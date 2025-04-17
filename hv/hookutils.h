@@ -54,12 +54,19 @@ namespace hyper
 	NTSTATUS HookManagerInitialize();
  
 	bool hook(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
-
+	bool hookr3(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
 	void unhook(_In_ void* target_api);
-
+	void unhookr3(_In_ void* target_api);
+	bool find_hook_info_by_rip(
+		LIST_ENTRY* hook_page_list,
+		void* rip,
+		hyper::EptHookInfo** out_hook_info);
 	static 	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 	static	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
 }
 
  
 extern LIST_ENTRY g_HookedPageListHead;
+
+extern LIST_ENTRY  g_UsermodeHookPageListHead;

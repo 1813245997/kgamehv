@@ -132,8 +132,9 @@
     <ClInclude Include="gdt.h" />
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
-    <ClInclude Include="hook_functions.h" />
-    <ClInclude Include="hook_manager.h" />
+    <ClInclude Include="utils\global_defs.h" />
+    <ClInclude Include="utils\hook_functions.h" />
+    <ClInclude Include="utils\hook_manager.h" />
     <ClInclude Include="hv.h" />
     <ClInclude Include="hypercalls.h" />
     <ClInclude Include="hypervisor_routines.h" />
@@ -160,6 +161,7 @@
     <ClInclude Include="utils\scanner_fun.h" />
     <ClInclude Include="utils\signature_scanner.h" />
     <ClInclude Include="utils\string_utils.h" />
+    <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="vcpu.h" />
     <ClInclude Include="vmcs.h" />
@@ -170,8 +172,8 @@
     <ClCompile Include="exit-handlers.cpp" />
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
-    <ClCompile Include="hook_functions.cpp" />
-    <ClCompile Include="hook_manager.cpp" />
+    <ClCompile Include="utils\hook_functions.cpp" />
+    <ClCompile Include="utils\hook_manager.cpp" />
     <ClCompile Include="hv.cpp" />
     <ClCompile Include="hypercalls.cpp" />
     <ClCompile Include="hypervisor_routines.cpp" />

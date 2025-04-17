@@ -1,4 +1,4 @@
-#include <ntifs.h>
+#include "global_defs.h"
 #include "os_info.h"
 
 #pragma once

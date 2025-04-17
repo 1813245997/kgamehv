@@ -1,4 +1,4 @@
-#include <ntifs.h>
+#include "global_defs.h"
 #include "string_utils.h"
 
 namespace utils

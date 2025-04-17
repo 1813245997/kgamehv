@@ -1,8 +1,6 @@
-#include <ntifs.h>
+#include "global_defs.h"
 #include "module_info.h"
-#include "ntos_struct_def.h"
-#include "native_api.h"
-#include "string_utils.h"
+
 namespace utils
 {
 	namespace module_info

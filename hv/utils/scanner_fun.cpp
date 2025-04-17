@@ -1,9 +1,5 @@
-#include <ntifs.h>
+#include "global_defs.h"
 #include "scanner_fun.h"
-#include "module_info.h"
-#include "windows_version_enum.h"
-#include "signature_scanner.h"
-#include "os_info.h"
 
 namespace utils
 {
@@ -12,6 +8,10 @@ namespace utils
 		unsigned long long find_ki_preprocess_fault()
 		{
 			static unsigned long long ki_preprocess_fault_addr{};
+			if (ki_preprocess_fault_addr!=0)
+			{
+				return ki_preprocess_fault_addr;
+			}
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
 			auto ntoskrnl_size = module_info::ntoskrnl_size;
 			unsigned long long temp_addr{};
@@ -354,5 +354,113 @@ namespace utils
 			}
 			return ki_preprocess_fault_addr;
 		}
+		unsigned long long find_mm_copy_memory()
+		{
+			static unsigned long long mm_copy_memory_addr{};
+
+			if (mm_copy_memory_addr != 0)
+				return mm_copy_memory_addr;
+
+			UNICODE_STRING func_name;
+			RtlInitUnicodeString(&func_name, L"MmCopyMemory");
+
+			void* func_ptr = MmGetSystemRoutineAddress(&func_name);
+
+			if (func_ptr)
+				mm_copy_memory_addr = reinterpret_cast<unsigned long long>(func_ptr);
+
+			return mm_copy_memory_addr;
+		 
+			 
+
+
+		}
+		unsigned long long find_mm_is_address_valid()
+		{
+			static unsigned long long mm_is_address_valid_addr = 0;   
+
+			if (mm_is_address_valid_addr != 0)
+				return mm_is_address_valid_addr;
+
+			UNICODE_STRING func_name;
+			RtlInitUnicodeString(&func_name, L"MmIsAddressValid");
+
+			void* func_ptr = MmGetSystemRoutineAddress(&func_name);
+
+			if (func_ptr)
+				mm_is_address_valid_addr = reinterpret_cast<unsigned long long>(func_ptr);
+
+			return mm_is_address_valid_addr;
+		}
+
+		unsigned long long find_mm_is_address_valid_ex()
+		{
+			// Static variable to hold the cached address once found
+			static unsigned long long mm_is_address_valid_ex_addr = 0;
+
+			// If the address has already been resolved, return the cached value
+			if (mm_is_address_valid_ex_addr != 0)
+			{
+				return mm_is_address_valid_ex_addr;
+			}
+
+			// Start by getting the address of MmIsAddressValid
+			unsigned long long mm_is_address_valid_addr = (unsigned long long)MmIsAddressValid;
+
+			// Traverse the memory from MmIsAddressValid to find the call instruction (opcode E8)
+			for (unsigned long long curr_addr = mm_is_address_valid_addr; curr_addr < mm_is_address_valid_addr + 0x1000; curr_addr++)
+			{
+				unsigned char opcode = *((unsigned char*)curr_addr);
+
+				if (opcode == 0xE8) // 0xE8 is the opcode for a "call" instruction
+				{
+					// Use resolve_relative_address to get the address being called by the call instruction
+					mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+					return mm_is_address_valid_ex_addr;
+				}
+			}
+
+			// Return 0 if the function is not found
+			return 0;
+		}
+
+		unsigned long long find_rtl_walk_frame_chain()
+		{
+			static unsigned long long rtl_walk_frame_chain_addr = 0;
+
+			if (rtl_walk_frame_chain_addr != 0)
+				return rtl_walk_frame_chain_addr;
+
+			UNICODE_STRING func_name;
+			RtlInitUnicodeString(&func_name, L"RtlWalkFrameChain");
+
+			void* func_ptr = MmGetSystemRoutineAddress(&func_name);
+
+			if (func_ptr)
+				rtl_walk_frame_chain_addr = reinterpret_cast<unsigned long long>(func_ptr);
+
+			return rtl_walk_frame_chain_addr;
+		}
+
+		unsigned long long find_rtl_lookup_function_entry()
+		{
+			static unsigned long long rtl_lookup_function_entry_addr = 0;
+
+			if (rtl_lookup_function_entry_addr != 0)
+				return rtl_lookup_function_entry_addr;
+
+			UNICODE_STRING func_name;
+			RtlInitUnicodeString(&func_name, L"RtlLookupFunctionEntry");
+
+			void* func_ptr = MmGetSystemRoutineAddress(&func_name);
+
+			if (func_ptr)
+				rtl_lookup_function_entry_addr = reinterpret_cast<unsigned long long>(func_ptr);
+
+			return rtl_lookup_function_entry_addr;
+		}
+
+
+
 	}
 }

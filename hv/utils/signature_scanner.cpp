@@ -1,5 +1,4 @@
-#include <ntifs.h>
-#include <ntimage.h>
+#include "global_defs.h"
 #include "signature_scanner.h"
 
 namespace utils

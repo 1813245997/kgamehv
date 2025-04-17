@@ -97,10 +97,10 @@
     <ClInclude Include="hookutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hook_manager.h">
+    <ClInclude Include="utils\hook_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hook_functions.h">
+    <ClInclude Include="utils\hook_functions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LDE64.h">
@@ -137,6 +137,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\windows_version_enum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\global_defs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -201,10 +207,10 @@
     <ClCompile Include="hookutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook_manager.cpp">
+    <ClCompile Include="utils\hook_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hook_functions.cpp">
+    <ClCompile Include="utils\hook_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="hypervisor_routines.cpp">

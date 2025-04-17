@@ -1,5 +1,4 @@
-#pragma once
-
+#include "types.h"
 extern "C"
 {
 
@@ -281,4 +280,35 @@ extern "C"
 		PVOID Buffer;
 	}SYSTEM_SESSION_PROCESS_INFORMATION, * PSYSTEM_SESSION_PROCESS_INFORMATION;
 #endif
+
+
+
+
+	typedef struct _IMAGE_RUNTIME_FUNCTION_ENTRY RUNTIME_FUNCTION, * PRUNTIME_FUNCTION;
+
+
+#define UNWIND_HISTORY_TABLE_SIZE 12
+	typedef struct _UNWIND_HISTORY_TABLE_ENTRY {
+		DWORD64 ImageBase;
+		PRUNTIME_FUNCTION FunctionEntry;
+	} UNWIND_HISTORY_TABLE_ENTRY, * PUNWIND_HISTORY_TABLE_ENTRY;
+
+	typedef struct _UNWIND_HISTORY_TABLE {
+		DWORD Count;
+		BYTE  LocalHint;
+		BYTE  GlobalHint;
+		BYTE  Search;
+		BYTE  Once;
+		DWORD64 LowAddress;
+		DWORD64 HighAddress;
+		UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
+	} UNWIND_HISTORY_TABLE, * PUNWIND_HISTORY_TABLE;
+
+	typedef struct _MM_COPY_ADDRESS {
+		union {
+			PVOID VirtualAddress;
+			PHYSICAL_ADDRESS PhysicalAddress;
+		};
+	} MM_COPY_ADDRESS, * PMMCOPY_ADDRESS;
 }
+

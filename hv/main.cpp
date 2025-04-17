@@ -2,7 +2,7 @@
 
 #include <ntddk.h>
 #include <ia32.hpp>
-#include "hook_manager.h"
+#include "utils/hook_manager.h"
 #include "utils/module_info.h"
 
 // simple hypercall wrappers
