@@ -555,26 +555,11 @@ void handle_exception_or_nmi(vcpu* const cpu) {
         rflags guest_rflags{ vmx_vmread(VMCS_GUEST_RFLAGS) };
 		if (!guest_rflags.trap_flag)  // Trap Flag (TF) bit is 0
 		{
-			for (PLIST_ENTRY page_entry = g_HookedPageListHead.Flink;
-				page_entry != &g_HookedPageListHead;
-				page_entry = page_entry->Flink)
+			hyper::EptHookInfo* matched_hook_info = nullptr;
+			if (find_hook_info_by_rip(&g_HookedPageListHead, reinterpret_cast<void*>(guest_rip), &matched_hook_info))
 			{
-				auto* hooked_page = CONTAINING_RECORD(page_entry, hyper::EptHookedPageContext, PageEntry);
-
-				for (PLIST_ENTRY func_entry = hooked_page->hooked_info_list.Flink;
-					func_entry != &hooked_page->hooked_info_list;
-					func_entry = func_entry->Flink)
-				{
-					auto* hook_info = CONTAINING_RECORD(func_entry, hyper::EptHookInfo, list_entry);
-
-					if (reinterpret_cast<void*>(guest_rip) == hook_info->original_va)
-					{
-
-
-						vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<ULONG_PTR>(hook_info->handler_va));
-						return;
-					}
-				}
+				vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<ULONG_PTR>(matched_hook_info->handler_va));
+				return;
 			}
 		}
 	}
