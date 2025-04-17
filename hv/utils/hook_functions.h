@@ -78,15 +78,15 @@ namespace hook_functions
     /**
      * @brief Hook for RtlLookupFunctionEntry.
      */
- //   PRUNTIME_FUNCTION NTAPI hook_rtl_lookup_function_entry(
- //       _In_ DWORD64 control_pc,
- //       _Out_ PDWORD64 image_base,
- //       _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
- //   );
+	PRUNTIME_FUNCTION NTAPI hook_rtl_lookup_function_entry(
+		_In_ DWORD64 control_pc,
+		_Out_ PDWORD64 image_base,
+		_Inout_opt_ PUNWIND_HISTORY_TABLE history_table
+	);
 
-	//extern	PRUNTIME_FUNCTION(NTAPI* original_rtl_lookup_function_entry)(
-	//		_In_ DWORD64 control_pc,
-	//		_Out_ PDWORD64 image_base,
-	//		_Inout_opt_ PUNWIND_HISTORY_TABLE history_table
-	//		);
+	extern	PRUNTIME_FUNCTION(NTAPI* original_rtl_lookup_function_entry)(
+		_In_ DWORD64 control_pc,
+		_Out_ PDWORD64 image_base,
+		_Inout_opt_ PUNWIND_HISTORY_TABLE history_table
+		);
 }

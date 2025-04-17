@@ -50,11 +50,11 @@ namespace hook_manager
 
 		if (rtl_lookup_function_entry_addr)
 		{
-		/*	hyper::hook(
+			hyper::hook(
 				reinterpret_cast<void*>(rtl_lookup_function_entry_addr),
 				hook_functions::hook_rtl_lookup_function_entry,
 				reinterpret_cast<void**>(&hook_functions::original_rtl_lookup_function_entry)
-			);*/
+			);
 		}
 
 		return STATUS_SUCCESS;

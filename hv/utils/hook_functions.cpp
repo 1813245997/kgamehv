@@ -1,3 +1,4 @@
+
 #include "global_defs.h"
 #include "hook_functions.h"
 
@@ -33,7 +34,10 @@ namespace hook_functions
 		IN OUT PCONTEXT ContextRecord,
 		IN KPROCESSOR_MODE PreviousMode);
 
-	BOOLEAN __fastcall hook_ki_preprocess_fault(IN OUT PEXCEPTION_RECORD ExceptionRecord, IN OUT PCONTEXT ContextRecord, IN KPROCESSOR_MODE PreviousMode)
+	BOOLEAN __fastcall hook_ki_preprocess_fault(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_In_ KPROCESSOR_MODE PreviousMode)
 	{
 		//不可以dprinftf 输出 因为是触发异常输出的
 		hyper::EptHookInfo* matched_hook_info = nullptr;
@@ -86,11 +90,11 @@ namespace hook_functions
 
 
      NTSTATUS __fastcall hook_mm_copy_memory(
-		PVOID TargetAddress,
-		MM_COPY_ADDRESS SourceAddress,
-		SIZE_T NumberOfBytes,
-		ULONG Flags,
-		PSIZE_T NumberOfBytesTransferred
+		 _In_ PVOID TargetAddress,
+		 _In_ MM_COPY_ADDRESS SourceAddress,
+		 _In_ SIZE_T NumberOfBytes,
+		 _In_ ULONG Flags,
+		 _Out_ PSIZE_T NumberOfBytesTransferred
 	)
 	{
 
@@ -116,20 +120,20 @@ namespace hook_functions
 	 }
 
 
-	 //PRUNTIME_FUNCTION(NTAPI* original_rtl_lookup_function_entry)(
-		// _In_ DWORD64 control_pc,
-		// _Out_ PDWORD64 image_base,
-		// _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
-		// );
+	 PRUNTIME_FUNCTION(NTAPI* original_rtl_lookup_function_entry)(
+		 _In_ DWORD64 control_pc,
+		 _Out_ PDWORD64 image_base,
+		 _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
+		 );
 
-	 //PRUNTIME_FUNCTION NTAPI hook_rtl_lookup_function_entry(
-		// DWORD64 control_pc,
-		// PDWORD64 image_base,
-		// PUNWIND_HISTORY_TABLE history_table
-	 //)
-	 //{
-		// // 在这里你可以添加自定义行为，比如日志、过滤等
+	 PRUNTIME_FUNCTION NTAPI hook_rtl_lookup_function_entry(
+		 _In_ DWORD64 control_pc,
+		 _Out_ PDWORD64 image_base,
+		 _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
+	 )
+	 {
+		  
 
-		// return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
-	 //}
+		 return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
+	 }
 }
