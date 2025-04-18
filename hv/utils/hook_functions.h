@@ -47,19 +47,19 @@ namespace hook_functions
      * @brief Hook for MmCopyMemory.
      */
     NTSTATUS __fastcall hook_mm_copy_memory(
-        _In_ PVOID TargetAddress,
-        _In_ MM_COPY_ADDRESS SourceAddress,
-        _In_ SIZE_T NumberOfBytes,
-        _In_ ULONG Flags,
-        _Out_ PSIZE_T NumberOfBytesTransferred
+		_In_ PVOID target_address,
+		_In_ MM_COPY_ADDRESS source_address,
+		_In_ SIZE_T number_of_bytes,
+		_In_ ULONG flags,
+		_Out_ PSIZE_T number_of_bytes_transferred
     );
 
     extern NTSTATUS(__fastcall* original_mm_copy_memory)(
-        _In_ PVOID TargetAddress,
-        _In_ MM_COPY_ADDRESS SourceAddress,
-        _In_ SIZE_T NumberOfBytes,
-        _In_ ULONG Flags,
-        _Out_ PSIZE_T NumberOfBytesTransferred
+		_In_ PVOID target_address,
+		_In_ MM_COPY_ADDRESS source_address,
+		_In_ SIZE_T number_of_bytes,
+		_In_ ULONG flags,
+		_Out_ PSIZE_T number_of_bytes_transferred
         );
 
 
@@ -89,4 +89,37 @@ namespace hook_functions
 		_Out_ PDWORD64 image_base,
 		_Inout_opt_ PUNWIND_HISTORY_TABLE history_table
 		);
+
+
+	void __fastcall hook_psp_exit_process(
+		IN BOOLEAN trim_address_space,
+		IN PEPROCESS process
+	);
+
+	extern void(__fastcall* original_psp_exit_process)(
+		IN BOOLEAN trim_address_space,
+		IN PEPROCESS process
+		);
+
+	NTSTATUS NTAPI hook_nt_create_section(
+		_Out_ PHANDLE section_handle,
+		_In_ ACCESS_MASK desired_access,
+		_In_opt_ POBJECT_ATTRIBUTES object_attributes,
+		_In_opt_ PLARGE_INTEGER maximum_size,
+		_In_ ULONG section_page_protection,
+		_In_ ULONG allocation_attributes,
+		_In_opt_ HANDLE file_handle
+	);
+
+	extern NTSTATUS(NTAPI* original_nt_create_section)(
+		_Out_ PHANDLE section_handle,
+		_In_ ACCESS_MASK desired_access,
+		_In_opt_ POBJECT_ATTRIBUTES object_attributes,
+		_In_opt_ PLARGE_INTEGER maximum_size,
+		_In_ ULONG section_page_protection,
+		_In_ ULONG allocation_attributes,
+		_In_opt_ HANDLE file_handle
+		);
+
+
 }

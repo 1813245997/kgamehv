@@ -12,7 +12,7 @@ namespace utils
 		bool initialize_os_version()
 		{
 			OSVERSIONINFOW os_version;
-			RtlGetVersion(&os_version);
+			utils::internal_functions::pfn_rtl_get_version  (&os_version);
 
 			dw_build_number = os_version.dwBuildNumber;
 			return true;
@@ -42,8 +42,9 @@ namespace utils
 		{
 			if (!dw_build_number)
 			{
+				 
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 
@@ -55,7 +56,7 @@ namespace utils
 			if (!dw_build_number)
 			{
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 			return dw_build_number == a_build_number ? TRUE : FALSE;
@@ -66,7 +67,7 @@ namespace utils
 			if (!dw_build_number)
 			{
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 			return dw_build_number < a_build_number ? TRUE : FALSE;
@@ -77,7 +78,7 @@ namespace utils
 			if (!dw_build_number)
 			{
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 			return dw_build_number <= a_build_number ? TRUE : FALSE;
@@ -88,7 +89,7 @@ namespace utils
 			if (!dw_build_number)
 			{
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 			return dw_build_number > a_build_number ? TRUE : FALSE;
@@ -99,7 +100,7 @@ namespace utils
 			if (!dw_build_number)
 			{
 				OSVERSIONINFOW os_version;
-				RtlGetVersion(&os_version);
+				utils::internal_functions::pfn_rtl_get_version(&os_version);
 				dw_build_number = os_version.dwBuildNumber;
 			}
 			return dw_build_number >= a_build_number ? TRUE : FALSE;

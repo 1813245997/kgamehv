@@ -1,4 +1,3 @@
-
 #include "global_defs.h"
 #include "hook_functions.h"
 
@@ -75,32 +74,85 @@ namespace hook_functions
 	)
 	{
 
+		
+	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
+	   {
+		   return FALSE;
+	   }
 
-		return original_mm_is_address_valid(VirtualAddress);
+
+		return utils::internal_functions::pfn_mm_is_address_valid_ex (VirtualAddress);
 	}
 
 
 	  NTSTATUS(__fastcall* original_mm_copy_memory)(
-		PVOID TargetAddress,
-		MM_COPY_ADDRESS SourceAddress,
-		SIZE_T NumberOfBytes,
-		ULONG Flags,
-		PSIZE_T NumberOfBytesTransferred
+		  _In_ PVOID target_address,
+		  _In_ MM_COPY_ADDRESS source_address,
+		  _In_ SIZE_T number_of_bytes,
+		  _In_ ULONG flags,
+		  _Out_ PSIZE_T number_of_bytes_transferred
 		);
 
 
-     NTSTATUS __fastcall hook_mm_copy_memory(
-		 _In_ PVOID TargetAddress,
-		 _In_ MM_COPY_ADDRESS SourceAddress,
-		 _In_ SIZE_T NumberOfBytes,
-		 _In_ ULONG Flags,
-		 _Out_ PSIZE_T NumberOfBytesTransferred
-	)
-	{
+	  NTSTATUS __fastcall hook_mm_copy_memory(
+		  _In_ PVOID target_address,
+		  _In_ MM_COPY_ADDRESS source_address,
+		  _In_ SIZE_T number_of_bytes,
+		  _In_ ULONG flags,
+		  _Out_ PSIZE_T number_of_bytes_transferred
+	  )
+	  {
+		  
+		  if (target_address == nullptr )
+		  {
+			  return original_mm_copy_memory(
+				  target_address,
+				  source_address,
+				  number_of_bytes,
+				  flags,
+				  number_of_bytes_transferred
+			  );
+		  }
 
+		  if (number_of_bytes == 0)
+		  {
+			  return original_mm_copy_memory(
+				  target_address,
+				  source_address,
+				  number_of_bytes,
+				  flags,
+				  number_of_bytes_transferred
+			  );
+		  }
 
-		 return original_mm_copy_memory(TargetAddress, SourceAddress, NumberOfBytes, Flags, NumberOfBytesTransferred);
-	}
+		  PVOID64 virtual_address = nullptr;
+
+		  if (flags == MM_COPY_MEMORY_PHYSICAL)
+		  {
+			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
+		  }
+		  else
+		  {
+			  virtual_address = source_address.VirtualAddress;
+		  }
+
+		  
+		  if (utils::hidden_modules::is_address_hidden(virtual_address))
+		  {
+			  *number_of_bytes_transferred = 0;
+			  return STATUS_CONFLICTING_ADDRESSES;
+		  }
+
+		 
+		  return original_mm_copy_memory(
+			  target_address,
+			  source_address,
+			  number_of_bytes,
+			  flags,
+			  number_of_bytes_transferred
+		  );
+	  }
+
 	  
 
 	 ULONG(__fastcall* original_rtl_walk_frame_chain)(
@@ -115,8 +167,26 @@ namespace hook_functions
 		 _In_ ULONG flags
 	 )
 	 {
+		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
-		 return original_rtl_walk_frame_chain(callers, count, flags);
+		 if (frames_captured == 0 || !callers)
+			 return frames_captured;
+
+		 for (ULONG i = 0; i < frames_captured; ++i)
+		 {
+			 PVOID addr = callers[i];
+
+			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(addr))
+				 continue;
+
+			 if (utils::hidden_modules::is_address_hidden(addr))
+			 {
+				 callers[i] = nullptr;
+				 return i;
+			 }
+		 }
+
+		 return frames_captured;
 	 }
 
 
@@ -136,4 +206,59 @@ namespace hook_functions
 
 		 return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
 	 }
+
+
+	   void(__fastcall* original_psp_exit_process)(
+		 IN BOOLEAN trim_address_space,
+		 IN PEPROCESS process
+		 );
+
+	   void __fastcall hook_psp_exit_process(
+		   IN BOOLEAN trim_address_space,
+		   IN PEPROCESS process
+	   )
+	   {
+
+
+
+		   return original_psp_exit_process(trim_address_space, process);
+
+	 }
+
+
+	   NTSTATUS(NTAPI* original_nt_create_section)(
+		   _Out_ PHANDLE section_handle,
+		   _In_ ACCESS_MASK desired_access,
+		   _In_opt_ POBJECT_ATTRIBUTES object_attributes,
+		   _In_opt_ PLARGE_INTEGER maximum_size,
+		   _In_ ULONG section_page_protection,
+		   _In_ ULONG allocation_attributes,
+		   _In_opt_ HANDLE file_handle
+		   );
+
+
+	   NTSTATUS NTAPI hook_nt_create_section(
+		   _Out_ PHANDLE section_handle,
+		   _In_ ACCESS_MASK desired_access,
+		   _In_opt_ POBJECT_ATTRIBUTES object_attributes,
+		   _In_opt_ PLARGE_INTEGER maximum_size,
+		   _In_ ULONG section_page_protection,
+		   _In_ ULONG allocation_attributes,
+		   _In_opt_ HANDLE file_handle
+	   )
+	   {
+		   return original_nt_create_section(
+			   section_handle,
+			   desired_access,
+			   object_attributes,
+			   maximum_size,
+			   section_page_protection,
+			   allocation_attributes,
+			   file_handle
+		   );
+	   }
+
+
+
+
 }

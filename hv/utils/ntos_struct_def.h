@@ -2,6 +2,9 @@
 extern "C"
 {
 
+#define MM_COPY_MEMORY_PHYSICAL             0x1
+#define MM_COPY_MEMORY_VIRTUAL              0x2
+
 #ifndef _SYSTEM_INFORMATION_CLASS
 	typedef enum _SYSTEM_INFORMATION_CLASS
 	{

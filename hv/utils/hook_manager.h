@@ -1,5 +1,5 @@
 #pragma once
 namespace hook_manager
 {
-	NTSTATUS InitializeAllHooks();
+	NTSTATUS initialize_all_hooks();
 }

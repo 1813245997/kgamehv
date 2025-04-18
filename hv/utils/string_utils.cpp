@@ -29,7 +29,7 @@ namespace utils
 
 			for (USHORT i = 0; i <= length_diff; ++i) {
 				slice.Buffer = main_str->Buffer + i;
-
+			 
 				if (RtlEqualString(&slice, search_str, case_insensitive)) {
 					return TRUE;
 				}

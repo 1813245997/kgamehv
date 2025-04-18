@@ -2,58 +2,71 @@
 #include "hook_manager.h"
 namespace hook_manager
 {
-	NTSTATUS InitializeAllHooks()
+	NTSTATUS initialize_all_hooks()
 	{
-		using namespace utils::scanner_fun;
+		using namespace utils::internal_functions;
 
-		const auto ki_preprocess_fault_addr = find_ki_preprocess_fault();
-		const auto mm_copy_memory_addr = find_mm_copy_memory();
-		const auto mm_is_address_valid_addr = find_mm_is_address_valid();
-		const auto rtl_walk_frame_chain_addr = find_rtl_walk_frame_chain();
-		const auto rtl_lookup_function_entry_addr = find_rtl_lookup_function_entry();
-
-		if (ki_preprocess_fault_addr)
+		if (pfn_ki_preprocess_fault)
 		{
 			hyper::hook(
-				reinterpret_cast<void*>(ki_preprocess_fault_addr),
+				reinterpret_cast<void*>(pfn_ki_preprocess_fault),
 				hook_functions::hook_ki_preprocess_fault,
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
 			);
 		}
 
-		if (mm_copy_memory_addr)
+		if (pfn_mm_copy_memory)
 		{
 			hyper::hook(
-				reinterpret_cast<void*>(mm_copy_memory_addr),
+				reinterpret_cast<void*>(pfn_mm_copy_memory),
 				hook_functions::hook_mm_copy_memory,
 				reinterpret_cast<void**>(&hook_functions::original_mm_copy_memory)
 			);
 		}
 
-		if (mm_is_address_valid_addr)
+		if (pfn_mm_is_address_valid)
 		{
 			hyper::hook(
-				reinterpret_cast<void*>(mm_is_address_valid_addr),
+				reinterpret_cast<void*>(pfn_mm_is_address_valid),
 				hook_functions::hook_mm_is_address_valid,
 				reinterpret_cast<void**>(&hook_functions::original_mm_is_address_valid)
 			);
 		}
 
-		if (rtl_walk_frame_chain_addr)
+		if (pfn_rtl_walk_frame_chain)
 		{
 			hyper::hook(
-				reinterpret_cast<void*>(rtl_walk_frame_chain_addr),
+				reinterpret_cast<void*>(pfn_rtl_walk_frame_chain),
 				hook_functions::hook_rtl_walk_frame_chain,
 				reinterpret_cast<void**>(&hook_functions::original_rtl_walk_frame_chain)
 			);
 		}
 
-		if (rtl_lookup_function_entry_addr)
+		if (pfn_rtl_lookup_function_entry)
 		{
 			hyper::hook(
-				reinterpret_cast<void*>(rtl_lookup_function_entry_addr),
+				reinterpret_cast<void*>(pfn_rtl_lookup_function_entry),
 				hook_functions::hook_rtl_lookup_function_entry,
 				reinterpret_cast<void**>(&hook_functions::original_rtl_lookup_function_entry)
+			);
+		}
+
+		if (pfn_nt_create_section)
+		{
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_create_section),
+				hook_functions::hook_nt_create_section,
+				reinterpret_cast<void**>(&hook_functions::original_nt_create_section)
+			);
+		}
+
+
+		if (pfn_psp_exit_process)
+		{
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_psp_exit_process),
+				hook_functions::hook_psp_exit_process,
+				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
 			);
 		}
 

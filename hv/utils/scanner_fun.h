@@ -3,6 +3,8 @@ namespace utils
 {
 	namespace scanner_fun
 	{
+		unsigned long long find_module_export_by_name(void* module_base, const char* export_name);
+
 		unsigned long long find_ki_preprocess_fault();
 
 		unsigned long long find_mm_copy_memory();
@@ -14,6 +16,8 @@ namespace utils
 		unsigned long long find_rtl_walk_frame_chain();
 
 		unsigned long long find_rtl_lookup_function_entry();
+
+		unsigned long long find_psp_exit_process();
 
 
 
