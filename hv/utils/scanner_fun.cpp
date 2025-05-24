@@ -54,13 +54,9 @@ namespace utils
 		}
 		unsigned long long find_ki_preprocess_fault()
 		{
-			static unsigned long long ki_preprocess_fault_addr{};
-			if (ki_preprocess_fault_addr!=0)
-			{
-				return ki_preprocess_fault_addr;
-			}
-			auto ntoskrnl_base = module_info::ntoskrnl_base;
-			auto ntoskrnl_size = module_info::ntoskrnl_size;
+			unsigned long long ki_preprocess_fault_addr{};
+			 
+			 
 			unsigned long long temp_addr{};
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
@@ -68,9 +64,9 @@ namespace utils
 			{
 			case utils::WINDOWS_7:
 			{
-
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				 
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x31\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -84,8 +80,8 @@ namespace utils
 			case utils::WINDOWS_7_SP1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x0F\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -99,8 +95,8 @@ namespace utils
 			case utils::WINDOWS_8:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x7E\x03\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -114,8 +110,8 @@ namespace utils
 			case utils::WINDOWS_8_1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\xF3\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -129,8 +125,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1507:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\xF1\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -144,8 +140,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1511:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\xC2\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -159,8 +155,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1607:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\xB3\x03\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -174,8 +170,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1703:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x8C\x03\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -189,8 +185,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1709:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x87\x03\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -204,8 +200,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1803:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x6C\x03\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -219,8 +215,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1809:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x45\x45\x84\xFF", "x????xxxxxxx"
 				);
 
@@ -234,8 +230,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_19H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base) ,
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x45\x45\x84\xFF", "x????xxxxxxx"
 				);
 
@@ -249,8 +245,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_19H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x45\x45\x84\xFF", "x????xxxxxxx"
 				);
 
@@ -264,8 +260,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_20H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x49\x45\x84\xE4", "x????xxxxxxx"
 				);
 
@@ -279,8 +275,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_20H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x49\x45\x84\xE4", "x????xxxxxxx"
 				);
 
@@ -294,8 +290,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_21H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x49\x45\x84\xE4", "x????xxxxxxx"
 				);
 
@@ -308,12 +304,13 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_21H2:
 			{
-
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+			 
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x49\x45\x84\xE4", "x????xxxxxxx"
 				);
 
+				
 
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
@@ -323,13 +320,13 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_22H2:
 			{
-				 
-				  temp_addr =  signature_scanner:: find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+			 
+				  temp_addr =  signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x49\x45\x84\xE4", "x????xxxxxxx"
 				);
 
-				 
+				  
 				  ki_preprocess_fault_addr =
 					  signature_scanner::resolve_relative_address(
 						  reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -339,8 +336,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x4D\x44\x8A\x45\x00", "x????xxxxxxxx"
 				);
 
@@ -354,8 +351,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x75\x04\x00\x00", "x????xxxxxxxx"
 				);
 
@@ -369,8 +366,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_23H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x4D\x44\x8A\x45\x00", "x????xxxxxxxx"
 				);
 
@@ -384,8 +381,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x4D\x44\x8A\x45\x00", "x????xxxxxxxx"
 				);
 
@@ -417,32 +414,16 @@ namespace utils
 		unsigned long long find_mm_is_address_valid_ex()
 		{
 			// Static variable to hold the cached address once found
-			static unsigned long long mm_is_address_valid_ex_addr = 0;
-
-			// If the address has already been resolved, return the cached value
-			if (mm_is_address_valid_ex_addr != 0)
-			{
-				return mm_is_address_valid_ex_addr;
-			}
-
+		   unsigned long long mm_is_address_valid_ex_addr = 0;
 			// Start by getting the address of MmIsAddressValid
 			unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
-
-			// Traverse the memory from MmIsAddressValid to find the call instruction (opcode E8)
-			for (unsigned long long curr_addr = mm_is_address_valid_addr; curr_addr < mm_is_address_valid_addr + 0x1000; curr_addr++)
-			{
-				unsigned char opcode = *((unsigned char*)curr_addr);
-
-				if (opcode == 0xE8) // 0xE8 is the opcode for a "call" instruction
-				{
-					// Use resolve_relative_address to get the address being called by the call instruction
-					mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
-					return mm_is_address_valid_ex_addr;
-				}
-			}
-
-			// Return 0 if the function is not found
-			return 0;
+			unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+		 
+			// Use resolve_relative_address to get the address being called by the call instruction
+			mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+			return mm_is_address_valid_ex_addr;
+		 
+ 
 		}
 
 		unsigned long long find_rtl_walk_frame_chain()
@@ -466,13 +447,9 @@ namespace utils
 
 		unsigned long long find_psp_exit_process()
 		{
-			static unsigned long long psp_exit_process_addr = 0;
-
-			if (psp_exit_process_addr != 0)
-				return psp_exit_process_addr;
-
-			auto ntoskrnl_base = module_info::ntoskrnl_base;
-			auto ntoskrnl_size = module_info::ntoskrnl_size;
+			//static unsigned long long psp_exit_process_addr = 0;
+			unsigned long long psp_exit_process_addr = 0;
+			 
 			unsigned long long temp_addr{};
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
@@ -481,8 +458,8 @@ namespace utils
 			case utils::WINDOWS_7:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xE8\xCC\xCC\xCC\xCC\x49\x8B\xCC\xE8\xCC\xCC\xCC\xCC\x48\x8B\xD8", "x????xxxx????xxx"
 				);
 
@@ -496,8 +473,8 @@ namespace utils
 			case utils::WINDOWS_7_SP1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\xE8\xCC\xCC\xCC\xCC\x49\x8B\xCC\xE8\xCC\xCC\xCC\xCC\x48\x8B\xD8", "x????xxxx????xxx"
 				);
 
@@ -511,8 +488,8 @@ namespace utils
 			case utils::WINDOWS_8:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4C\x24\x20\xE8\xCC\xCC\xCC\xCC\x48\x8B\xCB", "xxx????xxxxxx????xxx"
 				);
 				temp_addr += 2;
@@ -526,8 +503,8 @@ namespace utils
 			case utils::WINDOWS_8_1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 
@@ -541,8 +518,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1507:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4D\xC0", "xxx????xxxxxx"
 				);
 
@@ -556,8 +533,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1511:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4D\xC8", "xxx????xxxxxx"
 				);
 
@@ -571,8 +548,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1607:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4D\xC8", "xxx????xxxxxx"
 				);
 
@@ -586,8 +563,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1703:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
 				);
 
@@ -601,8 +578,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1709:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
 				);
 
@@ -616,8 +593,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1803:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
 				);
 
@@ -631,8 +608,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_1809:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4D\xC8", "xxx????xxxxxx"
 				);
 				temp_addr += 2;
@@ -646,8 +623,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_19H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4C\x24\x30\xE8\xCC\xCC\xCC\xCC\x48\x8B\xCB", "xxx????xxxxxx????xxx"
 				);
 				temp_addr += 2;
@@ -661,8 +638,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_19H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4C\x24\x30\xE8\xCC\xCC\xCC\xCC\x48\x8B\xCB", "xxx????xxxxxx????xxx"
 				);
 
@@ -676,8 +653,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_20H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 
@@ -691,8 +668,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_20H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 
@@ -706,8 +683,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_21H1:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 
@@ -721,8 +698,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_21H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 
@@ -736,8 +713,8 @@ namespace utils
 			case utils::WINDOWS_10_VERSION_22H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x48\x8D\x4D\xC0", "xxx????xxxx"
 				);
 				temp_addr += 2;
@@ -751,8 +728,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x38", "xxx????xxxxxxx"
 				);
 				temp_addr += 2;
@@ -766,8 +743,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
 				);
 
@@ -781,8 +758,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_23H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
 				);
 				temp_addr += 2;
@@ -796,8 +773,8 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
 					"\xB1\x01\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x54\x65", "xxx????xxxxx"
 				);
 				temp_addr += 2;

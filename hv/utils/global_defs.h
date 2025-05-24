@@ -18,5 +18,8 @@
 #include "hidden_module_list.h"
 #include "hook_manager.h"
 #include "internal_function_defs.h"
+#include "feature_data_initializer.h"
+#include "scanner_data.h"
+#include "kernel_hide_utils.h"
 #include "..\memory_pool.h"
 #include "..\hookutils.h"

@@ -27,8 +27,14 @@ namespace utils
 
 			for (unsigned long i = 0; i < size; i++)
 			{
-				if (pattern_check((const char*)addr + i, pattern, mask))
-					return addr + i;
+				auto current_addr = reinterpret_cast<const char*>(addr + i);
+				if (!pattern_check(current_addr, pattern, mask))
+					continue;
+
+				if (!internal_functions::pfn_mm_is_address_valid(const_cast<void*>(reinterpret_cast<const void*>(current_addr))))
+					continue;
+
+				return reinterpret_cast<unsigned long long>(current_addr);
 			}
 
 			return 0;

@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
 #include "..\hv.h"
-//#define USE_MANUAL_MAP_MODE 1
+ #define USE_MANUAL_MAP_MODE 1
 
 namespace utils
 {
@@ -19,65 +19,93 @@ namespace utils
 			PVOID module_base = nullptr;
 			SIZE_T image_size = {};
 
-			DbgPrint("[hv] Driver loaded.\n");
-			DbgBreakPoint();
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Driver loaded.\n");
+
 			// 初始化 ntoskrnl 导出表信息
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing ntoskrnl info...\n");
 			if (!utils::module_info::init_ntoskrnl_info())
 			{
-				DbgPrint("[hv] Failed to initialize ntoskrnl info.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize ntoskrnl info.\n");
 				return STATUS_UNSUCCESSFUL;
 			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ntoskrnl info initialized successfully.\n");
 
 			// 初始化内部函数地址
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing internal functions...\n");
 			NTSTATUS status = internal_functions::initialize_internal_functions();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrint("[hv] Failed to initialize internal functions.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize internal functions (0x%X).\n", status);
 				return status;
 			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Internal functions initialized successfully.\n");
+
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature globals...\n");
+			status = feature_init::initialize();
+			if (!NT_SUCCESS(status))
+			{
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
+					"[hv] Failed to initialize feature globals (0x%X).\n", status);
+				return status;
+			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature globals initialized successfully.\n");
+
+
+			
 
 			// 启动虚拟化
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Starting virtualization...\n");
 			if (!hv::start())
 			{
-				DbgPrint("[hv] Failed to virtualize system.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to virtualize system.\n");
 				return STATUS_HV_OPERATION_FAILED;
 			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Virtualization started successfully.\n");
 
 			// ping hypervisor 确认是否成功加载
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Pinging hypervisor...\n");
 			if (ping() == hv::hypervisor_signature)
 			{
-				DbgPrint("[client] Hypervisor signature matches.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[client] Hypervisor signature matches.\n");
 			}
 			else
 			{
-				DbgPrint("[client] Failed to ping hypervisor!\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[client] Failed to ping hypervisor!\n");
 			}
 
 			// 初始化隐藏模块链表
 			utils::hidden_modules::initialize_hidden_module_list();
-
 			// 获取驱动模块信息（基址与大小）
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Getting module info from context...\n");
 			if (!get_module_info_from_context(context, module_base, image_size))
 			{
-				DbgPrint("[hv] Failed to get module info from context.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to get module info from context.\n");
 				return STATUS_INVALID_IMAGE_FORMAT;
 			}
+			 
 
 			// 添加当前驱动模块为隐藏模块
+			 
 			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
+		 
 
 			// 初始化所有 HOOK
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing hooks...\n");
 			status = hook_manager::initialize_all_hooks();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrint("[hv] Failed to initialize hooks.\n");
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize hooks (0x%X).\n", status);
 				return status;
 			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Hooks initialized successfully.\n");
 
-			DbgPrint("[hv] Driver initialization complete.\n");
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Driver initialization complete.\n");
 
 			return STATUS_SUCCESS;
 		}
+
+
 
 
 

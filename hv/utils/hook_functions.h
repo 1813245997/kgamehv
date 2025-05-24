@@ -63,13 +63,13 @@ namespace hook_functions
         );
 
 
-	ULONG __fastcall hook_rtl_walk_frame_chain(
+	ULONG NTAPI hook_rtl_walk_frame_chain(
 		_Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
 		_In_ ULONG count,
 		_In_ ULONG flags
 	);
 
-	extern ULONG(__fastcall* original_rtl_walk_frame_chain)(
+	extern ULONG(NTAPI* original_rtl_walk_frame_chain)(
 		_Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
 		_In_ ULONG count,
 		_In_ ULONG flags

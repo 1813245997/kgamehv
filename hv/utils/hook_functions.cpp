@@ -155,13 +155,13 @@ namespace hook_functions
 
 	  
 
-	 ULONG(__fastcall* original_rtl_walk_frame_chain)(
+	 ULONG(NTAPI* original_rtl_walk_frame_chain)(
 		 _Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
 		 _In_ ULONG count,
 		 _In_ ULONG flags
 		 );
 
-	 ULONG __fastcall hook_rtl_walk_frame_chain(
+	 ULONG NTAPI hook_rtl_walk_frame_chain(
 		 _Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
 		 _In_ ULONG count,
 		 _In_ ULONG flags
@@ -169,8 +169,16 @@ namespace hook_functions
 	 {
 		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
-		 if (frames_captured == 0 || !callers)
+		 if (frames_captured == 0)
+		 {
 			 return frames_captured;
+		 }
+
+		 if (!callers)
+		 {
+			 return frames_captured;
+		 }
+
 
 		 for (ULONG i = 0; i < frames_captured; ++i)
 		 {

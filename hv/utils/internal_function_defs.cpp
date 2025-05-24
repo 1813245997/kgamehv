@@ -219,7 +219,11 @@ namespace utils
 			unsigned long long ke_query_active_processor_count_ex_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeQueryActiveProcessorCountEx");
 			unsigned long long ke_set_system_group_affinity_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeSetSystemGroupAffinityThread");
 		    unsigned long long nt_create_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateSection");
-			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCloses");
+			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtClose");
+
+
+
+
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid, mm_is_address_valid_addr);
@@ -254,11 +258,45 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_create_section, nt_create_section_addr);
 			INIT_FUNC_PTR(pfn_nt_close, nt_close_addr);
 
-
-
+			//These three search feature codes will cause errors. Find a way to solve it.
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlWalkFrameChain          = %p\n", reinterpret_cast<PVOID>(rtl_walk_frame_chain_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlLookupFunctionEntry     = %p\n", reinterpret_cast<PVOID>(rtl_lookup_function_entry_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetPhysicalAddress       = %p\n", reinterpret_cast<PVOID>(mm_get_physical_address_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ExAllocatePoolWithTag      = %p\n", reinterpret_cast<PVOID>(ex_allocate_pool_with_tag_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ExFreePoolWithTag          = %p\n", reinterpret_cast<PVOID>(ex_free_pool_with_tag_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlInitUnicodeString       = %p\n", reinterpret_cast<PVOID>(rtl_init_unicode_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] DbgPrint                   = %p\n", reinterpret_cast<PVOID>(dbg_print_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlDuplicateUnicodeString  = %p\n", reinterpret_cast<PVOID>(rtl_duplicate_unicode_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetVirtualForPhysical    = %p\n", reinterpret_cast<PVOID>(mm_get_virtual_for_physical_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeSetSystemAffinityThreadEx       = %p\n", reinterpret_cast<PVOID>(ke_set_system_affinity_thread_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeRevertToUserAffinityThreadEx    = %p\n", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveProcessorCount       = %p\n", reinterpret_cast<PVOID>(ke_query_active_processor_count_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetProcessId                     = %p\n", reinterpret_cast<PVOID>(ps_get_process_id_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetCurrentThreadProcess          = %p\n", reinterpret_cast<PVOID>(ps_get_current_thread_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetProcessImageFileName          = %p\n", reinterpret_cast<PVOID>(ps_get_process_image_file_name_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsInitialSystemProcess             = %p\n", reinterpret_cast<PVOID>(ps_initial_system_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlRandomEx                        = %p\n", reinterpret_cast<PVOID>(rtl_random_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlInitString                      = %p\n", reinterpret_cast<PVOID>(rtl_init_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ZwQuerySystemInformation           = %p\n", reinterpret_cast<PVOID>(zw_query_system_information_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] _stricmp                           = %p\n", reinterpret_cast<PVOID>(stricmp_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetSystemRoutineAddress          = %p\n", reinterpret_cast<PVOID>(mm_get_system_routine_address_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlEqualString                     = %p\n", reinterpret_cast<PVOID>(rtl_equal_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeBugCheckEx                       = %p\n", reinterpret_cast<PVOID>(ke_bug_check_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeRevertToUserAffinityThread       = %p\n", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveGroupCount            = %p\n", reinterpret_cast<PVOID>(ke_query_active_group_count_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveProcessorCountEx      = %p\n", reinterpret_cast<PVOID>(ke_query_active_processor_count_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeSetSystemGroupAffinityThread     = %p\n", reinterpret_cast<PVOID>(ke_set_system_group_affinity_thread_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] NtCreateSection                    = %p\n", reinterpret_cast<PVOID>(nt_create_section_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] NtClose                            = %p\n", reinterpret_cast<PVOID>(nt_close_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] ki_preprocess_fault_addr     = %p\n",reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] psp_exit_process_addr     = %p\n",reinterpret_cast<PVOID>(psp_exit_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] mm_is_address_valid_ex_add     = %p\n",reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
 
 
 
@@ -267,6 +305,78 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
 
 
+
+			if (!ki_preprocess_fault_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
+			if (!psp_exit_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] psp_exit_process_addr is null.\n");
+			if (!mm_is_address_valid_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_is_address_valid_ex_addr is null.\n");
+			if (!mm_copy_memory_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_copy_memory_addr is null.\n");
+			if (!mm_is_address_valid_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_is_address_valid_addr is null.\n");
+			if (!rtl_walk_frame_chain_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_walk_frame_chain_addr is null.\n");
+			if (!rtl_lookup_function_entry_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_lookup_function_entry_addr is null.\n");
+			if (!mm_get_physical_address_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_physical_address_addr is null.\n");
+			if (!ex_allocate_pool_with_tag_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_allocate_pool_with_tag_addr is null.\n");
+			if (!ex_free_pool_with_tag_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_free_pool_with_tag_addr is null.\n");
+			if (!rtl_init_unicode_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_init_unicode_string_addr is null.\n");
+			if (!dbg_print_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] dbg_print_addr is null.\n");
+			if (!rtl_duplicate_unicode_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_duplicate_unicode_string_addr is null.\n");
+			if (!mm_get_virtual_for_physical_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_virtual_for_physical_addr is null.\n");
+			if (!ke_set_system_affinity_thread_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_set_system_affinity_thread_ex_addr is null.\n");
+			if (!ke_revert_to_user_affinity_thread_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_revert_to_user_affinity_thread_ex_addr is null.\n");
+			if (!ke_query_active_processor_count_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_processor_count_addr is null.\n");
+			if (!ps_get_process_id_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_id_addr is null.\n");
+			if (!ps_get_current_thread_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_thread_process_addr is null.\n");
+			if (!ps_get_process_image_file_name_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_image_file_name_addr is null.\n");
+			if (!ps_initial_system_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_initial_system_process_addr is null.\n");
+			if (!rtl_random_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_random_ex_addr is null.\n");
+			if (!rtl_init_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_init_string_addr is null.\n");
+			if (!zw_query_system_information_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_system_information_addr is null.\n");
+			if (!rtl_get_version_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_get_version_addr is null.\n");
+			if (!stricmp_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] stricmp_addr is null.\n");
+			if (!mm_get_system_routine_address_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_system_routine_address_addr is null.\n");
+			if (!rtl_equal_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_equal_string_addr is null.\n");
+			if (!ke_bug_check_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_bug_check_ex_addr is null.\n");
+			if (!ke_revert_to_user_affinity_thread_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_revert_to_user_affinity_thread_addr is null.\n");
+			if (!ke_query_active_group_count_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_group_count_addr is null.\n");
+			if (!ke_query_active_processor_count_ex_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_processor_count_ex_addr is null.\n");
+			if (!ke_set_system_group_affinity_thread_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_set_system_group_affinity_thread_addr is null.\n");
+			if (!nt_create_section_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_section_addr is null.\n");
+			if (!nt_close_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_close_addr is null.\n");
+		 
 
 			if (!ki_preprocess_fault_addr||
 				!psp_exit_process_addr||
@@ -299,7 +409,10 @@ namespace utils
 				!ke_bug_check_ex_addr||
 				!ke_revert_to_user_affinity_thread_addr||
 				!ke_query_active_group_count_addr||
-				!ke_query_active_processor_count_ex_addr)
+				!ke_query_active_processor_count_ex_addr ||
+				!ke_set_system_group_affinity_thread_addr||
+				!nt_create_section_addr||
+				!nt_close_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
