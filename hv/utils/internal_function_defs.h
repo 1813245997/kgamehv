@@ -180,5 +180,10 @@ namespace utils
 		extern NTSTATUS(NTAPI* pfn_nt_close)(
 			_In_ _Post_ptr_invalid_ HANDLE handle
 			);
+
+		extern PHANDLE_TABLE_ENTRY(NTAPI* pfn_exp_lookup_handle_table_entry)(
+			_In_ PHANDLE_TABLE HandleTable,
+			_In_ EXHANDLE Handle
+			);
 	}
 }

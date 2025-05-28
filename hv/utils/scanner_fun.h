@@ -19,6 +19,7 @@ namespace utils
 
 		unsigned long long find_psp_exit_process();
 
+		unsigned long long find_exp_lookup_handle_table_entry();
 
 
 

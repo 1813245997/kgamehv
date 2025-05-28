@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
 #include "..\hv.h"
- #define USE_MANUAL_MAP_MODE 1
+// #define USE_MANUAL_MAP_MODE 1
 
 namespace utils
 {
@@ -40,6 +40,14 @@ namespace utils
 			}
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Internal functions initialized successfully.\n");
 
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing paging base addresses...\n");
+			status = memory::initialize_all_paging_base();
+			if (!NT_SUCCESS(status))
+			{
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize paging base addresses (0x%X).\n", status);
+				return status;
+			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Paging base addresses initialized successfully.\n");
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature globals...\n");
 			status = feature_init::initialize();

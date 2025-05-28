@@ -792,6 +792,354 @@ namespace utils
 			return psp_exit_process_addr;
 		}
 
+		unsigned long long find_exp_lookup_handle_table_entry()
+		{
+			unsigned long long exp_lookup_handle_table_entry_addr = 0;
+
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+				//ExEnumHandleTable
+				//PAGE:0000000140306AFC 49 8B CD                                                        mov     rcx, r13
+				//PAGE : 0000000140306AFF E8 AC 1B FF FF                                                  call    ExpLookupHandleTableEntry
+				//PAGE : 0000000140306B04 49 3B C2                                                        cmp     rax, r10
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xCD\xE8\xCC\xCC\xCC\xCC\x49\x3B\xC2", "xxxx????xxx","PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xCD\xE8\xCC\xCC\xCC\xCC\x49\x3B\xC2", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xCD\xE8\xCC\xCC\xCC\xCC\x49\x3B\xC2", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xCD\xE8\xCC\xCC\xCC\xCC\x49\x3B\xC2", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3 ;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF8", "xxxx????xxx", "PAGE"
+				);
+				temp_addr += 3;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x49\x8B\xD1\xE8\xCC\xCC\xCC\xCC\x41\xB8\xFF\x00\x00\x00", "xxxx????xxxxxx", "PAGE"
+				);
+
+				temp_addr += 3;
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
+				);
+				temp_addr += 2;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\xB1\x01\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x54\x65", "xxx????xxxxx"
+				);
+				temp_addr += 2;
+
+				exp_lookup_handle_table_entry_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+
+			return exp_lookup_handle_table_entry_addr;
+		}
+
 
 
 	}

@@ -8,6 +8,8 @@ namespace utils {
 
 		extern PULONG mm_last_unloaded_driver;
 
+		extern PHANDLE_TABLE g_psp_cid_table;
+
 		NTSTATUS initialize();
 	}
 }

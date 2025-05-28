@@ -1,6 +1,7 @@
 #pragma once
 #include <ntifs.h>
 #include <ntimage.h>
+#include <intrin.h>
 #include "types.h"
 #include "ntos_struct_def.h"
 #include "native_api.h"
@@ -21,5 +22,6 @@
 #include "feature_data_initializer.h"
 #include "scanner_data.h"
 #include "kernel_hide_utils.h"
+#include "memory_utils.h"
 #include "..\memory_pool.h"
 #include "..\hookutils.h"

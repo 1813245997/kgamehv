@@ -183,10 +183,15 @@ namespace utils
 			   _In_ _Post_ptr_invalid_ HANDLE handle
 			   ) = nullptr;
 
+
+		   PHANDLE_TABLE_ENTRY(NTAPI* pfn_exp_lookup_handle_table_entry)(
+			   _In_ PHANDLE_TABLE HandleTable,
+			   _In_ EXHANDLE Handle
+			   ) = nullptr;
 		NTSTATUS initialize_internal_functions()
 		{
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
-
+			DbgBreakPoint();
 		 
 			unsigned long long rtl_get_version_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "RtlGetVersion");
 			unsigned long long mm_copy_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmCopyMemory");
@@ -262,6 +267,7 @@ namespace utils
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
+			unsigned long long exp_lookup_handle_table_entry_addr = scanner_fun::find_exp_lookup_handle_table_entry();
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
@@ -296,13 +302,15 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] NtClose                            = %p\n", reinterpret_cast<PVOID>(nt_close_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] ki_preprocess_fault_addr     = %p\n",reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] psp_exit_process_addr     = %p\n",reinterpret_cast<PVOID>(psp_exit_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] mm_is_address_valid_ex_add     = %p\n",reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] mm_is_address_valid_ex_addr     = %p\n",reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] pfn_exp_lookup_handle_table_entry_addr     = %p\n", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
 
 
 
 			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
 			INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
+			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
 
 
 
@@ -376,6 +384,9 @@ namespace utils
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_section_addr is null.\n");
 			if (!nt_close_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_close_addr is null.\n");
+			if (!exp_lookup_handle_table_entry_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] exp_lookup_handle_table_entry_addr is null.\n");
+
 		 
 
 			if (!ki_preprocess_fault_addr||
@@ -412,7 +423,8 @@ namespace utils
 				!ke_query_active_processor_count_ex_addr ||
 				!ke_set_system_group_affinity_thread_addr||
 				!nt_create_section_addr||
-				!nt_close_addr)
+				!nt_close_addr||
+				!exp_lookup_handle_table_entry_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

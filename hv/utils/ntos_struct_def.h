@@ -322,5 +322,285 @@ extern "C"
 		PVOID 			ModuleEnd;
 		ULONG64 		UnloadTime;
 	} MM_UNLOADED_DRIVER, * PMM_UNLOADED_DRIVER;
+
+	typedef struct _pte_64
+	{
+		ULONG64 valid : 1;               // [0]
+		ULONG64 write : 1;               // [1]
+		ULONG64 owner : 1;               // [2]
+		ULONG64 write_through : 1;       // [3]
+		ULONG64 cache_disable : 1;       // [4]
+		ULONG64 accessed : 1;            // [5]
+		ULONG64 dirty : 1;               // [6]
+		ULONG64 large_page : 1;          // [7]
+		ULONG64 global : 1;              // [8]
+		ULONG64 copy_on_write : 1;       // [9]
+		ULONG64 prototype : 1;           // [10]
+		ULONG64 reserved0 : 1;           // [11]
+		ULONG64 page_frame_number : 36;  // [12:47]
+		ULONG64 reserved1 : 4;           // [48:51]
+		ULONG64 software_ws_index : 11;  // [52:62]
+		ULONG64 no_execute : 1;          // [63]
+	} mypte_64, * ppte_64;
+
+	typedef struct _HANDLE_TABLE_ENTRY_INFO {
+
+
+		//
+		//  The following field contains the audit mask for the handle if one
+		//  exists.  The purpose of the audit mask is to record all of the accesses
+		//  that may have been audited when the handle was opened in order to
+		//  support "per operation" based auditing.  It is computed by walking the
+		//  SACL of the object being opened and keeping a record of all of the audit
+		//  ACEs that apply to the open operation going on.  Each set bit corresponds
+		//  to an access that would be audited.  As each operation takes place, its
+		//  corresponding access bit is removed from this mask.
+		//
+
+		ACCESS_MASK AuditMask;
+
+	} HANDLE_TABLE_ENTRY_INFO, * PHANDLE_TABLE_ENTRY_INFO;
+
+	typedef struct _HANDLE_TABLE_ENTRY {
+
+		//
+		//  The pointer to the object overloaded with three ob attributes bits in
+		//  the lower order and the high bit to denote locked or unlocked entries
+		//
+
+		union {
+
+			PVOID Object;
+
+			ULONG ObAttributes;
+
+			PHANDLE_TABLE_ENTRY_INFO InfoTable;
+
+			ULONG_PTR Value;
+		};
+
+		//
+		//  This field either contains the granted access mask for the handle or an
+		//  ob variation that also stores the same information.  Or in the case of
+		//  a free entry the field stores the index for the next free entry in the
+		//  free list.  This is like a FAT chain, and is used instead of pointers
+		//  to make table duplication easier, because the entries can just be
+		//  copied without needing to modify pointers.
+		//
+
+		union {
+
+			union {
+
+				ACCESS_MASK GrantedAccess;
+
+				struct {
+
+					USHORT GrantedAccessIndex;
+					USHORT CreatorBackTraceIndex;
+				};
+			};
+
+			LONG NextFreeTableEntry;
+		};
+
+	} HANDLE_TABLE_ENTRY, * PHANDLE_TABLE_ENTRY;
+
+
+#define HANDLE_TRACE_DB_STACK_SIZE 16
+
+	typedef struct _HANDLE_TRACE_DB_ENTRY {
+		CLIENT_ID ClientId;
+		HANDLE Handle;
+#define HANDLE_TRACE_DB_OPEN    1
+#define HANDLE_TRACE_DB_CLOSE   2
+#define HANDLE_TRACE_DB_BADREF  3
+		ULONG Type;
+		PVOID StackTrace[HANDLE_TRACE_DB_STACK_SIZE];
+	} HANDLE_TRACE_DB_ENTRY, * PHANDLE_TRACE_DB_ENTRY;
+
+	typedef struct _HANDLE_TRACE_DEBUG_INFO {
+
+		//
+		// Reference count for this structure
+		//
+		LONG RefCount;
+
+		//
+		// Size of the trace table in entries
+		//
+
+		ULONG TableSize;
+
+		//
+		// this flag will clean the TraceDb.
+		// once the TraceDb is cleaned, this flag will be reset.
+		// it is needed for setting the HANDLE_TRACE_DEBUG_INFO_COMPACT_CLOSE_HANDLE
+		// dynamically via KD
+		//
+#define HANDLE_TRACE_DEBUG_INFO_CLEAN_DEBUG_INFO        0x1
+
+	//
+	// this flag will do the following: for each close
+	// it will look for a matching open, remove the open
+	// entry and compact TraceDb
+	// NOTE: this should not be used for HANDLE_TRACE_DB_BADREF
+	//      because you will not have the close trace
+	//
+#define HANDLE_TRACE_DEBUG_INFO_COMPACT_CLOSE_HANDLE    0x2
+
+	//
+	// setting this flag will break into debugger when the trace list
+	// wraps around. This way you will have a chance to loot at old entries
+	// before they are deleted
+	//
+#define HANDLE_TRACE_DEBUG_INFO_BREAK_ON_WRAP_AROUND    0x4
+
+	//
+	// these are status flags, do not set them explicitly
+	//
+#define HANDLE_TRACE_DEBUG_INFO_WAS_WRAPPED_AROUND      0x40000000
+#define HANDLE_TRACE_DEBUG_INFO_WAS_SOMETIME_CLEANED    0x80000000
+
+		ULONG BitMaskFlags;
+
+		FAST_MUTEX CloseCompactionLock;
+
+		//
+		// Current index for the stack trace DB
+		//
+		ULONG CurrentStackIndex;
+
+		//
+		// Save traces of those who open and close handles
+		//
+		HANDLE_TRACE_DB_ENTRY TraceDb[1];
+
+	} HANDLE_TRACE_DEBUG_INFO, * PHANDLE_TRACE_DEBUG_INFO;
+
+	typedef struct _HANDLE_TABLE {
+
+		//
+		//  A pointer to the top level handle table tree node.
+		//
+
+		ULONG_PTR TableCode;
+
+		//
+		//  The process who is being charged quota for this handle table and a
+		//  unique process id to use in our callbacks
+		//
+
+		struct _EPROCESS* QuotaProcess;
+		HANDLE UniqueProcessId;
+
+
+		//
+		// These locks are used for table expansion and preventing the A-B-A problem
+		// on handle allocate.
+		//
+
+#define HANDLE_TABLE_LOCKS 4
+
+		EX_PUSH_LOCK HandleTableLock[HANDLE_TABLE_LOCKS];
+
+		//
+		//  The list of global handle tables.  This field is protected by a global
+		//  lock.
+		//
+
+		LIST_ENTRY HandleTableList;
+
+		//
+		// Define a field to block on if a handle is found locked.
+		//
+		EX_PUSH_LOCK HandleContentionEvent;
+
+		//
+		// Debug info. Only allocated if we are debugging handles
+		//
+		PHANDLE_TRACE_DEBUG_INFO DebugInfo;
+
+		//
+		//  The number of pages for additional info.
+		//  This counter is used to improve the performance
+		//  in ExGetHandleInfo
+		//
+		LONG ExtraInfoPages;
+
+		//
+		//  This is a singly linked list of free table entries.  We don't actually
+		//  use pointers, but have each store the index of the next free entry
+		//  in the list.  The list is managed as a lifo list.  We also keep track
+		//  of the next index that we have to allocate pool to hold.
+		//
+
+		ULONG FirstFree;
+
+		//
+		// We free handles to this list when handle debugging is on or if we see
+		// that a thread has this handles bucket lock held. The allows us to delay reuse
+		// of handles to get a better chance of catching offenders
+		//
+
+		ULONG LastFree;
+
+		//
+		// This is the next handle index needing a pool allocation. Its also used as a bound
+		// for good handles.
+		//
+
+		ULONG NextHandleNeedingPool;
+
+		//
+		//  The number of handle table entries in use.
+		//
+
+		LONG HandleCount;
+
+		//
+		// Define a flags field
+		//
+		union {
+			ULONG Flags;
+
+			//
+			// For optimization we reuse handle values quickly. This can be a problem for
+			// some usages of handles and makes debugging a little harder. If this
+			// bit is set then we always use FIFO handle allocation.
+			//
+			BOOLEAN StrictFIFO : 1;
+		};
+
+	} HANDLE_TABLE, * PHANDLE_TABLE;
+
+	typedef struct _EXHANDLE {
+
+		union {
+
+			struct {
+
+				//
+				//  Application available tag bits
+				//
+
+				ULONG TagBits : 2;
+
+				//
+				//  The handle table entry index
+				//
+
+				ULONG Index : 30;
+
+			};
+
+			HANDLE GenericHandleOverlay;
+
+#define HANDLE_VALUE_INC 4 // Amount to increment the Value to get to the next handle
+
+			ULONG_PTR Value;
+		};
+
+	} EXHANDLE, * PEXHANDLE;
 }
 
