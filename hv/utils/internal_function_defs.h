@@ -185,5 +185,16 @@ namespace utils
 			_In_ PHANDLE_TABLE HandleTable,
 			_In_ EXHANDLE Handle
 			);
+
+		extern PVOID(NTAPI* pfn_mm_create_kernel_stack)(
+			_In_ BOOLEAN LargeStack,
+			_In_ UCHAR Processor
+			);
+
+		extern VOID(NTAPI* pfn_mm_delete_kernel_stack)(
+			_In_ PVOID PointerKernelStack,
+			_In_ BOOLEAN LargeStack
+			);
+
 	}
 }

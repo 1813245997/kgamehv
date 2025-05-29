@@ -21,6 +21,9 @@ namespace utils
 
 		unsigned long long find_exp_lookup_handle_table_entry();
 
+		unsigned long long find_mm_create_kernel_stack();
+
+		unsigned long long find_mm_delete_kernel_stack();
 
 
 	}

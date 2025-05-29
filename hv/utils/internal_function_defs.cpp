@@ -188,6 +188,17 @@ namespace utils
 			   _In_ PHANDLE_TABLE HandleTable,
 			   _In_ EXHANDLE Handle
 			   ) = nullptr;
+
+		    PVOID(NTAPI* pfn_mm_create_kernel_stack)(
+			   _In_ BOOLEAN LargeStack,
+			   _In_ UCHAR Processor
+			   ) = nullptr;
+
+		    VOID(NTAPI* pfn_mm_delete_kernel_stack)(
+			   _In_ PVOID PointerKernelStack,
+			   _In_ BOOLEAN LargeStack
+			   ) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
@@ -225,7 +236,6 @@ namespace utils
 			unsigned long long ke_set_system_group_affinity_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeSetSystemGroupAffinityThread");
 		    unsigned long long nt_create_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateSection");
 			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtClose");
-
 
 
 
@@ -268,6 +278,9 @@ namespace utils
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
 			unsigned long long exp_lookup_handle_table_entry_addr = scanner_fun::find_exp_lookup_handle_table_entry();
+			unsigned long long mm_create_kernel_stack_addr = scanner_fun::find_mm_create_kernel_stack();
+			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
+
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
@@ -303,14 +316,19 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] ki_preprocess_fault_addr     = %p\n",reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] psp_exit_process_addr     = %p\n",reinterpret_cast<PVOID>(psp_exit_process_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] mm_is_address_valid_ex_addr     = %p\n",reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] pfn_exp_lookup_handle_table_entry_addr     = %p\n", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] exp_lookup_handle_table_entry_addr     = %p\n", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_create_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_delete_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
 
+		 
 
 
 			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
 			INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
 			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
+			INIT_FUNC_PTR(pfn_mm_create_kernel_stack , mm_create_kernel_stack_addr);
+			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
 
 
 
@@ -386,6 +404,10 @@ namespace utils
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_close_addr is null.\n");
 			if (!exp_lookup_handle_table_entry_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] exp_lookup_handle_table_entry_addr is null.\n");
+			if (!mm_create_kernel_stack_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_create_kernel_stack_addr is null.\n");
+			if (!mm_delete_kernel_stack_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_delete_kernel_stack_addr is null.\n");
 
 		 
 
@@ -424,7 +446,9 @@ namespace utils
 				!ke_set_system_group_affinity_thread_addr||
 				!nt_create_section_addr||
 				!nt_close_addr||
-				!exp_lookup_handle_table_entry_addr)
+				!exp_lookup_handle_table_entry_addr||
+				!mm_create_kernel_stack_addr||
+				!mm_delete_kernel_stack_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

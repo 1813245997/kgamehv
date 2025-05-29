@@ -10,7 +10,7 @@ namespace utils {
 
 		NTSTATUS initialize()
 		{
-			DbgBreakPoint();
+			 
 			const unsigned long long mm_unloaded_drivers_addr = scanner_data::find_mm_unloaded_drivers_instr();
 			const unsigned long long mm_last_unloaded_driver_addr = scanner_data::find_mm_last_unloaded_driver_instr();
 			const unsigned long long psp_cid_table_addr = scanner_data::find_psp_cid_table();
