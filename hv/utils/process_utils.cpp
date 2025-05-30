@@ -25,6 +25,7 @@ namespace utils
 				if (!get_process_by_pid(handle, &process))
 					continue;
 
+				//获取 EPROCESS.SeAuditProcessCreationInfo.ImageFileName 判断进程名
 				//// 找到名字匹配的进程就返回
 				//if (utils::unicode_string_equals(process_name, process->ImageFileName))
 				//{
