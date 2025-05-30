@@ -50,7 +50,7 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Paging base addresses initialized successfully.\n");
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature globals...\n");
-			status = feature_init::initialize();
+			status = feature_data::initialize();
 			if (!NT_SUCCESS(status))
 			{
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
@@ -59,6 +59,17 @@ namespace utils
 			}
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature globals initialized successfully.\n");
 
+			 
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature offsets...\n");
+
+			status = feature_offset::initialize();
+			if (!NT_SUCCESS(status))
+			{
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
+					"[hv] Failed to initialize feature offsets (0x%X).\n", status);
+				return status;
+			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature offsets initialized successfully.\n");
 
 			
 

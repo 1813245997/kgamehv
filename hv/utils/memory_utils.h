@@ -24,6 +24,8 @@ namespace utils
 
 		unsigned long long get_physical_address(unsigned long long virtual_address);
 
+		bool is_virtual_address_valid(unsigned long long virtual_address);
+
 		void set_execute_page(unsigned long long virtual_address, SIZE_T length);
 
 

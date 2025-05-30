@@ -199,6 +199,8 @@ namespace utils
 			   _In_ BOOLEAN LargeStack
 			   ) = nullptr;
 
+			  LARGE_INTEGER(NTAPI* pfn_ps_get_process_exit_time)() = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
@@ -236,7 +238,7 @@ namespace utils
 			unsigned long long ke_set_system_group_affinity_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeSetSystemGroupAffinityThread");
 		    unsigned long long nt_create_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateSection");
 			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtClose");
-
+			unsigned long long ps_get_process_exit_time_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitTime");
 
 
 
@@ -272,6 +274,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ke_set_system_group_affinity_thread, ke_set_system_group_affinity_thread_addr);
 			INIT_FUNC_PTR(pfn_nt_create_section, nt_create_section_addr);
 			INIT_FUNC_PTR(pfn_nt_close, nt_close_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_exit_time, ps_get_process_exit_time_addr);
 			 
 			//These three search feature codes will cause errors. Find a way to solve it.
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
@@ -319,6 +322,7 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] exp_lookup_handle_table_entry_addr     = %p\n", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_create_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_delete_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_exit_time_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
 
 		 
 
@@ -408,7 +412,8 @@ namespace utils
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_create_kernel_stack_addr is null.\n");
 			if (!mm_delete_kernel_stack_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_delete_kernel_stack_addr is null.\n");
-
+			if (!ps_get_process_exit_time_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_exit_time_addr is null.\n");
 		 
 
 			if (!ki_preprocess_fault_addr||
@@ -448,7 +453,8 @@ namespace utils
 				!nt_close_addr||
 				!exp_lookup_handle_table_entry_addr||
 				!mm_create_kernel_stack_addr||
-				!mm_delete_kernel_stack_addr)
+				!mm_delete_kernel_stack_addr||
+				!ps_get_process_exit_time_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

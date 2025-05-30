@@ -1,7 +1,7 @@
 #pragma once
 
 namespace utils {
-	namespace feature_init {  
+	namespace feature_data {  
 		
 
 		extern PMM_UNLOADED_DRIVER  mm_unloaded_drivers;

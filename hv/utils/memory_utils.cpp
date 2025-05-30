@@ -142,6 +142,44 @@ namespace utils
 			return (pte_entry->page_frame_number << 12) + offset;
 		}
 
+		bool is_virtual_address_valid(unsigned long long virtual_address)
+		{
+			// 1. PML4E
+			auto pml4_entry = reinterpret_cast<ppte_64>(get_pml4(virtual_address));
+			if (!pml4_entry->valid)
+			{
+				return false;
+			}
+
+			// 2. PDPTE
+			auto pdpt_entry = reinterpret_cast<ppte_64>(get_pdpte(virtual_address));
+			if (!pdpt_entry->valid)
+			{
+				return false;
+			}
+			if (pdpt_entry->large_page)
+			{
+				// 1 GB 大页映射，地址有效
+				return true;
+			}
+
+			// 3. PDE
+			auto pde_entry = reinterpret_cast<ppte_64>(get_pde(virtual_address));
+			if (!pde_entry->valid)
+			{
+				return false;
+			}
+			if (pde_entry->large_page)
+			{
+				// 2 MB 大页映射，地址有效
+				return true;
+			}
+
+			// 4. PTE
+			auto pte_entry = reinterpret_cast<ppte_64>(get_pte(virtual_address));
+			return pte_entry->valid;
+		}
+
 
 		void set_execute_page(unsigned long long virtual_address, SIZE_T length)
 		{

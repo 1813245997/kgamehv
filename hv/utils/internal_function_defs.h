@@ -196,5 +196,7 @@ namespace utils
 			_In_ BOOLEAN LargeStack
 			);
 
+		extern LARGE_INTEGER(NTAPI* pfn_ps_get_process_exit_time)();
+
 	}
 }
