@@ -272,7 +272,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ke_set_system_group_affinity_thread, ke_set_system_group_affinity_thread_addr);
 			INIT_FUNC_PTR(pfn_nt_create_section, nt_create_section_addr);
 			INIT_FUNC_PTR(pfn_nt_close, nt_close_addr);
-
+			 
 			//These three search feature codes will cause errors. Find a way to solve it.
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
