@@ -102,6 +102,9 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>..\extern\ia32-doc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <ControlFlowGuard>Guard</ControlFlowGuard>
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
@@ -132,7 +135,9 @@
     <ClInclude Include="gdt.h" />
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
+    <ClInclude Include="utils\feature_data_initializer.h" />
     <ClInclude Include="utils\global_defs.h" />
+    <ClInclude Include="utils\hidden_module_list.h" />
     <ClInclude Include="utils\hook_functions.h" />
     <ClInclude Include="utils\hook_manager.h" />
     <ClInclude Include="hv.h" />
@@ -154,15 +159,22 @@
     <ClInclude Include="spin-lock.h" />
     <ClInclude Include="timing.h" />
     <ClInclude Include="trap-frame.h" />
+    <ClInclude Include="utils\import_encrypt.h" />
+    <ClInclude Include="utils\internal_function_defs.h" />
+    <ClInclude Include="utils\kernel_hide_utils.h" />
+    <ClInclude Include="utils\memory_utils.h" />
     <ClInclude Include="utils\module_info.h" />
+    <ClInclude Include="utils\driver_feature_init.h" />
     <ClInclude Include="utils\native_api.h" />
     <ClInclude Include="utils\ntos_struct_def.h" />
     <ClInclude Include="utils\os_info.h" />
+    <ClInclude Include="utils\scanner_data.h" />
     <ClInclude Include="utils\scanner_fun.h" />
     <ClInclude Include="utils\signature_scanner.h" />
     <ClInclude Include="utils\string_utils.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
+    <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vcpu.h" />
     <ClInclude Include="vmcs.h" />
     <ClInclude Include="vmx.h" />
@@ -172,6 +184,9 @@
     <ClCompile Include="exit-handlers.cpp" />
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
+    <ClCompile Include="utils\driver_feature_init.cpp" />
+    <ClCompile Include="utils\feature_data_initializer.cpp" />
+    <ClCompile Include="utils\hidden_module_list.cpp" />
     <ClCompile Include="utils\hook_functions.cpp" />
     <ClCompile Include="utils\hook_manager.cpp" />
     <ClCompile Include="hv.cpp" />
@@ -189,8 +204,13 @@
     <ClCompile Include="processor_affinity.cpp" />
     <ClCompile Include="segment.cpp" />
     <ClCompile Include="timing.cpp" />
+    <ClCompile Include="utils\import_encrypt.cpp" />
+    <ClCompile Include="utils\internal_function_defs.cpp" />
+    <ClCompile Include="utils\kernel_hide_utils.cpp" />
+    <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />
     <ClCompile Include="utils\os_info.cpp" />
+    <ClCompile Include="utils\scanner_data.cpp" />
     <ClCompile Include="utils\scanner_fun.cpp" />
     <ClCompile Include="utils\signature_scanner.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />

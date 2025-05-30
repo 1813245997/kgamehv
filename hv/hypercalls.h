@@ -8,7 +8,7 @@ struct vcpu;
 
 // key used for executing hypercalls
 // TODO: compute this at runtime
-inline constexpr uint64_t hypercall_key = 69420;
+inline constexpr uint64_t hypercall_key = 84320;
 
 // hypercall indices
 enum hypercall_code : uint64_t {
@@ -29,7 +29,8 @@ enum hypercall_code : uint64_t {
   hypercall_get_hv_base,
   hypercall_install_mmr,
   hypercall_remove_mmr,
-  hypercall_remove_all_mmrs
+  hypercall_remove_all_mmrs,
+  hypercall_clear_unloaded_drivers_entry,
 };
 
 // hypercall input
@@ -99,6 +100,9 @@ void remove_mmr(vcpu* cpu);
 
 // remove every installed MMR
 void remove_all_mmrs(vcpu* cpu);
+
+// clear an unloaded driver entry from the list
+void clear_unloaded_drivers_entry(vcpu* cpu);
 
 } // namespace hc
 

@@ -3,18 +3,13 @@
 #include "mm.h"
 #include "arch.h"
 #include "hookutils.h"
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 namespace hv {
 
 hypervisor ghv;
 
-extern "C" {
-
-// function prototype doesn't really matter
-// since we never call these functions anyways
-NTKERNELAPI void PsGetCurrentThreadProcess();
-NTKERNELAPI void PsGetProcessImageFileName();
-
-}
+ 
 
 // dynamically find the offsets for various kernel structures
 static bool find_offsets() {
@@ -29,7 +24,7 @@ static bool find_offsets() {
   DbgPrint("[hv] System EPROCESS = 0x%zX.\n",
     reinterpret_cast<size_t>(ghv.system_eprocess));
 
-  auto const ps_get_process_id = reinterpret_cast<uint8_t*>(PsGetProcessId);
+  auto const ps_get_process_id = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ps_get_process_id);
 
   // mov rax, [rcx + OFFSET]
   // retn
@@ -47,7 +42,7 @@ static bool find_offsets() {
   DbgPrint("[hv] EPROCESS::UniqueProcessId offset = 0x%zX.\n",
     ghv.eprocess_unique_process_id_offset);
 
-  auto const ps_get_process_image_file_name = reinterpret_cast<uint8_t*>(PsGetProcessImageFileName);
+  auto const ps_get_process_image_file_name = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ps_get_process_image_file_name);
 
   // lea rax, [rcx + OFFSET]
   // retn
@@ -66,7 +61,7 @@ static bool find_offsets() {
     ghv.eprocess_image_file_name);
 
   auto const ps_get_current_thread_process =
-    reinterpret_cast<uint8_t*>(PsGetCurrentThreadProcess);
+    reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ps_get_current_thread_process);
 
   // mov rax, gs:188h
   // mov rax, [rax + OFFSET]
@@ -100,14 +95,14 @@ static bool create() {
   memset(&ghv, 0, sizeof(ghv));
 
   logger_init();
-
-  ghv.vcpu_count = KeQueryActiveProcessorCount(nullptr);
+   
+  ghv.vcpu_count = utils::internal_functions::pfn_ke_query_active_processor_count(nullptr);
 
   // size of the vcpu array
   auto const arr_size = sizeof(vcpu) * ghv.vcpu_count;
 
   // allocate an array of vcpus
-  ghv.vcpus = static_cast<vcpu*>(ExAllocatePoolWithTag(
+  ghv.vcpus = static_cast<vcpu*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(
     NonPagedPoolNx, arr_size, 'fr0g'));
 
   if (!ghv.vcpus) {
@@ -146,15 +141,15 @@ bool start() {
   // virtualize every cpu
   for (unsigned long i = 0; i < ghv.vcpu_count; ++i) {
     // restrict execution to the specified cpu
-    auto const orig_affinity = KeSetSystemAffinityThreadEx(1ull << i);
+    auto const orig_affinity = utils::internal_functions::pfn_ke_set_system_affinity_thread_ex (1ull << i);
 
     if (!virtualize_cpu(&ghv.vcpus[i])) {
       // TODO: handle this bruh -_-
-      KeRevertToUserAffinityThreadEx(orig_affinity);
+     utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex (orig_affinity);
       return false;
     }
 
-    KeRevertToUserAffinityThreadEx(orig_affinity);
+    utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex(orig_affinity);
   }
 
   return true;
@@ -169,23 +164,29 @@ void stop() {
   // virtualize every cpu
   for (unsigned long i = 0; i < ghv.vcpu_count; ++i) {
     // restrict execution to the specified cpu
-    auto const orig_affinity = KeSetSystemAffinityThreadEx(1ull << i);
+    auto const orig_affinity =utils::internal_functions::pfn_ke_set_system_affinity_thread_ex  (1ull << i);
 
     // its possible that someone tried to call stop() when the hypervisor
     // wasn't even running, so we're wrapping this in a nice try-except
     // block. nice job.
-    __try {
-      hv::hypercall_input input;
-      input.code = hv::hypercall_unload;
-      input.key  = hv::hypercall_key;
-      vmx_vmcall(input);
-    }
-    __except (1) {}
+    //__try {
+    //  hv::hypercall_input input;
+    //  input.code = hv::hypercall_unload;
+    //  input.key  = hv::hypercall_key;
+    //  vmx_vmcall(input);
+    //}
+    //__except (1) {}
 
-    KeRevertToUserAffinityThreadEx(orig_affinity);
+
+	  hv::hypercall_input input;
+	  input.code = hv::hypercall_unload;
+	  input.key  = hv::hypercall_key;
+	  vmx_vmcall(input);
+
+    utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex(orig_affinity);
   }
 
-  ExFreePoolWithTag(ghv.vcpus, 'fr0g');
+  utils::internal_functions::pfn_ex_free_pool_with_tag(ghv.vcpus, 'fr0g');
 }
 
 } // namespace hv

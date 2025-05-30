@@ -9,7 +9,8 @@
 #include "exit-handlers.h"
 #include "exception-routines.h"
 #include "introspection.h"
-
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
 
@@ -102,7 +103,7 @@ static bool enter_vmx_operation(vmxon& vmxon_region) {
   vmxon_region.revision_id = vmx_basic.vmcs_revision_id;
   vmxon_region.must_be_zero = 0;
 
-  auto vmxon_phys = MmGetPhysicalAddress(&vmxon_region).QuadPart;
+  auto vmxon_phys = utils::internal_functions::pfn_mm_get_physical_address(&vmxon_region).QuadPart;
   NT_ASSERT(vmxon_phys % 0x1000 == 0);
 
   // enter vmx operation
@@ -126,7 +127,7 @@ static bool load_vmcs_pointer(vmcs& vmcs_region) {
   vmcs_region.revision_id = vmx_basic.vmcs_revision_id;
   vmcs_region.shadow_vmcs_indicator = 0;
 
-  auto vmcs_phys = MmGetPhysicalAddress(&vmcs_region).QuadPart;
+  auto vmcs_phys = utils::internal_functions::pfn_mm_get_physical_address(&vmcs_region).QuadPart;
   NT_ASSERT(vmcs_phys % 0x1000 == 0);
 
   if (!vmx_vmclear(vmcs_phys)) {

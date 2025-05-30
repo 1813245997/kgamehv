@@ -70,5 +70,16 @@
   ret
 ?write_ldtr@hv@@YAXG@Z endp
 
+enable_user_access proc
+    stac
+    ret
+enable_user_access endp
+
+disable_user_access proc
+    clac
+    ret
+disable_user_access endp
+
+
 end
 

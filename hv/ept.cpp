@@ -3,19 +3,20 @@
 #include "vcpu.h"
 #include "mtrr.h"
 #include "mm.h"
-
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 namespace hv {
 
 // identity-map the EPT paging structures
 void prepare_ept(vcpu_ept_data& ept) {
   memset(&ept, 0, sizeof(ept));
-
-  ept.dummy_page_pfn = MmGetPhysicalAddress(ept.dummy_page).QuadPart >> 12;
+  
+  ept.dummy_page_pfn = utils::internal_functions::pfn_mm_get_physical_address(ept.dummy_page).QuadPart >> 12;
 
   ept.num_used_free_pages = 0;
 
   for (size_t i = 0; i < ept_free_page_count; ++i)
-    ept.free_page_pfns[i] = MmGetPhysicalAddress(&ept.free_pages[i]).QuadPart >> 12;
+    ept.free_page_pfns[i] = utils::internal_functions::pfn_mm_get_physical_address(&ept.free_pages[i]).QuadPart >> 12;
 
   ept.hooks.active_list_head = nullptr;
   ept.hooks.free_list_head   = &ept.hooks.buffer[0];
@@ -34,7 +35,7 @@ void prepare_ept(vcpu_ept_data& ept) {
   pml4e.execute_access    = 1;
   pml4e.accessed          = 0;
   pml4e.user_mode_execute = 1;
-  pml4e.page_frame_number = MmGetPhysicalAddress(&ept.pdpt).QuadPart >> 12;
+  pml4e.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&ept.pdpt).QuadPart >> 12;
 
   // MTRR data for setting memory types
   auto const mtrrs = read_mtrr_data();
@@ -52,7 +53,7 @@ void prepare_ept(vcpu_ept_data& ept) {
     pdpte.execute_access    = 1;
     pdpte.accessed          = 0;
     pdpte.user_mode_execute = 1;
-    pdpte.page_frame_number = MmGetPhysicalAddress(&ept.pds[i]).QuadPart >> 12;
+    pdpte.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&ept.pds[i]).QuadPart >> 12;
 
     for (size_t j = 0; j < 512; ++j) {
       // identity-map every GPA to the corresponding HPA

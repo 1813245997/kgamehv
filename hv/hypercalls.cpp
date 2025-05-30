@@ -5,6 +5,7 @@
 #include "hv.h"
 #include "exception-routines.h"
 #include "introspection.h"
+#include "utils/kernel_hide_utils.h"
 
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
@@ -596,6 +597,19 @@ void remove_all_mmrs(vcpu* const cpu) {
 
   vmx_invept(invept_all_context, {});
   skip_instruction();
+}
+
+
+
+void clear_unloaded_drivers_entry(vcpu* cpu)
+{
+
+	// arguments
+	auto const driver_name = reinterpret_cast<PWCHAR  >( cpu->ctx->rcx);
+   
+    cpu->ctx->rax = utils::kernel_hide::clear_mm_unloaded_drivers_instr(driver_name);
+
+	skip_instruction();
 }
 
 } // namespace hv::hc

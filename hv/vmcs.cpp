@@ -5,7 +5,8 @@
 #include "segment.h"
 #include "timing.h"
 #include "exception.h"
-
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 namespace hv {
 
 // defined in vm-exit.asm
@@ -107,7 +108,7 @@ void write_vmcs_ctrl_fields(vcpu* const cpu) {
   vmx_vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0, ghv.system_cr3.flags);
 
   // 3.24.6.9
-  vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, MmGetPhysicalAddress(&cpu->msr_bitmap).QuadPart);
+  vmx_vmwrite(VMCS_CTRL_MSR_BITMAP_ADDRESS, utils::internal_functions::pfn_mm_get_physical_address(&cpu->msr_bitmap).QuadPart);
 
   // 3.24.6.11
   ept_pointer eptp;
@@ -116,7 +117,7 @@ void write_vmcs_ctrl_fields(vcpu* const cpu) {
   eptp.page_walk_length                     = 3;
   eptp.enable_access_and_dirty_flags        = 0;
   eptp.enable_supervisor_shadow_stack_pages = 0;
-  eptp.page_frame_number                    = MmGetPhysicalAddress(&cpu->ept.pml4).QuadPart >> 12;
+  eptp.page_frame_number                    = utils::internal_functions::pfn_mm_get_physical_address(&cpu->ept.pml4).QuadPart >> 12;
   vmx_vmwrite(VMCS_CTRL_EPT_POINTER, eptp.flags);
 
   // 3.24.6.12
@@ -130,7 +131,7 @@ void write_vmcs_ctrl_fields(vcpu* const cpu) {
   vmx_vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT,
     sizeof(cpu->msr_exit_store) / 16);
   vmx_vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS,
-    MmGetPhysicalAddress(&cpu->msr_exit_store).QuadPart);
+    utils::internal_functions::pfn_mm_get_physical_address(&cpu->msr_exit_store).QuadPart);
 
   // 3.24.7.2
   vmx_vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT,    0);
@@ -144,7 +145,7 @@ void write_vmcs_ctrl_fields(vcpu* const cpu) {
   vmx_vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT,
     sizeof(cpu->msr_entry_load) / 16);
   vmx_vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_ADDRESS,
-    MmGetPhysicalAddress(&cpu->msr_entry_load).QuadPart);
+    utils::internal_functions::pfn_mm_get_physical_address(&cpu->msr_entry_load).QuadPart);
 
   // 3.24.8.3
   vmx_vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
@@ -162,7 +163,7 @@ void write_vmcs_host_fields(vcpu const* const cpu) {
   host_cr3.page_level_cache_disable  = 0;
   host_cr3.page_level_write_through  = 0;
   host_cr3.address_of_page_directory =
-    MmGetPhysicalAddress(&ghv.host_page_tables.pml4).QuadPart >> 12;
+    utils::internal_functions::pfn_mm_get_physical_address(&ghv.host_page_tables.pml4).QuadPart >> 12;
   vmx_vmwrite(VMCS_HOST_CR3, host_cr3.flags);
 
   cr4 host_cr4;

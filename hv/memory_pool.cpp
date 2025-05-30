@@ -1,6 +1,7 @@
 #include <ntifs.h>
 #include "memory_pool.h"
-
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 
 namespace MemoryPoolTagger {
 #define RANDOM_SEED_INIT 0x3AF84E05
@@ -16,7 +17,7 @@ namespace MemoryPoolTagger {
 		// The KM versions seem to have been unaffected by this change, at least up until RS3.
 		// If this ever starts returning values >= Max, try the above scale instead
 		const ULONG Scale = (ULONG)MAXINT32 / (Max - Min);
-		return RtlRandomEx(&RandomSeed) / Scale + Min;
+		return  utils::internal_functions::pfn_rtl_random_ex(&RandomSeed) / Scale + Min;
 	}
 
 	ULONG32 pool_tag()

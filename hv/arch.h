@@ -9,6 +9,10 @@ extern "C" {
 void _sgdt(segment_descriptor_register_64* gdtr);
 void _lgdt(segment_descriptor_register_64* gdtr);
 
+ void enable_user_access();
+ void disable_user_access();
+
+
 } // extern "C"
 
 namespace hv {

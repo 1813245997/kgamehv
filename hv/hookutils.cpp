@@ -3,6 +3,8 @@
 #include "hookutils.h"
 #include "LDE64.h"
 #include "prevmcall.h"
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
   
 LIST_ENTRY g_HookedPageListHead{};
 
@@ -106,8 +108,8 @@ namespace hyper
 
 		if (origin_function)
 			*origin_function = nullptr;
-
-		uint64_t target_pa = MmGetPhysicalAddress(target_api).QuadPart;
+	 
+		uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 		if (target_pa == 0)
 			return false;
 
@@ -124,11 +126,12 @@ namespace hyper
 
 			if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa))
 			{
-				auto* hook_info = reinterpret_cast<EptHookInfo*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+				 
+				auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 				if (!hook_info)
 					return false;
 
-				hook_info->trampoline_va = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, 100, POOL_TAG));
+				hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 				if (!hook_info->trampoline_va)
 				{
 					ExFreePool(hook_info);
@@ -138,7 +141,7 @@ namespace hyper
 				hook_info->original_va = target_api;
 				hook_info->original_pa = target_pa;
 				hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
-				hook_info->fake_pa = MmGetPhysicalAddress(&page_ctx->fake_page_contents[page_offset]).QuadPart;
+				hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
 				hook_info->fake_page_contents = page_ctx->fake_page_contents;
 				if (origin_function)
 					*origin_function = hook_info->trampoline_va;
@@ -152,17 +155,17 @@ namespace hyper
 		 
 
 		 
-		auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
+		auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
 		if (!page_ctx)
 			return false;
 
-		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
 		if (!page_ctx->fake_page_contents)
 		{
 			ExFreePool(page_ctx);
 			return false;
 		}
-		uint64_t fake_pa = MmGetPhysicalAddress(page_ctx->fake_page_contents).QuadPart;
+		uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart;
 		if (fake_pa == 0)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -173,7 +176,7 @@ namespace hyper
 		}
 		InitializeListHead(&page_ctx->hooked_info_list);
 
-		auto* hook_info = reinterpret_cast<EptHookInfo*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+		auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 		if (!hook_info)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -181,7 +184,7 @@ namespace hyper
 			return false;
 		}
 
-		hook_info->trampoline_va = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, 100, POOL_TAG));
+		hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 		if (!hook_info->trampoline_va)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -192,12 +195,12 @@ namespace hyper
 		RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
 	
 		page_ctx->HookedPageFrameNumber = GET_PFN(target_pa);
-		page_ctx->FakePageFrameNumber = GET_PFN(MmGetPhysicalAddress(page_ctx->fake_page_contents).QuadPart);
+		page_ctx->FakePageFrameNumber = GET_PFN(utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart);
 		hook_info->handler_va = new_api;
 		hook_info->original_va = target_api;
 		hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
 		hook_info->original_pa = target_pa;
-		hook_info->fake_pa = MmGetPhysicalAddress( &page_ctx->fake_page_contents[page_offset]).QuadPart ;
+		hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address( &page_ctx->fake_page_contents[page_offset]).QuadPart ;
 		hook_info->fake_page_contents = page_ctx->fake_page_contents;
 		++page_ctx->ref_count;
 		if (origin_function)
@@ -219,7 +222,7 @@ namespace hyper
 		if (!target_api)
 			return;
 
-		const uint64_t target_pa = MmGetPhysicalAddress(target_api).QuadPart;
+		const uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 		if (target_pa == 0)
 			return;
 
@@ -288,7 +291,7 @@ namespace hyper
 		if (origin_function)
 			*origin_function = nullptr;
 
-		uint64_t target_pa = MmGetPhysicalAddress(target_api).QuadPart;
+		uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 		if (target_pa == 0)
 			return false;
 
@@ -305,11 +308,11 @@ namespace hyper
 
 			if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa))
 			{
-				auto* hook_info = reinterpret_cast<EptHookInfo*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+				auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 				if (!hook_info)
 					return false;
 
-				hook_info->trampoline_va = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, 100, POOL_TAG));
+				hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 				if (!hook_info->trampoline_va)
 				{
 					ExFreePool(hook_info);
@@ -319,7 +322,7 @@ namespace hyper
 				hook_info->original_va = target_api;
 				hook_info->original_pa = target_pa;
 				hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
-				hook_info->fake_pa = MmGetPhysicalAddress(&page_ctx->fake_page_contents[page_offset]).QuadPart;
+				hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
 				hook_info->fake_page_contents = page_ctx->fake_page_contents;
 				if (origin_function)
 					*origin_function = hook_info->trampoline_va;
@@ -333,17 +336,17 @@ namespace hyper
 
 
 
-		auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
+		auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
 		if (!page_ctx)
 			return false;
 
-		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
 		if (!page_ctx->fake_page_contents)
 		{
 			ExFreePool(page_ctx);
 			return false;
 		}
-		uint64_t fake_pa = MmGetPhysicalAddress(page_ctx->fake_page_contents).QuadPart;
+		uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart;
 		if (fake_pa == 0)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -354,7 +357,7 @@ namespace hyper
 		}
 		InitializeListHead(&page_ctx->hooked_info_list);
 
-		auto* hook_info = reinterpret_cast<EptHookInfo*>(ExAllocatePoolWithTag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+		auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 		if (!hook_info)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -362,7 +365,7 @@ namespace hyper
 			return false;
 		}
 
-		hook_info->trampoline_va = reinterpret_cast<uint8_t*>(ExAllocatePoolWithTag(NonPagedPool, 100, POOL_TAG));
+		hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 		if (!hook_info->trampoline_va)
 		{
 			ExFreePool(page_ctx->fake_page_contents);
@@ -373,12 +376,12 @@ namespace hyper
 		RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
 
 		page_ctx->HookedPageFrameNumber = GET_PFN(target_pa);
-		page_ctx->FakePageFrameNumber = GET_PFN(MmGetPhysicalAddress(page_ctx->fake_page_contents).QuadPart);
+		page_ctx->FakePageFrameNumber = GET_PFN(utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart);
 		hook_info->handler_va = new_api;
 		hook_info->original_va = target_api;
 		hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
 		hook_info->original_pa = target_pa;
-		hook_info->fake_pa = MmGetPhysicalAddress(&page_ctx->fake_page_contents[page_offset]).QuadPart;
+		hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
 		hook_info->fake_page_contents = page_ctx->fake_page_contents;
 		++page_ctx->ref_count;
 		if (origin_function)
@@ -401,7 +404,7 @@ namespace hyper
 		if (!target_api)
 			return;
 
-		const uint64_t target_pa = MmGetPhysicalAddress(target_api).QuadPart;
+		const uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 		if (target_pa == 0)
 			return;
 

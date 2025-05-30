@@ -2,7 +2,8 @@
 #include "vcpu.h"
 #include "hv.h"
 #include "mm.h"
-
+#include "utils/ntos_struct_def.h"
+#include "utils/internal_function_defs.h"
 namespace hv {
 
 // directly map physical memory into the host page tables
@@ -16,7 +17,7 @@ static void map_physical_memory(host_page_tables& pt) {
   pml4e.page_level_cache_disable = 0;
   pml4e.accessed                 = 0;
   pml4e.execute_disable          = 0;
-  pml4e.page_frame_number = MmGetPhysicalAddress(&pt.phys_pdpt).QuadPart >> 12;
+  pml4e.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&pt.phys_pdpt).QuadPart >> 12;
 
   // TODO: add support for 1GB pages
   // TODO: check if 2MB pages are supported (pretty much always are)
@@ -31,7 +32,7 @@ static void map_physical_memory(host_page_tables& pt) {
     pdpte.page_level_cache_disable = 0;
     pdpte.accessed                 = 0;
     pdpte.execute_disable          = 0;
-    pdpte.page_frame_number = MmGetPhysicalAddress(&pt.phys_pds[i]).QuadPart >> 12;
+    pdpte.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&pt.phys_pds[i]).QuadPart >> 12;
 
     for (uint64_t j = 0; j < 512; ++j) {
       auto& pde = pt.phys_pds[i][j];
@@ -64,7 +65,7 @@ void prepare_host_page_tables() {
   pml4_address.QuadPart = ghv.system_cr3.address_of_page_directory << 12;
 
   // kernel PML4 address
-  auto const guest_pml4 = static_cast<pml4e_64*>(MmGetVirtualForPhysical(pml4_address));
+  auto const guest_pml4 = static_cast<pml4e_64*>(utils::internal_functions::pfn_mm_get_virtual_for_physical(pml4_address));
 
   // copy the top half of the System pml4 (a.k.a. the kernel address space)
   memcpy(&pt.pml4[256], &guest_pml4[256], sizeof(pml4e_64) * 256);
