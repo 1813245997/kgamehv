@@ -23,5 +23,6 @@
 #include "scanner_data.h"
 #include "kernel_hide_utils.h"
 #include "memory_utils.h"
+#include "process_utils.h"
 #include "..\memory_pool.h"
 #include "..\hookutils.h"
