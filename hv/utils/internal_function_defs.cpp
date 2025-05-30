@@ -201,6 +201,11 @@ namespace utils
 
 			  LARGE_INTEGER(NTAPI* pfn_ps_get_process_exit_time)() = nullptr;
 
+			NTSTATUS(NTAPI* pfn_se_locate_process_image_name)(
+				  _In_  PEPROCESS       process,
+				  _Out_ PUNICODE_STRING image_name
+				  ) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
@@ -239,7 +244,7 @@ namespace utils
 		    unsigned long long nt_create_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateSection");
 			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtClose");
 			unsigned long long ps_get_process_exit_time_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitTime");
-
+		    unsigned long long se_locate_process_image_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "SeLocateProcessImageName");
 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);

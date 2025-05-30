@@ -198,5 +198,11 @@ namespace utils
 
 		extern LARGE_INTEGER(NTAPI* pfn_ps_get_process_exit_time)();
 
-	}
+
+		extern NTSTATUS(NTAPI* pfn_se_locate_process_image_name)(
+			_In_  PEPROCESS       process,
+			_Out_ PUNICODE_STRING image_name
+			);
+
+	} 
 }
