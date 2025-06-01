@@ -16,6 +16,7 @@
 #include "hook_functions.h"
 #include "signature_scanner.h"
 #include "scanner_fun.h"
+#include "scanner_offset.h"
 #include "hidden_module_list.h"
 #include "hook_manager.h"
 #include "internal_function_defs.h"
@@ -24,8 +25,7 @@
 #include "kernel_hide_utils.h"
 #include "memory_utils.h"
 #include "process_utils.h"
-#include "scanner_offset.h"
 #include "feature_offset_initializer.h"
-
+#include "dwm_draw.h"
 #include "..\memory_pool.h"
 #include "..\hookutils.h"

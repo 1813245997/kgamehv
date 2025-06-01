@@ -201,7 +201,60 @@ namespace utils
 
 		extern NTSTATUS(NTAPI* pfn_se_locate_process_image_name)(
 			_In_  PEPROCESS       process,
-			_Out_ PUNICODE_STRING image_name
+			_Out_ PUNICODE_STRING *image_name
+			);
+
+		extern unsigned long long (NTAPI* pfn_ps_get_process_dxgprocess)(
+			_In_  PEPROCESS   process);
+
+		extern PVOID(NTAPI* pfn_ps_get_process_wow64_process)(
+			IN PEPROCESS process);
+
+		extern PVOID(NTAPI* pfn_ps_get_process_peb)(
+			IN PEPROCESS process);
+
+		extern NTSTATUS(NTAPI* pfn_mm_copy_virtual_memory)(
+			_In_ PEPROCESS from_process,
+			_In_ CONST PVOID from_address,
+			_In_ PEPROCESS to_process,
+			_Out_ PVOID to_address,
+			_In_ SIZE_T buffer_size,
+			_In_ KPROCESSOR_MODE previous_mode,
+			_Out_ PSIZE_T number_of_bytes_copied
+			);
+
+		extern BOOLEAN(NTAPI* pfn_rtl_equal_unicode_string)(
+			_In_ PCUNICODE_STRING string1,
+			_In_ PCUNICODE_STRING string2,
+			_In_ BOOLEAN case_insensitive
+			);
+
+		extern LONG(NTAPI* pfn_rtl_compare_unicode_string)(
+			_In_ PCUNICODE_STRING string1,
+			_In_ PCUNICODE_STRING string2,
+			_In_ BOOLEAN case_insensitive
+			);
+
+
+		extern NTSTATUS(NTAPI* pfn_ps_lookup_process_by_process_id)(
+			_In_ HANDLE process_id,
+			_Outptr_ PEPROCESS* out_process
+			);
+
+
+		 
+
+		extern void (NTAPI* pfn_ob_dereference_object)(
+			_In_ PVOID object
+			);
+
+		extern VOID(NTAPI* pfn_ke_stack_attach_process)(
+			_Inout_ PRKPROCESS process,
+			_Out_ PVOID apc_state
+			);
+
+		extern VOID(NTAPI* pfn_ke_unstack_detach_process)(
+			_In_ PVOID apc_state
 			);
 
 	} 

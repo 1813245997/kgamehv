@@ -10,6 +10,8 @@ namespace utils {
 
 		extern PHANDLE_TABLE g_psp_cid_table;
 
+
+
 		NTSTATUS initialize();
 	}
 }

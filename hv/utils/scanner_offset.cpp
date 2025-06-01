@@ -6,15 +6,12 @@ namespace utils
 	namespace scanner_offset
 	{
 	 
-		 unsigned long long find_process_exit_time_offset()
+		unsigned long long  find_process_exit_time_offset()
 		 {
 
-			 static	unsigned long long process_exit_time_offset{};
+			 unsigned long long process_exit_time_offset{};
 			 unsigned long long temp_addr{};
-			 if (process_exit_time_offset != 0)
-			 {
-				 return process_exit_time_offset;
-			 }
+			 
 
 			 WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
@@ -24,12 +21,12 @@ namespace utils
 			 {
 				 temp_addr = signature_scanner::find_pattern(reinterpret_cast<ULONG_PTR>(internal_functions::pfn_ps_get_process_exit_time),
 					 0x100,
-					 "\x48\x8B\x80\x00\x00\x00\x00\xC3", 
+					 "\x48\x8B\x80\x00\x00\x00\x00\xC3",
 					 "xxx????x"
-					 );
+				 );
 				 temp_addr += 3;
 				 process_exit_time_offset = *reinterpret_cast<ULONG*>(temp_addr);
-				 
+
 			 }
 			 break;
 			 case utils::WINDOWS_7_SP1:
@@ -268,6 +265,58 @@ namespace utils
 			 }
 
 			 return process_exit_time_offset;
+		 }
+
+		 unsigned long long find_dxgprocess_offset()
+		 {
+			 unsigned long long dxgprocess_offset{};
+			 unsigned long long temp_addr{};
+			 
+			 WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+			 if (Version<WINDOWS_10_VERSION_1507)
+			 {
+				 return 0;
+			 }
+
+			 temp_addr = reinterpret_cast<unsigned long long>(internal_functions::pfn_ps_get_process_dxgprocess);
+			 temp_addr += 3;
+			 dxgprocess_offset = *reinterpret_cast<ULONG*>(temp_addr);
+
+			 return dxgprocess_offset;
+		 }
+		 unsigned long long find_process_wow64_process_offset()
+		 {
+			 unsigned long long process_wow64_process_offset{};
+			 unsigned long long temp_addr{};
+
+			 WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+			 if (Version < WINDOWS_10_VERSION_1507)
+			 {
+				 return 0;
+			 }
+
+			 temp_addr = reinterpret_cast<unsigned long long>(internal_functions::pfn_ps_get_process_wow64_process);
+			 temp_addr += 3;
+			 process_wow64_process_offset = *reinterpret_cast<ULONG*>(temp_addr);
+
+			 return process_wow64_process_offset;
+		 }
+		 unsigned long long find_process_peb_offset()
+		 {
+			 unsigned long long process_peb_offset{};
+			 unsigned long long temp_addr{};
+
+			 WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+			 if (Version < WINDOWS_10_VERSION_1507)
+			 {
+				 return 0;
+			 }
+
+			 temp_addr = reinterpret_cast<unsigned long long>(internal_functions::pfn_ps_get_process_peb);
+			 temp_addr += 3;
+			 process_peb_offset = *reinterpret_cast<ULONG*>(temp_addr);
+
+			 return process_peb_offset;
 		 }
 	}
 }

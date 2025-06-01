@@ -9,43 +9,78 @@ namespace utils
 
 		
 
-		bool get_process_by_name(_In_ LPCWSTR process_name, _Out_ PEPROCESS* out_process)
+		bool get_process_by_name(_In_ LPCWSTR target_name, _Out_ PEPROCESS* out_process)
 		{
+			if (!target_name)
+			{
+				return false;
+			}
+
 			if (!out_process)
 			{
 				return false;
 			}
 
-			ULONG64 max_handle = feature_data::g_psp_cid_table->NextHandleNeedingPool;
-			for (ULONG64 raw_handle = 4; raw_handle < max_handle; raw_handle += 4)
+			*out_process = nullptr;
+
+			UNICODE_STRING target_unicode_name{};
+			internal_functions::pfn_rtl_init_unicode_string(&target_unicode_name, target_name);
+
+		 
+
+			for (ULONG64 pid_value = 4; pid_value < 0x10000; pid_value += 4)
 			{
-				HANDLE handle = reinterpret_cast<HANDLE>(raw_handle);
+				HANDLE possible_pid = reinterpret_cast<HANDLE>(pid_value);
 				PEPROCESS process = nullptr;
 
-				if (!get_process_by_pid(handle, &process))
+				if (!NT_SUCCESS(internal_functions::pfn_ps_lookup_process_by_process_id(possible_pid, &process)))
+				{
 					continue;
+				}
+				 
 
-				//获取 EPROCESS.SeAuditProcessCreationInfo.ImageFileName 判断进程名
-				//// 找到名字匹配的进程就返回
-				//if (utils::unicode_string_equals(process_name, process->ImageFileName))
-				//{
-				//	*out_process = process;
-				//	return true;
-				//}
+				PUNICODE_STRING process_name = nullptr;
+				if (!get_process_name(process, &process_name) )
+				{
+					internal_functions::pfn_ob_dereference_object(process);
+					continue;
+				}
+				
+
+				if (!utils::string_utils::compare_unicode_strings(process_name, &target_unicode_name, TRUE))
+				{
+					if (process_name->Buffer)
+						internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer,0);
+					internal_functions::pfn_ex_free_pool_with_tag(process_name,0);
+					internal_functions::pfn_ob_dereference_object(process);
+					continue;
+				}
+
+				if (process_name->Buffer)
+					internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer,0);
+				internal_functions::pfn_ex_free_pool_with_tag(process_name,0);
+
+				*out_process = process;
+				
+
+				return true;
+			 
+				
 			}
 
 			return false;
 		}
 
+
 		bool get_process_by_pid(_In_ HANDLE pid, _Out_ PEPROCESS* out_process)
 		{
-			  
+			*out_process = nullptr;
 			if (!out_process)
 			{
 				return false;
 			}
-
-			auto handle_entry = exp_lookup_handle_table_entry(
+			
+			auto handle_entry =   exp_lookup_handle_table_entry(
 				feature_data::g_psp_cid_table,
 				pid
 			);
@@ -60,7 +95,8 @@ namespace utils
 				return false;
 			}
 
-			uint64_t raw_value = handle_entry->Value;
+			uint64_t raw_value = *(ULONG64*)handle_entry;
+			//uint64_t raw_value = handle_entry->ObjectPointerBits;
 			uint64_t process_address = 0;
 
 			DWORD build = os_info::get_build_number();
@@ -72,13 +108,14 @@ namespace utils
 			}
 			else
 			{
-				// 新版本：高 48 位存地址，低 16 位为引用计数
-				raw_value >>= 16;
+			 
+				raw_value = raw_value >> 0x10;
+			 
 				if (raw_value == 0)
 				{
 					return false;
 				}
-				process_address = raw_value | 0xFFFF'0000'0000'0000ui64;
+				process_address = raw_value | 0xFFFF000000000000;
 			}
 
 			if (!memory::is_virtual_address_valid(process_address))
@@ -96,8 +133,101 @@ namespace utils
 			*out_process = process;
 			return true;
 		}
+		bool get_process_full_name(_In_ PEPROCESS process, _Out_ PUNICODE_STRING* process_name)
+		{
+			if (!process)
+			{
+				return false;
+			}
+			if (!process_name)
+			{
+				return false;
+			}
 
-		bool is_process_exited(PEPROCESS process)
+		  
+			NTSTATUS status = internal_functions::pfn_se_locate_process_image_name(process, process_name);
+			return NT_SUCCESS(status) && *process_name != nullptr;
+		}
+
+		bool get_process_name(_In_ PEPROCESS process, _Out_ PUNICODE_STRING* process_name)
+		{
+			if (!process)
+			{
+				return false;
+			}
+			if (!process_name)
+			{
+				return false;
+			}
+
+			if (!internal_functions::pfn_se_locate_process_image_name)
+			{
+				return false;
+			}
+
+			PUNICODE_STRING full_image_name = nullptr;
+			NTSTATUS status = internal_functions::pfn_se_locate_process_image_name(process, &full_image_name);
+
+			if (!NT_SUCCESS(status))
+			{
+				return false;
+			}
+		
+			if (!full_image_name)
+			{
+				return false;
+			}
+
+			if (!full_image_name->Buffer)
+			{
+				return false;
+			}
+			 
+
+
+			// 查找最后一个反斜杠
+			USHORT length = full_image_name->Length / sizeof(WCHAR);
+			WCHAR* buffer = full_image_name->Buffer;
+			USHORT last_backslash_index = 0;
+
+			for (USHORT i = 0; i < length; ++i)
+			{
+				if (buffer[i] == L'\\')
+				{
+					last_backslash_index = i + 1;
+				}
+			}
+
+			USHORT name_length = (length - last_backslash_index) * sizeof(WCHAR);
+			UNICODE_STRING name_only{};
+			name_only.Length = static_cast<USHORT>(name_length);
+			name_only.MaximumLength = static_cast<USHORT>(name_length + sizeof(WCHAR));
+			name_only.Buffer = static_cast<PWSTR>(internal_functions::pfn_ex_allocate_pool_with_tag(PagedPool, name_only.MaximumLength, 'prcN'));
+
+			if (!name_only.Buffer)
+			{
+				ExFreePool(full_image_name);
+				return false;
+			}
+			
+			RtlCopyMemory(name_only.Buffer, &buffer[last_backslash_index], name_length);
+			name_only.Buffer[name_only.Length / sizeof(WCHAR)] = L'\0';
+
+			*process_name = static_cast<PUNICODE_STRING>(internal_functions::pfn_ex_allocate_pool_with_tag (PagedPool, sizeof(UNICODE_STRING), 'prcS'));
+			if (!*process_name)
+			{
+				internal_functions::pfn_ex_free_pool_with_tag(name_only.Buffer,0);
+				internal_functions::pfn_ex_free_pool_with_tag(full_image_name,0);
+				return false;
+			}
+
+			**process_name = name_only;
+
+			internal_functions::pfn_ex_free_pool_with_tag(full_image_name,0);
+			return true;
+		}
+
+		bool is_process_exited(_In_ PEPROCESS process)
 		{
 			if (!process)
 			{
@@ -116,7 +246,47 @@ namespace utils
 			return exit_time_value != 0;
 		}
 
-		PHANDLE_TABLE_ENTRY exp_lookup_handle_table_entry(PHANDLE_TABLE handle_table, HANDLE pid)
+		bool is_process_64_bit(_In_ PEPROCESS process)
+		{
+			if (get_process_peb32_process(process))
+			{
+				return false;
+			}
+			return true;
+		}
+
+		PVOID get_process_peb32_process(_In_ PEPROCESS process)
+		{
+			if (!process)
+			{
+				return false;
+			}
+
+			const uintptr_t process_wow64_process_addr = reinterpret_cast<uintptr_t>(process) + feature_offset::g_process_wow64_process_offset;
+			auto process_wow64_process_value = *reinterpret_cast<const PULONG_PTR*>(process_wow64_process_addr);
+			return process_wow64_process_value;
+		}
+
+		PVOID get_process_peb64_process(_In_ PEPROCESS process)
+		{
+			if (!process)
+			{
+				return false;
+			}
+
+			 
+			const uintptr_t process_peb64_address =
+				reinterpret_cast<uintptr_t>(process) + feature_offset::g_process_peb_offset;
+
+		 
+			const ULONG_PTR peb64_value =
+				*reinterpret_cast<const ULONG_PTR*>(process_peb64_address);
+
+		 
+			return reinterpret_cast<PVOID>(peb64_value);
+		}
+
+		PHANDLE_TABLE_ENTRY exp_lookup_handle_table_entry(_In_ PHANDLE_TABLE handle_table, _In_ HANDLE pid)
 		{
 			 
 		 
@@ -139,7 +309,7 @@ namespace utils
 				return reinterpret_cast<PHANDLE_TABLE_ENTRY>(handle_array + 4 * (handle_value & 0x3FF));
 			}
 
-			else if (table_level ==2)
+		     if (table_level !=0)
 			{
 				// 三级句柄表：两次解引用
 				uint64_t first_level = *reinterpret_cast<uint64_t*>(table_code + 8 * (handle_value >> 19) - 2);

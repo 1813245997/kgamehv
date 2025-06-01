@@ -361,49 +361,35 @@ extern "C"
 
 	} HANDLE_TABLE_ENTRY_INFO, * PHANDLE_TABLE_ENTRY_INFO;
 
-	typedef struct _HANDLE_TABLE_ENTRY {
-
-		//
-		//  The pointer to the object overloaded with three ob attributes bits in
-		//  the lower order and the high bit to denote locked or unlocked entries
-		//
-
-		union {
-
-			PVOID Object;
-
-			ULONG ObAttributes;
-
-			PHANDLE_TABLE_ENTRY_INFO InfoTable;
-
-			ULONG_PTR Value;
-		};
-
-		//
-		//  This field either contains the granted access mask for the handle or an
-		//  ob variation that also stores the same information.  Or in the case of
-		//  a free entry the field stores the index for the next free entry in the
-		//  free list.  This is like a FAT chain, and is used instead of pointers
-		//  to make table duplication easier, because the entries can just be
-		//  copied without needing to modify pointers.
-		//
-
-		union {
-
-			union {
-
-				ACCESS_MASK GrantedAccess;
-
-				struct {
-
-					USHORT GrantedAccessIndex;
-					USHORT CreatorBackTraceIndex;
-				};
+	//隐藏全局句柄表自己的句柄
+	typedef struct _HANDLE_TABLE_ENTRY // Size=16
+	{
+		union
+		{
+			ULONG_PTR VolatileLowValue; // Size=8 Offset=0
+			ULONG_PTR LowValue; // Size=8 Offset=0
+			struct _HANDLE_TABLE_ENTRY_INFO* InfoTable; // Size=8 Offset=0
+			struct
+			{
+				ULONG64 Unlocked : 1; // Size=8 Offset=0 BitOffset=0 BitCount=1
+				ULONG64 RefCnt : 16; // Size=8 Offset=0 BitOffset=1 BitCount=16
+				ULONG64 Attributes : 3; // Size=8 Offset=0 BitOffset=17 BitCount=3
+				ULONG64 ObjectPointerBits : 44; //  对象地址 <<4  || 0XFFFF00000000000
 			};
-
-			LONG NextFreeTableEntry;
 		};
-
+		union
+		{
+			ULONG_PTR HighValue; // Size=8 Offset=8
+			struct _HANDLE_TABLE_ENTRY* NextFreeHandleEntry; // Size=8 Offset=8
+			ULONG64 LeafHandleValue; // Size=8 Offset=8
+			struct
+			{
+				ULONG GrantedAccessBits : 25; //  对象权限
+				ULONG NoRightsUpgrade : 1; // Size=4 Offset=8 BitOffset=25 BitCount=1
+				ULONG Spare : 6; // Size=4 Offset=8 BitOffset=26 BitCount=6
+			};
+		};
+		ULONG TypeInfo; // Size=4 Offset=12
 	} HANDLE_TABLE_ENTRY, * PHANDLE_TABLE_ENTRY;
 
 
@@ -552,6 +538,108 @@ extern "C"
 
 	} EXHANDLE, * PEXHANDLE;
 
+	typedef struct _PEB_LDR_DATA
+	{
+		ULONG Length;
+		UCHAR Initialized;
+		PVOID SsHandle;
+		LIST_ENTRY InLoadOrderModuleList;
+		LIST_ENTRY InMemoryOrderModuleList;
+		LIST_ENTRY InInitializationOrderModuleList;
+	} PEB_LDR_DATA, * PPEB_LDR_DATA;
 
+
+	typedef struct _LDR_DATA_TABLE_ENTRY
+	{
+		LIST_ENTRY InLoadOrderLinks;
+		LIST_ENTRY InMemoryOrderLinks;
+		LIST_ENTRY InInitializationOrderLinks;
+		PVOID DllBase;
+		PVOID EntryPoint;
+		ULONG SizeOfImage;
+		UNICODE_STRING FullDllName;
+		UNICODE_STRING BaseDllName;
+		ULONG Flags;
+		USHORT LoadCount;
+		USHORT TlsIndex;
+		LIST_ENTRY HashLinks;
+		ULONG TimeDateStamp;
+	} LDR_DATA_TABLE_ENTRY, * PLDR_DATA_TABLE_ENTRY;
+
+	typedef struct _PEB
+	{
+		UCHAR InheritedAddressSpace;
+		UCHAR ReadImageFileExecOptions;
+		UCHAR BeingDebugged;
+		UCHAR BitField;
+		PVOID Mutant;
+		PVOID ImageBaseAddress;
+		PPEB_LDR_DATA Ldr;
+		PVOID ProcessParameters;
+		PVOID SubSystemData;
+		PVOID ProcessHeap;
+		PVOID FastPebLock;
+		PVOID AtlThunkSListPtr;
+		PVOID IFEOKey;
+		PVOID CrossProcessFlags;
+		PVOID UserSharedInfoPtr;
+		ULONG SystemReserved;
+		ULONG AtlThunkSListPtr32;
+		PVOID ApiSetMap;
+	} PEB, * PPEB;
+
+	typedef struct _PEB_LDR_DATA32
+	{
+		ULONG Length;
+		UCHAR Initialized;
+		ULONG SsHandle;
+		LIST_ENTRY32 InLoadOrderModuleList;
+		LIST_ENTRY32 InMemoryOrderModuleList;
+		LIST_ENTRY32 InInitializationOrderModuleList;
+	} PEB_LDR_DATA32, * PPEB_LDR_DATA32;
+
+	typedef struct _LDR_DATA_TABLE_ENTRY32
+	{
+		LIST_ENTRY32 InLoadOrderLinks;
+		LIST_ENTRY32 InMemoryOrderLinks;
+		LIST_ENTRY32 InInitializationOrderLinks;
+		ULONG DllBase;
+		ULONG EntryPoint;
+		ULONG SizeOfImage;
+		UNICODE_STRING32 FullDllName;
+		UNICODE_STRING32 BaseDllName;
+		ULONG Flags;
+		USHORT LoadCount;
+		USHORT TlsIndex;
+		LIST_ENTRY32 HashLinks;
+		ULONG TimeDateStamp;
+	} LDR_DATA_TABLE_ENTRY32, * PLDR_DATA_TABLE_ENTRY32;
+
+	typedef struct _PEB32
+	{
+		UCHAR InheritedAddressSpace;
+		UCHAR ReadImageFileExecOptions;
+		UCHAR BeingDebugged;
+		UCHAR BitField;
+		ULONG Mutant;
+		ULONG ImageBaseAddress;
+		ULONG Ldr;
+		ULONG ProcessParameters;
+		ULONG SubSystemData;
+		ULONG ProcessHeap;
+		ULONG FastPebLock;
+		ULONG AtlThunkSListPtr;
+		ULONG IFEOKey;
+		ULONG CrossProcessFlags;
+		ULONG UserSharedInfoPtr;
+		ULONG SystemReserved;
+		ULONG AtlThunkSListPtr32;
+		ULONG ApiSetMap;
+	} PEB32, * PPEB32;
+
+	typedef struct _WOW64_PROCESS
+	{
+		PPEB32 Wow64;
+	} WOW64_PROCESS, * PWOW64_PROCESS;
 }
 

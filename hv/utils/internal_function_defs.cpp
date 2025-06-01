@@ -1,4 +1,5 @@
 #include "global_defs.h"
+
 #include "internal_function_defs.h"
 
 
@@ -203,13 +204,63 @@ namespace utils
 
 			NTSTATUS(NTAPI* pfn_se_locate_process_image_name)(
 				  _In_  PEPROCESS       process,
-				  _Out_ PUNICODE_STRING image_name
+				  _Out_ PUNICODE_STRING *image_name
 				  ) = nullptr;
+
+			unsigned long long (NTAPI* pfn_ps_get_process_dxgprocess)(
+				_In_  PEPROCESS   process) = nullptr;
+
+			 PVOID(NTAPI* pfn_ps_get_process_wow64_process)(
+				IN PEPROCESS process) = nullptr;
+
+		     PVOID(NTAPI* pfn_ps_get_process_peb)(
+				IN PEPROCESS process) = nullptr;
+
+			 NTSTATUS(NTAPI* pfn_mm_copy_virtual_memory)(
+				 _In_ PEPROCESS from_process,
+				 _In_ CONST PVOID from_address,
+				 _In_ PEPROCESS to_process,
+				 _Out_ PVOID to_address,
+				 _In_ SIZE_T buffer_size,
+				 _In_ KPROCESSOR_MODE previous_mode,
+				 _Out_ PSIZE_T number_of_bytes_copied
+				 ) = nullptr;
+
+			  BOOLEAN(NTAPI* pfn_rtl_equal_unicode_string)(
+				 _In_ PCUNICODE_STRING string1,
+				 _In_ PCUNICODE_STRING string2,
+				 _In_ BOOLEAN case_insensitive
+				 ) = nullptr;
+
+			   LONG(NTAPI* pfn_rtl_compare_unicode_string)(
+				  _In_ PCUNICODE_STRING string1,
+				  _In_ PCUNICODE_STRING string2,
+				  _In_ BOOLEAN case_insensitive
+				  ) = nullptr;
+
+			   NTSTATUS(NTAPI* pfn_ps_lookup_process_by_process_id)(
+				   _In_ HANDLE process_id,
+				   _Outptr_ PEPROCESS* out_process
+				   ) = nullptr;
+
+			   void (NTAPI* pfn_ob_dereference_object)(
+				   _In_ PVOID object
+				   ) = nullptr;
+
+			   VOID(NTAPI* pfn_ke_stack_attach_process)(
+				   _Inout_ PRKPROCESS process,
+				   _Out_ PVOID apc_state
+				   ) = nullptr;
+
+			    VOID(NTAPI* pfn_ke_unstack_detach_process)(
+				   _In_ PVOID apc_state
+				   ) = nullptr;
 
 		NTSTATUS initialize_internal_functions()
 		{
+			 
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
-			DbgBreakPoint();
+		 
 		 
 			unsigned long long rtl_get_version_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "RtlGetVersion");
 			unsigned long long mm_copy_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmCopyMemory");
@@ -245,6 +296,16 @@ namespace utils
 			unsigned long long nt_close_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtClose");
 			unsigned long long ps_get_process_exit_time_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitTime");
 		    unsigned long long se_locate_process_image_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "SeLocateProcessImageName");
+			unsigned long long ps_get_process_dxgprocess_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessDxgProcess");
+			unsigned long long ps_get_process_wow64_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessWow64Process");
+			unsigned long long ps_get_process_peb_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessPeb");
+			unsigned long long mm_copy_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmCopyVirtualMemory");
+			unsigned long long rtl_equal_unicode_string_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "RtlEqualUnicodeString");
+			unsigned long long rtl_compare_unicode_string_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "RtlCompareUnicodeString");
+			unsigned long long ps_lookup_process_by_process_id_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsLookupProcessByProcessId");
+			unsigned long long ob_dereference_object_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObDereferenceObject");
+			unsigned long long ke_stack_attach_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeStackAttachProcess");
+			unsigned long long ke_unstack_detach_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeUnstackDetachProcess");
 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
@@ -280,7 +341,21 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_create_section, nt_create_section_addr);
 			INIT_FUNC_PTR(pfn_nt_close, nt_close_addr);
 			INIT_FUNC_PTR(pfn_ps_get_process_exit_time, ps_get_process_exit_time_addr);
-			 
+			INIT_FUNC_PTR(pfn_se_locate_process_image_name, se_locate_process_image_name_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_dxgprocess,ps_get_process_dxgprocess_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_wow64_process, ps_get_process_wow64_process_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_peb, ps_get_process_peb_addr);
+			INIT_FUNC_PTR(pfn_mm_copy_virtual_memory, mm_copy_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_rtl_equal_unicode_string, rtl_equal_unicode_string_addr);
+			INIT_FUNC_PTR(pfn_rtl_compare_unicode_string, rtl_compare_unicode_string_addr);
+			INIT_FUNC_PTR(pfn_ps_lookup_process_by_process_id, ps_lookup_process_by_process_id_addr);
+			INIT_FUNC_PTR(pfn_ob_dereference_object, ob_dereference_object_addr);
+			INIT_FUNC_PTR(pfn_ke_stack_attach_process, ke_stack_attach_process_addr);
+			INIT_FUNC_PTR(pfn_ke_unstack_detach_process, ke_unstack_detach_process_addr);
+
+	 
+			//rtl_compare_unicode_string_addr
+ 
 			//These three search feature codes will cause errors. Find a way to solve it.
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
@@ -328,9 +403,26 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_create_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_delete_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_exit_time_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] se_locate_process_image_name_addr      = %p\n", reinterpret_cast<PVOID>(se_locate_process_image_name_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_dxgprocess_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_dxgprocess_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_wow64_process_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_wow64_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_peb_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_peb_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_copy_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(mm_copy_virtual_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] rtl_equal_unicode_string_addr      = %p\n", reinterpret_cast<PVOID>(rtl_equal_unicode_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] rtl_compare_unicode_string_addr      = %p\n", reinterpret_cast<PVOID>(rtl_compare_unicode_string_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_lookup_process_by_process_id_addr      = %p\n", reinterpret_cast<PVOID>(ps_lookup_process_by_process_id_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ob_dereference_object_addr      = %p\n", reinterpret_cast<PVOID>(ob_dereference_object_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_stack_attach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_unstack_detach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
 
+
+
+			 //ob_dereference_object_addr
+
+
+			 
 		 
-
+ 
 
 			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
 			INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
@@ -419,6 +511,30 @@ namespace utils
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_delete_kernel_stack_addr is null.\n");
 			if (!ps_get_process_exit_time_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_exit_time_addr is null.\n");
+			if (!se_locate_process_image_name_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] se_locate_process_image_name_addr is null.\n");
+			if (!ps_get_process_dxgprocess_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_dxgprocess_addr is null.\n");
+			if (!ps_get_process_wow64_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_wow64_process_addr is null.\n");
+			if (!ps_get_process_peb_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_peb_addr is null.\n");
+			if (!mm_copy_virtual_memory_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_copy_virtual_memory_addr is null.\n");
+			if (!rtl_equal_unicode_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_equal_unicode_string_addr is null.\n");
+			if (!rtl_compare_unicode_string_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_compare_unicode_string_addr is null.\n");
+			if(!ps_lookup_process_by_process_id_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_lookup_process_by_process_id_addr is null.\n");
+			if(!ob_dereference_object_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ob_dereference_object_addr is null.\n");
+			if (!ke_stack_attach_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_stack_attach_process_addr is null.\n");
+			if (!ke_unstack_detach_process_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_unstack_detach_process_addr is null.\n");
+
+
 		 
 
 			if (!ki_preprocess_fault_addr||
@@ -459,7 +575,18 @@ namespace utils
 				!exp_lookup_handle_table_entry_addr||
 				!mm_create_kernel_stack_addr||
 				!mm_delete_kernel_stack_addr||
-				!ps_get_process_exit_time_addr)
+				!ps_get_process_exit_time_addr||
+				!se_locate_process_image_name_addr||
+				!ps_get_process_dxgprocess_addr||
+				!ps_get_process_wow64_process_addr||
+				!ps_get_process_peb_addr||
+				!mm_copy_virtual_memory_addr||
+				!rtl_equal_unicode_string_addr||
+				!rtl_compare_unicode_string_addr||
+				!ps_lookup_process_by_process_id_addr||
+				!ob_dereference_object_addr||
+				!ke_stack_attach_process_addr||
+				!ke_unstack_detach_process_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

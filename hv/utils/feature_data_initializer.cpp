@@ -2,11 +2,13 @@
 #include "feature_data_initializer.h"
 
 namespace utils {
-	namespace feature_init {
+	namespace feature_data {
 
 		PMM_UNLOADED_DRIVER  mm_unloaded_drivers = nullptr;
 		PULONG mm_last_unloaded_driver = nullptr;
 		PHANDLE_TABLE g_psp_cid_table = nullptr;
+
+	 
 
 		NTSTATUS initialize()
 		{

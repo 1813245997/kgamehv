@@ -17,6 +17,7 @@ namespace utils
 
 		unsigned long long find_module_export_by_name(const unsigned long long image_base, const char* export_name);
 
+		unsigned long long find_function_begin(unsigned long long image_base, unsigned long long addr);
 
 	}
 }

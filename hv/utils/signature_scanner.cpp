@@ -158,6 +158,44 @@ namespace utils
 			return 0;
 		}
 
+		unsigned long long find_function_begin(unsigned long long image_base, unsigned long long target_addr)
+		{
+			auto* base_ptr = reinterpret_cast<PUCHAR>(image_base);
+			auto* dos_header = reinterpret_cast<IMAGE_DOS_HEADER*>(base_ptr);
+			auto* nt_headers = reinterpret_cast<IMAGE_NT_HEADERS*>(base_ptr + dos_header->e_lfanew);
+
+			const auto& exception_directory = nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION];
+
+
+			if (exception_directory.VirtualAddress == 0)
+			{
+				return 0;
+			}
+
+			if (exception_directory.Size == 0)
+			{
+				return 0;
+			}
+
+			auto* function_entries = reinterpret_cast<IMAGE_RUNTIME_FUNCTION_ENTRY*>(
+				base_ptr + exception_directory.VirtualAddress);
+
+			size_t entry_count = exception_directory.Size / sizeof(IMAGE_RUNTIME_FUNCTION_ENTRY);
+
+			for (size_t i = 0; i < entry_count; ++i)
+			{
+				unsigned long long begin_addr = image_base + function_entries[i].BeginAddress;
+				unsigned long long end_addr = image_base + function_entries[i].EndAddress;
+
+				if (target_addr >= begin_addr && target_addr < end_addr)
+				{
+					return begin_addr;
+				}
+			}
+
+			return 0;
+		}
+
 	 }
 }
 
