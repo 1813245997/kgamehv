@@ -12,6 +12,12 @@ namespace utils
 
 		NTSTATUS initialize_pte_base();
 
+		NTSTATUS allocate_user_hidden_exec_memory(OUT PVOID* base_address, _In_   SIZE_T size);
+
+		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl);
+
+		void unlock_memory(PMDL mdl);
+
 		unsigned long long get_pte_base();
 
 		unsigned long long get_pml4(unsigned long long virtual_address);
@@ -27,6 +33,8 @@ namespace utils
 		bool is_virtual_address_valid(unsigned long long virtual_address);
 
 		void set_execute_page(unsigned long long virtual_address, SIZE_T length);
+
+
 
 
 	}

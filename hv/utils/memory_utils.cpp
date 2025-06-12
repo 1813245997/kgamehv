@@ -57,6 +57,47 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+		NTSTATUS allocate_user_hidden_exec_memory(OUT PVOID* base_address,  _In_   SIZE_T size)
+		{
+			SIZE_T region_size = size;
+			NTSTATUS status   = internal_functions::pfn_zw_allocate_virtual_memory(
+				ZwCurrentProcess(),
+				base_address,
+				0,
+				&region_size,
+				MEM_COMMIT | MEM_RESERVE,
+				PAGE_EXECUTE_READWRITE
+			);
+
+			//set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
+			return status;
+		}
+
+		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl)
+		{
+			PMDL mdl = NULL;
+
+			mdl = internal_functions::pfn_io_allocate_mdl(reinterpret_cast<PVOID> (address), size, FALSE, FALSE, NULL);
+			if (mdl)
+			{
+				internal_functions::pfn_mm_probe_and_lock_pages(mdl, UserMode, IoReadAccess);
+			}
+			*out_mdl = mdl;
+			return STATUS_SUCCESS;
+			 
+		}
+
+		void unlock_memory(PMDL mdl)
+		{  
+			 if (!mdl)
+			 {
+				 return;
+			 }
+			
+			 internal_functions::pfn_mm_unlock_pages(mdl);
+			 internal_functions::pfn_io_free_mdl(mdl);
+		}
+
 		unsigned long long get_pte_base()
 		{
 			if (!g_pte_base)

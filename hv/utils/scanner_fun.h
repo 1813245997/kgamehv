@@ -25,6 +25,10 @@ namespace utils
 
 		unsigned long long find_mm_delete_kernel_stack();
 
+		unsigned long long find_cocclusion_context_post_sub_graph(unsigned long long image_base);
 
+		unsigned long long find_cdxgi_swapchain_present_multiplane_overlay(unsigned long long image_base);
+
+		unsigned long long find_cdxgi_swapchain_dwm_legacy_present_dwm(unsigned long long image_base);
 	}
 }

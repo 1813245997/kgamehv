@@ -256,6 +256,46 @@ namespace utils
 				   _In_ PVOID apc_state
 				   ) = nullptr;
 
+			HANDLE(NTAPI* pfn_ps_get_current_process_id)(
+					VOID
+					)=nullptr;
+
+			  NTSTATUS(NTAPI* pfn_zw_allocate_virtual_memory)(
+				_In_ HANDLE process_handle,
+				_Inout_ PVOID* base_address,
+				_In_ ULONG_PTR zero_bits,
+				_Inout_ PSIZE_T region_size,
+				_In_ ULONG allocation_type,
+				_In_ ULONG protect
+				) = nullptr;
+
+			   PVOID(NTAPI* pfn_ps_get_process_section_base_address)(
+				  _In_ PEPROCESS process
+				  ) = nullptr;
+
+			    PMDL(NTAPI* pfn_io_allocate_mdl)(
+				   _In_opt_ __drv_aliasesMem PVOID VirtualAddress,
+				   _In_ ULONG Length,
+				   _In_ BOOLEAN SecondaryBuffer,
+				   _In_ BOOLEAN ChargeQuota,
+				   _Inout_opt_ PIRP Irp
+				   ) = nullptr;
+
+				VOID(NTAPI* pfn_mm_probe_and_lock_pages)(
+					_Inout_ PMDL MemoryDescriptorList,
+					_In_ KPROCESSOR_MODE AccessMode,
+					_In_ LOCK_OPERATION Operation
+					) = nullptr;
+
+				 VOID(NTAPI* pfn_mm_unlock_pages)(
+					_Inout_ PMDL MemoryDescriptorList
+					) = nullptr;
+
+
+				 VOID(NTAPI* pfn_io_free_mdl)(
+					_In_ PMDL Mdl
+					) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -306,6 +346,13 @@ namespace utils
 			unsigned long long ob_dereference_object_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObDereferenceObject");
 			unsigned long long ke_stack_attach_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeStackAttachProcess");
 			unsigned long long ke_unstack_detach_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeUnstackDetachProcess");
+			unsigned long long ps_get_current_process_id_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcessId");
+			unsigned long long zw_allocate_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwAllocateVirtualMemory");
+			unsigned long long ps_get_process_section_base_address_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessSectionBaseAddress");
+			unsigned long long io_allocate_mdl_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoAllocateMdl");
+			unsigned long long mm_probe_and_lock_pages_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmProbeAndLockPages");
+			unsigned long long mm_unlock_pages_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmUnlockPages");
+			unsigned long long io_free_mdl_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoFreeMdl");
 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
@@ -352,8 +399,16 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ob_dereference_object, ob_dereference_object_addr);
 			INIT_FUNC_PTR(pfn_ke_stack_attach_process, ke_stack_attach_process_addr);
 			INIT_FUNC_PTR(pfn_ke_unstack_detach_process, ke_unstack_detach_process_addr);
+			INIT_FUNC_PTR(pfn_ps_get_current_process_id, ps_get_current_process_id_addr);
+			INIT_FUNC_PTR(pfn_zw_allocate_virtual_memory, zw_allocate_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_section_base_address, ps_get_process_section_base_address_addr);
+			INIT_FUNC_PTR(pfn_io_allocate_mdl, io_allocate_mdl_addr);
+			INIT_FUNC_PTR(pfn_mm_probe_and_lock_pages, mm_probe_and_lock_pages_addr);
+			INIT_FUNC_PTR(pfn_mm_unlock_pages, mm_unlock_pages_addr);
+			INIT_FUNC_PTR(pfn_io_free_mdl, io_free_mdl_addr);
 
-	 
+			 
+
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -414,11 +469,20 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ob_dereference_object_addr      = %p\n", reinterpret_cast<PVOID>(ob_dereference_object_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_stack_attach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_unstack_detach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_process_id_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_process_id_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_allocate_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(zw_allocate_virtual_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_section_base_address_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_allocate_mdl_addr      = %p\n", reinterpret_cast<PVOID>(io_allocate_mdl_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_probe_and_lock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_unlock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_free_mdl_add      = %p\n", reinterpret_cast<PVOID>(io_free_mdl_addr));
 
 
+			 //mm_probe_and_lock_pages_addr
+			
 
-			 //ob_dereference_object_addr
-
+		 
+		 
 
 			 
 		 
@@ -533,6 +597,20 @@ namespace utils
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_stack_attach_process_addr is null.\n");
 			if (!ke_unstack_detach_process_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_unstack_detach_process_addr is null.\n");
+			if (!ps_get_current_process_id_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_process_id_addr is null.\n");
+			if(!zw_allocate_virtual_memory_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_allocate_virtual_memory_addr is null.\n");
+			if (!ps_get_process_section_base_address_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_section_base_address_addr is null.\n");
+			if (!io_allocate_mdl_addr)
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_allocate_mdl_addr is null.\n");
+			 if(!mm_probe_and_lock_pages_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_probe_and_lock_pages_addr is null.\n");
+			 if (!mm_unlock_pages_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_unlock_pages_addr is null.\n");
+			 if (!io_free_mdl_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_free_mdl_addr is null.\n");
 
 
 		 
@@ -586,7 +664,14 @@ namespace utils
 				!ps_lookup_process_by_process_id_addr||
 				!ob_dereference_object_addr||
 				!ke_stack_attach_process_addr||
-				!ke_unstack_detach_process_addr)
+				!ke_unstack_detach_process_addr||
+				!ps_get_current_process_id_addr||
+				!zw_allocate_virtual_memory_addr||
+				!ps_get_process_section_base_address_addr||
+				!io_allocate_mdl_addr||
+				!mm_probe_and_lock_pages_addr||
+				!mm_unlock_pages_addr||
+				!io_free_mdl_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

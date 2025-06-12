@@ -101,7 +101,7 @@ namespace utils
 			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 		    if (process_utils::is_process_64_bit(process))
 		    {
-			
+
 				PPEB peb64 = reinterpret_cast<PPEB>(utils::process_utils::get_process_peb64_process(process));
 				PPEB_LDR_DATA pebldr{};
 				internal_functions::pfn_mm_copy_virtual_memory(process, peb64, process, peb64, 1, UserMode, &bytes_read);

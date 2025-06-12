@@ -46,19 +46,20 @@ namespace hook_functions
 			return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
 		}
 
-		if (!find_hook_info_by_rip(&g_UsermodeHookPageListHead,  ExceptionRecord->ExceptionAddress , &matched_hook_info))
-		{
-			return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
-		}
+		//
+		//if (!find_hook_break_point_int3(  ExceptionRecord->ExceptionAddress , &matched_hook_info))
+		//{
+		//	return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
+		//}
+		// 
+		//using handler_fn_t = bool(*)(PEXCEPTION_RECORD, PCONTEXT);
+		//auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
 
-		using handler_fn_t = bool(*)(PEXCEPTION_RECORD, PCONTEXT);
-		auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
-
-		if (handler(ExceptionRecord, ContextRecord))
-		{
-			return TRUE;  // 已处理
-		}
-
+		//if (handler(ExceptionRecord, ContextRecord))
+		//{
+		//	return TRUE;  // 已处理
+		//}
+	
 		return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
 		 
 		 

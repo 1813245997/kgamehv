@@ -257,5 +257,45 @@ namespace utils
 			_In_ PVOID apc_state
 			);
 
+		extern HANDLE(NTAPI* pfn_ps_get_current_process_id)(
+			VOID
+			);
+
+		extern NTSTATUS(NTAPI* pfn_zw_allocate_virtual_memory)(
+			_In_ HANDLE process_handle,
+			_Inout_ PVOID* base_address,
+			_In_ ULONG_PTR zero_bits,
+			_Inout_ PSIZE_T region_size,
+			_In_ ULONG allocation_type,
+			_In_ ULONG protect
+			);
+
+		extern PVOID(NTAPI* pfn_ps_get_process_section_base_address)(
+			_In_ PEPROCESS process
+			);
+
+
+		extern PMDL(NTAPI* pfn_io_allocate_mdl)(
+			_In_opt_ __drv_aliasesMem PVOID VirtualAddress,
+			_In_ ULONG Length,
+			_In_ BOOLEAN SecondaryBuffer,
+			_In_ BOOLEAN ChargeQuota,
+			_Inout_opt_ PIRP Irp
+			);
+
+		extern VOID(NTAPI* pfn_mm_probe_and_lock_pages)(
+			_Inout_ PMDL MemoryDescriptorList,
+			_In_ KPROCESSOR_MODE AccessMode,
+			_In_ LOCK_OPERATION Operation
+			);
+
+		extern VOID(NTAPI* pfn_mm_unlock_pages)(
+			_Inout_ PMDL MemoryDescriptorList
+			);
+
+
+		extern VOID(NTAPI* pfn_io_free_mdl)(
+			_In_ PMDL Mdl
+			);
 	} 
 }
