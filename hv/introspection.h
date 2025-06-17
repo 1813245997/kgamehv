@@ -3,7 +3,7 @@
 #include "vmx.h"
 #include "mm.h"
 
-#include <ntddk.h>
+#include <ntifs.h>
 
 namespace hv {
 

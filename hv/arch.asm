@@ -80,6 +80,15 @@ disable_user_access proc
     ret
 disable_user_access endp
 
+_setac proc
+stac
+ret
+_setac endp
+
+_clearac proc
+clac
+ret
+_clearac endp
 
 end
 

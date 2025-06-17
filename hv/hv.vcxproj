@@ -135,7 +135,10 @@
     <ClInclude Include="gdt.h" />
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
+    <ClInclude Include="utils\dwm_draw.h" />
+    <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\feature_data_initializer.h" />
+    <ClInclude Include="utils\feature_offset_initializer.h" />
     <ClInclude Include="utils\global_defs.h" />
     <ClInclude Include="utils\hidden_module_list.h" />
     <ClInclude Include="utils\hook_functions.h" />
@@ -168,11 +171,17 @@
     <ClInclude Include="utils\native_api.h" />
     <ClInclude Include="utils\ntos_struct_def.h" />
     <ClInclude Include="utils\os_info.h" />
+    <ClInclude Include="utils\process_utils.h" />
     <ClInclude Include="utils\scanner_data.h" />
     <ClInclude Include="utils\scanner_fun.h" />
+    <ClInclude Include="utils\scanner_offset.h" />
     <ClInclude Include="utils\signature_scanner.h" />
     <ClInclude Include="utils\string_utils.h" />
+    <ClInclude Include="utils\strong_dx.h" />
+    <ClInclude Include="utils\thread_utils.h" />
     <ClInclude Include="utils\types.h" />
+    <ClInclude Include="utils\user_call_utils.h" />
+    <ClInclude Include="utils\vfun_utils.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vcpu.h" />
@@ -185,7 +194,9 @@
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
+    <ClCompile Include="utils\dwm_draw.cpp" />
     <ClCompile Include="utils\feature_data_initializer.cpp" />
+    <ClCompile Include="utils\feature_offset_initializer.cpp" />
     <ClCompile Include="utils\hidden_module_list.cpp" />
     <ClCompile Include="utils\hook_functions.cpp" />
     <ClCompile Include="utils\hook_manager.cpp" />
@@ -210,10 +221,16 @@
     <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />
     <ClCompile Include="utils\os_info.cpp" />
+    <ClCompile Include="utils\process_utils.cpp" />
     <ClCompile Include="utils\scanner_data.cpp" />
     <ClCompile Include="utils\scanner_fun.cpp" />
+    <ClCompile Include="utils\scanner_offset.cpp" />
     <ClCompile Include="utils\signature_scanner.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />
+    <ClCompile Include="utils\strong_dx.cpp" />
+    <ClCompile Include="utils\thread_utils.cpp" />
+    <ClCompile Include="utils\user_call_utils.cpp" />
+    <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
     <ClCompile Include="vmcs.cpp" />
   </ItemGroup>

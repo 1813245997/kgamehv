@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ia32.hpp>
-#include <ntddk.h>
+#include <ntifs.h>
 
 namespace hv {
 

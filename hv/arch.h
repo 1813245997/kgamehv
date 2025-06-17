@@ -12,7 +12,9 @@ void _lgdt(segment_descriptor_register_64* gdtr);
  void enable_user_access();
  void disable_user_access();
 
+ void _setac();
 
+ void _clearac();
 } // extern "C"
 
 namespace hv {

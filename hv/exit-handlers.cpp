@@ -562,8 +562,27 @@ void handle_exception_or_nmi(vcpu* const cpu) {
 				vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<ULONG_PTR>(matched_hook_info->handler_va));
 				return;
 			}
+
+          
+
+			 
 		}
 	}
+	//else if (interrupt_info.vector == EXCEPTION_VECTOR_BREAKPOINT)
+	//{
+	//	rflags guest_rflags{ vmx_vmread(VMCS_GUEST_RFLAGS) };
+ //       if (!guest_rflags.trap_flag)  // Trap Flag (TF) bit is 0
+ //       {
+	//		hyper::EptHookInfo* matched_hook_info = nullptr;
+	//		if (find_hook_break_point_int3(reinterpret_cast<void*>(guest_rip), &matched_hook_info))
+	//		{
+	//			vmx_vmwrite(VMCS_GUEST_RIP, reinterpret_cast<ULONG_PTR>(matched_hook_info->handler_va));
+	//			return;
+	//		}
+
+ //       }
+
+	//}
     const uint32_t error_code = static_cast<uint32_t>  (hv::vmread(VMCS_VMEXIT_INTERRUPTION_ERROR_CODE));
     hv::inject_interruption(interrupt_info.vector, interrupt_info.interruption_type, error_code, interrupt_info.error_code_valid);
   

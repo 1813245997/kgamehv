@@ -20,9 +20,9 @@ namespace hyper
 		uint8_t* trampoline_va;      
 		uint8_t* fake_page_contents;       
 
-		
-
 		uint64_t hook_size;
+
+	
 	};
 
 	//
@@ -47,26 +47,43 @@ namespace hyper
 		//
 		unsigned __int8* fake_page_contents;
 
-		uint32_t ref_count;
+		HANDLE  process_id;
+		 
+		uint32_t  ref_count;
 	};
 
 
 	NTSTATUS HookManagerInitialize();
  
 	bool hook(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
-	bool hookr3(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
-	void unhook(_In_ void* target_api);
-	void unhookr3(_In_ void* target_api);
+
 	bool find_hook_info_by_rip(
 		LIST_ENTRY* hook_page_list,
 		void* rip,
 		hyper::EptHookInfo** out_hook_info);
-	static 	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
-	static	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+	
+	void unhook(_In_ void* target_api);
+	 
+	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
+	//DBG
+	bool ept_hook_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
+
+	bool find_hook_break_point_int3(
+		_In_ void* rip,
+		_Out_ hyper::EptHookInfo** out_hook_info);
+
+	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
+
+	void hook_write_absolute_jump_r3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64);
+
+	void write_int1(uint8_t* address);
+
+	void write_int3(uint8_t* address);
 
 }
 
  
 extern LIST_ENTRY g_HookedPageListHead;
 
-extern LIST_ENTRY  g_UsermodeHookPageListHead;
+extern LIST_ENTRY g_ept_breakpoint_hook_list;

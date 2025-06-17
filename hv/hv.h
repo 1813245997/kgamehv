@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "vmx.h"
 
-#include <ntddk.h>
+#include <ntifs.h>
 
 namespace hv {
 
