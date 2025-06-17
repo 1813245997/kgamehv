@@ -1,6 +1,6 @@
 #pragma once
 
- 
+#include "..\hookutils.h"
 
 namespace utils
 {
@@ -187,8 +187,7 @@ namespace utils
 			);
 
 		extern PVOID(NTAPI* pfn_mm_create_kernel_stack)(
-			_In_ BOOLEAN LargeStack,
-			_In_ UCHAR Processor
+			unsigned long, short, PETHREAD
 			);
 
 		extern VOID(NTAPI* pfn_mm_delete_kernel_stack)(
@@ -296,6 +295,30 @@ namespace utils
 
 		extern VOID(NTAPI* pfn_io_free_mdl)(
 			_In_ PMDL Mdl
+			);
+
+		extern KIRQL(NTAPI* pfn_ke_get_current_irql)(
+			VOID
+			);
+
+		extern KPROCESSOR_MODE(NTAPI* pfn_ex_get_previous_mode)(VOID);
+
+		extern PEPROCESS(NTAPI* pfn_ps_get_current_process)(VOID);
+
+		extern PETHREAD(NTAPI* pfn_ps_get_current_thread)(VOID);
+
+		extern PKTHREAD(NTAPI* pfn_ke_get_current_thread)(VOID);
+
+		extern PVOID
+		(__stdcall* pfn_mm_allocate_independent_pages)(
+			IN SIZE_T number_of_bytes,
+			IN ULONG node_number
+			);
+
+		extern VOID
+		(__stdcall* pfn_mm_free_independent_pages)(
+			IN PVOID virtual_address,
+			IN SIZE_T number_of_bytes
 			);
 	} 
 }

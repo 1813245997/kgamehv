@@ -30,5 +30,11 @@ namespace utils
 		unsigned long long find_cdxgi_swapchain_present_multiplane_overlay(unsigned long long image_base);
 
 		unsigned long long find_cdxgi_swapchain_dwm_legacy_present_dwm(unsigned long long image_base);
+
+		unsigned long long find_mm_allocate_independent_pages();
+
+		unsigned long long find_mm_free_independent_pages();
+
+		
 	}
 }

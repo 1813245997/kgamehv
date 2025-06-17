@@ -51,7 +51,7 @@ namespace utils
 			ExFreePool(module_info);   
 			return FALSE;
 		}
-
+	 
 		BOOLEAN init_ntoskrnl_info()
 		{
 			PVOID base_address = nullptr;

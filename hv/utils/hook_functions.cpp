@@ -1,6 +1,8 @@
-#include "global_defs.h"
-#include "hook_functions.h"
 
+#include "global_defs.h"
+
+#include "hook_functions.h"
+#include "dwm_draw.h"
 
 namespace hook_functions
 {
@@ -46,23 +48,22 @@ namespace hook_functions
 			return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
 		}
 
-		//
-		//if (!find_hook_break_point_int3(  ExceptionRecord->ExceptionAddress , &matched_hook_info))
-		//{
-		//	return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
-		//}
-		// 
-		//using handler_fn_t = bool(*)(PEXCEPTION_RECORD, PCONTEXT);
-		//auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
+		if (PreviousMode == MODE::UserMode)
+		{
+			if (!find_hook_break_point_int3(ExceptionRecord->ExceptionAddress, &matched_hook_info))
+			{
+				return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
+			}
 
-		//if (handler(ExceptionRecord, ContextRecord))
-		//{
-		//	return TRUE;  // 已处理
-		//}
-	
+			using handler_fn_t =BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, hyper::EptHookInfo*);
+			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
+
+			if (handler(ExceptionRecord, ContextRecord, matched_hook_info))
+			{
+				return TRUE;  // 已处理
+			}
+		}
 		return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
-		 
-		 
 	}
 
 
@@ -181,13 +182,19 @@ namespace hook_functions
 		 }
 
 
+		 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers))
+		 {
+			 return frames_captured;
+		 }
+
 		 for (ULONG i = 0; i < frames_captured; ++i)
 		 {
-			 PVOID addr = callers[i];
+			 
 
-			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(addr))
+			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers[i]))
 				 continue;
 
+			 PVOID addr = callers[i];
 			 if (utils::hidden_modules::is_address_hidden(addr))
 			 {
 				 callers[i] = nullptr;
@@ -268,6 +275,92 @@ namespace hook_functions
 	   }
 
 
+	   INT64(__fastcall* original_present_multiplane_overlay)(
+		   void* thisptr,
+		   PVOID dxgi_swap_chain,
+		   unsigned int a3,
+		   unsigned int a4,
+		   int a5,
+		   const void* a6,
+		   PVOID64 a7,
+		   unsigned int a8
+		   ) = nullptr;
+
+	   BOOLEAN  __fastcall new_present_multiplane_overlay(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+
+		   if (!utils:: dwm_draw::g_pswap_chain)
+		   {
+			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rdx;
+		   }
+
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+
+		   return TRUE;
+	   }
 
 
+	      INT64(__fastcall* original_cdxgi_swap_chain_dwm_legacy_present_dwm)(
+		   void* pthis,
+		   PVOID pDxgiSwapChain,
+		   unsigned int a3,
+		   unsigned int a4,
+		   const PVOID a5, unsigned int a6, PVOID64 a7, unsigned int a8,
+		   PVOID a9, unsigned int a10) = nullptr;
+
+
+	   BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   if (!utils::dwm_draw::g_pswap_chain)
+		   {
+			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rdx;
+		   }
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+
+		   return TRUE;
+	   }
+
+	   __int64(__fastcall* original_dxgk_get_device_state)(
+		   _Inout_ PVOID unnamedParam1)
+		   = nullptr;
+
+
+	   __int64 __fastcall hook_dxgk_get_device_state(_Inout_ PVOID unnamedParam1)
+	   {
+		  
+			if (utils::internal_functions:: pfn_ke_get_current_irql() >= DISPATCH_LEVEL)
+			{
+				return  original_dxgk_get_device_state(unnamedParam1);
+			}
+
+			if (utils::internal_functions::pfn_ex_get_previous_mode() != MODE::UserMode)
+			{
+				return  original_dxgk_get_device_state(unnamedParam1);
+			}
+
+			if (utils::dwm_draw::g_dwm_process==nullptr)
+			{
+				return  original_dxgk_get_device_state(unnamedParam1);
+			}
+
+			if (utils::internal_functions::pfn_ps_get_current_process()!=utils :: dwm_draw::g_dwm_process)
+			{
+				return  original_dxgk_get_device_state(unnamedParam1);
+			}
+			//utils::dwm_draw::g_dwm_render_thread= utils::internal_functions::
+	/*		if ()
+			{
+			}*/
+
+			 
+
+
+		   return  original_dxgk_get_device_state(unnamedParam1);
+	   }
 }

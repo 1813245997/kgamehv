@@ -2,6 +2,7 @@
 #include <ntifs.h>
 #include <ntimage.h>
 #include <intrin.h>
+#include <minwindef.h>
 #include "types.h"
 #include "ntos_struct_def.h"
 #include "native_api.h"
@@ -19,6 +20,8 @@
 #include "scanner_offset.h"
 #include "hidden_module_list.h"
 #include "hook_manager.h"
+#include "..\hookutils.h"
+#include "hook_functions.h"
 #include "internal_function_defs.h"
 #include "feature_data_initializer.h"
 #include "scanner_data.h"
@@ -28,4 +31,8 @@
 #include "feature_offset_initializer.h"
 #include "dwm_draw.h"
 #include "..\memory_pool.h"
-#include "..\hookutils.h"
+
+#include "strong_dx.h"
+#include "thread_utils.h"
+#include "vfun_utils.h"
+#include "user_call_utils.h"

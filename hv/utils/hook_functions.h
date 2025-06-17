@@ -1,5 +1,5 @@
 #pragma once
- 
+
 namespace hook_functions
 {
 
@@ -121,5 +121,39 @@ namespace hook_functions
 		_In_opt_ HANDLE file_handle
 		);
 
+	__int64 __fastcall hook_dxgk_get_device_state(_Inout_ PVOID unnamedParam1);
+
+	extern __int64(__fastcall* original_dxgk_get_device_state)(_Inout_ PVOID unnamedParam1);
+
+
+
+	BOOLEAN  __fastcall new_present_multiplane_overlay(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	extern  INT64(__fastcall* original_present_multiplane_overlay)(
+		void* thisptr,
+		PVOID dxgi_swap_chain,
+		unsigned int a3,
+		unsigned int a4,
+		int a5,
+		const void* a6,
+		PVOID64 a7,
+		unsigned int a8
+		);
+
+	BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	extern  INT64(__fastcall* original_cdxgi_swap_chain_dwm_legacy_present_dwm)(
+		void* pthis,
+		PVOID pDxgiSwapChain,
+		unsigned int a3,
+		unsigned int a4,
+		const PVOID a5, unsigned int a6, PVOID64 a7, unsigned int a8,
+		PVOID a9, unsigned int a10);
 
 }

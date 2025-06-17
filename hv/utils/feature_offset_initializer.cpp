@@ -14,6 +14,8 @@ namespace utils
 
 		unsigned long long g_process_peb_offset;
 
+		unsigned long long g_previous_modeoffset;
+
 		NTSTATUS initialize()
 		{
 			 

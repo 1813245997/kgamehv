@@ -1,5 +1,4 @@
 #include "global_defs.h"
-
 #include "internal_function_defs.h"
 
 
@@ -191,8 +190,7 @@ namespace utils
 			   ) = nullptr;
 
 		    PVOID(NTAPI* pfn_mm_create_kernel_stack)(
-			   _In_ BOOLEAN LargeStack,
-			   _In_ UCHAR Processor
+			   unsigned long, short, PETHREAD
 			   ) = nullptr;
 
 		    VOID(NTAPI* pfn_mm_delete_kernel_stack)(
@@ -296,8 +294,37 @@ namespace utils
 					_In_ PMDL Mdl
 					) = nullptr;
 
+				  KIRQL(NTAPI* pfn_ke_get_current_irql)(
+					 VOID
+					 ) = nullptr;
+
+				  KPROCESSOR_MODE(NTAPI* pfn_ex_get_previous_mode)
+					  (VOID) = nullptr;
+
+				   PEPROCESS(NTAPI* pfn_ps_get_current_process)
+					  (VOID)= nullptr;
+
+				   PETHREAD(NTAPI* pfn_ps_get_current_thread)
+					   (VOID) = nullptr;
+
+				   PETHREAD(NTAPI* pfn_ke_get_current_thread)
+					   (VOID) = nullptr;
+
+				   PVOID
+				   (__stdcall* pfn_mm_allocate_independent_pages)(
+					   IN SIZE_T number_of_bytes,
+					   IN ULONG node_number
+					   ) = nullptr;
+
+				   VOID
+				   (__stdcall* pfn_mm_free_independent_pages)(
+					   IN PVOID virtual_address,
+					   IN SIZE_T number_of_bytes
+					   ) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
+			 
 			 
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
 		 
@@ -353,7 +380,13 @@ namespace utils
 			unsigned long long mm_probe_and_lock_pages_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmProbeAndLockPages");
 			unsigned long long mm_unlock_pages_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmUnlockPages");
 			unsigned long long io_free_mdl_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoFreeMdl");
+			unsigned long long ke_get_current_irql_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeGetCurrentIrql");
+			unsigned long long ex_get_previous_mode_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ExGetPreviousMode");
+			unsigned long long ps_get_current_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcess");
+			unsigned long long ps_get_current_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcess");
+			unsigned long long ke_get_current_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeGetCurrentThread");
 
+			 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid, mm_is_address_valid_addr);
@@ -406,9 +439,12 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_probe_and_lock_pages, mm_probe_and_lock_pages_addr);
 			INIT_FUNC_PTR(pfn_mm_unlock_pages, mm_unlock_pages_addr);
 			INIT_FUNC_PTR(pfn_io_free_mdl, io_free_mdl_addr);
-
-			 
-
+			INIT_FUNC_PTR(pfn_ke_get_current_irql, ke_get_current_irql_addr);
+			INIT_FUNC_PTR(pfn_ex_get_previous_mode, ex_get_previous_mode_addr);
+			INIT_FUNC_PTR(pfn_ps_get_current_process, ps_get_current_process_addr);
+			INIT_FUNC_PTR(pfn_ps_get_current_thread , ps_get_current_thread_addr);
+			INIT_FUNC_PTR(pfn_ke_get_current_thread, ke_get_current_thread_addr);
+			
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -418,6 +454,8 @@ namespace utils
 			unsigned long long exp_lookup_handle_table_entry_addr = scanner_fun::find_exp_lookup_handle_table_entry();
 			unsigned long long mm_create_kernel_stack_addr = scanner_fun::find_mm_create_kernel_stack();
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
+			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
+			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
@@ -476,8 +514,18 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_probe_and_lock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_unlock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_free_mdl_add      = %p\n", reinterpret_cast<PVOID>(io_free_mdl_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_get_current_irql_addr      = %p\n", reinterpret_cast<PVOID>(ke_get_current_irql_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ex_get_previous_mode_addr      = %p\n", reinterpret_cast<PVOID>(ex_get_previous_mode_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_process_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_thread_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_get_current_thread_addr      = %p\n", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_allocate_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_free_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
 
-
+			
+			//ps_get_current_thread_addr
+			//ps_get_current_process_addr
+			//ex_get_previous_mode_addr
 			 //mm_probe_and_lock_pages_addr
 			
 
@@ -494,6 +542,8 @@ namespace utils
 			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
 			INIT_FUNC_PTR(pfn_mm_create_kernel_stack , mm_create_kernel_stack_addr);
 			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
+			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
+			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
 
 
 
@@ -611,10 +661,24 @@ namespace utils
 				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_unlock_pages_addr is null.\n");
 			 if (!io_free_mdl_addr)
 				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_free_mdl_addr is null.\n");
+			 if (!ke_get_current_irql_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_get_current_irql_addr is null.\n");
+			 if (!ex_get_previous_mode_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_get_previous_mode_addr is null.\n");
+			 if (!ps_get_current_process_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_process_addr is null.\n");
+			 if (!ps_get_current_thread_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_thread_addr is null.\n");
+			 if (!ke_get_current_thread_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_get_current_thread_addr is null.\n");
+			 if (!mm_allocate_independent_pages_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_allocate_independent_pages_addr is null.\n");
+			 if (!mm_free_independent_pages_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_free_independent_pages_addr is null.\n");
 
 
 		 
-
+			  
 			if (!ki_preprocess_fault_addr||
 				!psp_exit_process_addr||
 				!mm_is_address_valid_ex_addr||
@@ -671,14 +735,21 @@ namespace utils
 				!io_allocate_mdl_addr||
 				!mm_probe_and_lock_pages_addr||
 				!mm_unlock_pages_addr||
-				!io_free_mdl_addr)
+				!io_free_mdl_addr||
+				!ke_get_current_irql_addr||
+				!ex_get_previous_mode_addr||
+				!ps_get_current_process_addr||
+				!ps_get_current_thread_addr||
+				!ke_get_current_thread_addr||
+				!mm_allocate_independent_pages_addr||
+				!mm_free_independent_pages_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
 
 			 
 
-
+		 
 
 
 			return STATUS_SUCCESS;

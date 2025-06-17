@@ -2953,6 +2953,742 @@ namespace utils
 			return cdxgi_swapchain_dwm_legacy_present_dwm_addr;
 		}
 
+	  
+		unsigned long long find_mm_allocate_independent_pages()
+		{
+			static unsigned long long mm_allocate_independent_pages_addr{};
+			if (mm_allocate_independent_pages_addr != 0)
+			{
+				return mm_allocate_independent_pages_addr;
+			}
+			auto ntoskrnl_base = module_info::ntoskrnl_base;
+			auto ntoskrnl_size = module_info::ntoskrnl_size;
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			//.text:  00000001403755D0 41 8B D6                                                        mov     edx, r14d
+			//.text : 00000001403755D3 B9 00 10 00 00                                                  mov     ecx, 1000h
+			//.text : 00000001403755D8 E8 83 01 3E 00                                                  call    MmAllocateIndependentPages; Call
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\xB9\x00\x50\x00\x00\x0F\xB7\x50\x54", "xxxxxxxxx"
+				);
+
+				temp_addr += 9;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\xB9\x00\x50\x00\x00\x0F\xB7\x50\x54", "xxxxxxxxx"
+				);
+				temp_addr += 9;
+
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\xB9\x00\x40\x00\x00\x0F\xB7\x50\x44", "xxxxxxxxx"
+				);
+
+				temp_addr += 9;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x0F\xB7\xD2\xB9\x00\x70\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x83\xCA\xFF\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
+					"xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
+					"xxxxxxxx"
+				);
+
+				temp_addr += 8;
+
+
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00\xE8",
+					"xxxxxxxxx"
+				);
+
+				temp_addr += 8;
+
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
+					"xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
+					"xxxxxxxx"
+				);
+
+				temp_addr += 8;
+				mm_allocate_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+			return mm_allocate_independent_pages_addr;
+		}
+		unsigned long long find_mm_free_independent_pages()
+		{
+			static unsigned long long mm_free_independent_pages_addr{};
+			if (mm_free_independent_pages_addr != 0)
+			{
+				return mm_free_independent_pages_addr;
+			}
+			auto ntoskrnl_base = module_info::ntoskrnl_base;
+			auto ntoskrnl_size = module_info::ntoskrnl_size;
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			//PAGE:000000014088EAF0 74 0A                                                           jz      short loc_14088EAFC; Jump if Zero(ZF = 1)
+			//PAGE:000000014088EAF2 BA 00 50 00 00                                                  mov     edx, 5000h
+			//PAGE :000000014088EAF7 E8 34 91 EC FF                                                call    MmFreeIndependentPages; Call Procedure
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+				temp_addr += 7;
+
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00", "xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+
+
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00", "xxxxxxx"
+				);
+
+				temp_addr += 7;
+
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00", "xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
+					"\x74\x0A\xBA\x00\x50\x00\x00",
+					"xxxxxxx"
+				);
+
+				temp_addr += 7;
+				mm_free_independent_pages_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+			return mm_free_independent_pages_addr;
+		}
 
 
 	}

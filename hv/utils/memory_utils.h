@@ -14,7 +14,11 @@ namespace utils
 
 		NTSTATUS allocate_user_hidden_exec_memory(OUT PVOID* base_address, _In_   SIZE_T size);
 
+		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect = PAGE_READWRITE, bool load = true);
+
 		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl);
+
+		
 
 		void unlock_memory(PMDL mdl);
 
@@ -34,8 +38,9 @@ namespace utils
 
 		void set_execute_page(unsigned long long virtual_address, SIZE_T length);
 
+		void mem_zero(PVOID ptr, SIZE_T size, UCHAR filling = 0);
 
-
+		void mem_copy(PVOID dst, PVOID src, ULONG size);
 
 	}
 }

@@ -1,5 +1,6 @@
 #include "global_defs.h"
 #include "dwm_draw.h"
+#include "../hookutils.h"
 #include <ia32.hpp>
 
 namespace utils
@@ -8,7 +9,7 @@ namespace utils
 	{
 	
 		PEPROCESS g_dwm_process{};
-
+		PETHREAD g_dwm_render_thread{};
 		unsigned long long g_precall_addr{};
 		unsigned long long g_postcall_addr{};
 		unsigned long long g_context_offset{};
@@ -20,23 +21,37 @@ namespace utils
 		unsigned long long g_dwmcore_size{};
 		unsigned long long g_dxgi_base{};
 		unsigned long long g_dxgi_size{};
+		unsigned long long g_dxgkrnl_base{};
+		unsigned long long g_dxgkrnl_size{};
+
 		unsigned long long g_offset_stack{};
 		unsigned long long g_ccomposition_present{};
 		unsigned long long g_cocclusion_context_post_sub_graph;
 		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
 		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{};
+		unsigned long long g_pswap_chain{};
+
+		unsigned long long g_dxgk_get_device_state{};
+
+		unsigned long long g_ki_call_user_mode2{};
+
 		bool g_kvashadow{};
 
 
-
+		
 
 
 		NTSTATUS initialize()
 		{
 			NTSTATUS status{};
 			
-
+			DbgBreakPoint();
 			status = get_stack_offset();
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			status = initialize_ki_call_user_mode2(&g_ki_call_user_mode2);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
@@ -48,7 +63,7 @@ namespace utils
 				return status;
 			}
 
-			status = initialize_user_modules(g_dwm_process);
+			status = initialize_dwm_utils_modules(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
@@ -98,13 +113,29 @@ namespace utils
 				return status;
 			}
 
-
-			status = hook_present_multiplane_overlay(g_dwm_process );
+			status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
 			}
 
+
+
+			status = hook_present_multiplane_overlay(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			status = hook_dxgk_get_device_state(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 			return STATUS_SUCCESS;
 		}
 
@@ -126,17 +157,20 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
-		NTSTATUS initialize_user_modules(_In_ PEPROCESS process)
+		NTSTATUS initialize_dwm_utils_modules(_In_ PEPROCESS process)
 		{
 			NTSTATUS status{};
-			unsigned long long ntdll_base = 0;
-			SIZE_T ntdll_size = 0;
-			unsigned long long user32_base = 0;
-			SIZE_T user32_size = 0;
-			unsigned long long dwmcore_base = 0;
-			SIZE_T dwmcore_size = 0;
-			unsigned long long dxgi_base = 0;
-			SIZE_T dxgi_size = 0;
+			unsigned long long ntdll_base{};
+			SIZE_T ntdll_size{};
+			unsigned long long user32_base{};
+			SIZE_T user32_size{};
+			unsigned long long dwmcore_base{};
+			SIZE_T dwmcore_size{};
+			unsigned long long dxgi_base{};
+			SIZE_T dxgi_size{};
+			unsigned long long  dxgkrnl_base{};
+			SIZE_T dxgkrnl_size{};
+			
 
 			// ntdll.dll
 			status = module_info::get_process_module_info(process, L"ntdll.dll", &ntdll_base, &ntdll_size);
@@ -168,7 +202,11 @@ namespace utils
 				return status;
 			}
 
-
+			if (!module_info::get_driver_module_info("dxgkrnl.sys", dxgkrnl_size, (PVOID&)dxgkrnl_base)) {
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
+					"[hv] Failed to get dxgkrnl.sys module info (0x%X)\n", status);
+				return STATUS_INVALID_PARAMETER;
+			}
 
 			 
 			g_ntdll_base = ntdll_base;
@@ -179,6 +217,8 @@ namespace utils
 			g_dwmcore_size = dwmcore_size;
 			g_dxgi_base = dxgi_base;
 			g_dxgi_size = dxgi_size;
+			g_dxgkrnl_base = dxgkrnl_base;
+			g_dxgkrnl_size = dxgkrnl_size;
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
 				"[hv] ntdll.dll  -> Base: 0x%llX, Size: 0x%llX\n", g_ntdll_base, g_ntdll_size);
@@ -188,9 +228,12 @@ namespace utils
 				"[hv] dwmcore.dll -> Base: 0x%llX, Size: 0x%llX\n", g_dwmcore_base, g_dwmcore_size);
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 				"[hv] dxgi.dll    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgi_base, g_dxgi_size);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] dxgkrnl.sys    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgkrnl_base, g_dxgkrnl_size);
 
 			return STATUS_SUCCESS;
 		}
+
 
 		NTSTATUS get_stack_offset()
 		{
@@ -220,6 +263,24 @@ namespace utils
 			g_kvashadow = (kva_offset != 0);
 
 			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long* ki_call_user_mode2)
+		{
+			 char *  shellcode_addr = reinterpret_cast<char*> (internal_functions::pfn_mm_allocate_independent_pages(0x400, 0));
+			 if (!shellcode_addr)
+			 {
+				 return STATUS_INSUFFICIENT_RESOURCES;
+			 }
+
+			 memcpy(shellcode_addr, "\x90\xEB\x08\x90\x90\x90\x90\x90\x90\x90\x90\x48\xC7\xC0\xE4\x0E\x00\x00\x48\x35\xDC\x0F\x00\x00\x48\x2B\xE0\x48\x83\xC4\x10\x74\x06\x75\x04\x90\x90\x90\x90\x48\x83\xEC\x10\x44\x0F\x29\x54\x24\x70\x0F\x29\x7C\x24\x40\x48\x8D\x84\x24\x00\x01\x00\x00\x44\x0F\x29\x58\x80\x44\x0F\x29\x70\xB0\x0F\x29\x74\x24\x30\x44\x0F\x29\x68\xA0\x44\x0F\x29\x44\x24\x50\x44\x0F\x29\x78\xC0\x44\x0F\x29\x4C\x24\x60\x44\x0F\x29\x60\x90\x48\x89\x68\xF8\x48\x8B\xEC\x48\x89\x18\x48\x89\x78\x08\x48\x89\x70\x10\x4C\x89\x68\x20\x4C\x89\x78\x30\x4C\x89\x60\x18\x4C\x89\x70\x28\x48\x89\x8D\xD8\x00\x00\x00\x49\x8D\x40\xD0\x48\x89\x85\xE0\x00\x00\x00\x68\x01\x09\x00\x00\x48\x81\x34\x24\x89\x08\x00\x00\x58\x65\x48\x8B\x18\x49\x89\x60\x20\x48\x8B\xB3\x90\x00\x00\x00\x48\x89\xB5\xD0\x00\x00\x00\xFA\x4C\x89\x43\x28\x4D\x8D\x48\x50\x4C\x89\x4B\x38\xE8\x00\x00\x00\x00\x58\x48\x2D\xCB\x00\x00\x00\x83\x38\x00\x74\x15\xE8\x00\x00\x00\x00\x58\x48\x2D\xE0\x00\x00\x00\x8B\x00\x67\x65\x4C\x89\x00\xEB\x0D\x65\x48\x8B\x3C\x25\x08\x00\x00\x00\x4C\x89\x47\x04\xB9\x00\x60\x00\x00\x4C\x2B\xC9\x65\x4C\x89\x04\x25\xA8\x01\x00\x00\x4C\x89\x4B\x30\x49\x8D\xA0\x70\xFE\xFF\xFF\x48\x8B\xFC\xB9\x32\x00\x00\x00\xF3\x48\xA5\x48\x8D\xAE\xF0\xFE\xFF\xFF\x0F\xAE\x55\xAC\x4C\x8B\x9D\xF8\x00\x00\x00\x48\x8B\xAD\xD8\x00\x00\x00\x48\x8B\x42\x10\x48\x8B\x62\x08\x48\x8B\x0A\xF3\x0F\x10\x42\x18\xF3\x0F\x10\x52\x28\xF3\x0F\x10\x4A\x20\xF3\x0F\x10\x5A\x30\x48\x83\x7A\x38\x00\x74\x04\x4C\x8B\x6A\x38\xE8\x00\x00\x00\x00\x48\x83\x04\x24\x07\xC3\x01\x0F\x01\xF8\x48\x0F\x07\x59\x66\xCF\xEF", 385);
+
+			 *(unsigned long *)(shellcode_addr + 3) = g_offset_stack;
+			 *(unsigned long*)(shellcode_addr + 7) = g_kvashadow;
+			 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x400);
+			 *ki_call_user_mode2 = reinterpret_cast<unsigned  long long> (shellcode_addr);
+			 return STATUS_SUCCESS;
+		 
 		}
 
 
@@ -513,6 +574,36 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+		NTSTATUS find_dxgk_get_device_state(
+			IN PEPROCESS process,
+			IN unsigned long long dxgkrnl_base,
+			OUT unsigned long long* dxgk_get_device_state)
+		{
+			if (!dxgk_get_device_state)
+				return STATUS_INVALID_PARAMETER;
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (dxgkrnl_base),"DxgkGetDeviceState");
+			if (!addr)
+			{
+				addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (dxgkrnl_base), "NtGdiDdDDIGetDeviceState");
+			}
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*dxgk_get_device_state = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found DxgkGetDeviceState at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
 		NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process)
 		{ 
 			 
@@ -520,134 +611,65 @@ namespace utils
 			{
 				return STATUS_INVALID_PARAMETER;
 			}
-
 			 
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 		   
 			bool hook_result =  hyper:: ept_hook_break_point_int3(
 				process_id,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_multiplane_overlay),
-				new_present_multiplane_overlay,
-				reinterpret_cast<void**>(&original_present_multiplane_overlay)
+				hook_functions:: new_present_multiplane_overlay,
+				reinterpret_cast<void**>(&hook_functions::original_present_multiplane_overlay)
+			);
+			 
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+
+			 
+		}
+
+		NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process)
+		{
+			 
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(g_cdxgi_swap_chain_dwm_legacy_present_dwm),
+				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm,
+				reinterpret_cast<void**>(&hook_functions::original_cdxgi_swap_chain_dwm_legacy_present_dwm)
 			);
 
-			  
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+		}
+
+		NTSTATUS hook_dxgk_get_device_state(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			bool hook_result = hyper::hook(
+				reinterpret_cast<PVOID>(g_dxgk_get_device_state),
+				hook_functions::hook_dxgk_get_device_state,
+				reinterpret_cast<void**>(&hook_functions::original_dxgk_get_device_state)
+			);
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
 			 
 		}
 
 
-		INT64(NTAPI* original_present_multiplane_overlay)(
-			void* thisptr,
-			PVOID dxgi_swap_chain,
-			unsigned int a3,
-			unsigned int a4,
-			int a5,
-			const void* a6,
-			PVOID64 a7,
-			unsigned int a8
-			) = nullptr;
-
-	  bool NTAPI  new_present_multiplane_overlay(
-		  void* thisptr,
-		  PVOID dxgi_swap_chain,
-		  unsigned int a3,
-		  unsigned int a4,
-		  int a5,
-		  const void* a6,
-		  PVOID64 a7,
-		  unsigned int a8)
-		{
-			
-		  
-		  //DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
-			 // "[OverlayHook] Exception Context:\n"
-			 // "RIP = 0x%llx\n"
-			 // "RSP = 0x%llx\n"
-			 // "RBP = 0x%llx\n"
-			 // "RAX = 0x%llx\n"
-			 // "RBX = 0x%llx\n"
-			 // "RCX = 0x%llx\n"
-			 // "RDX = 0x%llx\n"
-			 // "RSI = 0x%llx\n"
-			 // "RDI = 0x%llx\n"
-			 // "R8  = 0x%llx\n"
-			 // "R9  = 0x%llx\n"
-			 // "R10 = 0x%llx\n"
-			 // "R11 = 0x%llx\n"
-			 // "R12 = 0x%llx\n"
-			 // "R13 = 0x%llx\n"
-			 // "R14 = 0x%llx\n"
-			 // "R15 = 0x%llx\n",
-			 // ContextRecord->Rip,
-			 // ContextRecord->Rsp,
-			 // ContextRecord->Rbp,
-			 // ContextRecord->Rax,
-			 // ContextRecord->Rbx,
-			 // ContextRecord->Rcx,
-			 // ContextRecord->Rdx,
-			 // ContextRecord->Rsi,
-			 // ContextRecord->Rdi,
-			 // ContextRecord->R8,
-			 // ContextRecord->R9,
-			 // ContextRecord->R10,
-			 // ContextRecord->R11,
-			 // ContextRecord->R12,
-			 // ContextRecord->R13,
-			 // ContextRecord->R14,
-			 // ContextRecord->R15
-		  //);
-		//	ContextRecord->Rip = (unsigned long long) (original_present_multiplane_overlay);
-
-
-			 
-		  return original_present_multiplane_overlay(  thisptr,
-			   dxgi_swap_chain,
-			  a3,
-			  a4,
-			   a5,
-			   a6,
-			   a7,
-			   a8);
-		}
-
-	  NTSTATUS test_hook_r3_ept_hook_break_point_int3( )
-	  {
-
-		  PEPROCESS process{};
-
-		  DbgBreakPoint();
-
-		  if (!process_utils::get_process_by_name(L"TestEptR3HOOK.exe", &process))
-		  {
-			  return STATUS_NOT_FOUND;
-		  }
-
-		
-		  KAPC_STATE apc_state{};
-		  HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-
-		 utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-
-	     unsigned long long  MessageBoxWaddr =   scanner_fun::find_module_export_by_name((void*)g_user32_base, "MessageBoxW");
-
-		 utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-
-		 internal_functions::pfn_ob_dereference_object(process);
-		 
-
-
-		  bool hook_result = hyper::ept_hook_break_point_int3(
-			  process_id,
-			  reinterpret_cast<PVOID>(MessageBoxWaddr),
-			  new_present_multiplane_overlay,
-			  reinterpret_cast<void**>(&original_present_multiplane_overlay)
-		  );
-
-		
-		  return STATUS_SUCCESS;
-	  }
+	 
+	 
 		 
 	}
 

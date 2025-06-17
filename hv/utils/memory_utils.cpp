@@ -7,7 +7,7 @@ namespace utils
 {
 	namespace memory
 	{
-
+#define SizeAlign(Size) ((Size + 0xFFF) & 0xFFFFFFFFFFFFF000)
 
 
 		unsigned long long g_pte_base{};
@@ -68,9 +68,27 @@ namespace utils
 				MEM_COMMIT | MEM_RESERVE,
 				PAGE_EXECUTE_READWRITE
 			);
-
-			//set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
+			 
+			 //set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
 			return status;
+		}
+		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect , bool load  )
+		{
+			SIZE_T region_size = SizeAlign(size);
+
+			NTSTATUS status = internal_functions::pfn_zw_allocate_virtual_memory(
+				ZwCurrentProcess(),
+				base_address,
+				0,
+				&region_size,
+				MEM_COMMIT,
+				protect
+			);
+
+			if (load)
+				mem_zero(*base_address, region_size);
+			return status;
+
 		}
 
 		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl)
@@ -254,6 +272,12 @@ namespace utils
 
 
 
+		   void mem_zero(PVOID ptr, SIZE_T size, UCHAR filling  ) {
+			__stosb((PUCHAR)ptr, filling, size);
+		}
 
+		   void mem_copy(PVOID dst, PVOID src, ULONG size) {
+			   __movsb((PUCHAR)dst, (const PUCHAR)src, size);
+		   }
 	}
 }

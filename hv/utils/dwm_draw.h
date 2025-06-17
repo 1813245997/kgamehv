@@ -1,9 +1,11 @@
 #pragma once
+ 
 namespace utils
 {
 	namespace dwm_draw
 	{
 		extern PEPROCESS g_dwm_process;
+		extern PETHREAD g_dwm_render_thread ;
 		extern unsigned long long  g_precall_addr ;
 		extern unsigned long long  g_postcall_addr ;
 		extern unsigned long long g_context_offset;
@@ -20,17 +22,27 @@ namespace utils
 		extern unsigned long long g_cocclusion_context_post_sub_graph;
 		extern unsigned long long g_cdxgi_swapchain_present_multiplane_overlay ;
 		extern unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm ;
+		extern unsigned long long g_pswap_chain ;
 
+		extern unsigned long long g_dxgk_get_device_state ;
+
+		extern unsigned long long g_ki_call_user_mode2 ;
 
 		extern bool g_kvashadow ;
+
+	
 		
 		NTSTATUS initialize();
 
-		NTSTATUS initialize_user_modules(_In_ PEPROCESS process);
+		NTSTATUS  initialize_dwm_utils_modules(_In_ PEPROCESS process);
+
+		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long * ki_call_user_mode2);
 
 		NTSTATUS get_dwm_process(_Out_ PEPROCESS* process);
 
 		NTSTATUS get_stack_offset();
+
+
 
 		NTSTATUS find_precall_address(
 			IN PEPROCESS process,
@@ -68,24 +80,19 @@ namespace utils
 			IN unsigned long long dxgi_base,
 			OUT unsigned long long* cdxgi_swap_chain_dwm_legacy_present_dwm_out);
 
+		NTSTATUS find_dxgk_get_device_state(
+			IN PEPROCESS process, 
+			IN unsigned long long dxgkrnl_base,
+			OUT unsigned long long* dxgk_get_device_state);
+
+
+
+
 		 NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process);
 
-		 bool  __fastcall new_present_multiplane_overlay(
-			 _Inout_ PEXCEPTION_RECORD ExceptionRecord,
-			 _Inout_ PCONTEXT ContextRecord);
-
-		 extern  INT64(NTAPI* original_present_multiplane_overlay)(
-			 void* thisptr,
-			 PVOID dxgi_swap_chain,
-			 unsigned int a3,
-			 unsigned int a4,
-			 int a5,
-			 const void* a6,
-			 PVOID64 a7,
-			 unsigned int a8
-			 );
-
-		 NTSTATUS test_hook_r3_ept_hook_break_point_int3();
+		 NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process);
+ 
+		 NTSTATUS  hook_dxgk_get_device_state(IN PEPROCESS process);
 	 
 		
  	}
