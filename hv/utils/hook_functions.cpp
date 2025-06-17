@@ -3,7 +3,7 @@
 
 #include "hook_functions.h"
 #include "dwm_draw.h"
-
+#include "strong_dx.h"
 namespace hook_functions
 {
 
@@ -353,6 +353,8 @@ namespace hook_functions
 			{
 				return  original_dxgk_get_device_state(unnamedParam1);
 			}
+			DbgBreakPoint();
+			utils::strong_dx::draw_utils();
 			//utils::dwm_draw::g_dwm_render_thread= utils::internal_functions::
 	/*		if ()
 			{

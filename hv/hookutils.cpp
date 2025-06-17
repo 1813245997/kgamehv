@@ -350,7 +350,7 @@ namespace hyper
 	 
 		PEPROCESS process = nullptr;
 		KAPC_STATE apc_state{};
-		PMDL mdl = nullptr;
+		 
 		uint64_t target_pa{};
 		bool is_64_bit = false;
 		bool succeed = false;
@@ -371,7 +371,7 @@ namespace hyper
 		 
 
 		
-		unsigned long long orignal_page = (unsigned long long)PAGE_ALIGN(target_api);
+		//unsigned long long orignal_page = (unsigned long long)PAGE_ALIGN(target_api);
 		unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
 	 
 	 

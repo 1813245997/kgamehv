@@ -63,5 +63,51 @@ namespace utils
 
 			return length;
 		}
+		 
+		void utf8_to_unicode(LPCSTR utf8, LPWSTR uni, SIZE_T max_count)
+		{
+			unsigned char v;
+			int unidx = 0;
+			for (int i = 0; v = utf8[i]; i++) {
+				if ((v & 0b10000000) == 0) {
+					uni[unidx] = v;
+				}
+				else if ((v & 0b11100000) == 0b11000000) {
+					unsigned short c = (unsigned short)((v & 0b00011111)) << 6;
+					v = utf8[++i];
+					if ((v & 0b11000000) == 0b10000000) {
+						c |= (v & 0b00111111);
+						uni[unidx] = c;
+					}
+					else
+						continue;
+				}
+				else if ((v & 0b11110000) == 0b11100000) {
+					unsigned short c = (unsigned short)((v & 0b00001111)) << 12;
+					v = utf8[++i];
+					if ((v & 0b11000000) == 0b10000000) {
+						c |= (unsigned short)((v & 0b00111111)) << 6;
+						v = utf8[++i];
+						if ((v & 0b11000000) == 0b10000000) {
+							c |= (unsigned short)((v & 0b00111111));
+							uni[unidx] = c;
+						}
+						else
+							continue;
+					}
+					else
+						continue;
+				}
+				else
+					continue;
+				unidx++;
+				if (unidx >= max_count)
+					break;
+			}
+			uni[unidx] = 0;
+			return;
+		}
+
+
 	}
 }

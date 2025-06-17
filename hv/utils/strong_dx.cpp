@@ -1,15 +1,19 @@
 #include "global_defs.h"
 #include "strong_dx.h"
-#include "LegacyRender.h"
+#include "../ia32-doc/ia32.hpp"
+#include "dx_draw/LegacyRender.h"
 #include "dx11.h"
+
 
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
+
 namespace utils
 {
 	namespace  strong_dx
-	{ 
+	{    
 
+			
 			bool g_initialized{};
 			PVOID g_desc_buffer{};
 			PVOID g_entity_buffer{};
@@ -18,6 +22,7 @@ namespace utils
 			PVOID g_pContext{};
 			PVOID g_pRenderTargetView;
 			PVOID g_Surface{};
+		 
 		NTSTATUS initialize(unsigned long long pswap_chain)
 		{
 			NTSTATUS status{};
@@ -129,8 +134,8 @@ namespace utils
 			unsigned  long long  get_desc_fun{};
 			unsigned  long long copy_resource_fun{};
 			unsigned  long long create_texture2D_fun{};
-			unsigned  long long copy_resource_fun{};
 			unsigned  long long map_fun{};
+			unsigned  long long umap_fun{};
 		
 			    get_desc_fun =	reinterpret_cast<unsigned long long > (utils::vfun_utils::get_vfunc(g_Surface,10));
 			memory::mem_zero(g_desc_buffer, 0X1000);
@@ -194,8 +199,45 @@ namespace utils
 			);
 
 			MapRes = *(D3D11_MAPPED_SUBRESOURCE*)g_desc_buffer;
+			memset(pagehit, 0, sizeof(pagehit));
+			memset(pagevaild, 0, sizeof(pagevaild));
 
-			 
+			cr4 cr4vlaue{ __readcr4() };
+			bool smap = cr4vlaue.smap_enable;
+			if (smap == true) {
+				cr4vlaue.smap_enable = false;
+				__writecr4(cr4vlaue.flags);
+			}
+
+			  
+			ByteRender rend;
+			rend.Setup(SDesc.Width, SDesc.Height, MapRes.Data);
+			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
+			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
+			if (smap == true) {
+
+				cr4vlaue.smap_enable = true;
+				__writecr4(cr4vlaue.flags);
+			}
+
+			umap_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 15));
+			user_call::call(
+				umap_fun,
+				reinterpret_cast<unsigned long long>(g_pContext),
+				reinterpret_cast<unsigned long long>(pTexture),
+				0,
+				0
+			);
+
+			user_call::call(
+				copy_resource_fun,
+				reinterpret_cast<unsigned long long>(g_pContext),
+				reinterpret_cast<unsigned long long>(g_Surface),
+				reinterpret_cast<unsigned long long>(pTexture)
+				, 0
+			);
+			vfun_utils::release(pTexture);
+			vfun_utils::release(g_Surface);
 		}
 
 	}

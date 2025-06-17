@@ -199,6 +199,21 @@
     <ClInclude Include="utils\dx11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\dx_draw\LegacyRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\pmcol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\kdxrender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exit-handlers.cpp">
@@ -333,6 +348,9 @@
     <ClCompile Include="utils\user_call_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="utils\dx_draw\kdxrender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="interrupt-handlers.asm">
@@ -354,6 +372,9 @@
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="lde64.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="utils\dx_draw\math.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

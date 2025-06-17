@@ -108,7 +108,7 @@
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
-      <AdditionalDependencies>LDE64x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>LDE64x64.lib;libcntpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Inf>
       <SpecifyArchitecture>false</SpecifyArchitecture>
@@ -137,6 +137,11 @@
     <ClInclude Include="hookutils.h" />
     <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
+    <ClInclude Include="utils\dx_draw\font.h" />
+    <ClInclude Include="utils\dx_draw\kdxrender.h" />
+    <ClInclude Include="utils\dx_draw\LegacyRender.h" />
+    <ClInclude Include="utils\dx_draw\math.h" />
+    <ClInclude Include="utils\dx_draw\pmcol.h" />
     <ClInclude Include="utils\feature_data_initializer.h" />
     <ClInclude Include="utils\feature_offset_initializer.h" />
     <ClInclude Include="utils\global_defs.h" />
@@ -195,6 +200,7 @@
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
     <ClCompile Include="utils\dwm_draw.cpp" />
+    <ClCompile Include="utils\dx_draw\kdxrender.cpp" />
     <ClCompile Include="utils\feature_data_initializer.cpp" />
     <ClCompile Include="utils\feature_offset_initializer.cpp" />
     <ClCompile Include="utils\hidden_module_list.cpp" />
@@ -239,6 +245,7 @@
     <MASM Include="exception-routines.asm" />
     <MASM Include="interrupt-handlers.asm" />
     <MASM Include="lde64.asm" />
+    <MASM Include="utils\dx_draw\math.asm" />
     <MASM Include="vm-exit.asm" />
     <MASM Include="vm-launch.asm" />
     <MASM Include="vmx.asm" />
