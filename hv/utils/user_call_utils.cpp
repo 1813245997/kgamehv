@@ -7,6 +7,13 @@ namespace utils
 	{
 		unsigned long long call(unsigned long long func_ptr, unsigned long long arg1, unsigned long long arg2, unsigned long long arg3, unsigned long long arg4)
 		{
+			unsigned long long current_irql = asm_read_cr8();
+			bool i_enable = asm_read_rflags() & 0x200;
+		 
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(PASSIVE_LEVEL);
+			}
+
 			void* cdata[9]{};
 			auto new_user_rsp =  thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
 			 
@@ -16,7 +23,15 @@ namespace utils
 			*(unsigned long long*)(new_user_rsp + 0x20 + (3 * 8)) = arg4;
 
 			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
-			
+
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(current_irql );
+			}
+
+			if (!i_enable)
+			{
+				asm_cli();
+			}
 			return ret;
 		}
 
@@ -30,6 +45,12 @@ namespace utils
 			unsigned long long arg5,
 			unsigned long long arg6)
 		{
+			unsigned long long current_irql = asm_read_cr8();
+			bool i_enable = asm_read_rflags() & 0x200;
+
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(PASSIVE_LEVEL);
+			}
 			void* cdata[9]{};
 			auto new_user_rsp = thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
 
@@ -42,6 +63,14 @@ namespace utils
 
 			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
 
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(current_irql);
+			}
+
+			if (!i_enable)
+			{
+				asm_cli();
+			}
 			return ret;
 		}
 

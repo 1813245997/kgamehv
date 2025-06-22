@@ -12,9 +12,11 @@ namespace utils
 
 		NTSTATUS initialize_pte_base();
 
-		NTSTATUS allocate_user_hidden_exec_memory(OUT PVOID* base_address, _In_   SIZE_T size);
+		NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process ,OUT PVOID* base_address, _In_   SIZE_T size, bool load = true, bool hide = true);
 
-		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect = PAGE_READWRITE, bool load = true);
+		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect = PAGE_READWRITE, bool load = true ,bool hide =true);
+
+		NTSTATUS free_user_memory(_In_ HANDLE process_id, _In_  PVOID base_address, _In_ SIZE_T size,  bool hide = true);
 
 		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl);
 

@@ -267,6 +267,13 @@ namespace utils
 				_In_ ULONG protect
 				) = nullptr;
 
+			    NTSTATUS(NTAPI* pfn_zw_free_virtual_memory)(
+				  _In_ HANDLE process_handle,
+				  _Inout_ PVOID* base_address,
+				  _Inout_ PSIZE_T region_size,
+				  _In_ ULONG free_type
+				  ) = nullptr;
+
 			   PVOID(NTAPI* pfn_ps_get_process_section_base_address)(
 				  _In_ PEPROCESS process
 				  ) = nullptr;
@@ -322,6 +329,84 @@ namespace utils
 					   IN SIZE_T number_of_bytes
 					   ) = nullptr;
 
+				    NTSTATUS
+				   (NTAPI* pfn_zw_open_file)(
+					   _Out_ PHANDLE file_handle,
+					   _In_ ACCESS_MASK desired_access,
+					   _In_ POBJECT_ATTRIBUTES object_attributes,
+					   _Out_ PIO_STATUS_BLOCK io_status_block,
+					   _In_ ULONG share_access,
+					   _In_ ULONG open_options
+					   ) = nullptr;
+
+					  NTSTATUS
+					(NTAPI* pfn_zw_create_section)(
+						_Out_ PHANDLE section_handle,
+						_In_ ACCESS_MASK desired_access,
+						_In_opt_ POBJECT_ATTRIBUTES object_attributes,
+						_In_opt_ PLARGE_INTEGER maximum_size,
+						_In_ ULONG section_page_protection,
+						_In_ ULONG allocation_attributes,
+						_In_opt_ HANDLE file_handle
+						) = nullptr;
+
+					  NTSTATUS
+					  (NTAPI* pfn_zw_map_view_of_section)(
+						  _In_ HANDLE section_handle,
+						  _In_ HANDLE process_handle,
+						  _Outptr_result_bytebuffer_(*view_size) PVOID* base_address,
+						  _In_ ULONG_PTR zero_bits,
+						  _In_ SIZE_T commit_size,
+						  _Inout_opt_ PLARGE_INTEGER section_offset,
+						  _Inout_ PSIZE_T view_size,
+						  _In_ SECTION_INHERIT inherit_disposition,
+						  _In_ ULONG allocation_type,
+						  _In_ ULONG win32_protect
+						  ) = nullptr;
+
+
+					    NTSTATUS
+					  (NTAPI* pfn_zw_close)(
+						  _In_ HANDLE handle
+						  ) = nullptr;
+
+					 NTSTATUS
+						(NTAPI* pfn_zw_unmap_view_of_section)(
+							_In_ HANDLE process_handle,
+							_In_opt_ PVOID base_address
+							) = nullptr;
+
+
+
+				    NTSTATUS
+				   (NTAPI* pfn_nt_query_virtual_memory)(
+					   _In_ HANDLE ProcessHandle,
+					   _In_opt_ PVOID BaseAddress,
+					   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+					   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+					   _In_ SIZE_T MemoryInformationLength,
+					   _Out_opt_ PSIZE_T ReturnLength
+					   ) = nullptr;
+
+				  NTSTATUS
+					(NTAPI* pfn_nt_read_virtual_memory)(
+						_In_ HANDLE ProcessHandle,
+						_In_opt_ PVOID BaseAddress,
+						_Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+						_In_ SIZE_T NumberOfBytesToRead,
+						_Out_opt_ PSIZE_T NumberOfBytesRead
+						) = nullptr;
+
+				    NTSTATUS
+				  (NTAPI* pfn_zw_query_information_process)(
+					  _In_ HANDLE ProcessHandle,
+					  _In_ PROCESSINFOCLASS ProcessInformationClass,
+					  _Out_writes_bytes_(ProcessInformationLength) PVOID ProcessInformation,
+					  _In_ ULONG ProcessInformationLength,
+					  _Out_opt_ PULONG ReturnLength
+					  ) = nullptr;
+
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -375,6 +460,7 @@ namespace utils
 			unsigned long long ke_unstack_detach_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeUnstackDetachProcess");
 			unsigned long long ps_get_current_process_id_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcessId");
 			unsigned long long zw_allocate_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwAllocateVirtualMemory");
+			unsigned long long zw_free_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwFreeVirtualMemory");
 			unsigned long long ps_get_process_section_base_address_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessSectionBaseAddress");
 			unsigned long long io_allocate_mdl_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoAllocateMdl");
 			unsigned long long mm_probe_and_lock_pages_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "MmProbeAndLockPages");
@@ -385,7 +471,13 @@ namespace utils
 			unsigned long long ps_get_current_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcess");
 			unsigned long long ps_get_current_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetCurrentProcess");
 			unsigned long long ke_get_current_thread_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeGetCurrentThread");
-
+			unsigned long long zw_open_file_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwOpenFile");
+			unsigned long long zw_create_section_addr  = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwCreateSection");
+			unsigned long long zw_map_view_of_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwMapViewOfSection");
+			unsigned long long zw_close_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwClose");
+			unsigned long long zw_unmap_view_of_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwUnmapViewOfSection");
+			unsigned long long zw_query_information_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryInformationProcess");
+			//unsigned long long zw_query_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryVirtualMemory");
 			 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
@@ -444,7 +536,13 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ps_get_current_process, ps_get_current_process_addr);
 			INIT_FUNC_PTR(pfn_ps_get_current_thread , ps_get_current_thread_addr);
 			INIT_FUNC_PTR(pfn_ke_get_current_thread, ke_get_current_thread_addr);
-			
+			INIT_FUNC_PTR(pfn_zw_open_file, zw_open_file_addr);
+			INIT_FUNC_PTR(pfn_zw_create_section, zw_create_section_addr);
+			INIT_FUNC_PTR(pfn_zw_map_view_of_section, zw_map_view_of_section_addr);
+			INIT_FUNC_PTR(pfn_zw_close, zw_close_addr);
+			INIT_FUNC_PTR(pfn_zw_unmap_view_of_section, zw_unmap_view_of_section_addr);
+			INIT_FUNC_PTR(pfn_zw_query_information_process, zw_query_information_process_addr);
+			INIT_FUNC_PTR(pfn_zw_free_virtual_memory, zw_free_virtual_memory_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -456,7 +554,11 @@ namespace utils
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
+			 
+			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
+			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
 
+		 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
@@ -521,8 +623,26 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_get_current_thread_addr      = %p\n", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_allocate_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_free_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_open_file_addr      = %p\n", reinterpret_cast<PVOID>(zw_open_file_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_create_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_create_section_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_map_view_of_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_map_view_of_section_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_close_addr      = %p\n", reinterpret_cast<PVOID>(zw_close_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_unmap_view_of_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_unmap_view_of_section_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_query_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(nt_query_virtual_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_read_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(nt_read_virtual_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_query_information_process_addr       = %p\n", reinterpret_cast<PVOID>(zw_query_information_process_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_free_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
 
-			
+			//zw_free_virtual_memory_addr
+			//zw_query_information_process_addr
+			//nt_read_virtual_memory_addr 
+			//nt_query_virtual_memory_addr
+
+			//zw_unmap_view_of_section_addr
+			//zw_close_addr
+			//zw_map_view_of_section_addr
+			//zw_create_section_addr
+			//zw_open_file_addr
 			//ps_get_current_thread_addr
 			//ps_get_current_process_addr
 			//ex_get_previous_mode_addr
@@ -544,8 +664,8 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
 			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
-
-
+			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
 
 			if (!ki_preprocess_fault_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
@@ -675,10 +795,26 @@ namespace utils
 				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_allocate_independent_pages_addr is null.\n");
 			 if (!mm_free_independent_pages_addr)
 				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_free_independent_pages_addr is null.\n");
+			 if (!zw_open_file_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_open_file_addr is null.\n");
+			 if(!zw_create_section_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_create_section_addr is null.\n");
+			 if(!zw_map_view_of_section_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_map_view_of_section_addr is null.\n");
+			 if (!zw_close_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_close_addr is null.\n");
+			 if (!zw_unmap_view_of_section_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_unmap_view_of_section_addr is null.\n");
+			 if(!nt_query_virtual_memory_addr)
+				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_query_virtual_memory_add is null.\n");
+			  if (!nt_read_virtual_memory_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_read_virtual_memory_addr is null.\n");
+			  if(!zw_query_information_process_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_information_process_addr is null.\n");
+			  if (!zw_free_virtual_memory_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_free_virtual_memory_addr is null.\n");
 
-
-		 
-			  
+				  //nt_read_virtual_memory_addr 
 			if (!ki_preprocess_fault_addr||
 				!psp_exit_process_addr||
 				!mm_is_address_valid_ex_addr||
@@ -742,7 +878,16 @@ namespace utils
 				!ps_get_current_thread_addr||
 				!ke_get_current_thread_addr||
 				!mm_allocate_independent_pages_addr||
-				!mm_free_independent_pages_addr)
+				!mm_free_independent_pages_addr||
+				!zw_open_file_addr||
+				!zw_create_section_addr||
+				!zw_map_view_of_section_addr||
+				!zw_close_addr||
+				!zw_unmap_view_of_section_addr||
+				!nt_query_virtual_memory_addr||
+				!nt_read_virtual_memory_addr||
+				!zw_query_information_process_addr||
+				!zw_free_virtual_memory_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

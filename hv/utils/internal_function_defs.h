@@ -269,6 +269,13 @@ namespace utils
 			_In_ ULONG protect
 			);
 
+		extern NTSTATUS(NTAPI* pfn_zw_free_virtual_memory)(
+			_In_ HANDLE process_handle,
+			_Inout_ PVOID* base_address,
+			_Inout_ PSIZE_T region_size,
+			_In_ ULONG free_type
+			);
+
 		extern PVOID(NTAPI* pfn_ps_get_process_section_base_address)(
 			_In_ PEPROCESS process
 			);
@@ -320,5 +327,84 @@ namespace utils
 			IN PVOID virtual_address,
 			IN SIZE_T number_of_bytes
 			);
+
+
+		extern NTSTATUS
+		(NTAPI* pfn_zw_open_file)(
+			_Out_ PHANDLE file_handle,
+			_In_ ACCESS_MASK desired_access,
+			_In_ POBJECT_ATTRIBUTES object_attributes,
+			_Out_ PIO_STATUS_BLOCK io_status_block,
+			_In_ ULONG share_access,
+			_In_ ULONG open_options
+			);
+
+		extern NTSTATUS
+		(NTAPI* pfn_zw_create_section)(
+			_Out_ PHANDLE section_handle,
+			_In_ ACCESS_MASK desired_access,
+			_In_opt_ POBJECT_ATTRIBUTES object_attributes,
+			_In_opt_ PLARGE_INTEGER maximum_size,
+			_In_ ULONG section_page_protection,
+			_In_ ULONG allocation_attributes,
+			_In_opt_ HANDLE file_handle
+			);
+
+		extern NTSTATUS
+		(NTAPI* pfn_zw_map_view_of_section)(
+			_In_ HANDLE section_handle,
+			_In_ HANDLE process_handle,
+			_Outptr_result_bytebuffer_(*view_size) PVOID* base_address,
+			_In_ ULONG_PTR zero_bits,
+			_In_ SIZE_T commit_size,
+			_Inout_opt_ PLARGE_INTEGER section_offset,
+			_Inout_ PSIZE_T view_size,
+			_In_ SECTION_INHERIT inherit_disposition,
+			_In_ ULONG allocation_type,
+			_In_ ULONG win32_protect
+			);
+
+		extern NTSTATUS
+		(NTAPI* pfn_zw_close)(
+			_In_ HANDLE handle
+			);
+
+ 
+		extern NTSTATUS
+		(NTAPI* pfn_zw_unmap_view_of_section)(
+			_In_ HANDLE process_handle,
+			_In_opt_ PVOID base_address
+			);
+
+
+		extern NTSTATUS
+		(NTAPI* pfn_nt_query_virtual_memory)(
+			_In_ HANDLE ProcessHandle,
+			_In_opt_ PVOID BaseAddress,
+			_In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+			_Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+			_In_ SIZE_T MemoryInformationLength,
+			_Out_opt_ PSIZE_T ReturnLength
+			);
+
+		extern NTSTATUS
+		(NTAPI* pfn_nt_read_virtual_memory)(
+			_In_ HANDLE ProcessHandle,
+			_In_opt_ PVOID BaseAddress,
+			_Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+			_In_ SIZE_T NumberOfBytesToRead,
+			_Out_opt_ PSIZE_T NumberOfBytesRead
+			);
+
+		extern NTSTATUS
+		(NTAPI* pfn_zw_query_information_process)(
+			_In_ HANDLE ProcessHandle,
+			_In_ PROCESSINFOCLASS ProcessInformationClass,
+			_Out_writes_bytes_(ProcessInformationLength) PVOID ProcessInformation,
+			_In_ ULONG ProcessInformationLength,
+			_Out_opt_ PULONG ReturnLength
+			);
+
+
 	} 
 }

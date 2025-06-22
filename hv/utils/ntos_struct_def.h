@@ -641,5 +641,13 @@ extern "C"
 	{
 		PPEB32 Wow64;
 	} WOW64_PROCESS, * PWOW64_PROCESS;
+
+	typedef struct _SSDT
+	{
+		LONG* ServiceTable;
+		PVOID CounterTable;
+		ULONG64 SyscallsNumber;
+		PVOID ArgumentTable;
+	}_SSDT, * PSSDT;
 }
 

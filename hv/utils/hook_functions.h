@@ -3,20 +3,7 @@
 namespace hook_functions
 {
 
-    NTSTATUS NTAPI hook_nt_open_process(
-        _Out_ PHANDLE ProcessHandle,
-        _In_ ACCESS_MASK DesiredAccess,
-        _In_ POBJECT_ATTRIBUTES ObjectAttributes,
-        _In_opt_ PCLIENT_ID ClientId
-    );
-
-    extern NTSTATUS(NTAPI* original_nt_open_process)(
-        _Out_ PHANDLE ProcessHandle,
-        _In_ ACCESS_MASK DesiredAccess,
-        _In_ POBJECT_ATTRIBUTES ObjectAttributes,
-        _In_opt_ PCLIENT_ID ClientId
-        );
-
+    
     /**
      * @brief Hook for KiPreprocessFault.
      */
@@ -155,5 +142,50 @@ namespace hook_functions
 		unsigned int a4,
 		const PVOID a5, unsigned int a6, PVOID64 a7, unsigned int a8,
 		PVOID a9, unsigned int a10);
+
+
+	HRESULT __fastcall  new_get_buffer(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
+
+	  NTSTATUS NTAPI  new_nt_query_virtual_memory (
+		_In_ HANDLE ProcessHandle,
+		_In_opt_ PVOID BaseAddress,
+		_In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+		_Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+		_In_ SIZE_T MemoryInformationLength,
+		_Out_opt_ PSIZE_T ReturnLength
+		);
+	   
+
+	  extern   NTSTATUS(NTAPI* original_nt_query_virtual_memory) (
+		_In_ HANDLE ProcessHandle,
+		_In_opt_ PVOID BaseAddress,
+		_In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+		_Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+		_In_ SIZE_T MemoryInformationLength,
+		_Out_opt_ PSIZE_T ReturnLength
+		);
+
+
+	  NTSTATUS NTAPI new_nt_read_virtual_memory (
+		  _In_ HANDLE ProcessHandle,
+		  _In_opt_ PVOID BaseAddress,
+		  _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+		  _In_ SIZE_T NumberOfBytesToRead,
+		  _Out_opt_ PSIZE_T NumberOfBytesRead
+		  );
+
+
+	  extern NTSTATUS(NTAPI* original_nt_read_virtual_memory)(
+		  _In_ HANDLE ProcessHandle,
+		  _In_opt_ PVOID BaseAddress,
+		  _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+		  _In_ SIZE_T NumberOfBytesToRead,
+		  _Out_opt_ PSIZE_T NumberOfBytesRead
+	  );
 
 }

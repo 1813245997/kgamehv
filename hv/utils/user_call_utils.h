@@ -18,6 +18,7 @@ namespace utils
 			unsigned long long arg4,
 			unsigned long long arg5,
 			unsigned long long arg6);
+
 		unsigned long long call2(
 			unsigned long long ptr, 
 			char* user_rsp, 

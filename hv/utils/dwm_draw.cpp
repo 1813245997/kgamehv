@@ -45,7 +45,7 @@ namespace utils
 		{
 			NTSTATUS status{};
 			
-			DbgBreakPoint();
+			 
 			status = get_stack_offset();
 			if (!NT_SUCCESS(status))
 			{
@@ -126,11 +126,11 @@ namespace utils
 			{
 				return status;
 			}
-			status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+		/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
-			}
+			}*/
 			status = hook_dxgk_get_device_state(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -665,6 +665,31 @@ namespace utils
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
 			 
+		}
+
+		NTSTATUS hook_get_buffer(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+			
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+
+			unsigned  long long get_buffer_fun = reinterpret_cast<unsigned long long>  (utils::vfun_utils::get_vfunc(reinterpret_cast<PVOID>(utils::dwm_draw::g_pswap_chain), 9));
+		 
+
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(get_buffer_fun),
+				hook_functions::new_get_buffer,
+				nullptr
+			);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+		
+			 
+		 
 		}
 
 

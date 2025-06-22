@@ -184,6 +184,95 @@ namespace utils
 			return status;
 		}
 
+		NTSTATUS map_user_module_to_kernel(const wchar_t* module_full_path, unsigned long long* base_address_out)
+		{
+			if (!module_full_path  )	
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			if (!base_address_out)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			HANDLE h_section = nullptr;
+			HANDLE h_file = nullptr;
+			UNICODE_STRING unicode_module_name;
+			PVOID base_address = nullptr;
+			SIZE_T view_size = 0;
+			IO_STATUS_BLOCK io_status_block{};
+			OBJECT_ATTRIBUTES object_attributes = {
+				sizeof(OBJECT_ATTRIBUTES),
+				nullptr,
+				&unicode_module_name,
+				OBJ_CASE_INSENSITIVE
+			};
+
+			utils::internal_functions::pfn_rtl_init_unicode_string(&unicode_module_name, module_full_path);
+
+			NTSTATUS status = utils::internal_functions::pfn_zw_open_file(
+				&h_file,
+				FILE_EXECUTE | SYNCHRONIZE,
+				&object_attributes,
+				&io_status_block,
+				FILE_SHARE_READ,
+				FILE_SYNCHRONOUS_IO_NONALERT
+			);
+			if (!NT_SUCCESS(status)) {
+				return status;
+			}
+
+			object_attributes.ObjectName = nullptr;
+
+			status = utils::internal_functions::pfn_zw_create_section(
+				&h_section,
+				SECTION_ALL_ACCESS,
+				&object_attributes,
+				nullptr,
+				PAGE_EXECUTE,
+				SEC_IMAGE,
+				h_file
+			);
+			if (!NT_SUCCESS(status)) {
+				ZwClose(h_file);
+				return status;
+			}
+
+			status = utils::internal_functions::pfn_zw_map_view_of_section(
+				h_section,
+				NtCurrentProcess(),
+				&base_address,
+				0,
+				0,
+				nullptr,
+				&view_size,
+				ViewShare,
+				0,
+				PAGE_READWRITE
+			);
+
+			utils::internal_functions::pfn_zw_close (h_section);
+			utils::internal_functions::pfn_zw_close(h_file);
+
+			if (!NT_SUCCESS(status)) {
+				return status;
+			}
+
+			*base_address_out = reinterpret_cast<unsigned long long>(base_address);
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS free_map_module(unsigned long long base_address)
+		{
+
+			 
+			return utils::internal_functions::pfn_zw_unmap_view_of_section(NtCurrentProcess(), reinterpret_cast<PVOID> (base_address));
+		}
+
+
+
 
 
 	 

@@ -91,10 +91,12 @@ namespace utils
 		 NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process);
 
 		 NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process);
+
+		 NTSTATUS  hook_get_buffer(IN PEPROCESS process);
  
 		 NTSTATUS  hook_dxgk_get_device_state(IN PEPROCESS process);
 	 
-		
+		 
  	}
 
 }

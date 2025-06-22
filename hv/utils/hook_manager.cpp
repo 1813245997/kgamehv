@@ -69,6 +69,24 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
 			);
 		}
+		
+		if (pfn_nt_query_virtual_memory)
+		{
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_query_virtual_memory),
+				hook_functions::new_nt_query_virtual_memory,
+				reinterpret_cast<void**>(&hook_functions::original_nt_query_virtual_memory)
+			);
+		}
+
+		if (pfn_nt_read_virtual_memory)
+		{
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_read_virtual_memory),
+				hook_functions::new_nt_read_virtual_memory,
+				reinterpret_cast<void**>(&hook_functions::original_nt_read_virtual_memory)
+			);
+		}
 
 		return STATUS_SUCCESS;
 	}

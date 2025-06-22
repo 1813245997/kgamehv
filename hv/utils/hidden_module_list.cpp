@@ -89,7 +89,7 @@ namespace utils
 			{
 				auto module_entry = CONTAINING_RECORD(entry, HIDDEN_MODULE_ENTRY, list_entry);
 				if (reinterpret_cast<UINT_PTR>(address) >= reinterpret_cast<UINT_PTR>(module_entry->module_base) &&
-					reinterpret_cast<UINT_PTR>(address) < reinterpret_cast<UINT_PTR>(module_entry->module_end))
+					reinterpret_cast<UINT_PTR>(address) <= reinterpret_cast<UINT_PTR>(module_entry->module_end))
 				{
 					return true;
 				}

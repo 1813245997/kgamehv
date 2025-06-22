@@ -31,8 +31,11 @@
 #include "feature_offset_initializer.h"
 #include "dwm_draw.h"
 #include "..\memory_pool.h"
-
+#include "time_utils.h"
+#include "cpu_registers.h"
 #include "strong_dx.h"
 #include "thread_utils.h"
 #include "vfun_utils.h"
 #include "user_call_utils.h"
+#include "sstd_utils.h"
+#include "hidden_user_memory_list.h"

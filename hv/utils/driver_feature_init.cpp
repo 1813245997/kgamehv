@@ -107,7 +107,19 @@ namespace utils
 			// 添加当前驱动模块为隐藏模块
 			 
 			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
-		 
+		    
+			//初始化 R3内存链表
+			utils::hidden_user_memory::initialize_hidden_user_memory();
+
+			// 初始化 DWM 绘制支持
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing DWM draw support...\n");
+			status = utils::dwm_draw::initialize();
+			if (!NT_SUCCESS(status))
+			{
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize DWM draw (0x%X).\n", status);
+				return status;
+			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] DWM draw initialized successfully.\n");
 
 			// 初始化所有 HOOK
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing hooks...\n");
@@ -119,15 +131,7 @@ namespace utils
 			}
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Hooks initialized successfully.\n");
 			 
-			// 初始化 DWM 绘制支持
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing DWM draw support...\n");
-			status = utils::dwm_draw::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize DWM draw (0x%X).\n", status);
-				return status;
-			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] DWM draw initialized successfully.\n");
+
 
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Driver initialization complete.\n");

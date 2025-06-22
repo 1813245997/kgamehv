@@ -66,7 +66,7 @@ public:
 			Glyph.bitmap = (BYTE*)(info + 1);
 			Glyph.bitmap_sz = info->bitmap_sz;
 			Glyph.stroke_sz = info->stroke_sz;
-			//g_FontList.push_back(Glyph);
+			 
 			g_FontIdxList[Glyph.Char] = fidx;
 			g_FontList[fidx] = Glyph;
 			fidx++;

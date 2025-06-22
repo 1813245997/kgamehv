@@ -21,7 +21,8 @@ namespace utils
 			_Out_ SIZE_T* module_size
 		);
 		
-
-
+		NTSTATUS map_user_module_to_kernel(const wchar_t* module_full_path, unsigned long long* base_address_out);
+		
+		NTSTATUS free_map_module(unsigned long long base_address);
 	}
 }
