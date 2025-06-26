@@ -22,9 +22,10 @@ namespace utils
 			PVOID g_pContext{};
 			PVOID g_pRenderTargetView;
 			PVOID g_Surface{};
-			unsigned  long long g_previous_render_time{};
-		  
+		 
+			bool g_should_hide_overlay = false;
 		   volatile LONG g_dwm_render_lock = 0;
+		 
 		NTSTATUS initialize(unsigned long long pswap_chain)
 		{
 			NTSTATUS status{};
@@ -47,11 +48,8 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 			g_swap_chain = reinterpret_cast<PVOID> (pswap_chain);
-			
 
-
-
-
+		 
 			status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
 			if (!NT_SUCCESS(status))
 			{
@@ -358,6 +356,41 @@ namespace utils
 			}
 
 			return false;
+		}
+
+		void draw_utils( )
+		{
+			static bool  has_hooked_get_buffer = false;
+		 
+			if (g_should_hide_overlay)
+			{
+				//DbgBreakPoint();
+				return;
+			}
+
+			// 防止并发调用
+			if (InterlockedCompareExchange(&g_dwm_render_lock, 1, 0) != 0)
+				return;
+
+			if (!NT_SUCCESS(initialize(utils::dwm_draw::g_pswap_chain)))
+			{
+				InterlockedExchange(&g_dwm_render_lock, 0);
+				return;
+			}
+
+			if (!has_hooked_get_buffer)
+			{
+				utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
+				has_hooked_get_buffer = true;
+			}
+
+			render_overlay_frame(draw_overlay_elements);
+			 
+			InterlockedExchange(&g_dwm_render_lock, 0);
+
+		 
+		 
+		
 		}
 
 		 

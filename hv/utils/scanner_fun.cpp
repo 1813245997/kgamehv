@@ -2219,6 +2219,375 @@ namespace utils
 			return cocclusion_context_post_sub_graph_addr;
 		}
 
+
+		unsigned long long find_cdxgi_swapchain_present_dwm(unsigned long long image_base)
+		{
+
+			unsigned long long cdxgi_swapchain_present_dwm_addr = 0;
+
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+
+				/*		temp_addr = signature_scanner::find_pattern_image(
+							image_base,
+							"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\x41\x30",
+							"xxxxxxxxxxxxxxxxxxx",
+							".text"
+						);*/
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+
+				/*	temp_addr = signature_scanner::find_pattern_image(
+						image_base,
+						"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\x41\x30",
+						"xxxxxxxxxxxxxxxxxxx",
+						".text"
+					);*/
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x18\x89\x54\x24\x10",
+					"xxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x18\x89\x54\x24\x10",
+					"xxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x18\x89\x54\x24\x10",
+					"xxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x18\x89\x54\x24\x10",
+					"xxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x44\x89\x44\x24\x18",
+					"xxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x44\x89\x44\x24\x18",
+					"xxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\xA0\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\xA0\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+				//OK
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x80\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x81\xEC\x90\x00\x00\x00",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\x6C\x24\xA0",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cdxgi_swapchain_present_dwm_addr = temp_addr;
+
+			}
+			break;
+			default:
+				break;
+			}
+
+			return cdxgi_swapchain_present_dwm_addr;
+		}
+
 		unsigned long long find_cdxgi_swapchain_present_multiplane_overlay(unsigned long long image_base)
 		{
 			unsigned long long cdxgi_swapchain_present_multiplane_overlay_addr = 0;

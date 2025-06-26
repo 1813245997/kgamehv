@@ -21,30 +21,47 @@ namespace hook_functions
 		_Inout_ PCONTEXT ContextRecord,
 		_In_ KPROCESSOR_MODE PreviousMode)
 	{
-		//不可以dprinftf 输出 因为是触发异常输出的
-		hyper::EptHookInfo* matched_hook_info = nullptr;
-		 
-		if (ExceptionRecord->ExceptionCode != STATUS_BREAKPOINT)
+		
+
+		BOOLEAN is_succeed = FALSE;
+
+		switch (ExceptionRecord->ExceptionCode)
+		{
+
+		case   STATUS_GUARD_PAGE_VIOLATION:
+		{
+			is_succeed = utils::falt_utils::handle_page_fault_exception(ExceptionRecord, ContextRecord, PreviousMode);
+
+			break;
+		}
+		case STATUS_BREAKPOINT:
+		{  
+			is_succeed = utils::falt_utils:: handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
+			break;
+		}
+
+		case   STATUS_SINGLE_STEP:
+		{
+			is_succeed = utils::falt_utils::handle_single_step_exception (ExceptionRecord, ContextRecord, PreviousMode);
+			break;
+		}
+
+
+		default:
+			break;
+		}
+
+		if (!is_succeed)
 		{
 			return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
 		}
+		
+	
+		return is_succeed;
+		
+		 
 
-		if (PreviousMode == MODE::UserMode)
-		{
-			if (!find_hook_break_point_int3(ExceptionRecord->ExceptionAddress, &matched_hook_info))
-			{
-				return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
-			}
-
-			using handler_fn_t =BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, hyper::EptHookInfo*);
-			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
-
-			if (handler(ExceptionRecord, ContextRecord, matched_hook_info))
-			{
-				return TRUE;  // 已处理
-			}
-		}
-		return original_ki_preprocess_fault(ExceptionRecord, ContextRecord, PreviousMode);
+		 
 	}
 
 
@@ -313,6 +330,29 @@ namespace hook_functions
 		   unsigned int a8
 		   ) = nullptr;
 
+	   BOOLEAN __fastcall new_present_dwm	
+	   (
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
+
+
+
+
+		   if (!utils::dwm_draw::g_pswap_chain)
+		   {
+			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
+
+		   }
+
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+
+		   return TRUE;
+	   }
+
 	   BOOLEAN  __fastcall new_present_multiplane_overlay(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
@@ -326,9 +366,7 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
-			
-			   
+			  
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -365,21 +403,78 @@ namespace hook_functions
 	   }
 
 
-	   HRESULT __fastcall  new_get_buffer(
+	   BOOLEAN __fastcall  new_get_buffer(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
-		   while (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) != 0)
-		   {
-			   LARGE_INTEGER larTime = {  };
-			   larTime.QuadPart = ((ULONG64)-10000) * 1000;
-			   KeDelayExecutionThread(KernelMode, FALSE, &larTime);
-		   }
-		   
+		   static volatile LONG g_screen_capture_count = 0;
 
-		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+		 
+		   utils::strong_dx::g_should_hide_overlay = true;
 
+
+		   ULONG count = InterlockedIncrement(&g_screen_capture_count);
+
+		 
+		   //  获取当前时间（休眠前）
+		   LARGE_INTEGER system_time_before = {};
+		   KeQuerySystemTime(&system_time_before);
+
+		   TIME_FIELDS time_fields_before;
+		   LARGE_INTEGER local_time_before;
+		   ExSystemTimeToLocalTime(&system_time_before, &local_time_before);
+		   RtlTimeToTimeFields(&local_time_before, &time_fields_before);
+
+		   /*  DbgPrintEx(77, 0, "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+				 time_fields_before.Year,
+				 time_fields_before.Month,
+				 time_fields_before.Day,
+				 time_fields_before.Hour,
+				 time_fields_before.Minute,
+				 time_fields_before.Second,
+				 time_fields_before.Milliseconds);*/
+
+
+		   utils::thread_utils::sleep(1);
+
+		   // 调用原始函数并设置返回值
+		   unsigned long long get_buffer_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
+		   unsigned long long usercall_retval_ptr = utils::user_call::call(
+			   get_buffer_fun, ContextRecord->Rcx, ContextRecord->Rdx, ContextRecord->R8, ContextRecord->R9);
+
+		   HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+		   ContextRecord->Rax = hr;
+		   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
+		   ContextRecord->Rsp += sizeof(ULONG64);
+
+		   // 获取当前时间（休眠后）
+		   LARGE_INTEGER system_time_after = {};
+		   KeQuerySystemTime(&system_time_after);
+
+		   TIME_FIELDS time_fields_after;
+		   LARGE_INTEGER local_time_after;
+		   ExSystemTimeToLocalTime(&system_time_after, &local_time_after);
+		   RtlTimeToTimeFields(&local_time_after, &time_fields_after);
+
+		   DbgPrintEx(77, 0, "[DWM-HOOK] After Sleep Time:  %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+			   time_fields_after.Year,
+			   time_fields_after.Month,
+			   time_fields_after.Day,
+			   time_fields_after.Hour,
+			   time_fields_after.Minute,
+			   time_fields_after.Second,
+			   time_fields_after.Milliseconds);
+
+		   DbgPrintEx(77, 0, "[DWM-HOOK] Screen capture attempt detected. Count=%lu RSP=0x%llX\n",
+			   count, ContextRecord->Rsp);
+		  
+
+		   utils::strong_dx::g_should_hide_overlay =false;
+		 
+
+		 
+	 
 		   return TRUE;
 	   }
 
@@ -431,29 +526,21 @@ namespace hook_functions
 			{
 				return  original_dxgk_get_device_state(unnamedParam1);
 			}
-			 
+			
+			if (!utils::dwm_draw::g_dwm_render_thread)
+			{
+				utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
+			}
+
+			if (utils::dwm_draw::g_dwm_render_thread != utils::internal_functions::pfn_ps_get_current_thread())
+			{
+				return  original_dxgk_get_device_state(unnamedParam1);
+			}
+			
+			//截图的时候 绘制 还是被截图到了 通过getbuffer截图
 			  
-
-			if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) != 0)
-			{
-				return  original_dxgk_get_device_state(unnamedParam1);
-			}
-
-			if (!NT_SUCCESS(utils::strong_dx::initialize(utils::dwm_draw::g_pswap_chain)))
-			{
-				return  original_dxgk_get_device_state(unnamedParam1);
-			}
-
-			if (!has_hooked_get_buffer)
-			{
-				 
-				utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
-				has_hooked_get_buffer = true;
-			}
-
-			utils::strong_dx::render_overlay_frame(utils::strong_dx::draw_overlay_elements);
-
-			InterlockedExchange(&utils::strong_dx::g_dwm_render_lock, 0);
+			utils::strong_dx:: draw_utils();
+		
 		
 		  
 		   return  original_dxgk_get_device_state(unnamedParam1);
@@ -580,5 +667,27 @@ namespace hook_functions
 
 
 		   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
+	   }
+
+
+	     NTSTATUS(NTAPI* original_nt_protect_virtual_memory)(
+		   _In_ HANDLE ProcessHandle,
+		   _Inout_ PVOID* BaseAddress,
+		   _Inout_ PSIZE_T NumberOfBytesToProtect,
+		   _In_ ULONG NewAccessProtection,
+		   _Out_ PULONG OldAccessProtection
+		   )=nullptr;
+
+	   NTSTATUS NTAPI  new_nt_protect_virtual_memory(
+		   _In_ HANDLE ProcessHandle,
+		   _Inout_ PVOID* BaseAddress,
+		   _Inout_ PSIZE_T NumberOfBytesToProtect,
+		   _In_ ULONG NewAccessProtection,
+		   _Out_ PULONG OldAccessProtection
+	   )
+	   {
+
+
+		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
 	   }
 }

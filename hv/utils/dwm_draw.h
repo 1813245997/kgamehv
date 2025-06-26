@@ -21,6 +21,7 @@ namespace utils
 		extern unsigned long long g_ccomposition_present ;
 		extern unsigned long long g_cocclusion_context_post_sub_graph;
 		extern unsigned long long g_cdxgi_swapchain_present_multiplane_overlay ;
+		extern unsigned long long g_cdxgi_swapchain_present_dwm;
 		extern unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm ;
 		extern unsigned long long g_pswap_chain ;
 
@@ -70,6 +71,11 @@ namespace utils
 			IN unsigned long long dwmcore_base,
 			OUT unsigned long long* cocclusion_context_post_sub_graph_addr_out);
 
+		NTSTATUS find_cdxgi_swapchain_present_dwm(
+			IN PEPROCESS process,
+			IN unsigned long long dxgi_base,
+			OUT unsigned long long* cdxgi_swapchain_present_dwm_out);
+
 		NTSTATUS  find_cdxgi_swapchain_present_multiplane_overlay(
 			IN PEPROCESS process,
 			IN unsigned long long dxgi_base,
@@ -86,7 +92,7 @@ namespace utils
 			OUT unsigned long long* dxgk_get_device_state);
 
 
-
+		NTSTATUS  hook_swapchain_present_dwm(IN PEPROCESS process);
 
 		 NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process);
 

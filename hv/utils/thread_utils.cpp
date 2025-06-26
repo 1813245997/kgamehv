@@ -10,5 +10,12 @@ namespace utils
 			auto trap_frame = *(KTRAP_FRAME**)(current_thread + 0x90);
 			return *(unsigned long long*)&trap_frame->Rsp;
 		}
+		void sleep(ULONG seconds)
+		{
+			LARGE_INTEGER larTime = {};
+			larTime.QuadPart = -10 * 1000 * 1000;
+			larTime.QuadPart *= seconds;
+			KeDelayExecutionThread(KernelMode, FALSE, &larTime);
+		}
 	}
 }

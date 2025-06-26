@@ -405,6 +405,12 @@ namespace utils
 			_Out_opt_ PULONG ReturnLength
 			);
 
-
+		extern NTSTATUS(NTAPI* pfn_nt_protect_virtual_memory)(
+			_In_ HANDLE ProcessHandle,
+			_Inout_ PVOID* BaseAddress,
+			_Inout_ PSIZE_T NumberOfBytesToProtect,
+			_In_ ULONG NewAccessProtection,
+			_Out_ PULONG OldAccessProtection
+			);
 	} 
 }

@@ -23,12 +23,14 @@ namespace utils
 		unsigned long long g_dxgi_size{};
 		unsigned long long g_dxgkrnl_base{};
 		unsigned long long g_dxgkrnl_size{};
-
 		unsigned long long g_offset_stack{};
 		unsigned long long g_ccomposition_present{};
 		unsigned long long g_cocclusion_context_post_sub_graph;
-		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
-		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{};
+		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{}; //CDXGISwapChain::PresentImplCore
+		unsigned long long g_cdxgi_swapchain_present_dwm{}; //CDXGISwapChain::PresentDWM
+		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{}; //CDXGISwapChain::PresentMultiplaneOverlay
+
+
 		unsigned long long g_pswap_chain{};
 
 		unsigned long long g_dxgk_get_device_state{};
@@ -37,6 +39,8 @@ namespace utils
 
 		bool g_kvashadow{};
 
+
+		//CDXGISwapChain::PresentImplCore
 
 		
 
@@ -100,7 +104,13 @@ namespace utils
 			{
 				return status;
 			}
-		 
+
+			status = find_cdxgi_swapchain_present_dwm(g_dwm_process, g_dxgi_base, &g_cdxgi_swapchain_present_dwm);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+
 			status = find_cdxgi_swapchain_present_multiplane_overlay(g_dwm_process, g_dxgi_base, &g_cdxgi_swapchain_present_multiplane_overlay);
 			if (!NT_SUCCESS(status))
 			{
@@ -120,6 +130,11 @@ namespace utils
 			}
 
 
+			status = hook_swapchain_present_dwm(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 
 			status = hook_present_multiplane_overlay(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -521,6 +536,32 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+
+		NTSTATUS find_cdxgi_swapchain_present_dwm(
+			IN PEPROCESS process,
+			IN unsigned long long dxgi_base,
+			OUT unsigned long long* cdxgi_swapchain_present_dwm_out)
+		{
+			if (!cdxgi_swapchain_present_dwm_out)
+				return STATUS_INVALID_PARAMETER;
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_cdxgi_swapchain_present_dwm(dxgi_base);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*cdxgi_swapchain_present_dwm_out = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found CDXGISwapChain::PresentDWM at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
 		NTSTATUS  find_cdxgi_swapchain_present_multiplane_overlay(
 			IN PEPROCESS process,
 			IN unsigned long long dxgi_base,
@@ -602,6 +643,28 @@ namespace utils
 				"[hv] Found DxgkGetDeviceState at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS  hook_swapchain_present_dwm(IN PEPROCESS process)
+		{
+
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_dwm),
+				hook_functions::new_present_dwm,
+				NULL
+			);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+
 		}
 
 		NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process)

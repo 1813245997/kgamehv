@@ -113,6 +113,11 @@ namespace hook_functions
 	extern __int64(__fastcall* original_dxgk_get_device_state)(_Inout_ PVOID unnamedParam1);
 
 
+	BOOLEAN __fastcall new_present_dwm(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
 
 	BOOLEAN  __fastcall new_present_multiplane_overlay(
 		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
@@ -144,7 +149,7 @@ namespace hook_functions
 		PVOID a9, unsigned int a10);
 
 
-	HRESULT __fastcall  new_get_buffer(
+	BOOLEAN __fastcall  new_get_buffer(
 		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		_Inout_ PCONTEXT ContextRecord,
 		_Inout_ hyper::EptHookInfo* matched_hook_info);
@@ -188,4 +193,19 @@ namespace hook_functions
 		  _Out_opt_ PSIZE_T NumberOfBytesRead
 	  );
 
+	  NTSTATUS NTAPI  new_nt_protect_virtual_memory (
+		  _In_ HANDLE ProcessHandle,
+		  _Inout_ PVOID* BaseAddress,
+		  _Inout_ PSIZE_T NumberOfBytesToProtect,
+		  _In_ ULONG NewAccessProtection,
+		  _Out_ PULONG OldAccessProtection
+		  );
+
+	  extern  NTSTATUS(NTAPI* original_nt_protect_virtual_memory)(
+		  _In_ HANDLE ProcessHandle,
+		  _Inout_ PVOID* BaseAddress,
+		  _Inout_ PSIZE_T NumberOfBytesToProtect,
+		  _In_ ULONG NewAccessProtection,
+		  _Out_ PULONG OldAccessProtection
+		  );
 }

@@ -407,6 +407,15 @@ namespace utils
 					  ) = nullptr;
 
 
+					  NTSTATUS(NTAPI* pfn_nt_protect_virtual_memory)(
+						_In_ HANDLE ProcessHandle,
+						_Inout_ PVOID* BaseAddress,
+						_Inout_ PSIZE_T NumberOfBytesToProtect,
+						_In_ ULONG NewAccessProtection,
+						_Out_ PULONG OldAccessProtection
+						) = nullptr;
+
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -557,8 +566,8 @@ namespace utils
 			 
 			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
-
-		 
+			unsigned long long nt_protect_virtual_memory = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
+			 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
@@ -632,7 +641,7 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_read_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(nt_read_virtual_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_query_information_process_addr       = %p\n", reinterpret_cast<PVOID>(zw_query_information_process_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_free_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
-
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_protect_virtual_memory       = %p\n", reinterpret_cast<PVOID>(nt_protect_virtual_memory));
 			//zw_free_virtual_memory_addr
 			//zw_query_information_process_addr
 			//nt_read_virtual_memory_addr 
@@ -666,6 +675,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory);
 
 			if (!ki_preprocess_fault_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
@@ -813,6 +823,8 @@ namespace utils
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_information_process_addr is null.\n");
 			  if (!zw_free_virtual_memory_addr)
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_free_virtual_memory_addr is null.\n");
+			  if (!nt_protect_virtual_memory)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_protect_virtual_memory is null.\n");
 
 				  //nt_read_virtual_memory_addr 
 			if (!ki_preprocess_fault_addr||
@@ -887,7 +899,8 @@ namespace utils
 				!nt_query_virtual_memory_addr||
 				!nt_read_virtual_memory_addr||
 				!zw_query_information_process_addr||
-				!zw_free_virtual_memory_addr)
+				!zw_free_virtual_memory_addr||
+				!nt_protect_virtual_memory)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
