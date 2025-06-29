@@ -413,7 +413,7 @@ namespace hook_functions
 		 
 		   utils::strong_dx::g_should_hide_overlay = true;
 
-
+		  
 		   ULONG count = InterlockedIncrement(&g_screen_capture_count);
 
 		 
@@ -690,4 +690,85 @@ namespace hook_functions
 
 		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
 	   }
+
+
+
+
+	  // BOOLEAN __fastcall  new_d3d_kmt_open_resource(
+		 //  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		 //  _Inout_ PCONTEXT ContextRecord,
+		 //  _Inout_ hyper::EptHookInfo* matched_hook_info)
+	  // {
+
+		 ////NtGdiDdDDIOpenResource
+			//   if (utils::dwm_draw::g_dwm_process == utils:: internal_functions::pfn_ps_get_current_process())
+			//   {
+			//	   utils::strong_dx::g_should_hide_overlay = true;
+			//	   static volatile LONG g_screen_capture_count = 0;
+			//	   ULONG count = InterlockedIncrement(&g_screen_capture_count);
+
+
+			//	   unsigned long long d3d_kmt_open_resource_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
+			//	   unsigned long long usercall_retval_ptr = utils::user_call::call(
+			//		   d3d_kmt_open_resource_fun, ContextRecord->Rcx, 0, 0, 0);
+
+			//	   NTSTATUS status = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			//	   ContextRecord->Rax = status;
+			//	   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
+			//	   ContextRecord->Rsp += sizeof(ULONG64);
+
+			//	   DbgPrintEx(77, 0, "[DWM-HOOK] D3DKMTOpenResource intercepted - possible screen/resource capture attempt. Count=%lu RSP=0x%llX\n",
+			//		   count, ContextRecord->Rsp);
+
+			//	   utils::strong_dx::g_should_hide_overlay = false;
+
+			//	   return TRUE;
+			//   }
+			//   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+
+
+	
+
+		 //  return TRUE;
+
+	  // }
+	   extern NTSTATUS(NTAPI* original_nt_gdi_ddddi_open_resource)(
+		   _Inout_ PVOID OpenResourceParams
+		   ) = nullptr;
+
+	   NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource(
+		   _Inout_ PVOID OpenResourceParams
+	   )
+	   {
+
+		   HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id();
+
+		   // 输出当前调用该系统调用的进程 PID
+		   DbgPrintEx(77, 0, "[DWM-HOOK] NtGdiDdDDIOpenResource called from PID: %lu\n", (ULONG)(ULONG_PTR)pid);
+		 
+		   if (utils::dwm_draw::g_dwm_process != utils::internal_functions::pfn_ps_get_current_process())
+		   {
+			   return  original_nt_gdi_ddddi_open_resource(OpenResourceParams);
+		   }
+		   
+
+
+		   utils::strong_dx::g_should_hide_overlay = true;
+		   static volatile LONG g_screen_capture_count = 0;
+		   ULONG count = InterlockedIncrement(&g_screen_capture_count);
+
+		   DbgPrintEx(77, 0, "[DWM-HOOK] D3DKMTOpenResource intercepted - possible screen/resource capture attempt. Count=%lu OpenResourceParams=0x%p\n",
+			   count, OpenResourceParams);
+
+		   NTSTATUS status = original_nt_gdi_ddddi_open_resource(OpenResourceParams);
+		   utils::strong_dx::g_should_hide_overlay = false;
+
+		   return  status;
+		  
+		  
+
+		  
+	   }
+
+
 }

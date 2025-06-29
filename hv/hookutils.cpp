@@ -415,7 +415,7 @@ namespace hyper
 				}
 
 				 
-				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
 				{
 					 
 					  ExFreePool(hook_info);
@@ -481,7 +481,7 @@ namespace hyper
 		}
 		memset(hook_info, 0, sizeof(EptHookInfo));
 		 
-		if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+		if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
 		{
 			ExFreePool(page_ctx->fake_page_contents);
 			ExFreePool(page_ctx);
@@ -788,6 +788,61 @@ namespace hyper
 		}
 
 		return false;
+	}
+
+	bool unhook_all_ept_hooks_for_pid(_In_ HANDLE process_id)
+	{
+		if (!process_id)
+			return false;
+
+		bool found_any = false;
+
+		PLIST_ENTRY entry = g_ept_breakpoint_hook_list.Flink;
+		while (entry != &g_ept_breakpoint_hook_list)
+		{
+			 
+			auto* page_ctx = CONTAINING_RECORD(entry, EptHookedPageContext, PageEntry);
+			PLIST_ENTRY next_entry = entry->Flink;
+
+			 
+			if (page_ctx->process_id != process_id)
+			{
+				entry = next_entry;
+				continue;
+			}
+
+		 
+			PLIST_ENTRY func_entry = page_ctx->hooked_info_list.Flink;
+			while (func_entry != &page_ctx->hooked_info_list)
+			{
+				auto* hook_info = CONTAINING_RECORD(func_entry, EptHookInfo, list_entry);
+				func_entry = func_entry->Flink;
+
+				 
+				prevmcall::remove_ept_hook(hook_info->original_pa);
+				utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+				RemoveEntryList(&hook_info->list_entry);
+
+				if (hook_info->trampoline_va)
+					ExFreePool(hook_info->trampoline_va);
+				ExFreePool(hook_info);
+			}
+
+			 
+			RemoveEntryList(&page_ctx->PageEntry);
+
+			if (page_ctx->fake_page_contents)
+				ExFreePool(page_ctx->fake_page_contents);
+
+			ExFreePool(page_ctx);
+
+			found_any = true;
+			entry = next_entry;
+		}
+
+		return found_any;
+
+		 
 	}
 	 
 }

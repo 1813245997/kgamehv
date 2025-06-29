@@ -9,6 +9,8 @@ namespace utils
 		extern unsigned long long  g_precall_addr ;
 		extern unsigned long long  g_postcall_addr ;
 		extern unsigned long long g_context_offset;
+		extern unsigned long long g_gdi32_base;
+		extern unsigned long long g_gdi32_size;
 		extern unsigned long long g_ntdll_base ;
 		extern unsigned long long g_ntdll_size ;
 		extern unsigned long long g_user32_base ;
@@ -24,6 +26,7 @@ namespace utils
 		extern unsigned long long g_cdxgi_swapchain_present_dwm;
 		extern unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm ;
 		extern unsigned long long g_pswap_chain ;
+		 
 
 		extern unsigned long long g_dxgk_get_device_state ;
 
@@ -86,10 +89,14 @@ namespace utils
 			IN unsigned long long dxgi_base,
 			OUT unsigned long long* cdxgi_swap_chain_dwm_legacy_present_dwm_out);
 
+ 
+
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process, 
 			IN unsigned long long dxgkrnl_base,
 			OUT unsigned long long* dxgk_get_device_state);
+
+
 
 
 		NTSTATUS  hook_swapchain_present_dwm(IN PEPROCESS process);
@@ -102,6 +109,7 @@ namespace utils
  
 		 NTSTATUS  hook_dxgk_get_device_state(IN PEPROCESS process);
 	 
+	 	 NTSTATUS  hook_d3d_kmt_open_resource(IN PEPROCESS process);
 		 
  	}
 

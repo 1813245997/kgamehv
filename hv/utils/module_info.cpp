@@ -118,10 +118,7 @@ namespace utils
 					return STATUS_NOT_FOUND;
 				}
 
-				
-			  
-				
-
+				  
 				PLIST_ENTRY pList = reinterpret_cast<PLIST_ENTRY>(&pebldr->InLoadOrderModuleList);
 				PLDR_DATA_TABLE_ENTRY plistNext = reinterpret_cast<PLDR_DATA_TABLE_ENTRY>(pList->Flink);
 				while (reinterpret_cast<unsigned long long> (pList)!= reinterpret_cast<unsigned long long>(plistNext))

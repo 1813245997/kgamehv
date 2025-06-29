@@ -135,17 +135,21 @@
     <ClInclude Include="gdt.h" />
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
+    <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
+    <ClInclude Include="utils\ark_utils.h" />
     <ClInclude Include="utils\dx_draw\font.h" />
     <ClInclude Include="utils\dx_draw\kdxrender.h" />
     <ClInclude Include="utils\dx_draw\LegacyRender.h" />
     <ClInclude Include="utils\dx_draw\math.h" />
     <ClInclude Include="utils\dx_draw\pmcol.h" />
+    <ClInclude Include="utils\fault_uitls.h" />
     <ClInclude Include="utils\feature_data_initializer.h" />
     <ClInclude Include="utils\feature_offset_initializer.h" />
     <ClInclude Include="utils\global_defs.h" />
     <ClInclude Include="utils\hidden_module_list.h" />
+    <ClInclude Include="utils\hidden_user_memory_list.h" />
     <ClInclude Include="utils\hook_functions.h" />
     <ClInclude Include="utils\hook_manager.h" />
     <ClInclude Include="hv.h" />
@@ -170,6 +174,8 @@
     <ClInclude Include="utils\import_encrypt.h" />
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
+    <ClInclude Include="utils\LegacyRender.h" />
+    <ClInclude Include="utils\Math.h" />
     <ClInclude Include="utils\memory_utils.h" />
     <ClInclude Include="utils\module_info.h" />
     <ClInclude Include="utils\driver_feature_init.h" />
@@ -181,9 +187,11 @@
     <ClInclude Include="utils\scanner_fun.h" />
     <ClInclude Include="utils\scanner_offset.h" />
     <ClInclude Include="utils\signature_scanner.h" />
+    <ClInclude Include="utils\sstd_utils.h" />
     <ClInclude Include="utils\string_utils.h" />
     <ClInclude Include="utils\strong_dx.h" />
     <ClInclude Include="utils\thread_utils.h" />
+    <ClInclude Include="utils\time_utils.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\user_call_utils.h" />
     <ClInclude Include="utils\vfun_utils.h" />
@@ -198,12 +206,15 @@
     <ClCompile Include="exit-handlers.cpp" />
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
+    <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
     <ClCompile Include="utils\dwm_draw.cpp" />
     <ClCompile Include="utils\dx_draw\kdxrender.cpp" />
+    <ClCompile Include="utils\fault_uitls.cpp" />
     <ClCompile Include="utils\feature_data_initializer.cpp" />
     <ClCompile Include="utils\feature_offset_initializer.cpp" />
     <ClCompile Include="utils\hidden_module_list.cpp" />
+    <ClCompile Include="utils\hidden_user_memory_list.cpp" />
     <ClCompile Include="utils\hook_functions.cpp" />
     <ClCompile Include="utils\hook_manager.cpp" />
     <ClCompile Include="hv.cpp" />
@@ -232,9 +243,11 @@
     <ClCompile Include="utils\scanner_fun.cpp" />
     <ClCompile Include="utils\scanner_offset.cpp" />
     <ClCompile Include="utils\signature_scanner.cpp" />
+    <ClCompile Include="utils\sstd_utils.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />
     <ClCompile Include="utils\strong_dx.cpp" />
     <ClCompile Include="utils\thread_utils.cpp" />
+    <ClCompile Include="utils\time_utils.cpp" />
     <ClCompile Include="utils\user_call_utils.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
@@ -245,12 +258,14 @@
     <MASM Include="exception-routines.asm" />
     <MASM Include="interrupt-handlers.asm" />
     <MASM Include="lde64.asm" />
+    <MASM Include="utils\cpu_registers.asm" />
     <MASM Include="utils\dx_draw\math.asm" />
     <MASM Include="vm-exit.asm" />
     <MASM Include="vm-launch.asm" />
     <MASM Include="vmx.asm" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="cpp.hint" />
     <None Include="vmx.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

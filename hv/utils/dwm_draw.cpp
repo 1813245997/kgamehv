@@ -13,6 +13,8 @@ namespace utils
 		unsigned long long g_precall_addr{};
 		unsigned long long g_postcall_addr{};
 		unsigned long long g_context_offset{};
+		unsigned long long g_gdi32_base{};
+		unsigned long long g_gdi32_size{};
 		unsigned long long g_ntdll_base{};
 		unsigned long long g_ntdll_size{};
 		unsigned long long g_user32_base{};
@@ -29,7 +31,7 @@ namespace utils
 		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{}; //CDXGISwapChain::PresentImplCore
 		unsigned long long g_cdxgi_swapchain_present_dwm{}; //CDXGISwapChain::PresentDWM
 		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{}; //CDXGISwapChain::PresentMultiplaneOverlay
-
+		 
 
 		unsigned long long g_pswap_chain{};
 
@@ -123,11 +125,16 @@ namespace utils
 				return status;
 			}
 
+	 
+
+
 			status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
 			}
+
+			
 
 
 			status = hook_swapchain_present_dwm(g_dwm_process);
@@ -141,16 +148,32 @@ namespace utils
 			{
 				return status;
 			}
+
+
 		/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
 			}*/
+
+			/*status = hook_d3d_kmt_open_resource(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}*/
+
 			status = hook_dxgk_get_device_state(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
 			}
+
+	/*		status = hook_d3d_kmt_open_resource(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}*/
+
 			return STATUS_SUCCESS;
 		}
 
@@ -185,6 +208,8 @@ namespace utils
 			SIZE_T dxgi_size{};
 			unsigned long long  dxgkrnl_base{};
 			SIZE_T dxgkrnl_size{};
+			unsigned long long gdi32_base{};
+			SIZE_T gdi32_size{};
 			
 
 			// ntdll.dll
@@ -223,6 +248,13 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
+			status = module_info::get_process_module_info(process, L"gdi32.dll", &gdi32_base, &gdi32_size);
+			if (!NT_SUCCESS(status)) {
+				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
+					"[hv] Failed to get gdi32.dll module info (0x%X)\n", status);
+				return status;
+			}
+
 			 
 			g_ntdll_base = ntdll_base;
 			g_ntdll_size = ntdll_size;
@@ -232,8 +264,13 @@ namespace utils
 			g_dwmcore_size = dwmcore_size;
 			g_dxgi_base = dxgi_base;
 			g_dxgi_size = dxgi_size;
+			g_gdi32_base = gdi32_base;
+			g_gdi32_size = gdi32_size;
 			g_dxgkrnl_base = dxgkrnl_base;
 			g_dxgkrnl_size = dxgkrnl_size;
+
+
+			
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
 				"[hv] ntdll.dll  -> Base: 0x%llX, Size: 0x%llX\n", g_ntdll_base, g_ntdll_size);
@@ -244,7 +281,10 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 				"[hv] dxgi.dll    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgi_base, g_dxgi_size);
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] gdi32.dll   -> Base: 0x%llX, Size: 0x%llX\n", g_gdi32_base, g_gdi32_size);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 				"[hv] dxgkrnl.sys    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgkrnl_base, g_dxgkrnl_size);
+	
 
 			return STATUS_SUCCESS;
 		}
@@ -615,6 +655,8 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+	 
+
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process,
 			IN unsigned long long dxgkrnl_base,
@@ -753,6 +795,25 @@ namespace utils
 		
 			 
 		 
+		}
+
+		NTSTATUS hook_d3d_kmt_open_resource(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+			DbgBreakPoint();
+			bool hook_result = hyper::hook(
+				internal_functions::pfn_nt_gdi_ddddi_open_resource,
+				hook_functions::new_nt_gdi_ddddi_open_resource,
+				reinterpret_cast<void**>(&hook_functions::original_nt_gdi_ddddi_open_resource)
+			);
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 		}
 
 

@@ -415,6 +415,24 @@ namespace utils
 						_Out_ PULONG OldAccessProtection
 						) = nullptr;
 
+					  NTSTATUS(NTAPI* pfn_nt_create_file)(
+						  _Out_ PHANDLE FileHandle,
+						  _In_ ACCESS_MASK DesiredAccess,
+						  _In_ POBJECT_ATTRIBUTES ObjectAttributes,
+						  _Out_ PIO_STATUS_BLOCK IoStatusBlock,
+						  _In_opt_ PLARGE_INTEGER AllocationSize,
+						  _In_ ULONG FileAttributes,
+						  _In_ ULONG ShareAccess,
+						  _In_ ULONG CreateDisposition,
+						  _In_ ULONG CreateOptions,
+						  _In_reads_bytes_opt_(EaLength) PVOID EaBuffer,
+						  _In_ ULONG EaLength
+						  ) = nullptr;
+
+
+					   NTSTATUS(NTAPI* pfn_nt_gdi_ddddi_open_resource)(
+						  _Inout_ PVOID OpenResourceParams
+						  ) = nullptr;
 
 		NTSTATUS initialize_internal_functions()
 		{
@@ -486,6 +504,7 @@ namespace utils
 			unsigned long long zw_close_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwClose");
 			unsigned long long zw_unmap_view_of_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwUnmapViewOfSection");
 			unsigned long long zw_query_information_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryInformationProcess");
+			unsigned long long nt_create_file_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateFile");
 			//unsigned long long zw_query_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryVirtualMemory");
 			 
 
@@ -552,6 +571,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_zw_unmap_view_of_section, zw_unmap_view_of_section_addr);
 			INIT_FUNC_PTR(pfn_zw_query_information_process, zw_query_information_process_addr);
 			INIT_FUNC_PTR(pfn_zw_free_virtual_memory, zw_free_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_create_file, nt_create_file_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -566,7 +586,12 @@ namespace utils
 			 
 			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
-			unsigned long long nt_protect_virtual_memory = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
+			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
+
+
+			 
+			unsigned long long nt_gdi_ddddi_open_resource_addr =  ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
+
 			 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
@@ -641,27 +666,16 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_read_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(nt_read_virtual_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_query_information_process_addr       = %p\n", reinterpret_cast<PVOID>(zw_query_information_process_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_free_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_protect_virtual_memory       = %p\n", reinterpret_cast<PVOID>(nt_protect_virtual_memory));
-			//zw_free_virtual_memory_addr
-			//zw_query_information_process_addr
-			//nt_read_virtual_memory_addr 
-			//nt_query_virtual_memory_addr
-
-			//zw_unmap_view_of_section_addr
-			//zw_close_addr
-			//zw_map_view_of_section_addr
-			//zw_create_section_addr
-			//zw_open_file_addr
-			//ps_get_current_thread_addr
-			//ps_get_current_process_addr
-			//ex_get_previous_mode_addr
-			 //mm_probe_and_lock_pages_addr
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_protect_virtual_memory       = %p\n", reinterpret_cast<PVOID>(nt_protect_virtual_memory_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_create_file_addr       = %p\n", reinterpret_cast<PVOID>(nt_create_file_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_gdi_ddddi_open_resource_addr       = %p\n", reinterpret_cast<PVOID>(nt_gdi_ddddi_open_resource_addr));
+			 //nt_gdi_ddddi_open_resource_addr
 			
 
 		 
 		 
 
-			 
+		 
 		 
  
 
@@ -675,7 +689,8 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
-			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory);
+			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_gdi_ddddi_open_resource, nt_gdi_ddddi_open_resource_addr);
 
 			if (!ki_preprocess_fault_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
@@ -823,8 +838,12 @@ namespace utils
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_information_process_addr is null.\n");
 			  if (!zw_free_virtual_memory_addr)
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_free_virtual_memory_addr is null.\n");
-			  if (!nt_protect_virtual_memory)
+			  if (!nt_protect_virtual_memory_addr)
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_protect_virtual_memory is null.\n");
+			  if (!nt_create_file_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_file_addr is null.\n");
+			  if (!nt_gdi_ddddi_open_resource_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_gdi_ddddi_open_resource_addr is null.\n");
 
 				  //nt_read_virtual_memory_addr 
 			if (!ki_preprocess_fault_addr||
@@ -900,7 +919,9 @@ namespace utils
 				!nt_read_virtual_memory_addr||
 				!zw_query_information_process_addr||
 				!zw_free_virtual_memory_addr||
-				!nt_protect_virtual_memory)
+				!nt_protect_virtual_memory_addr||
+				!nt_create_file_addr||
+				!nt_gdi_ddddi_open_resource_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

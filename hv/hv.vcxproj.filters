@@ -199,19 +199,43 @@
     <ClInclude Include="utils\dx11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\LegacyRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\Math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\kdxrender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="utils\dx_draw\LegacyRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\dx_draw\math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\font.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\dx_draw\pmcol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\kdxrender.h">
+    <ClInclude Include="utils\time_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\cpu_registers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\sstd_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\hidden_user_memory_list.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\fault_uitls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\ark_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -351,6 +375,21 @@
     <ClCompile Include="utils\dx_draw\kdxrender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="utils\time_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\sstd_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hidden_user_memory_list.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\fault_uitls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\ark_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="interrupt-handlers.asm">
@@ -377,10 +416,14 @@
     <MASM Include="utils\dx_draw\math.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="utils\cpu_registers.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <None Include="vmx.inl">
       <Filter>Header Files</Filter>
     </None>
+    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

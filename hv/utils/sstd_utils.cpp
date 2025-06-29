@@ -80,6 +80,57 @@ namespace utils
 			return STATUS_NOT_SUPPORTED;
 		}
 
+		NTSTATUS get_win32_sys_call_number(IN const char* fun_name, OUT unsigned int* syscall_number)
+		{
+
+			if (!fun_name)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+			if (!syscall_number)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+			unsigned long long win32u_base = 0;
+
+			NTSTATUS status = module_info::map_user_module_to_kernel(L"\\SystemRoot\\System32\\win32u.dll", &win32u_base);
+			if (!NT_SUCCESS(status) || !win32u_base)
+			{
+				return status;
+			}
+
+			PUCHAR fun_addr = reinterpret_cast <PUCHAR>  (scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (win32u_base), fun_name));
+
+			if (!fun_addr)
+			{
+
+				module_info::free_map_module(win32u_base);
+				return STATUS_PROCEDURE_NOT_FOUND;
+			}
+
+
+#ifdef _X86_
+			// 32位下，mov eax, imm32 -> B8 xx xx xx xx
+			if (fun_addr[0] == 0xB8)
+			{
+				*syscall_number = *(unsigned int*)(fun_addr + 1);
+				module_info::free_map_module(ntdll_base);
+				return STATUS_SUCCESS;
+			}
+#elif defined(_AMD64_)
+			// 64位下，mov eax, imm32 -> 4C 8B D1 B8 xx xx xx xx
+			if (*(fun_addr + 3) == 0xB8)
+			{
+				*syscall_number = *(unsigned int*)(fun_addr + 4);
+				module_info::free_map_module(win32u_base);
+				return STATUS_SUCCESS;
+			}
+#endif 
+			module_info::free_map_module(win32u_base);
+			return STATUS_NOT_SUPPORTED;
+
+		}
+
 		bool get_ke_service_descriptor_table_addr(void* module_base, PSSDT* nt_table_out, PSSDT* win32k_table_out)
 		{ 
 			if (!module_base)
@@ -133,6 +184,25 @@ namespace utils
 			return syscall_number;
 		}
 
+		unsigned int get_win32_syscall_number_simple(const char* fun_name)
+		{
+			unsigned int syscall_number = 0;
+			if (!fun_name)
+			{
+				return 0;
+
+			}
+
+			NTSTATUS status = get_win32_sys_call_number  (fun_name, &syscall_number);
+			if (!NT_SUCCESS(status))
+			{
+				return 0;
+
+			}
+
+			return syscall_number;
+		}
+
 		unsigned long long get_ssdt_fun_addr(void* module_base, unsigned long syscall_number)
 		{
 			 
@@ -167,6 +237,59 @@ namespace utils
 			return function_address;
 		}
 
+		unsigned long long get_sssdt_fun_addr(void* module_base, unsigned long syscall_number)
+		{
+
+			if (!g_win32k_table)
+			{
+				PSSDT tmp_nt_table = nullptr;
+				PSSDT tmp_win32k_table = nullptr;
+
+				if (!get_ke_service_descriptor_table_addr(module_base, &tmp_nt_table, &tmp_win32k_table))
+				{
+					return 0;
+				}
+
+
+				g_ssdt_table = tmp_nt_table;
+				g_win32k_table = tmp_win32k_table;
+			}
+
+
+			PULONG service_table_base = reinterpret_cast<PULONG>(g_win32k_table->ServiceTable);
+			if (!service_table_base)
+			{
+				return 0;
+
+			}
+
+			// 获取系统调用号对应的偏移值
+			uint32_t dw_offset = service_table_base[syscall_number];
+
+			// 根据高位判断如何恢复函数地址
+			uint64_t offset = 0;
+			if (dw_offset & 0x80000000)
+			{
+				// 高位为 1，表示是负偏移（符号扩展）
+				offset = (static_cast<uint64_t>(dw_offset) >> 4) | 0xFFFFFFFFF0000000;
+			}
+			else
+			{
+				// 正常偏移
+				offset = static_cast<uint64_t>(dw_offset >> 4);
+			}
+
+			// 还原函数地址：SSDT 基址 + 偏移
+			uint64_t function_address = reinterpret_cast<uint64_t>(service_table_base) + offset;
+
+			return function_address;
+
+
+
+		 
+
+		}
+
 		unsigned long long get_syscall_fun_addr(void* module_base, const char* fun_name)
 		{
 			unsigned int syscall_number = get_syscall_number_simple(fun_name);
@@ -179,7 +302,33 @@ namespace utils
 			return fun_addr;
 		}
 
+		unsigned long long get_win32_syscall_fun_addr(void* module_base, const char* fun_name)
+		{
 
+			PEPROCESS process{};
+
+			 
+			if (!process_utils::get_process_by_name(L"csrss.exe", &process))
+			{
+				return 0;
+			}
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+			
+			unsigned int syscall_number = get_win32_syscall_number_simple(fun_name);
+			if (!syscall_number)
+			{
+				return 0;
+			}
+			syscall_number &= 0x0fff;
+			syscall_number -= 1;
+		   
+			unsigned long long fun_addr = get_sssdt_fun_addr(module_base, syscall_number);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			internal_functions::pfn_ob_dereference_object(process);
+			return fun_addr;
+		}
 
 	}
 

@@ -63,8 +63,11 @@ namespace hyper
 		hyper::EptHookInfo** out_hook_info);
 	
 	void unhook(_In_ void* target_api);
+
 	 
 	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
+
 
 	//DBG
 	bool ept_hook_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
@@ -76,6 +79,10 @@ namespace hyper
 	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
 	void hook_write_absolute_jump_r3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64);
+
+	bool unhook_all_ept_hooks_for_pid(_In_ HANDLE process_id);
+
+
 
 	void write_int1(uint8_t* address);
 

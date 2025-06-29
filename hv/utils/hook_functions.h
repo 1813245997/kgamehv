@@ -208,4 +208,14 @@ namespace hook_functions
 		  _In_ ULONG NewAccessProtection,
 		  _Out_ PULONG OldAccessProtection
 		  );
+
+
+	  NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource(
+		  _Inout_ PVOID OpenResourceParams
+	  );
+
+	  extern NTSTATUS(NTAPI* original_nt_gdi_ddddi_open_resource)(
+		  _Inout_ PVOID OpenResourceParams
+		  );
+	  
 }
