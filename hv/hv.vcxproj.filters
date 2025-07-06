@@ -238,6 +238,21 @@
     <ClInclude Include="utils\ark_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\csgogame\offsets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\csgogame\kcsgo2_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\csgogame\Kcsgo2_data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\window_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exit-handlers.cpp">
@@ -388,6 +403,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\ark_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\window_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

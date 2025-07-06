@@ -52,6 +52,47 @@ namespace utils
 
 			 
 		}
+
+		unsigned long long find_win32k_exprot_by_name(const char* export_name)
+		{
+			if (!export_name)
+			{
+				return 0;
+			}
+
+			PEPROCESS process = nullptr;
+			if (!process_utils::get_process_by_name(L"csrss.exe", &process))
+			{
+			 
+				return 0;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			PVOID win32kfull_base = nullptr;
+			size_t win32k_size = 0;
+
+			// 获取 win32kfull.sys 模块基址和大小
+			if (!module_info::get_driver_module_info("win32kfull.sys", win32k_size, win32kfull_base))
+			{
+			  
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				internal_functions::pfn_ob_dereference_object(process);
+				return 0;
+			}
+
+			// 查找导出函数地址
+			auto export_addr = scanner_fun::find_module_export_by_name(
+			    win32kfull_base,
+				export_name
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			internal_functions::pfn_ob_dereference_object(process);
+
+			return export_addr;
+		}
 		unsigned long long find_ki_preprocess_fault()
 		{
 			unsigned long long ki_preprocess_fault_addr{};
@@ -4057,6 +4098,11 @@ namespace utils
 				break;
 			}
 			return mm_free_independent_pages_addr;
+		}
+
+		unsigned long long find_open_resource()
+		{
+			return 0;
 		}
 
 

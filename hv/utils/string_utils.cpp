@@ -38,6 +38,71 @@ namespace utils
 			return FALSE;
 		}
 
+		BOOLEAN contains_substring_wchar(PWCHAR main_str, PWCHAR search_str, BOOLEAN case_insensitive)
+		{
+			if (!main_str || !search_str)
+				return FALSE;
+
+			SIZE_T main_len = 0;
+			while (main_str[main_len] != L'\0')
+				main_len++;
+
+			SIZE_T search_len = 0;
+			while (search_str[search_len] != L'\0')
+				search_len++;
+
+			if (main_len < search_len || search_len == 0)
+				return FALSE;
+
+			UNICODE_STRING target;
+			target.Buffer = search_str;
+			target.Length = (USHORT)(search_len * sizeof(WCHAR));
+			target.MaximumLength = target.Length;
+
+			// »¬¶¯´°¿ÚËÑË÷
+			for (SIZE_T i = 0; i <= main_len - search_len; ++i)
+			{
+				UNICODE_STRING slice;
+				slice.Buffer = &main_str[i];
+				slice.Length = (USHORT)(search_len * sizeof(WCHAR));
+				slice.MaximumLength = slice.Length;
+				if (internal_functions::pfn_rtl_equal_unicode_string(&slice, &target, case_insensitive))
+				{
+					return TRUE;
+				}
+			}
+
+			return FALSE;
+		}
+
+
+		BOOLEAN contains_unicode_substring(PUNICODE_STRING main_str, PUNICODE_STRING search_str, BOOLEAN case_insensitive)
+		{
+			if (!main_str || !search_str || main_str->Length < search_str->Length)
+			{
+				return FALSE;
+
+			}
+
+			USHORT max_offset = main_str->Length - search_str->Length;
+
+			UNICODE_STRING slice = {  };
+			slice.Length = search_str->Length;
+			slice.MaximumLength = search_str->Length;
+
+			for (USHORT i = 0; i <= max_offset; i += sizeof(WCHAR))
+			{
+				slice.Buffer = (PWCH)((PUCHAR)main_str->Buffer + i);
+
+				if (internal_functions::pfn_rtl_equal_unicode_string(&slice, search_str, case_insensitive))
+				{
+					return TRUE;
+				}
+			}
+
+			return FALSE;
+		}
+
 		BOOLEAN compare_unicode_strings(_In_ PUNICODE_STRING str1, _In_ PUNICODE_STRING str2, _In_ BOOLEAN case_insensitive)
 		{
 			if (!str1 || !str2 || !str1->Buffer || !str2->Buffer)

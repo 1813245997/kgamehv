@@ -17,5 +17,13 @@ namespace utils
 			larTime.QuadPart *= seconds;
 			KeDelayExecutionThread(KernelMode, FALSE, &larTime);
 		}
+
+		void sleep_ms(ULONG milliseconds)
+		{
+			LARGE_INTEGER larTime = {};
+			larTime.QuadPart = -10 * 1000; 
+			larTime.QuadPart *= milliseconds;
+			KeDelayExecutionThread(KernelMode, FALSE, &larTime);
+		}
 	}
 }

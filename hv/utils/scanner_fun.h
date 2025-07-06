@@ -5,6 +5,9 @@ namespace utils
 	{
 		unsigned long long find_module_export_by_name(void* module_base, const char* export_name);
 
+		unsigned long long find_win32k_exprot_by_name(const char* export_name);
+
+
 		unsigned long long find_ki_preprocess_fault();
 
 		unsigned long long find_mm_copy_memory();
@@ -36,6 +39,9 @@ namespace utils
 		unsigned long long find_mm_allocate_independent_pages();
 
 		unsigned long long find_mm_free_independent_pages();
+
+
+	
 
 		
 	}

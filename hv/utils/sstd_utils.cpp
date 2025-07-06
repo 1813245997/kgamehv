@@ -320,8 +320,10 @@ namespace utils
 			{
 				return 0;
 			}
+			
+		 
 			syscall_number &= 0x0fff;
-			syscall_number -= 1;
+			//syscall_number -= 1;
 		   
 			unsigned long long fun_addr = get_sssdt_fun_addr(module_base, syscall_number);
 

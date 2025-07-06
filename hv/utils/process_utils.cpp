@@ -255,6 +255,68 @@ namespace utils
 			return true;
 		}
 
+		bool is_process_name_match(_In_ PEPROCESS process, _In_ PUNICODE_STRING target_name, _In_ BOOLEAN case_insensitive)
+		{
+			bool result = false;
+
+			if (process == nullptr)
+			{
+				return false;
+			}
+
+			if (target_name == nullptr)
+			{
+				return result;
+			}
+
+			if (target_name->Buffer == nullptr)
+			{
+				return  result;
+			}
+
+			if (target_name->Length == 0)
+			{
+				return  result;
+			}
+
+			PUNICODE_STRING process_name = nullptr;
+
+			if (!get_process_name(process, &process_name))
+			{
+				return false;
+			}
+
+			
+			if (internal_functions::pfn_rtl_equal_unicode_string)
+			{
+				result = internal_functions::pfn_rtl_equal_unicode_string(process_name, target_name, case_insensitive);
+			}
+
+			// 清理分配的内存
+			if (process_name)
+			{
+				if (process_name->Buffer)
+					internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer, 0);
+
+				internal_functions::pfn_ex_free_pool_with_tag(process_name, 0);
+			}
+
+			return result;
+		}
+
+		bool is_process_name_match_wstr(_In_ PEPROCESS process, _In_ PWCHAR target_name_wstr, _In_ BOOLEAN case_insensitive)
+		{
+			if (target_name_wstr == nullptr)
+			{
+				return false;
+			}
+
+			UNICODE_STRING target_name_unicode;
+			RtlInitUnicodeString(&target_name_unicode, target_name_wstr);
+
+			return is_process_name_match(process, &target_name_unicode, case_insensitive);
+		}
+
 		PVOID get_process_peb32_process(_In_ PEPROCESS process)
 		{
 			if (!process)

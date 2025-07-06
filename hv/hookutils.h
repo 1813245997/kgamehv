@@ -20,6 +20,8 @@ namespace hyper
 		uint8_t* trampoline_va;      
 		uint8_t* fake_page_contents;       
 
+
+		uint8_t* original_instructions_backup;
 		uint64_t hook_size;
 
 	
@@ -70,7 +72,7 @@ namespace hyper
 
 
 	//DBG
-	bool ept_hook_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
+	bool ept_hook_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function, _Inout_ bool allocate_trampoline =true);
 
 	bool find_hook_break_point_int3(
 		_In_ void* rip,

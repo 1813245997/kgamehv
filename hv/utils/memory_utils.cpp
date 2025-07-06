@@ -86,9 +86,9 @@ namespace utils
 				}
 
 				// 输出调试信息
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+			/*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 					"[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					pid, start_addr, region_size);
+					pid, start_addr, region_size);*/
 			}
 			 //set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
 			return status;
@@ -113,9 +113,9 @@ namespace utils
 				unsigned long long end_addr = start_addr + region_size;
 
 				// 输出分配信息
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+			/*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 					"[allocate_user_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					pid, start_addr, region_size);
+					pid, start_addr, region_size);*/
 
 				if (load) {
 					mem_zero(*base_address, region_size);

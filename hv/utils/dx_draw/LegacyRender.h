@@ -289,7 +289,24 @@ public:
 		plotLineWidth(Start.x, Start.y, End.x, End.y, Color, 0);
 	}
 
-	void Rectangle(const Vector2& Start, const Vector2& Size, const FColor& Color, int Thickness = 1)
+	void Rectangle(float x, float y, float w, float h, const FColor& Color,  int thickness = 1)
+	{
+	 
+
+		int fix = thickness / 2;
+		thickness = OddNumber(thickness);
+
+		align = false;
+
+		plotLineWidth(x - fix, y, x + w + fix, y, Color, thickness);
+		plotLineWidth(x, y, x, y + h, Color, thickness);
+		plotLineWidth(x + w, y, x + w, y + h, Color, thickness);
+		plotLineWidth(x - fix, y + h, x + w + fix, y + h, Color, thickness);
+
+		align = true;
+	}
+
+	/*void Rectangle(const Vector2& Start, const Vector2& Size, const FColor& Color, int Thickness = 1)
 	{
 		int fix = Thickness / 2;
 		Thickness = OddNumber(Thickness);
@@ -302,10 +319,10 @@ public:
 		plotLineWidth(Start.x - fix, Start.y + Size.y, Start.x + Size.x + fix, Start.y + Size.y, Color, Thickness);
 
 		align = true;
-	}
+	}*/
 
 	void FillRectangle(const Vector2& arg_Start, const Vector2& arg_Size, const FColor& Color) {
-		Rectangle(arg_Start, arg_Size, Color);
+		Rectangle(arg_Start.x, arg_Start.y, arg_Size.x, arg_Start.y, Color);
 		return;
 	}
 

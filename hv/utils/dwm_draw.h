@@ -30,10 +30,17 @@ namespace utils
 
 		extern unsigned long long g_dxgk_get_device_state ;
 
+		extern unsigned long long g_dxgk_open_resource;
+
 		extern unsigned long long g_ki_call_user_mode2 ;
 
 		extern bool g_kvashadow ;
 
+		extern unsigned long long g_client_to_screen_fun ;
+		extern unsigned long long g_get_client_rect_fun ;
+		extern unsigned long long g_get_foreground_window_fun;
+		extern unsigned long long g_find_windoww_fun;
+		extern unsigned long long g_get_window_rect_fun ;
 	
 		
 		NTSTATUS initialize();
@@ -89,13 +96,43 @@ namespace utils
 			IN unsigned long long dxgi_base,
 			OUT unsigned long long* cdxgi_swap_chain_dwm_legacy_present_dwm_out);
 
- 
+		NTSTATUS find_find_windoww(
+			IN PEPROCESS process,
+			IN unsigned long long user32_base,
+			OUT unsigned long long* find_windoww_addr);
+
+		NTSTATUS find_client_to_screen(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* client_to_screen_addr
+		);
+
+		NTSTATUS find_get_client_rect(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_client_rect_addr
+		);
+
+		NTSTATUS find_get_foreground_window(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_foreground_window_addr
+		);
+
+		NTSTATUS find_get_window_rect(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_window_rect_addr);
 
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process, 
 			IN unsigned long long dxgkrnl_base,
 			OUT unsigned long long* dxgk_get_device_state);
 
+		NTSTATUS   find_open_resource(
+			IN PEPROCESS process,
+			IN unsigned long long dxgkrnl_base, 
+			OUT unsigned long long * dxgk_open_resource);
 
 
 
@@ -104,12 +141,16 @@ namespace utils
 		 NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process);
 
 		 NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process);
-
+		  
 		 NTSTATUS  hook_get_buffer(IN PEPROCESS process);
- 
+
+		 NTSTATUS  hook_cocclusion_context_post_sub_graph(IN PEPROCESS process);
+
 		 NTSTATUS  hook_dxgk_get_device_state(IN PEPROCESS process);
 	 
 	 	 NTSTATUS  hook_d3d_kmt_open_resource(IN PEPROCESS process);
+
+
 		 
  	}
 

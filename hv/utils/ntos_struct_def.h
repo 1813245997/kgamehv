@@ -649,5 +649,28 @@ extern "C"
 		ULONG64 SyscallsNumber;
 		PVOID ArgumentTable;
 	}_SSDT, * PSSDT;
+
+	typedef enum _WINDOWINFOCLASS {
+		WindowProcess,
+		WindowThread,
+		WindowActiveWindow,
+		WindowFocusWindow,
+		WindowIsHung,
+		WindowClientBase,
+		WindowIsForegroundThread,
+	} WINDOWINFOCLASS;
+
+	typedef struct tagPOINT
+	{
+		LONG  x;
+		LONG  y;
+	} POINT ;
+
+	typedef struct tagRECT {
+		LONG left;
+		LONG top;
+		LONG right;
+		LONG bottom;
+	} RECT;
 }
 

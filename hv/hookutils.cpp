@@ -63,17 +63,26 @@ namespace hyper
 		return true;
 	}
 
-	bool hook_instruction_memory_r3(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset, bool is64)
+	bool hook_instruction_memory_r3(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset, bool is64, _In_ bool allocate_trampoline)
 	{
+	 
 		unsigned __int64 hooked_instructions_size = LDE(target_function, 64);
 
 		hooked_function_info->hook_size = hooked_instructions_size;
 
-		// Copy overwritten instructions to trampoline buffer
-		RtlCopyMemory(hooked_function_info->trampoline_va, target_function, hooked_instructions_size);
 
-		hook_write_absolute_jump_r3(&hooked_function_info->trampoline_va[hooked_instructions_size], (unsigned __int64)target_function + hooked_instructions_size, is64);
- 
+		if (allocate_trampoline)
+		{// Copy overwritten instructions to trampoline buffer
+			RtlCopyMemory(hooked_function_info->trampoline_va, target_function, hooked_instructions_size);
+
+			hook_write_absolute_jump_r3(&hooked_function_info->trampoline_va[hooked_instructions_size], (unsigned __int64)target_function + hooked_instructions_size, is64);
+		}
+		hooked_function_info->original_instructions_backup = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, hooked_instructions_size, POOL_TAG));
+		if (!hooked_function_info->original_instructions_backup)
+		{
+			return false;
+		}
+		RtlCopyMemory(hooked_function_info->original_instructions_backup, target_function, hooked_instructions_size);
 		// Write icebp instruction to our shadow page memory to trigger vmexit.
 		write_int3(&hooked_function_info->fake_page_contents[page_offset]);
 
@@ -328,7 +337,7 @@ namespace hyper
 		}
 	}
 
-	bool ept_hook_break_point_int3( _In_ HANDLE process_id,  _In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function  )
+	bool ept_hook_break_point_int3( _In_ HANDLE process_id,  _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function , _Inout_ bool allocate_trampoline)
 	{
 
 	 
@@ -376,7 +385,7 @@ namespace hyper
 	 
 	 
 		SIZE_T bytes = 0;
-		NTSTATUS status = utils::internal_functions::pfn_mm_copy_virtual_memory(
+		   utils::internal_functions::pfn_mm_copy_virtual_memory(
 			process,
 			(PVOID)target_api,              // 任意用户态地址
 			process,
@@ -415,14 +424,19 @@ namespace hyper
 				}
 
 				 
-				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+				if (allocate_trampoline)
 				{
-					 
-					  ExFreePool(hook_info);
-					  goto clear;
-					 
+					if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+					{
+
+						ExFreePool(hook_info);
+						goto clear;
+
+					}
+					RtlZeroMemory(hook_info->trampoline_va, 0X1000);
 				}
-				RtlZeroMemory(hook_info->trampoline_va, 0X1000);
+
+			
 
 				hook_info->handler_va = new_api;
 				hook_info->original_va = target_api;
@@ -433,7 +447,8 @@ namespace hyper
 				if (origin_function)
 					*origin_function = hook_info->trampoline_va;
 				++page_ctx->ref_count;
-				 hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit);
+				 hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit,allocate_trampoline);
+
 				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 				utils::internal_functions::pfn_ob_dereference_object(process);
 				InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
@@ -480,16 +495,20 @@ namespace hyper
 		 
 		}
 		memset(hook_info, 0, sizeof(EptHookInfo));
-		 
-		if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+		if (allocate_trampoline)
 		{
-			ExFreePool(page_ctx->fake_page_contents);
-			ExFreePool(page_ctx);
-			ExFreePool(hook_info);
-			goto clear;
+			if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
+			{
+				ExFreePool(page_ctx->fake_page_contents);
+				ExFreePool(page_ctx);
+				ExFreePool(hook_info);
+				goto clear;
 
+			}
+			RtlZeroMemory(hook_info->trampoline_va, 0X1000);
 		}
-		RtlZeroMemory(hook_info->trampoline_va, 0X1000);
+	
+	
 		RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
 
 
@@ -508,9 +527,18 @@ namespace hyper
 		if (origin_function)
 			*origin_function = hook_info->trampoline_va;
 
-		 hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit);
+		 
 
-	 
+		 if (!hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit, allocate_trampoline))
+		 {
+			 ExFreePool(page_ctx->fake_page_contents);
+			 ExFreePool(page_ctx);
+			 ExFreePool(hook_info->original_instructions_backup);
+			 utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+			 ExFreePool(hook_info);
+			 goto clear;
+		 }
+		
 		prevmcall::install_ept_hook(hook_info->original_pa, hook_info->fake_pa);
 		 
 		
@@ -820,11 +848,18 @@ namespace hyper
 
 				 
 				prevmcall::remove_ept_hook(hook_info->original_pa);
-				utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
-				RemoveEntryList(&hook_info->list_entry);
-
 				if (hook_info->trampoline_va)
-					ExFreePool(hook_info->trampoline_va);
+				{
+					utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+
+				}
+
+				if (hook_info->original_instructions_backup)
+				{
+					ExFreePool(hook_info->original_instructions_backup);
+				}
+				
+				RemoveEntryList(&hook_info->list_entry);
 				ExFreePool(hook_info);
 			}
 

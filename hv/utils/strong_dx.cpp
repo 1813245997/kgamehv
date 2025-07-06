@@ -25,7 +25,7 @@ namespace utils
 		 
 			bool g_should_hide_overlay = false;
 		   volatile LONG g_dwm_render_lock = 0;
-		 
+		   FAST_MUTEX g_overlay_hide_mutex{};
 		NTSTATUS initialize(unsigned long long pswap_chain)
 		{
 			NTSTATUS status{};
@@ -48,7 +48,7 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 			g_swap_chain = reinterpret_cast<PVOID> (pswap_chain);
-
+			ExInitializeFastMutex(&g_overlay_hide_mutex);
 		 
 			status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
 			if (!NT_SUCCESS(status))
@@ -144,33 +144,8 @@ namespace utils
 			unsigned  long long map_fun{};
 			unsigned  long long umap_fun{};
 			unsigned long long   usercall_retval_ptr{};
-
-
-
-
-
-		/*	static unsigned long long slient_start_time = 0;
-			if (slient_start_time) {
-				if (utils::time_utils::get_real_time () - slient_start_time > 3000) {
-					slient_start_time = 0;
-				}
-				g_previous_render_time = utils::time_utils::get_real_time();
-				return;
-			}
-
-			if (utils::time_utils::get_real_time() - g_previous_render_time > 150) {
-				g_previous_render_time = utils::time_utils::get_real_time();
-				slient_start_time = utils::time_utils::get_real_time();
-				return;
-			}
-
-			g_previous_render_time = utils::time_utils::get_real_time();*/
-
-
-
-
-
-
+			 
+			 
 			get_desc_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_Surface, 10));
 			memory::mem_zero(desc_buffer, 0X1000);
 			user_call::call(
@@ -265,8 +240,15 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 		
+
+			if (!game::kcsgo2::initialize_game_data())
+			{
+				return;
+			}
+
 			memset(pagehit, 0, sizeof(pagehit));
 			memset(pagevaild, 0, sizeof(pagevaild));
+
 
 			bool i_enable = asm_read_rflags() & 0x200;
 			if (i_enable)
@@ -274,20 +256,53 @@ namespace utils
 				asm_cli();
 			}
 
-			cr4 cr4vlaue{  __readcr4() };
-			bool smap =  cr4vlaue.smap_enable;
+			cr4 cr4vlaue{ __readcr4() };
+			bool smap = cr4vlaue.smap_enable;
 
 			if (smap) {
 				cr4vlaue.smap_enable = 0;
 				__writecr4(cr4vlaue.flags);
 			}
-
 			ByteRender rend;
 			rend.Setup(width, height, data);
 
 
-			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
-			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
+			for ( size_t i =0;i<game::kcsgo2::g_player_count;i++)
+			{
+
+				int box_h{};
+				int box_w{};
+				int box_x{};
+				int box_y{};
+				Vector3 ov{}, ov2{};
+				game::kcsgo2struct::CPlayer& player =   game::kcsgo2::g_player_array[i];
+ 
+				if (!world_to_screen(&player.origin, &ov, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+				{
+					continue;
+				}
+				player.origin.z += 70;
+
+
+				if (!world_to_screen(&player.origin, &ov2, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+				{
+					continue; // 如果转换失败，跳过该玩家
+				}
+
+				// 绘制矩形框
+				int box_height = static_cast<int> (ov.y - ov2.y);   // 视角高
+				int box_weight = box_height / 2; // 视角宽
+				box_h = box_height;
+				box_w = box_weight;
+				box_x = static_cast<float> (ov2.x - box_weight / 2);
+				box_y = ov2.y;
+
+				  
+				rend.Rectangle(box_x, ov2.y, static_cast<float> (box_weight), static_cast<float> (box_height), FColor(0, 255, 0), 1);
+
+			}
+
+
 
 			if (smap)
 			{
@@ -299,6 +314,13 @@ namespace utils
 			{
 				asm_sti();
 			}
+
+			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
+			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
+
+		    
+
+			
 		}
 		PULONG64 get_user_rsp_ptr()
 		{
@@ -364,7 +386,7 @@ namespace utils
 		 
 			if (g_should_hide_overlay)
 			{
-				//DbgBreakPoint();
+				 
 				return;
 			}
 
@@ -384,8 +406,11 @@ namespace utils
 				has_hooked_get_buffer = true;
 			}
 
+			
 			render_overlay_frame(draw_overlay_elements);
-			 
+
+
+		 
 			InterlockedExchange(&g_dwm_render_lock, 0);
 
 		 

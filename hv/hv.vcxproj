@@ -136,6 +136,10 @@
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
     <ClInclude Include="utils\cpu_registers.h" />
+    <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
+    <ClInclude Include="utils\csgogame\Kcsgo2_data.h" />
+    <ClInclude Include="utils\csgogame\kcsgo2_utils.h" />
+    <ClInclude Include="utils\csgogame\offsets.h" />
     <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\ark_utils.h" />
@@ -196,6 +200,7 @@
     <ClInclude Include="utils\user_call_utils.h" />
     <ClInclude Include="utils\vfun_utils.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
+    <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vcpu.h" />
     <ClInclude Include="vmcs.h" />
@@ -207,6 +212,8 @@
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
+    <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp" />
+    <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
     <ClCompile Include="utils\dwm_draw.cpp" />
     <ClCompile Include="utils\dx_draw\kdxrender.cpp" />
@@ -250,6 +257,7 @@
     <ClCompile Include="utils\time_utils.cpp" />
     <ClCompile Include="utils\user_call_utils.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
+    <ClCompile Include="utils\window_utils.cpp" />
     <ClCompile Include="vcpu.cpp" />
     <ClCompile Include="vmcs.cpp" />
   </ItemGroup>

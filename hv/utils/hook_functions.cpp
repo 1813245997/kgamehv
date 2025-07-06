@@ -8,7 +8,7 @@ namespace hook_functions
 {
 
  
-
+#define STACK_CAPTURE_SIZE 32
 
 
  	BOOLEAN(__fastcall* original_ki_preprocess_fault)(
@@ -177,44 +177,32 @@ namespace hook_functions
 		 _In_ ULONG flags
 	 )
 	 {
-		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
-
-		 if (frames_captured == 0)
-		 {
-			 return frames_captured;
-		 }
-
-		 if (!callers)
-		 {
-			 return frames_captured;
-		 }
-
-
-		 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers))
-		 {
-			 return frames_captured;
-		 }
+		 
 
 		 ULONG process_id = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
 
+		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
+
 		 for (ULONG i = 0; i < frames_captured; ++i)
 		 {
-			 
-
 			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers[i]))
-				 continue;
-
-			 PVOID addr = callers[i];
-			 if (utils::hidden_modules::is_address_hidden(addr))
 			 {
-				 callers[i] = nullptr;
-				 return i;
+				 continue;
 			 }
 
-			 if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(addr)))
+			 PVOID addr = callers[i];
+
+			 if (utils::hidden_modules::is_address_hidden(addr) ||
+				 utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr)))
 			 {
-				 callers[i] = nullptr;
-				 return i;
+				 // 向前覆盖该帧
+				 for (ULONG j = i + 1; j < frames_captured; ++j)
+				 {
+					 callers[j - 1] = callers[j];
+				 }
+
+				 frames_captured--;
+				 i--; // 重新检查当前位置的新值
 			 }
 		 }
 
@@ -272,15 +260,19 @@ namespace hook_functions
 		   IN PEPROCESS process
 	   )
 	   {
-		   //特殊处理待处理
-	/*	   if (utils::dwm_draw::g_dwm_process == process )
+
+		   if (trim_address_space && process)
 		   {
 
-		   }*/
+			   if (game::kcsgo2::is_game_process(process))
+			   {
+				   game::kcsgo2::cleanup_game_process(process);
+			   }
 
-		   /*  HANDLE  process_id  =  utils::internal_functions::pfn_ps_get_process_id(process) ;
-			 hyper::unhook_all_ept_hooks_for_pid(process_id);
-			 utils::hidden_user_memory::remove_hidden_addresses_for_pid(reinterpret_cast<ULONG> (process_id));*/
+
+		   }
+	  
+		    
 		   return original_psp_exit_process(trim_address_space, process);
 
 	 }
@@ -307,16 +299,147 @@ namespace hook_functions
 		   _In_opt_ HANDLE file_handle
 	   )
 	   {
-		   return original_nt_create_section(
-			   section_handle,
-			   desired_access,
-			   object_attributes,
-			   maximum_size,
-			   section_page_protection,
-			   allocation_attributes,
-			   file_handle
+
+		   
+	/*	   NTSTATUS status{};
+		   PFILE_OBJECT pfile_object{};
+		   PEPROCESS  process{};
+		   POBJECT_NAME_INFORMATION ObjectNameInformation{};
+		   HANDLE  process_id{};
+		   process = utils::internal_functions::pfn_ps_get_current_process();
+		   process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		
+		   if (!file_handle)
+		   {
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+
+		   if (allocation_attributes != 0X1000000 )
+		   {
+			 
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+
+		   if (section_page_protection != PAGE_EXECUTE)
+		   {
+
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+		  status =  utils::internal_functions::pfn_ob_reference_object_by_handle (
+			   file_handle,
+			   0,  
+			   0,
+			   KernelMode,  
+			   (PVOID*)&pfile_object,
+			   NULL
 		   );
-	   }
+
+		  if (!NT_SUCCESS(status))
+		  {
+			  return original_nt_create_section(
+				  section_handle,
+				  desired_access,
+				  object_attributes,
+				  maximum_size,
+				  section_page_protection,
+				  allocation_attributes,
+				  file_handle
+			  );
+		  }
+		 
+
+		  status = utils::internal_functions::pfn_io_query_file_dos_device_name(pfile_object, &ObjectNameInformation);
+		  if (!NT_SUCCESS(status))
+		  {
+			  return original_nt_create_section(
+				  section_handle,
+				  desired_access,
+				  object_attributes,
+				  maximum_size,
+				  section_page_protection,
+				  allocation_attributes,
+				  file_handle
+			  );
+		  }
+	 
+		    
+		  utils::internal_functions::pfn_ob_dereference_object(pfile_object);
+
+
+		  if (!ObjectNameInformation)
+		  {
+
+			  return original_nt_create_section(
+				  section_handle,
+				  desired_access,
+				  object_attributes,
+				  maximum_size,
+				  section_page_protection,
+				  allocation_attributes,
+				  file_handle
+			  );
+		  }
+
+		  if (!utils::internal_functions::pfn_mm_is_address_valid_ex(ObjectNameInformation->Name.Buffer)
+			  )
+		  {
+			  return original_nt_create_section(
+				  section_handle,
+				  desired_access,
+				  object_attributes,
+				  maximum_size,
+				  section_page_protection,
+				  allocation_attributes,
+				  file_handle
+			  );
+		  }
+
+		   
+		  if (game::kcsgo2::is_game_module(process, ObjectNameInformation->Name.Buffer))
+		  {
+			    
+			  game::kcsgo2::initialize_game_process(process);
+			  
+		  }
+		   */
+		  return original_nt_create_section(
+			  section_handle,
+			  desired_access,
+			  object_attributes,
+			  maximum_size,
+			  section_page_protection,
+			  allocation_attributes,
+			  file_handle
+		  );
+
+	   } 
 
 
 	   INT64(__fastcall* original_present_multiplane_overlay)(
@@ -345,7 +468,6 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -367,6 +489,7 @@ namespace hook_functions
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
 			  
+			  
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -374,6 +497,30 @@ namespace hook_functions
 		   return TRUE;
 	   }
 
+	   BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+
+		   unsigned long long cocclusion_context_post_sub_graph_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
+		   unsigned long long usercall_retval_ptr = 
+			   utils::user_call::call(
+				   cocclusion_context_post_sub_graph_fun,
+				   ContextRecord->Rcx,
+				   ContextRecord->Rdx, 
+				   ContextRecord->R8,0);
+		   if (usercall_retval_ptr)
+		   {
+			   HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			   hr = -1;
+			   ContextRecord->Rax = hr;
+			   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
+			   ContextRecord->Rsp += sizeof(ULONG64);
+		   }
+		  
+		   return TRUE;
+	   }
 
 	      INT64(__fastcall* original_cdxgi_swap_chain_dwm_legacy_present_dwm)(
 		   void* pthis,
@@ -426,14 +573,14 @@ namespace hook_functions
 		   ExSystemTimeToLocalTime(&system_time_before, &local_time_before);
 		   RtlTimeToTimeFields(&local_time_before, &time_fields_before);
 
-		   /*  DbgPrintEx(77, 0, "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
-				 time_fields_before.Year,
-				 time_fields_before.Month,
-				 time_fields_before.Day,
-				 time_fields_before.Hour,
-				 time_fields_before.Minute,
-				 time_fields_before.Second,
-				 time_fields_before.Milliseconds);*/
+		   DbgPrintEx(77, 0, "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+			   time_fields_before.Year,
+			   time_fields_before.Month,
+			   time_fields_before.Day,
+			   time_fields_before.Hour,
+			   time_fields_before.Minute,
+			   time_fields_before.Second,
+			   time_fields_before.Milliseconds);
 
 
 		   utils::thread_utils::sleep(1);
@@ -472,11 +619,45 @@ namespace hook_functions
 
 		   utils::strong_dx::g_should_hide_overlay =false;
 		 
-
-		 
 	 
 		   return TRUE;
 	   }
+
+
+	   BOOLEAN  __fastcall new_nvfbc_create_ex(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
+			   "[NVFBC_HOOK_EX] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
+			   ContextRecord->Rcx,
+			   ContextRecord->Rdx,
+			   ContextRecord->R8,
+			   ContextRecord->R9);
+		   return TRUE;
+
+		  
+	   }
+
+	   BOOLEAN  __fastcall new_nvfbc_create(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
+			   "[NVFBC_HOOK] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
+			   ContextRecord->Rcx,
+			   ContextRecord->Rdx,
+			   ContextRecord->R8,
+			   ContextRecord->R9);
+		   return TRUE;
+		  
+	   }
+
 
 	   __int64(__fastcall* original_dxgk_get_device_state)(
 		   _Inout_ PVOID unnamedParam1)
@@ -693,81 +874,117 @@ namespace hook_functions
 
 
 
-
-	  // BOOLEAN __fastcall  new_d3d_kmt_open_resource(
-		 //  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		 //  _Inout_ PCONTEXT ContextRecord,
-		 //  _Inout_ hyper::EptHookInfo* matched_hook_info)
-	  // {
-
-		 ////NtGdiDdDDIOpenResource
-			//   if (utils::dwm_draw::g_dwm_process == utils:: internal_functions::pfn_ps_get_current_process())
-			//   {
-			//	   utils::strong_dx::g_should_hide_overlay = true;
-			//	   static volatile LONG g_screen_capture_count = 0;
-			//	   ULONG count = InterlockedIncrement(&g_screen_capture_count);
-
-
-			//	   unsigned long long d3d_kmt_open_resource_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
-			//	   unsigned long long usercall_retval_ptr = utils::user_call::call(
-			//		   d3d_kmt_open_resource_fun, ContextRecord->Rcx, 0, 0, 0);
-
-			//	   NTSTATUS status = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			//	   ContextRecord->Rax = status;
-			//	   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
-			//	   ContextRecord->Rsp += sizeof(ULONG64);
-
-			//	   DbgPrintEx(77, 0, "[DWM-HOOK] D3DKMTOpenResource intercepted - possible screen/resource capture attempt. Count=%lu RSP=0x%llX\n",
-			//		   count, ContextRecord->Rsp);
-
-			//	   utils::strong_dx::g_should_hide_overlay = false;
-
-			//	   return TRUE;
-			//   }
-			//   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-
-
-	
-
-		 //  return TRUE;
-
-	  // }
+ 
 	   extern NTSTATUS(NTAPI* original_nt_gdi_ddddi_open_resource)(
-		   _Inout_ PVOID OpenResourceParams
+		   ULONG64 a1,
+		   __int64 a2,
+		   __int64 a3,
+		   __int64 a4,
+		   unsigned int a5,
+		   __int64 a6,
+		   char a7,
+		   __int64 a8,
+		   __int64 a9,
+		   __int64 a10,
+		   __int64 a11,
+		   __int64 a12,
+		   __int64 a13,
+		   __int64 a14,
+		   __int64 a15
 		   ) = nullptr;
 
-	   NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource(
-		   _Inout_ PVOID OpenResourceParams
+	   NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource
+	   (	ULONG64 a1,
+		   __int64 a2,
+		   __int64 a3,
+		   __int64 a4,
+		   unsigned int a5,
+		   __int64 a6,
+		   char a7,
+		   __int64 a8,
+		   __int64 a9,
+		   __int64 a10,
+		   __int64 a11,
+		   __int64 a12,
+		   __int64 a13,
+		   __int64 a14,
+		   __int64 a15
+
 	   )
 	   {
+		//   HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id();
 
-		   HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id();
+		//   // 输出当前调用该系统调用的进程 PID
+	 //
 
-		   // 输出当前调用该系统调用的进程 PID
-		   DbgPrintEx(77, 0, "[DWM-HOOK] NtGdiDdDDIOpenResource called from PID: %lu\n", (ULONG)(ULONG_PTR)pid);
+		//   if (utils::dwm_draw::g_dwm_process != utils::internal_functions::pfn_ps_get_current_process())
+		//   {
+		//	   return original_nt_gdi_ddddi_open_resource(
+		//		   a1, a2, a3, a4, a5,
+		//		   a6, a7, a8, a9, a10,
+		//		   a11, a12, a13, a14, a15
+		//	   );
+		//   }
+
+		// 
+	 //
+		//   utils::strong_dx::g_should_hide_overlay = true;
+		// 
+		//   static volatile LONG g_screen_capture_count = 0;
+		//   ULONG count = InterlockedIncrement(&g_screen_capture_count);
+
+		//  
+		// //  DbgPrintEx(77, 0, "[DWM-HOOK] D3DKMTOpenResource intercepted - possible screen/resource capture attempt. Count=%lu, a1=0x%llx  PID:%p\n", count, a1 , pid);
+		// 
+		//   utils::thread_utils::sleep_ms(500);
+		   NTSTATUS status = original_nt_gdi_ddddi_open_resource(
+			   a1, a2, a3, a4, a5,
+			   a6, a7, a8, a9, a10,
+			   a11, a12, a13, a14, a15
+		   );
+		////   utils::thread_utils::sleep_ms(200);
+		//   utils::strong_dx::g_should_hide_overlay = false;
 		 
-		   if (utils::dwm_draw::g_dwm_process != utils::internal_functions::pfn_ps_get_current_process())
+		   return status;
+		  
+		  
+
+		  
+	   }
+
+	   BOOLEAN  __fastcall new_get_csgo_hp(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
+		   UNREFERENCED_PARAMETER(matched_hook_info);
+
+		   // 读取 RCX 中的本地玩家对象指针
+		   uintptr_t local_player = static_cast<uintptr_t>(ContextRecord->Rcx);
+
+		   // 安全检查
+		   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_player)))
 		   {
-			   return  original_nt_gdi_ddddi_open_resource(OpenResourceParams);
+			   return TRUE;
 		   }
-		   
 
+		   // HP 偏移
+		   constexpr size_t hp_offset = 0x344;
 
-		   utils::strong_dx::g_should_hide_overlay = true;
-		   static volatile LONG g_screen_capture_count = 0;
-		   ULONG count = InterlockedIncrement(&g_screen_capture_count);
+		   // 读取 HP 值
+		   int hp = 0;
+		   if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_player + hp_offset)))
+		   {
+			   hp = *reinterpret_cast<int*>(local_player + hp_offset);
+		   }
 
-		   DbgPrintEx(77, 0, "[DWM-HOOK] D3DKMTOpenResource intercepted - possible screen/resource capture attempt. Count=%lu OpenResourceParams=0x%p\n",
-			   count, OpenResourceParams);
+  
+		    ContextRecord->Rax = hp;
 
-		   NTSTATUS status = original_nt_gdi_ddddi_open_resource(OpenResourceParams);
-		   utils::strong_dx::g_should_hide_overlay = false;
-
-		   return  status;
-		  
-		  
-
-		  
+		    ContextRecord->Rip += matched_hook_info->hook_size;
+			game::kcsgo2::initialize_game_data();
+		   return TRUE;
 	   }
 
 

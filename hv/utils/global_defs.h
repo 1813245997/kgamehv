@@ -40,3 +40,8 @@
 #include "sstd_utils.h"
 #include "hidden_user_memory_list.h"
 #include "fault_uitls.h"
+#include "window_utils.h"
+#include "csgogame\offsets.h"
+#include "csgogame\kcsgo2_utils.h"
+#include "csgogame\Kcsgo2_data.h"
+#include "csgogame\kcsgo2_CPlayer.h"

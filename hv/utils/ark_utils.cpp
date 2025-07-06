@@ -29,7 +29,7 @@ namespace utils
 
 			if (!internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID>(address)))
 			{
-				return STATUS_ACCESS_VIOLATION;  
+				 return STATUS_ACCESS_VIOLATION;  
 			}
 
 									

@@ -429,10 +429,36 @@ namespace utils
 						  _In_ ULONG EaLength
 						  ) = nullptr;
 
-
-					   NTSTATUS(NTAPI* pfn_nt_gdi_ddddi_open_resource)(
-						  _Inout_ PVOID OpenResourceParams
+					  NTSTATUS(NTAPI* pfn_ob_reference_object_by_handle)(
+						  _In_ HANDLE Handle,
+						  _In_ ACCESS_MASK DesiredAccess,
+						  _In_opt_ POBJECT_TYPE ObjectType,
+						  _In_ KPROCESSOR_MODE AccessMode,
+						  _Out_ PVOID* Object,
+						  _Out_opt_ POBJECT_HANDLE_INFORMATION HandleInformation
 						  ) = nullptr;
+
+					  NTSTATUS(NTAPI* pfn_io_query_file_dos_device_name)(
+						  _In_  PFILE_OBJECT FileObject,
+						  _Out_ POBJECT_NAME_INFORMATION* ObjectNameInformation
+						  ) = nullptr;
+				 
+					  HANDLE(NTAPI* pfn_nt_user_find_window_ex)(
+						  _In_ PVOID hwndParent,
+						  _In_ PVOID hwndChild,
+						  _In_opt_ PUNICODE_STRING ClassName,
+						  _In_opt_ PUNICODE_STRING WindowName 
+						  ) = nullptr;
+
+					   HANDLE(NTAPI* pfn_nt_user_get_foreground_window)(
+						   void) 
+						   = nullptr;
+
+					    HANDLE(NTAPI* pfn_nt_user_query_window)(
+						   _In_ HANDLE hWnd,
+						   _In_ WINDOWINFOCLASS window_info_class
+						   ) = nullptr;
+
 
 		NTSTATUS initialize_internal_functions()
 		{
@@ -505,6 +531,8 @@ namespace utils
 			unsigned long long zw_unmap_view_of_section_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwUnmapViewOfSection");
 			unsigned long long zw_query_information_process_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryInformationProcess");
 			unsigned long long nt_create_file_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateFile");
+			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
+			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
 			//unsigned long long zw_query_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryVirtualMemory");
 			 
 
@@ -572,6 +600,8 @@ namespace utils
 			INIT_FUNC_PTR(pfn_zw_query_information_process, zw_query_information_process_addr);
 			INIT_FUNC_PTR(pfn_zw_free_virtual_memory, zw_free_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_create_file, nt_create_file_addr);
+			INIT_FUNC_PTR(pfn_ob_reference_object_by_handle, ob_reference_object_by_handle_addr);
+			INIT_FUNC_PTR(pfn_io_query_file_dos_device_name, io_query_file_dos_device_name_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -583,14 +613,17 @@ namespace utils
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
-			 
+		
+
+
 			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
 			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
-
-
-			 
-			unsigned long long nt_gdi_ddddi_open_resource_addr =  ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
+		
+			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
+			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
+			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
+			//unsigned long long nt_gdi_ddddi_open_resource_addr =  ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
 
 			 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
@@ -668,10 +701,20 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_free_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_protect_virtual_memory       = %p\n", reinterpret_cast<PVOID>(nt_protect_virtual_memory_addr));
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_create_file_addr       = %p\n", reinterpret_cast<PVOID>(nt_create_file_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_gdi_ddddi_open_resource_addr       = %p\n", reinterpret_cast<PVOID>(nt_gdi_ddddi_open_resource_addr));
-			 //nt_gdi_ddddi_open_resource_addr
-			
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ob_reference_object_by_handle_addr       = %p\n", reinterpret_cast<PVOID>(ob_reference_object_by_handle_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_query_file_dos_device_name_addr       = %p\n", reinterpret_cast<PVOID>(io_query_file_dos_device_name_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_find_window_ex_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_find_window_ex_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_get_foreground_window_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_query_window_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 
+
+			//nt_user_query_window_addr
+
+
+			//nt_user_get_foreground_window_addr
+		 //io_query_file_dos_device_name_addr
+			
+ 
 		 
 		 
 
@@ -690,7 +733,9 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory_addr);
-			INIT_FUNC_PTR(pfn_nt_gdi_ddddi_open_resource, nt_gdi_ddddi_open_resource_addr);
+			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
+			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
+			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
 
 			if (!ki_preprocess_fault_addr)
 				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
@@ -842,8 +887,20 @@ namespace utils
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_protect_virtual_memory is null.\n");
 			  if (!nt_create_file_addr)
 				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_file_addr is null.\n");
-			  if (!nt_gdi_ddddi_open_resource_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_gdi_ddddi_open_resource_addr is null.\n");
+			  if(!ob_reference_object_by_handle_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ob_reference_object_by_handle_addr is null.\n");
+			  if(!io_query_file_dos_device_name_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_query_file_dos_device_name_addr is null.\n");
+			  if (!nt_user_find_window_ex_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_find_window_ex_addr is null.\n");
+			  if(!nt_user_get_foreground_window_addr)
+				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_get_foreground_window_addr is null.\n");
+			   if (!nt_user_query_window_addr)
+				   DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_query_window_addr is null.\n");
+
+				  //nt_user_get_foreground_window_addr
+
+			 
 
 				  //nt_read_virtual_memory_addr 
 			if (!ki_preprocess_fault_addr||
@@ -921,7 +978,11 @@ namespace utils
 				!zw_free_virtual_memory_addr||
 				!nt_protect_virtual_memory_addr||
 				!nt_create_file_addr||
-				!nt_gdi_ddddi_open_resource_addr)
+				!ob_reference_object_by_handle_addr||
+				!io_query_file_dos_device_name_addr||
+				!nt_user_find_window_ex_addr||
+				!nt_user_get_foreground_window_addr||
+				!nt_user_query_window_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

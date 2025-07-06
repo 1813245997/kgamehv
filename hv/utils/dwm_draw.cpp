@@ -27,11 +27,11 @@ namespace utils
 		unsigned long long g_dxgkrnl_size{};
 		unsigned long long g_offset_stack{};
 		unsigned long long g_ccomposition_present{};
-		unsigned long long g_cocclusion_context_post_sub_graph;
+		unsigned long long g_cocclusion_context_post_sub_graph{};
 		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{}; //CDXGISwapChain::PresentImplCore
 		unsigned long long g_cdxgi_swapchain_present_dwm{}; //CDXGISwapChain::PresentDWM
 		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{}; //CDXGISwapChain::PresentMultiplaneOverlay
-		 
+	    unsigned long long g_dxgk_open_resource{};
 
 		unsigned long long g_pswap_chain{};
 
@@ -41,17 +41,26 @@ namespace utils
 
 		bool g_kvashadow{};
 
+		
+
+
 
 		//CDXGISwapChain::PresentImplCore
 
-		
 
+		//要用到的一部分窗口函数
+		unsigned long long g_client_to_screen_fun{};
+		unsigned long long g_get_client_rect_fun{};
+		unsigned long long g_get_foreground_window_fun{};
+		unsigned long long g_find_windoww_fun{};
+		unsigned long long g_get_window_rect_fun{};
 
 		NTSTATUS initialize()
 		{
 			NTSTATUS status{};
 			
-			 
+		
+
 			status = get_stack_offset();
 			if (!NT_SUCCESS(status))
 			{
@@ -125,8 +134,36 @@ namespace utils
 				return status;
 			}
 
-	 
+			status = find_find_windoww(g_dwm_process, g_user32_base, &g_find_windoww_fun);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			
+			status = find_client_to_screen(g_dwm_process, g_user32_base, &g_client_to_screen_fun);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			
+			status = find_get_client_rect(g_dwm_process, g_user32_base, &g_get_client_rect_fun);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 
+			status = find_get_foreground_window(g_dwm_process, g_user32_base, &g_get_foreground_window_fun);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+
+			status = find_get_window_rect(g_dwm_process, g_user32_base, &g_get_window_rect_fun);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			 
 
 			status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
 			if (!NT_SUCCESS(status))
@@ -134,9 +171,12 @@ namespace utils
 				return status;
 			}
 
+			status = find_open_resource(g_dwm_process, g_dxgkrnl_base, &g_dxgk_open_resource);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 			
-
-
 			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -149,18 +189,17 @@ namespace utils
 				return status;
 			}
 
-
-		/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+			status =   hook_cocclusion_context_post_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
-			}*/
+			}
 
-			/*status = hook_d3d_kmt_open_resource(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}*/
+			/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+				if (!NT_SUCCESS(status))
+				{
+					return status;
+				}*/
 
 			status = hook_dxgk_get_device_state(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -168,11 +207,15 @@ namespace utils
 				return status;
 			}
 
-	/*		status = hook_d3d_kmt_open_resource(g_dwm_process);
+			status = hook_d3d_kmt_open_resource(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
-			}*/
+			}
+
+			 
+
+
 
 			return STATUS_SUCCESS;
 		}
@@ -655,6 +698,161 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+		NTSTATUS find_find_windoww(
+			IN PEPROCESS process,
+			IN unsigned long long user32_base,
+			OUT unsigned long long* find_windoww_addr)
+		{
+
+			if (!find_windoww_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (user32_base),"FindWindowW");
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*find_windoww_addr = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found FindWindowW at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_client_to_screen(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* client_to_screen_addr)
+		{
+			if (!client_to_screen_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"ClientToScreen"
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*client_to_screen_addr = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found ClientToScreen at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_get_client_rect(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_client_rect_addr)
+		{
+			if (!get_client_rect_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetClientRect"
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*get_client_rect_addr = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found GetClientRect at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_get_foreground_window(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_foreground_window_addr)
+		{
+			if (!get_foreground_window_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetForegroundWindow"
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*get_foreground_window_addr = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found GetForegroundWindow at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_get_window_rect(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_window_rect_addr)
+		{
+			if (!get_window_rect_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetWindowRect"
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*get_window_rect_addr = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found GetWindowRect at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
 	 
 
 		NTSTATUS find_dxgk_get_device_state(
@@ -683,6 +881,35 @@ namespace utils
 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 				"[hv] Found DxgkGetDeviceState at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+		NTSTATUS   find_open_resource(
+			IN PEPROCESS process,
+			IN unsigned long long dxgkrnl_base,
+			OUT unsigned long long* dxgk_open_resource)
+		{
+			if (!dxgk_open_resource)
+				return STATUS_INVALID_PARAMETER;
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (dxgkrnl_base), "DxgkOpenResource");
+			if (!addr)
+			{
+				addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (dxgkrnl_base), "NtGdiDdDDIOpenResource");
+			}
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*dxgk_open_resource = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found DxgkOpenResource at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -729,6 +956,24 @@ namespace utils
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
 			 
+		}
+		NTSTATUS  hook_cocclusion_context_post_sub_graph(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(g_cocclusion_context_post_sub_graph),
+				hook_functions::new_cocclusion_context_post_sub_graph,
+			    nullptr
+			);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 		}
 
 		NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process)
@@ -805,9 +1050,9 @@ namespace utils
 			}
 			KAPC_STATE apc_state{};
 			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-			DbgBreakPoint();
+			 
 			bool hook_result = hyper::hook(
-				internal_functions::pfn_nt_gdi_ddddi_open_resource,
+				 reinterpret_cast<void*> (g_dxgk_open_resource),
 				hook_functions::new_nt_gdi_ddddi_open_resource,
 				reinterpret_cast<void**>(&hook_functions::original_nt_gdi_ddddi_open_resource)
 			);

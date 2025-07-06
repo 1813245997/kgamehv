@@ -427,8 +427,37 @@ namespace utils
 			_In_ ULONG EaLength
 			);
 	   
-		extern NTSTATUS(NTAPI* pfn_nt_gdi_ddddi_open_resource)(
-			_Inout_ PVOID OpenResourceParams
+		 
+		extern NTSTATUS(NTAPI* pfn_ob_reference_object_by_handle)(
+			_In_ HANDLE Handle,
+			_In_ ACCESS_MASK DesiredAccess,
+			_In_opt_ POBJECT_TYPE ObjectType,
+			_In_ KPROCESSOR_MODE AccessMode,
+			_Out_ PVOID* Object,
+			_Out_opt_ POBJECT_HANDLE_INFORMATION HandleInformation
+			);
+
+
+		extern NTSTATUS(NTAPI* pfn_io_query_file_dos_device_name)(
+			_In_  PFILE_OBJECT FileObject,
+			_Out_ POBJECT_NAME_INFORMATION* ObjectNameInformation
+			);
+
+		//WIN32KFULL.SYS
+		 
+		extern   HANDLE(NTAPI* pfn_nt_user_find_window_ex)(
+			_In_ PVOID hwndParent,
+			_In_ PVOID hwndChild,
+			_In_opt_ PUNICODE_STRING ClassName,
+			_In_opt_ PUNICODE_STRING WindowName
+			 
+			);
+
+		extern HANDLE(NTAPI* pfn_nt_user_get_foreground_window)(void);
+
+		extern    HANDLE(NTAPI * pfn_nt_user_query_window)(
+			_In_ HANDLE hWnd,
+			_In_ WINDOWINFOCLASS window_info_class
 			);
 	} 
 }

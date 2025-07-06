@@ -124,6 +124,11 @@ namespace hook_functions
 		_Inout_ PCONTEXT ContextRecord,
 		_Inout_ hyper::EptHookInfo* matched_hook_info);
 
+	BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
 	extern  INT64(__fastcall* original_present_multiplane_overlay)(
 		void* thisptr,
 		PVOID dxgi_swap_chain,
@@ -211,11 +216,58 @@ namespace hook_functions
 
 
 	  NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource(
-		  _Inout_ PVOID OpenResourceParams
+		  ULONG64 a1,
+		  __int64 a2,
+		  __int64 a3,
+		  __int64 a4,
+		  unsigned int a5,
+		  __int64 a6,
+		  char a7,
+		  __int64 a8,
+		  __int64 a9,
+		  __int64 a10,
+		  __int64 a11,
+		  __int64 a12,
+		  __int64 a13,
+		  __int64 a14,
+		  __int64 a15
 	  );
 
 	  extern NTSTATUS(NTAPI* original_nt_gdi_ddddi_open_resource)(
-		  _Inout_ PVOID OpenResourceParams
+		  ULONG64 a1,
+		  __int64 a2,
+		  __int64 a3,
+		  __int64 a4,
+		  unsigned int a5,
+		  __int64 a6,
+		  char a7,
+		  __int64 a8,
+		  __int64 a9,
+		  __int64 a10,
+		  __int64 a11,
+		  __int64 a12,
+		  __int64 a13,
+		  __int64 a14,
+		  __int64 a15
 		  );
+
+
+
+	  BOOLEAN  __fastcall new_nvfbc_create_ex(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
+	  BOOLEAN  __fastcall new_nvfbc_create (
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
+	  BOOLEAN  __fastcall new_get_csgo_hp(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
 	  
 }
