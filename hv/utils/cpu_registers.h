@@ -9,3 +9,7 @@ extern "C"
 	void asm_sti();
 
 }
+
+inline bool is_ac_flag_set(void) {
+	return (asm_read_rflags() & (1UL << 18)) != 0;
+}

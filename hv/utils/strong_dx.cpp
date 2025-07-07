@@ -3,7 +3,7 @@
 #include "../ia32-doc/ia32.hpp"
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
-
+#include "../arch.h"
 
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
@@ -240,22 +240,6 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 		
-
-			if (!game::kcsgo2::initialize_game_data())
-			{
-				return;
-			}
-
-			memset(pagehit, 0, sizeof(pagehit));
-			memset(pagevaild, 0, sizeof(pagevaild));
-
-
-			bool i_enable = asm_read_rflags() & 0x200;
-			if (i_enable)
-			{
-				asm_cli();
-			}
-
 			cr4 cr4vlaue{ __readcr4() };
 			bool smap = cr4vlaue.smap_enable;
 
@@ -263,6 +247,27 @@ namespace utils
 				cr4vlaue.smap_enable = 0;
 				__writecr4(cr4vlaue.flags);
 			}
+
+
+			if (!game::kcsgo2::initialize_game_data())
+			{
+				if (smap)
+				{
+					cr4vlaue.smap_enable = true;
+					__writecr4(cr4vlaue.flags);
+				}
+				return;
+			}
+
+			memset(pagehit, 0, sizeof(pagehit));
+			memset(pagevaild, 0, sizeof(pagevaild));
+
+
+			
+
+		
+
+
 			ByteRender rend;
 			rend.Setup(width, height, data);
 
@@ -297,9 +302,24 @@ namespace utils
 				box_x = static_cast<float> (ov2.x - box_weight / 2);
 				box_y = ov2.y;
 
-				  
+				/*	bool old_state = asm_read_rflags() & 0x200;
+					asm_cli();*/
+				 
+				//const bool ac_was_disabled = !is_ac_flag_set();
+
+				//// 如果AC被禁用则临时启用
+				//if (ac_was_disabled) _setac();
 				rend.Rectangle(box_x, ov2.y, static_cast<float> (box_weight), static_cast<float> (box_height), FColor(0, 255, 0), 1);
 
+				//if (ac_was_disabled)_clearac();
+				 
+					
+				
+				/*if (old_state)
+				{
+					asm_sti();
+				}*/
+				 
 			}
 
 
@@ -310,10 +330,7 @@ namespace utils
 				__writecr4(cr4vlaue.flags);
 			}
 
-			if (i_enable)
-			{
-				asm_sti();
-			}
+		
 
 			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
 			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));

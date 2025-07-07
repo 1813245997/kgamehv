@@ -7,12 +7,13 @@ namespace utils
 	{
 		unsigned long long call(unsigned long long func_ptr, unsigned long long arg1, unsigned long long arg2, unsigned long long arg3, unsigned long long arg4)
 		{
-			unsigned long long current_irql = asm_read_cr8();
-			bool i_enable = asm_read_rflags() & 0x200;
-		 
-			if (current_irql > PASSIVE_LEVEL) {
-				asm_write_cr8(PASSIVE_LEVEL);
-			}
+			/*	unsigned long long current_irql = asm_read_cr8();
+				bool i_enable = asm_read_rflags() & 0x200;
+
+				if (current_irql > PASSIVE_LEVEL) {
+					asm_write_cr8(PASSIVE_LEVEL);
+				}*/
+
 
 			void* cdata[9]{};
 			auto new_user_rsp =  thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
@@ -24,14 +25,14 @@ namespace utils
 
 			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
 
-			if (current_irql > PASSIVE_LEVEL) {
-				asm_write_cr8(current_irql );
-			}
+			//if (current_irql > PASSIVE_LEVEL) {
+			//	asm_write_cr8(current_irql);
+			//}
 
-			if (!i_enable)
-			{
-				asm_cli();
-			}
+			//if (!i_enable)
+			//{
+			//	asm_cli();
+			//}
 			return ret;
 		}
 
@@ -45,12 +46,7 @@ namespace utils
 			unsigned long long arg5,
 			unsigned long long arg6)
 		{
-			unsigned long long current_irql = asm_read_cr8();
-			bool i_enable = asm_read_rflags() & 0x200;
-
-			if (current_irql > PASSIVE_LEVEL) {
-				asm_write_cr8(PASSIVE_LEVEL);
-			}
+		 
 			void* cdata[9]{};
 			auto new_user_rsp = thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
 
@@ -63,14 +59,8 @@ namespace utils
 
 			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
 
-			if (current_irql > PASSIVE_LEVEL) {
-				asm_write_cr8(current_irql);
-			}
-
-			if (!i_enable)
-			{
-				asm_cli();
-			}
+			
+ 
 			return ret;
 		}
 
@@ -80,6 +70,7 @@ namespace utils
 			void** call_data)
 		{
 
+			
 			//alloc new kernel stack
 			unsigned long long  ret_val_ptr{};
 			auto current_thread = reinterpret_cast<unsigned long long>  (internal_functions::pfn_ke_get_current_thread());
@@ -126,8 +117,19 @@ namespace utils
 			typedef VOID(*FnKiCallUserMode2)(unsigned long long* OutVarPtr, unsigned long long CallCtx, unsigned long long KStackControl);
 			auto pFnKiCallUserMode2 = (FnKiCallUserMode2)dwm_draw::g_ki_call_user_mode2;
 
+			unsigned long long current_irql = asm_read_cr8();
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(PASSIVE_LEVEL);
+			}
+			bool old_state = asm_read_rflags() & 0x200;
 			pFnKiCallUserMode2( &ret_val_ptr, reinterpret_cast<unsigned long long> (call_data), kernel_stack_control);
 
+			if (current_irql > PASSIVE_LEVEL) {
+				asm_write_cr8(current_irql);
+			}
+
+			if (old_state)
+				asm_sti();
 			//restore apc state
 			*(unsigned short*)(current_thread + 0x1E4) = v1;
 			*(unsigned short*)(current_thread + 0x1E6) = v2;

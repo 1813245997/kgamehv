@@ -502,23 +502,33 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   unsigned long long cocclusion_context_post_sub_graph_fun =
+			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
 
-		   unsigned long long cocclusion_context_post_sub_graph_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
-		   unsigned long long usercall_retval_ptr = 
+		   // 保存原始返回地址
+		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
+
+		   unsigned long long usercall_retval_ptr =
 			   utils::user_call::call(
 				   cocclusion_context_post_sub_graph_fun,
 				   ContextRecord->Rcx,
-				   ContextRecord->Rdx, 
-				   ContextRecord->R8,0);
+				   ContextRecord->Rdx,
+				   ContextRecord->R8, 0);
+
 		   if (usercall_retval_ptr)
 		   {
+			   // 强制设置返回值为 -1
 			   HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
 			   hr = -1;
-			   ContextRecord->Rax = hr;
-			   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
+			   ContextRecord->Rax = hr;  // 设置返回值
+
+			   // 关键修复：直接返回到调用者的下一条指令
+			   ContextRecord->Rip = original_return_address;
 			   ContextRecord->Rsp += sizeof(ULONG64);
 		   }
-		  
+		 /*  ContextRecord->Rax = -1;
+		   ContextRecord->Rip = original_return_address;
+		   ContextRecord->Rsp += sizeof(ULONG64);*/
 		   return TRUE;
 	   }
 

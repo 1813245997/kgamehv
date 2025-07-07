@@ -189,11 +189,11 @@ namespace utils
 				return status;
 			}
 
-			status =   hook_cocclusion_context_post_sub_graph(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}
+			//status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
+			//if (!NT_SUCCESS(status))
+			//{
+			//	return status;
+			//}
 
 			/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 				if (!NT_SUCCESS(status))
@@ -370,7 +370,103 @@ namespace utils
 			 {
 				 return STATUS_INSUFFICIENT_RESOURCES;
 			 }
+			 /*	 00000000: 90                      nop
+					  00000001 : EB 08                   jmp     short 0x0B; 跳转到真实代码开始处
 
+					  ; 被修改的代码段（原始为 90 90 90 90）
+					  00000003: [g_offset_stack] dd ? ; 动态写入值
+					  00000007: [g_kvashadow] dd ? ; 动态写入值
+
+					  ; == = 真实代码开始 == =
+					  0000000B: 48 C7 C0 E4 0E 00 00    mov     rax, 0EE4h
+					  00000012 : 48 35 DC 0F 00 00 xor rax, 0FDCh
+					  00000018 : 48 2B E0                sub     rsp, rax
+					  0000001B : 48 83 C4 10             add     rsp, 10h
+					  0000001F : 74 06                   je      short 00000027h; ZF = 1 跳转
+					  00000021: 75 04                   jne     short 00000027h; ZF = 0 跳转
+					  00000023: 90                      nop; 占位符
+					  00000024: 90                      nop
+					  00000025 : 90                      nop
+					  00000026 : 90                      nop
+					  00000027 : 48 83 EC 10             sub     rsp, 10h
+					  0000002B : 44 0F 29 54 24 70       movaps[rsp + 70h], xmm10
+					  00000031 : 0F 29 7C 24 40          movaps[rsp + 40h], xmm7
+					  00000036 : 48 8D 84 24 00 01 00 00 lea     rax, [rsp + 100h]
+					  0000003E : 44 0F 29 58 80          movaps[rax - 80h], xmm11
+					  00000043 : 44 0F 29 70 B0          movaps[rax - 50h], xmm14
+					  00000048 : 0F 29 74 24 30          movaps[rsp + 30h], xmm6
+					  0000004D : 44 0F 29 68 A0          movaps[rax - 60h], xmm13
+					  00000052 : 44 0F 29 44 24 50       movaps[rsp + 50h], xmm8
+					  00000058 : 44 0F 29 78 C0          movaps[rax - 40h], xmm15
+					  0000005D : 44 0F 29 4C 24 60       movaps[rsp + 60h], xmm9
+					  00000063 : 44 0F 29 60 90          movaps[rax - 70h], xmm12
+					  00000068 : 48 89 68 F8             mov[rax - 8], rbp
+					  0000006C : 48 8B EC                mov     rbp, rsp
+					  0000006F : 48 89 18                mov[rax], rbx
+					  00000072 : 48 89 78 08             mov[rax + 8], rdi
+					  00000076: 48 89 70 10             mov[rax + 10h], rsi
+					  0000007A : 4C 89 68 20             mov[rax + 20h], r13
+					  0000007E : 4C 89 78 30             mov[rax + 30h], r15
+					  00000082 : 4C 89 60 18             mov[rax + 18h], r12
+					  00000086 : 4C 89 70 28             mov[rax + 28h], r14
+					  0000008A : 48 89 8D D8 00 00 00    mov[rbp + 0D8h], rcx
+					  00000091 : 49 8D 40 D0             lea     rax, [r8 - 30h]
+					  00000095 : 48 89 85 E0 00 00 00    mov[rbp + 0E0h], rax
+					  0000009C : 68 01 09 00 00          push    901h
+					  000000A1: 48 81 34 24 89 08 00 00 xor qword ptr[rsp], 889h
+					  000000A9: 58                      pop     rax
+					  000000AA : 65 48 8B 18             mov     rbx, gs : [rax] ; GS 段访问
+					  000000AE: 49 89 60 20             mov[r8 + 20h], rsp
+					  000000B2 : 48 8B B3 90 00 00 00    mov     rsi, [rbx + 90h]
+					  000000B9 : 48 89 B5 D0 00 00 00    mov[rbp + 0D0h], rsi
+					  000000C0 : FA                      cli; 禁用中断
+					  000000C1: 4C 89 43 28             mov[rbx + 28h], r8
+					  000000C5 : 4D 8D 48 50             lea     r9, [r8 + 50h]
+					  000000C9 : 4C 89 4B 38             mov[rbx + 38h], r9
+					  000000CD : E8 00 00 00 00          call    near 000000D2h; 相对调用
+					  000000D2: 58                      pop     rax; 获取返回地址
+					  000000D3: 48 2D CB 00 00 00       sub     rax, 0CBh
+					  000000D9 : 83 38 00                cmp     dword ptr[rax], 0; 检查内存值
+					  000000DC: 74 15                   je      short 000000F3h
+					  000000DE : E8 00 00 00 00          call    near 000000E3h
+					  000000E3 : 58                      pop     rax
+					  000000E4 : 48 2D E0 00 00 00       sub     rax, 0E0h
+					  000000EA : 8B 00                   mov     eax, [rax]
+					  000000EC : 67 65 4C 89 00          mov     gs : [eax] , r8; GS 段修改
+					  000000F1: EB 0D                   jmp     short 00000100h
+					  000000F3 : 65 48 8B 3C 25 08 00 00 00 mov   rdi, gs: [8]
+					  000000FC : 4C 89 47 04             mov[rdi + 4], r8
+					  00000100 : B9 00 60 00 00          mov     ecx, 6000h
+					  00000105 : 4C 2B C9                sub     r9, rcx
+					  00000108 : 65 4C 89 04 25 A8 01 00 00 mov   gs : [1A8h] , r8; 修改 GS 段
+					  00000111: 4C 89 4B 30             mov[rbx + 30h], r9
+					  00000115 : 49 8D A0 70 FE FF FF    lea     rsp, [r8 - 190h]
+					  0000011C : 48 8B FC                mov     rdi, rsp
+					  0000011F : B9 32 00 00 00          mov     ecx, 32h
+					  00000124 : F3 48 A5                rep movsq; 内存块复制
+					  00000127: 48 8D AE F0 FE FF FF    lea     rbp, [rsi - 110h]
+					  0000012E : 0F AE 55 AC             ldmxcsr[rbp - 54h]; 加载 MXCSR
+					  00000132: 4C 8B 9D F8 00 00 00    mov     r11, [rbp + 0F8h]
+					  00000139 : 48 8B AD D8 00 00 00    mov     rbp, [rbp + 0D8h]
+					  00000140 : 48 8B 42 10             mov     rax, [rdx + 10h]
+					  00000144 : 48 8B 62 08             mov     rsp, [rdx + 8]
+					  00000148: 48 8B 0A                mov     rcx, [rdx]
+					  0000014B : F3 0F 10 42 18          movss   xmm0, dword ptr[rdx + 18h]
+					  00000150 : F3 0F 10 52 28          movss   xmm2, dword ptr[rdx + 28h]
+					  00000155 : F3 0F 10 4A 20          movss   xmm1, dword ptr[rdx + 20h]
+					  0000015A : F3 0F 10 5A 30          movss   xmm3, dword ptr[rdx + 30h]
+					  0000015F : 48 83 7A 38 00          cmp     qword ptr[rdx + 38h], 0
+					  00000164 : 74 04                   je      short 0000016Ah
+					  00000166 : 4C 8B 6A 38             mov     r13, [rdx + 38h]
+					  0000016A : E8 00 00 00 00          call    near 0000016Fh
+					  0000016F : 48 83 04 24 07          add     qword ptr[rsp], 7
+					  00000174 : C3                      ret
+					  00000175 : 01 0F                   add[rdi], ecx
+					  00000177 : 01 F8                   add     eax, edi
+					  00000179 : 48 0F 07                sysretq; 关键：返回用户空间
+					  0000017C: 59                      pop     rcx
+					  0000017D : 66 CF                   iretq; 32位中断返回
+					  0000017F: EF                      out     dx, eax*/
 			 memcpy(shellcode_addr, "\x90\xEB\x08\x90\x90\x90\x90\x90\x90\x90\x90\x48\xC7\xC0\xE4\x0E\x00\x00\x48\x35\xDC\x0F\x00\x00\x48\x2B\xE0\x48\x83\xC4\x10\x74\x06\x75\x04\x90\x90\x90\x90\x48\x83\xEC\x10\x44\x0F\x29\x54\x24\x70\x0F\x29\x7C\x24\x40\x48\x8D\x84\x24\x00\x01\x00\x00\x44\x0F\x29\x58\x80\x44\x0F\x29\x70\xB0\x0F\x29\x74\x24\x30\x44\x0F\x29\x68\xA0\x44\x0F\x29\x44\x24\x50\x44\x0F\x29\x78\xC0\x44\x0F\x29\x4C\x24\x60\x44\x0F\x29\x60\x90\x48\x89\x68\xF8\x48\x8B\xEC\x48\x89\x18\x48\x89\x78\x08\x48\x89\x70\x10\x4C\x89\x68\x20\x4C\x89\x78\x30\x4C\x89\x60\x18\x4C\x89\x70\x28\x48\x89\x8D\xD8\x00\x00\x00\x49\x8D\x40\xD0\x48\x89\x85\xE0\x00\x00\x00\x68\x01\x09\x00\x00\x48\x81\x34\x24\x89\x08\x00\x00\x58\x65\x48\x8B\x18\x49\x89\x60\x20\x48\x8B\xB3\x90\x00\x00\x00\x48\x89\xB5\xD0\x00\x00\x00\xFA\x4C\x89\x43\x28\x4D\x8D\x48\x50\x4C\x89\x4B\x38\xE8\x00\x00\x00\x00\x58\x48\x2D\xCB\x00\x00\x00\x83\x38\x00\x74\x15\xE8\x00\x00\x00\x00\x58\x48\x2D\xE0\x00\x00\x00\x8B\x00\x67\x65\x4C\x89\x00\xEB\x0D\x65\x48\x8B\x3C\x25\x08\x00\x00\x00\x4C\x89\x47\x04\xB9\x00\x60\x00\x00\x4C\x2B\xC9\x65\x4C\x89\x04\x25\xA8\x01\x00\x00\x4C\x89\x4B\x30\x49\x8D\xA0\x70\xFE\xFF\xFF\x48\x8B\xFC\xB9\x32\x00\x00\x00\xF3\x48\xA5\x48\x8D\xAE\xF0\xFE\xFF\xFF\x0F\xAE\x55\xAC\x4C\x8B\x9D\xF8\x00\x00\x00\x48\x8B\xAD\xD8\x00\x00\x00\x48\x8B\x42\x10\x48\x8B\x62\x08\x48\x8B\x0A\xF3\x0F\x10\x42\x18\xF3\x0F\x10\x52\x28\xF3\x0F\x10\x4A\x20\xF3\x0F\x10\x5A\x30\x48\x83\x7A\x38\x00\x74\x04\x4C\x8B\x6A\x38\xE8\x00\x00\x00\x00\x48\x83\x04\x24\x07\xC3\x01\x0F\x01\xF8\x48\x0F\x07\x59\x66\xCF\xEF", 385);
 
 			 *(unsigned long *)(shellcode_addr + 3) = g_offset_stack;
