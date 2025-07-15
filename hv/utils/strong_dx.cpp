@@ -15,235 +15,266 @@ namespace utils
 
 			
 			bool g_initialized{};
-			PVOID g_desc_buffer{};
-			PVOID g_entity_buffer{};
+			unsigned long long g_user_buffer{};
+			unsigned long long  g_texture_buffer{};
 			PVOID g_swap_chain{};
 			PVOID  g_pdevice{};
 			PVOID g_pContext{};
 			PVOID g_pRenderTargetView;
 			PVOID g_Surface{};
-		 
+			
 			bool g_should_hide_overlay = false;
 		   volatile LONG g_dwm_render_lock = 0;
+
+		   static ULONG_PTR g_slient_start_time = 0;
+		   static ULONG_PTR g_PreviousRenderTime = 0;
+
 		 
-		NTSTATUS initialize(unsigned long long pswap_chain)
+	 
+		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data))
 		{
+
 			NTSTATUS status{};
 			PVOID get_device_fun{};
 			PVOID get_immediate_context_fun{};
 			PVOID get_buffer_fun{};
 			PVOID desc_buffer_local{};
-			PVOID entity_buffer_local{};
-			unsigned long long   usercall_retval_ptr{};
-			HRESULT  hr{};
-			const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
-			const GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
-			if (g_initialized)
-			{
-				return STATUS_SUCCESS;
-			}
-
-			if (!pswap_chain)
-			{
-				return STATUS_INVALID_PARAMETER;
-			}
-			g_swap_chain = reinterpret_cast<PVOID> (pswap_chain);
-			 
-		 
-			status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}
-			g_desc_buffer = desc_buffer_local;
-			status = memory::allocate_user_memory(&entity_buffer_local, 0x1000, PAGE_READWRITE, true, true);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}
-			g_entity_buffer = entity_buffer_local;
-
-		 
-			memory::mem_copy(desc_buffer_local, (PVOID)&ID3D11DeviceVar, sizeof(ID3D11DeviceVar));
-
-		     get_device_fun =   utils::vfun_utils::get_vfunc(g_swap_chain, 7);
-
-			 usercall_retval_ptr = user_call::call(
-				reinterpret_cast<unsigned long long> (get_device_fun),
-				pswap_chain,
-				reinterpret_cast<unsigned long long> (desc_buffer_local),
-				reinterpret_cast<unsigned long long> (entity_buffer_local),
-				0);
-			 hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			if (FAILED(hr))
-			{
-				return STATUS_DEVICE_DOES_NOT_EXIST;
-				
-			}
-
-			g_pdevice = *reinterpret_cast<PVOID*>(entity_buffer_local);
-			//vfun_utils::release(g_pdevice);
-			get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pdevice, 40);
-
-		
-
-		    user_call::call(
-				reinterpret_cast<unsigned long long> (get_immediate_context_fun),
-				reinterpret_cast<unsigned long long> (g_pdevice),
-				reinterpret_cast<unsigned long long>(entity_buffer_local),
-				0,
-				0);
-
-			g_pContext = *(PVOID*)entity_buffer_local;
-			//vfun_utils::release(g_pContext);
-			
-
-			memory::mem_copy(desc_buffer_local, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
-
-			get_buffer_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 9);
-			
-			usercall_retval_ptr = user_call::call(
-				reinterpret_cast<unsigned long long> (get_buffer_fun),
-				reinterpret_cast<unsigned long long> (g_swap_chain),
-				0,
-				reinterpret_cast<unsigned long long> (desc_buffer_local),
-				reinterpret_cast<unsigned long long> (entity_buffer_local) );
-			hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			if (FAILED(hr))
-			{
-					return STATUS_DEVICE_DOES_NOT_EXIST;
-
-			}
-			g_Surface = *(PVOID*)entity_buffer_local;
-			 
-			//vfun_utils::release(renderTargetTexture);
-			 
-		 
-			g_initialized = true;
-			/*	vfun_utils::release(g_pdevice);
-				vfun_utils::release(g_pContext);
-				vfun_utils::release(g_Surface);*/
-
-			return STATUS_SUCCESS;
-		}
-
-	 
-		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data))
-		{
-			HRESULT  hr{};
-			PVOID  desc_buffer = g_desc_buffer;
-			PVOID entity_buffer = g_entity_buffer;
-			D3D11_TEXTURE2D_DESC SDesc{};
-			D3D11_MAPPED_SUBRESOURCE MapRes{};
-
+			PVOID texture_buffer{};
 			unsigned  long long  get_desc_fun{};
 			unsigned  long long copy_resource_fun{};
 			unsigned  long long create_texture2D_fun{};
 			unsigned  long long map_fun{};
 			unsigned  long long umap_fun{};
 			unsigned long long   usercall_retval_ptr{};
+			D3D11_TEXTURE2D_DESC SDesc{};
+			D3D11_MAPPED_SUBRESOURCE MapRes{};
+
+
+
+
+			const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
+			const GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
+			HRESULT  hr{};
+
+
 			 
-			 
-			get_desc_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_Surface, 10));
-		 
-
-			user_call::call(
-				get_desc_fun,
-				reinterpret_cast<unsigned long long>(g_Surface),
-				reinterpret_cast<unsigned long long>(desc_buffer),
-				0,
-				0
-			);
-
-			SDesc = *(D3D11_TEXTURE2D_DESC*)desc_buffer;
-
-			SDesc.BindFlags = 0;
-			SDesc.MiscFlags = 0;
-			SDesc.Usage = D3D11_USAGE_STAGING;
-			SDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
-
-			//memory::mem_zero(desc_buffer, 0X1000);
-			memory::mem_copy(desc_buffer, &SDesc, sizeof(SDesc));
+				if (!utils::dwm_draw::g_pswap_chain)
+				{
+					return;
+				}
+				g_swap_chain = reinterpret_cast<PVOID> (utils::dwm_draw::g_pswap_chain);
 
 
-			create_texture2D_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pdevice, 5));
+				if (!g_user_buffer)
+				{
+					status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
+					if (!NT_SUCCESS(status))
+					{
+						return;
+					}
+					g_user_buffer = reinterpret_cast<unsigned long long> (desc_buffer_local);
+				}
 
-		 
-			
-			usercall_retval_ptr = user_call::call(
-				create_texture2D_fun,
-				reinterpret_cast<unsigned long long>(g_pdevice),
-				reinterpret_cast<unsigned long long>(desc_buffer),
-				0,
-				reinterpret_cast<unsigned long long>(entity_buffer)
-			);
-
-			hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			if (FAILED(hr))
-			{
-				return;
-			}
-
-			PVOID pTexture = *(PVOID*)entity_buffer;
-			if (!pTexture)
-			{
-				return;
-			}
-		 
-
-			copy_resource_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 47));
-
-			user_call::call(
-				copy_resource_fun,
-				reinterpret_cast<unsigned long long>(g_pContext),
-				reinterpret_cast<unsigned long long>(pTexture),
-				reinterpret_cast<unsigned long long>(g_Surface)
-				, 0
-			);
-
-		 
-			map_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 14));
-
-			user_call::call6(
-				map_fun,
-				reinterpret_cast<unsigned long long>(g_pContext),
-				reinterpret_cast<unsigned long long>(pTexture),
-				0,
-				D3D11_MAP_READ_WRITE,
-				0,
-				reinterpret_cast<unsigned long long>(desc_buffer)
-			);
-
-			MapRes = *(D3D11_MAPPED_SUBRESOURCE*)desc_buffer;
-		 
-
-			/*	if (SDesc.Width && SDesc.Height && MapRes.Data)
+				if (!g_texture_buffer)
 				{
 
-				}*/
-			draw_callback(SDesc.Width, SDesc.Height, MapRes.Data);
-		
+					status = memory::allocate_user_memory(&texture_buffer, 0x4000, PAGE_READWRITE, true,true);
+					if (!NT_SUCCESS(status))
+					{
+						return;
+					}
+					g_texture_buffer = reinterpret_cast<unsigned long long> (texture_buffer);
+				}
+
+				if (!g_pdevice)
+				{
+					memory::mem_copy(reinterpret_cast<PVOID>  (g_user_buffer), (PVOID)&ID3D11DeviceVar, sizeof(ID3D11DeviceVar));
+
+					get_device_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 7);
+
+					usercall_retval_ptr = user_call::call(
+						reinterpret_cast<unsigned long long> (get_device_fun),
+						reinterpret_cast<unsigned long long> (g_swap_chain),
+						g_user_buffer,
+						g_user_buffer + sizeof(ID3D11DeviceVar),
+						0);
+
+					hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+					if (FAILED(hr))
+					{
+						return;
+
+					}
+
+					g_pdevice = *(PVOID*)(g_user_buffer + sizeof(ID3D11DeviceVar));
+				}
+				  
+				
+					//vfun_utils::release(g_pdevice);
+				 
+
+				if (!g_pContext)
+				{
+					get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pdevice, 40);
+					user_call::call(
+						reinterpret_cast<unsigned long long> (get_immediate_context_fun),
+						reinterpret_cast<unsigned long long> (g_pdevice),
+						g_user_buffer,
+						0,
+						0);
+
+					g_pContext = *(PVOID*)g_user_buffer;
+					//vfun_utils::release(g_pContext);
+
+				}
 			 
-		 
+				 
+				if (!g_Surface)
+				{
+					memory::mem_copy((PVOID)g_user_buffer, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
 
-			umap_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 15));
-			user_call::call(
-				umap_fun,
-				reinterpret_cast<unsigned long long>(g_pContext),
-				reinterpret_cast<unsigned long long>(pTexture),
-				0,
-				0
-			);
+					get_buffer_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 9);
 
-			user_call::call(
-				copy_resource_fun,
-				reinterpret_cast<unsigned long long>(g_pContext),
-				reinterpret_cast<unsigned long long>(g_Surface),
-				reinterpret_cast<unsigned long long>(pTexture)
-				, 0
-			);
-			vfun_utils::release(pTexture);
-		
+					usercall_retval_ptr = user_call::call(
+						reinterpret_cast<unsigned long long> (get_buffer_fun),
+						reinterpret_cast<unsigned long long> (g_swap_chain),
+						0,
+						g_user_buffer,
+						g_user_buffer + sizeof(ID3D11Texture2DVar));
+					hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+					if (FAILED(hr))
+					{
+						return;
+
+					}
+					g_Surface = *(PVOID*)(g_user_buffer + sizeof(ID3D11Texture2DVar));
+				}
+
+
+
+				if (!g_pdevice || !g_pContext || !g_Surface)
+				{
+					return;
+				}
+
+
+			 
+				/*	if (g_slient_start_time) {
+						if (utils::time_utils::get_real_time() - g_slient_start_time > 3000) {
+							g_slient_start_time = 0;
+						}
+						g_PreviousRenderTime = utils::time_utils::get_real_time();
+						return;
+					}
+					if (utils::time_utils::get_real_time() - g_PreviousRenderTime > 150) {
+						g_PreviousRenderTime = utils::time_utils::get_real_time();
+						g_slient_start_time = utils::time_utils::get_real_time();
+						return;
+					}
+
+					g_PreviousRenderTime = utils::time_utils::get_real_time();*/
+
+
+				get_desc_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_Surface, 10));
+
+
+				user_call::call(
+					get_desc_fun,
+					reinterpret_cast<unsigned long long>(g_Surface),
+					g_user_buffer,
+					0,
+					0
+
+				);
+
+
+				SDesc = *(D3D11_TEXTURE2D_DESC*)g_user_buffer;
+				SDesc.BindFlags = 0;
+				SDesc.MiscFlags = 0;
+				SDesc.Usage = D3D11_USAGE_STAGING;
+				SDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+
+				memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
+
+				;
+
+
+				create_texture2D_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pdevice, 5));
+
+
+				memory::mem_zero((PVOID)g_texture_buffer, 0x4000, 0);
+				usercall_retval_ptr = user_call::call(
+					create_texture2D_fun,
+					reinterpret_cast<unsigned long long>(g_pdevice),
+					g_user_buffer,
+					0,
+					g_texture_buffer
+				);
+
+				hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+				if (FAILED(hr))
+				{
+					return;
+				}
+
+				PVOID pTexture = *(PVOID*)g_texture_buffer;
+				if (!pTexture)
+				{
+					return;
+				}
+
+
+				copy_resource_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 47));
+
+				user_call::call(
+					copy_resource_fun,
+					reinterpret_cast<unsigned long long>(g_pContext),
+					reinterpret_cast<unsigned long long>(pTexture),
+					reinterpret_cast<unsigned long long>(g_Surface)
+					, 0
+				);
+
+
+				map_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 14));
+
+				usercall_retval_ptr = user_call::call6(
+					map_fun,
+					reinterpret_cast<unsigned long long>(g_pContext),
+					reinterpret_cast<unsigned long long>(pTexture),
+					0,
+					D3D11_MAP_READ_WRITE,
+					0,
+					g_user_buffer
+				);
+				hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			 
+				memcpy(&MapRes, reinterpret_cast<PVOID>(g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
+				 
+				if (SDesc.Width && SDesc.Height && MapRes.Data)
+				{
+					draw_callback(SDesc.Width, SDesc.Height, MapRes.Data);
+
+				}
+				 
+
+				umap_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 15));
+				user_call::call(
+					umap_fun,
+					reinterpret_cast<unsigned long long>(g_pContext),
+					reinterpret_cast<unsigned long long>(pTexture),
+					0,
+					0
+				);
+
+				user_call::call(
+					copy_resource_fun,
+					reinterpret_cast<unsigned long long>(g_pContext),
+					reinterpret_cast<unsigned long long>(g_Surface),
+					reinterpret_cast<unsigned long long>(pTexture)
+					, 0
+				);
+				vfun_utils::release(pTexture);
+				 
 		}
 
 		void draw_overlay_elements(int width, int height, void* data)
@@ -255,7 +286,7 @@ namespace utils
 			ByteRender rend;
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
-
+			//太过耗时 导致GUI系统卡死
 			if (!game::kcsgo2::initialize_game_data())
 			{
 				
@@ -420,18 +451,13 @@ namespace utils
 
 
 
-			if (!has_hooked_get_buffer)
+		/*	if (!has_hooked_get_buffer)
 			{
 				utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
 				has_hooked_get_buffer = true;
-			}
+			}*/
 
-			if (!NT_SUCCESS(initialize(utils::dwm_draw::g_pswap_chain)))
-			{
-				InterlockedExchange(&g_dwm_render_lock, 0);
-				return;
-			}
-			
+			  
 			render_overlay_frame(draw_overlay_elements);
 
 

@@ -468,6 +468,7 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
+			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -489,7 +490,7 @@ namespace hook_functions
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
 			  
-			  
+			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -585,6 +586,7 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
+			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
 			  
 		   }
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -1066,6 +1068,12 @@ namespace hook_functions
 			   return TRUE;
 		   }
 		    
+		   if (utils::dwm_draw::g_dwm_render_thread != utils::internal_functions::pfn_ps_get_current_thread())
+		   {
+			   return TRUE;
+		   }
+
+
 		   utils::strong_dx::draw_utils();
 
 		   return TRUE;
