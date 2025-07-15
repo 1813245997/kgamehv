@@ -1881,6 +1881,418 @@ namespace utils
 			return mm_delete_kernel_stack_addr;
 		}
 
+		unsigned long long find_cocclusion_context_pre_sub_graph(unsigned long long image_base)
+		{
+			unsigned long long cocclusion_context_pre_sub_graph_addr = 0;
+
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+			//text:0000000180085120 ? PreSubgraph@COcclusionContext@@QEAAJPEBVCVisualTree@@PEA_N@Z proc near
+			//	.text:0000000180085120; CODE XREF : CVisualTreeIterator::WalkSubtree<COcclusionContext>(CVisual const*, COcclusionContext*, WalkReason) + E8¡üp
+			//	.text : 0000000180085120; DATA XREF : .rdata : 000000018032EA08¡ýo ...
+			//	.text : 0000000180085120
+			//	.text:0000000180085120                                                 var_260 = dword ptr - 260h
+			//	.text:0000000180085120                                                 var_258 = qword ptr - 258h
+			//	.text:0000000180085120                                                 var_250 = qword ptr - 250h
+			//	.text:0000000180085120                                                 var_240 = byte ptr - 240h
+			//	.text:0000000180085120                                                 var_23F = byte ptr - 23Fh
+			//	.text:0000000180085120                                                 var_23E = byte ptr - 23Eh
+			//	.text:0000000180085120                                                 var_23D = byte ptr - 23Dh
+			//	.text:0000000180085120                                                 var_23C = dword ptr - 23Ch
+			//	.text:0000000180085120                                                 var_238 = byte ptr - 238h
+			//	.text:0000000180085120                                                 var_230 = qword ptr - 230h
+			//	.text:0000000180085120                                                 var_220 = qword ptr - 220h
+			//	.text:0000000180085120                                                 var_210 = xmmword ptr - 210h
+			//	.text:0000000180085120                                                 var_200 = xmmword ptr - 200h
+			//	.text:0000000180085120                                                 var_1F0 = xmmword ptr - 1F0h
+			//	.text:0000000180085120                                                 var_1E0 = xmmword ptr - 1E0h
+			//	.text:0000000180085120                                                 var_1D0 = dword ptr - 1D0h
+			//	.text:0000000180085120                                                 var_1C0 = byte ptr - 1C0h
+			//	.text:0000000180085120                                                 var_180 = dword ptr - 180h
+			//	.text:0000000180085120                                                 var_170 = byte ptr - 170h
+			//	.text:0000000180085120                                                 var_130 = dword ptr - 130h
+			//	.text:0000000180085120                                                 var_120 = byte ptr - 120h
+			//	.text:0000000180085120                                                 var_E0 = dword ptr - 0E0h
+			//	.text:0000000180085120                                                 lpMem = qword ptr - 0D0h
+			//	.text:0000000180085120                                                 var_C0 = xmmword ptr - 0C0h
+			//	.text:0000000180085120                                                 var_B0 = xmmword ptr - 0B0h
+			//	.text:0000000180085120                                                 var_A0 = qword ptr - 0A0h
+			//	.text:0000000180085120                                                 var_98 = qword ptr - 98h
+			//	.text:0000000180085120                                                 var_90 = xmmword ptr - 90h
+			//	.text:0000000180085120                                                 var_80 = xmmword ptr - 80h
+			//	.text:0000000180085120                                                 var_70 = xmmword ptr - 70h
+			//	.text:0000000180085120                                                 var_60 = xmmword ptr - 60h
+			//	.text:0000000180085120                                                 var_50 = xmmword ptr - 50h
+			//	.text:0000000180085120                                                 var_40 = xmmword ptr - 40h
+			//	.text:0000000180085120                                                 arg_18 = qword ptr  28h
+			//	.text:0000000180085120
+			//	.text:0000000180085120; __unwind{ // __GSHandlerCheck
+			//	.text:0000000180085120 48 89 5C 24 20                                                  mov[rsp - 8 + arg_18], rbx
+			//	.text:0000000180085125 55                                                              push    rbp
+			//	.text:0000000180085126 56                                                              push    rsi
+			//	.text:0000000180085127 57                                                              push    rdi
+			//	.text:0000000180085128 41 54                                                           push    r12
+			//	.text:000000018008512A 41 55                                                           push    r13
+			//	.text:000000018008512C 41 56                                                           push    r14
+			//	.text:000000018008512E 41 57                                                           push    r15
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\x41\x30",
+					"xxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\x41\x30",
+					"xxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x41\x56\x41\x57\x48\x83\xEC\x30\x41\xC6\x00\x01",
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x41\x56\x41\x57\x48\x83\xEC\x30\x41\xC6\x00\x01",
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x41\x56\x41\x57\x48\x83\xEC\x30\x41\xC6\x00\x01",
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x41\x56\x41\x57\x48\x83\xEC\x30\x41\xC6\x00\x01",
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x40\x55\x53\x56\x41\x54",
+					"xxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xE8\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xAC\x24\x40\xFF\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\x08\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xC8\xFD\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xF8\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xF8\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\x08\xFF\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\x08\xFF\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\x08\xFF\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\x08\xFF\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xAC\x24\xB0\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\x41\x30", "xxxxxxxxxxxxxxxxxxx", ".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xAC\x24\xF0\xFE\xFF\xFF",
+					"xxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xD8\xFE\xFF\xFF\x48\x81\xEC\xF0\x01\x00\x00\x0F\x29\x70\xB8\x0F\x29\x78\xA8\x44\x0F\x29\x40\x98\x44\x0F\x29\x48\x88\x48\x8B\x05",
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x4C\x8B\xDC\x55\x53\x56\x57\x49\x8D\x6B\xC8",
+					"xxxxxxxxxxx",
+					".text"
+				);
+
+
+				cocclusion_context_pre_sub_graph_addr = temp_addr;
+
+			}
+			break;
+			default:
+				break;
+			}
+
+			return cocclusion_context_pre_sub_graph_addr;
+		}
+
 		unsigned long long find_cocclusion_context_post_sub_graph(unsigned long long image_base)
 		{
 			unsigned long long cocclusion_context_post_sub_graph_addr = 0;

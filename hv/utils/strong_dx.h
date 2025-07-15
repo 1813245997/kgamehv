@@ -12,7 +12,7 @@ namespace utils
 		extern volatile LONG g_dwm_render_lock ;
 		extern bool g_should_hide_overlay;
 	 
-		extern 	FAST_MUTEX g_overlay_hide_mutex;
+		 
 		NTSTATUS initialize(unsigned long long pswap_chain);
 		 
 		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data));

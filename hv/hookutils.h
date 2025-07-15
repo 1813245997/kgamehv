@@ -24,6 +24,7 @@ namespace hyper
 		uint8_t* original_instructions_backup;
 		uint64_t hook_size;
 
+		bool is_user_mode;
 	
 	};
 
@@ -74,13 +75,26 @@ namespace hyper
 	//DBG
 	bool ept_hook_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function, _Inout_ bool allocate_trampoline =true);
 
+	bool ept_hook_user_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function, _Inout_ bool allocate_trampoline = true);
+
+	bool ept_hook_kernel_break_point_int3(  _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function);
+
 	bool find_hook_break_point_int3(
 		_In_ void* rip,
 		_Out_ hyper::EptHookInfo** out_hook_info);
 
-	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
-	void hook_write_absolute_jump_r3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64);
+	bool find_user_hook_break_point_int3(
+		_In_ void* rip,
+		_Out_ hyper::EptHookInfo** out_hook_info);
+
+	bool find_kernel_hook_break_point_int3(
+		_In_ void* rip,
+		_Out_ hyper::EptHookInfo** out_hook_info);
+
+	bool hook_instruction_memory_int1(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset);
+	bool hook_instruction_memory_int3(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset, bool is64, _In_ bool allocate_trampoline);
+	void hook_write_absolute_jump_int3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64);
 
 	bool unhook_all_ept_hooks_for_pid(_In_ HANDLE process_id);
 

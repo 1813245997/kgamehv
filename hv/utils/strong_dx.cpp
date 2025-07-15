@@ -25,7 +25,7 @@ namespace utils
 		 
 			bool g_should_hide_overlay = false;
 		   volatile LONG g_dwm_render_lock = 0;
-		   FAST_MUTEX g_overlay_hide_mutex{};
+		 
 		NTSTATUS initialize(unsigned long long pswap_chain)
 		{
 			NTSTATUS status{};
@@ -48,7 +48,7 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 			g_swap_chain = reinterpret_cast<PVOID> (pswap_chain);
-			ExInitializeFastMutex(&g_overlay_hide_mutex);
+			 
 		 
 			status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
 			if (!NT_SUCCESS(status))
@@ -85,7 +85,7 @@ namespace utils
 			//vfun_utils::release(g_pdevice);
 			get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pdevice, 40);
 
-			memory::mem_zero(entity_buffer_local, 0X1000);
+		
 
 		    user_call::call(
 				reinterpret_cast<unsigned long long> (get_immediate_context_fun),
@@ -96,9 +96,7 @@ namespace utils
 
 			g_pContext = *(PVOID*)entity_buffer_local;
 			//vfun_utils::release(g_pContext);
-			memory::mem_zero(desc_buffer_local, 0X1000);
-
-			memory::mem_zero(entity_buffer_local, 0X1000);
+			
 
 			memory::mem_copy(desc_buffer_local, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
 
@@ -147,7 +145,8 @@ namespace utils
 			 
 			 
 			get_desc_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_Surface, 10));
-			memory::mem_zero(desc_buffer, 0X1000);
+		 
+
 			user_call::call(
 				get_desc_fun,
 				reinterpret_cast<unsigned long long>(g_Surface),
@@ -186,6 +185,11 @@ namespace utils
 			}
 
 			PVOID pTexture = *(PVOID*)entity_buffer;
+			if (!pTexture)
+			{
+				return;
+			}
+		 
 
 			copy_resource_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 47));
 
@@ -197,7 +201,7 @@ namespace utils
 				, 0
 			);
 
-			memory::mem_zero(desc_buffer, 0X1000);
+		 
 			map_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pContext, 14));
 
 			user_call::call6(
@@ -212,8 +216,13 @@ namespace utils
 
 			MapRes = *(D3D11_MAPPED_SUBRESOURCE*)desc_buffer;
 		 
-  
+
+			/*	if (SDesc.Width && SDesc.Height && MapRes.Data)
+				{
+
+				}*/
 			draw_callback(SDesc.Width, SDesc.Height, MapRes.Data);
+		
 			 
 		 
 
@@ -240,37 +249,21 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 		
-			cr4 cr4vlaue{ __readcr4() };
-			bool smap = cr4vlaue.smap_enable;
-
-			if (smap) {
-				cr4vlaue.smap_enable = 0;
-				__writecr4(cr4vlaue.flags);
-			}
-
-
-			if (!game::kcsgo2::initialize_game_data())
-			{
-				if (smap)
-				{
-					cr4vlaue.smap_enable = true;
-					__writecr4(cr4vlaue.flags);
-				}
-				return;
-			}
-
 			memset(pagehit, 0, sizeof(pagehit));
 			memset(pagevaild, 0, sizeof(pagevaild));
 
-
-			
-
-		
-
-
 			ByteRender rend;
 			rend.Setup(width, height, data);
+			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
 
+			if (!game::kcsgo2::initialize_game_data())
+			{
+				
+				return;
+			}
+
+		 
+			
 
 			for ( size_t i =0;i<game::kcsgo2::g_player_count;i++)
 			{
@@ -302,37 +295,51 @@ namespace utils
 				box_x = static_cast<float> (ov2.x - box_weight / 2);
 				box_y = ov2.y;
 
-				/*	bool old_state = asm_read_rflags() & 0x200;
-					asm_cli();*/
+			
 				 
-				//const bool ac_was_disabled = !is_ac_flag_set();
-
-				//// 如果AC被禁用则临时启用
-				//if (ac_was_disabled) _setac();
-				rend.Rectangle(box_x, ov2.y, static_cast<float> (box_weight), static_cast<float> (box_height), FColor(0, 255, 0), 1);
-
-				//if (ac_was_disabled)_clearac();
 				 
-					
+
+			 
+
 				
-				/*if (old_state)
-				{
-					asm_sti();
-				}*/
+				/*unsigned long long current_irql = asm_read_cr8();
+				asm_write_cr8(DISPATCH_LEVEL);*/
+				/*	bool old_state = asm_read_rflags() & 0x200;
+					if (old_state)
+					{
+						asm_cli();
+					}*/
+					/*	KIRQL old_irql;
+						KeRaiseIrql(DISPATCH_LEVEL, &old_irql);
+						cr4 cr4vlaue{ __readcr4() };
+						bool smap = cr4vlaue.smap_enable;
+						if (smap) {
+							cr4vlaue.smap_enable = 0;
+							__writecr4(cr4vlaue.flags);
+						}*/
+				////防止其他绘制打断 
+			
+			
+				rend.Rectangle(box_x, box_y, static_cast<float> (box_weight), static_cast<float> (box_height), FColor(0, 255, 0), 1);
+				
+				//if (smap)
+				//{
+				//	cr4vlaue.smap_enable = true;
+				//	__writecr4(cr4vlaue.flags);
+				//}
+				///*	if (old_state)
+				//	{
+				//		asm_sti();
+				//	}*/
+		  //  	// asm_write_cr8(current_irql);
+				//KeLowerIrql(old_irql);
 				 
 			}
 
+			 
+			  
 
-
-			if (smap)
-			{
-				cr4vlaue.smap_enable = true;
-				__writecr4(cr4vlaue.flags);
-			}
-
-		
-
-			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
+			
 			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
 
 		    
@@ -411,11 +418,7 @@ namespace utils
 			if (InterlockedCompareExchange(&g_dwm_render_lock, 1, 0) != 0)
 				return;
 
-			if (!NT_SUCCESS(initialize(utils::dwm_draw::g_pswap_chain)))
-			{
-				InterlockedExchange(&g_dwm_render_lock, 0);
-				return;
-			}
+
 
 			if (!has_hooked_get_buffer)
 			{
@@ -423,6 +426,11 @@ namespace utils
 				has_hooked_get_buffer = true;
 			}
 
+			if (!NT_SUCCESS(initialize(utils::dwm_draw::g_pswap_chain)))
+			{
+				InterlockedExchange(&g_dwm_render_lock, 0);
+				return;
+			}
 			
 			render_overlay_frame(draw_overlay_elements);
 

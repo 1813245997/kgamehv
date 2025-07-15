@@ -27,6 +27,7 @@ namespace utils
 		unsigned long long g_dxgkrnl_size{};
 		unsigned long long g_offset_stack{};
 		unsigned long long g_ccomposition_present{};
+		unsigned long long g_cocclusion_context_pre_sub_graph{};
 		unsigned long long g_cocclusion_context_post_sub_graph{};
 		unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm{}; //CDXGISwapChain::PresentImplCore
 		unsigned long long g_cdxgi_swapchain_present_dwm{}; //CDXGISwapChain::PresentDWM
@@ -105,6 +106,12 @@ namespace utils
 			}
 
 			status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+
+			status = find_cocclusion_context_pre_sub_graph(g_dwm_process, g_dwmcore_base, &g_cocclusion_context_pre_sub_graph);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
@@ -189,17 +196,25 @@ namespace utils
 				return status;
 			}
 
-			//status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
-			//if (!NT_SUCCESS(status))
-			//{
-			//	return status;
-			//}
 
-			/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
-				if (!NT_SUCCESS(status))
-				{
-					return status;
-				}*/
+			status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			 
+			//全屏DWM可能会卡死 需要找原因TODO
+			status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+
+			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 
 			status = hook_dxgk_get_device_state(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -207,11 +222,11 @@ namespace utils
 				return status;
 			}
 
-			status = hook_d3d_kmt_open_resource(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}
+			/*	status = hook_d3d_kmt_open_resource(g_dwm_process);
+				if (!NT_SUCCESS(status))
+				{
+					return status;
+				}*/
 
 			 
 
@@ -688,6 +703,32 @@ namespace utils
 
 			return STATUS_SUCCESS;
 		}
+		NTSTATUS find_cocclusion_context_pre_sub_graph(
+			IN PEPROCESS process,
+			IN unsigned long long dwmcore_base,
+			OUT unsigned long long* cocclusion_context_pre_sub_graph_addr_out)
+		{   
+			if (!cocclusion_context_pre_sub_graph_addr_out)
+				return STATUS_INVALID_PARAMETER;
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_cocclusion_context_pre_sub_graph(dwmcore_base);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*cocclusion_context_pre_sub_graph_addr_out = addr;
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+				"[hv] Found COcclusionContext::PreSubgraph at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+			   
+		}
 
 		NTSTATUS find_cocclusion_context_post_sub_graph(
 			IN PEPROCESS process,
@@ -1053,6 +1094,26 @@ namespace utils
 
 			 
 		}
+
+
+		NTSTATUS hook_cocclusion_context_pre_sub_graph(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(g_cocclusion_context_pre_sub_graph),
+				hook_functions::new_cocclusion_context_pre_sub_graph,
+				nullptr
+			);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+		}
 		NTSTATUS  hook_cocclusion_context_post_sub_graph(IN PEPROCESS process)
 		{
 			if (!process)
@@ -1102,11 +1163,14 @@ namespace utils
 			KAPC_STATE apc_state{};
 			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 
-			bool hook_result = hyper::hook(
+			bool hook_result = hyper::ept_hook_break_point_int3(
+				NULL,
 				reinterpret_cast<PVOID>(g_dxgk_get_device_state),
-				hook_functions::hook_dxgk_get_device_state,
-				reinterpret_cast<void**>(&hook_functions::original_dxgk_get_device_state)
+				hook_functions::new_dxgk_get_device_state,
+			  nullptr
 			);
+		 
+
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 

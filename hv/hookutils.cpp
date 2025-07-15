@@ -7,7 +7,7 @@
 #include "utils/process_utils.h"
 #include "utils/memory_utils.h"
 #include "utils/internal_function_defs.h"
-
+#include "utils/os_info.h"
 
 
 
@@ -43,7 +43,7 @@ namespace hyper
 	 }
 
 
-	bool hook_instruction_memory(EptHookInfo* hooked_function_info, void* target_function , unsigned __int64 page_offset )
+	bool hook_instruction_memory_int1(EptHookInfo* hooked_function_info, void* target_function , unsigned __int64 page_offset )
 	{
 		  
 		unsigned __int64 hooked_instructions_size = LDE(target_function, 64);
@@ -63,7 +63,7 @@ namespace hyper
 		return true;
 	}
 
-	bool hook_instruction_memory_r3(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset, bool is64, _In_ bool allocate_trampoline)
+	bool hook_instruction_memory_int3(EptHookInfo* hooked_function_info, void* target_function, unsigned __int64 page_offset, bool is64, _In_ bool allocate_trampoline)
 	{
 	 
 		unsigned __int64 hooked_instructions_size = LDE(target_function, 64);
@@ -75,7 +75,7 @@ namespace hyper
 		{// Copy overwritten instructions to trampoline buffer
 			RtlCopyMemory(hooked_function_info->trampoline_va, target_function, hooked_instructions_size);
 
-			hook_write_absolute_jump_r3(&hooked_function_info->trampoline_va[hooked_instructions_size], (unsigned __int64)target_function + hooked_instructions_size, is64);
+			hook_write_absolute_jump_int3(&hooked_function_info->trampoline_va[hooked_instructions_size], (unsigned __int64)target_function + hooked_instructions_size, is64);
 		}
 		hooked_function_info->original_instructions_backup = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, hooked_instructions_size, POOL_TAG));
 		if (!hooked_function_info->original_instructions_backup)
@@ -111,7 +111,7 @@ namespace hyper
 
 	}
 
-	void  hook_write_absolute_jump_r3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64)
+	void  hook_write_absolute_jump_int3(unsigned __int8* target_buffer, unsigned __int64 destination_address, bool is64)
 	{
 		if (is64)
 		{
@@ -193,7 +193,7 @@ namespace hyper
 				if (origin_function)
 					*origin_function = hook_info->trampoline_va;
 				++page_ctx->ref_count;
-				hook_instruction_memory(hook_info, target_api,page_offset );
+				hook_instruction_memory_int1(hook_info, target_api,page_offset );
 				InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
 
 				return true;
@@ -258,7 +258,7 @@ namespace hyper
 		if (origin_function)
 			*origin_function = hook_info->trampoline_va;
 
-		hook_instruction_memory(hook_info, target_api,page_offset );
+		hook_instruction_memory_int1(hook_info, target_api,page_offset );
 		InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
 		InsertHeadList(&g_HookedPageListHead, &page_ctx->PageEntry);
 
@@ -339,27 +339,40 @@ namespace hyper
 
 	bool ept_hook_break_point_int3( _In_ HANDLE process_id,  _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function , _Inout_ bool allocate_trampoline)
 	{
+		 
+		if (utils::memory::is_user_address(target_api))
 
+			return ept_hook_user_break_point_int3(process_id, target_api, new_api, origin_function, allocate_trampoline);
+		 
+		else
+			return ept_hook_kernel_break_point_int3( target_api, new_api, origin_function);
 	 
+	   
+		
+
+		 
+	}
+	bool ept_hook_user_break_point_int3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function, _Inout_ bool allocate_trampoline)
+	{
 		if (!target_api)
 		{
 			return false;
 		}
 
-		if( !new_api)
+		if (!new_api)
 		{
 			return false;
-			
+
 		}
 
 		if (origin_function)
 		{
 			*origin_function = nullptr;
 		}
-	 
+
 		PEPROCESS process = nullptr;
 		KAPC_STATE apc_state{};
-		 
+
 		uint64_t target_pa{};
 		bool is_64_bit = false;
 		bool succeed = false;
@@ -371,21 +384,21 @@ namespace hyper
 		is_64_bit = utils::process_utils::is_process_64_bit(process);
 
 
-	
+
 
 
 		utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 
-		
-		 
 
-		
+
+
+
 		//unsigned long long orignal_page = (unsigned long long)PAGE_ALIGN(target_api);
 		unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
-	 
-	 
+
+
 		SIZE_T bytes = 0;
-		   utils::internal_functions::pfn_mm_copy_virtual_memory(
+		utils::internal_functions::pfn_mm_copy_virtual_memory(
 			process,
 			(PVOID)target_api,              // 任意用户态地址
 			process,
@@ -399,8 +412,8 @@ namespace hyper
 			goto clear;
 
 		}*/
-		
-	     target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+
+		target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 		if (target_pa == 0)
 		{
 			goto clear;
@@ -413,17 +426,17 @@ namespace hyper
 		{
 			EptHookedPageContext* page_ctx = CONTAINING_RECORD(entry, EptHookedPageContext, PageEntry);
 
-			if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa)&&page_ctx->process_id== process_id)
+			if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa) && page_ctx->process_id == process_id)
 			{
 
 				auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 				if (!hook_info)
 				{
 					goto clear;
-				  
+
 				}
 
-				 
+
 				if (allocate_trampoline)
 				{
 					if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
@@ -436,7 +449,7 @@ namespace hyper
 					RtlZeroMemory(hook_info->trampoline_va, 0X1000);
 				}
 
-			
+
 
 				hook_info->handler_va = new_api;
 				hook_info->original_va = target_api;
@@ -447,7 +460,7 @@ namespace hyper
 				if (origin_function)
 					*origin_function = hook_info->trampoline_va;
 				++page_ctx->ref_count;
-				 hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit,allocate_trampoline);
+				hook_instruction_memory_int3(hook_info, target_api, page_offset, is_64_bit, allocate_trampoline);
 
 				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 				utils::internal_functions::pfn_ob_dereference_object(process);
@@ -462,25 +475,25 @@ namespace hyper
 		if (!page_ctx)
 		{
 			goto clear;
-		  
+
 		}
 
 		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
 		if (!page_ctx->fake_page_contents)
 		{
-			 
+
 			ExFreePool(page_ctx);
 			goto clear;
-		 
+
 		}
 		uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart;
 		if (fake_pa == 0)
 		{
-			 
+
 			ExFreePool(page_ctx->fake_page_contents);
 			ExFreePool(page_ctx);
 			goto clear;
-			 
+
 
 		}
 		InitializeListHead(&page_ctx->hooked_info_list);
@@ -488,11 +501,11 @@ namespace hyper
 		auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
 		if (!hook_info)
 		{
-			 
+
 			ExFreePool(page_ctx->fake_page_contents);
 			ExFreePool(page_ctx);
 			goto clear;
-		 
+
 		}
 		memset(hook_info, 0, sizeof(EptHookInfo));
 		if (allocate_trampoline)
@@ -507,8 +520,8 @@ namespace hyper
 			}
 			RtlZeroMemory(hook_info->trampoline_va, 0X1000);
 		}
-	
-	
+
+
 		RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
 
 
@@ -523,238 +536,216 @@ namespace hyper
 		hook_info->original_pa = target_pa;
 		hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
 		hook_info->fake_page_contents = page_ctx->fake_page_contents;
+		hook_info->is_user_mode = true;
 		++page_ctx->ref_count;
 		if (origin_function)
 			*origin_function = hook_info->trampoline_va;
 
-		 
 
-		 if (!hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit, allocate_trampoline))
-		 {
-			 ExFreePool(page_ctx->fake_page_contents);
-			 ExFreePool(page_ctx);
-			 ExFreePool(hook_info->original_instructions_backup);
-			 utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
-			 ExFreePool(hook_info);
-			 goto clear;
-		 }
-		
+
+		if (!hook_instruction_memory_int3(hook_info, target_api, page_offset, is_64_bit, allocate_trampoline))
+		{
+			ExFreePool(page_ctx->fake_page_contents);
+			ExFreePool(page_ctx);
+			ExFreePool(hook_info->original_instructions_backup);
+			utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+			ExFreePool(hook_info);
+			goto clear;
+		}
+
 		prevmcall::install_ept_hook(hook_info->original_pa, hook_info->fake_pa);
-		 
-		
+
+
 		utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 		utils::internal_functions::pfn_ob_dereference_object(process);
 		InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
 		InsertHeadList(&g_ept_breakpoint_hook_list, &page_ctx->PageEntry);
 		return  true;
 	clear:
-		 
+
 		utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 		utils::internal_functions::pfn_ob_dereference_object(process);
-		
+
 
 		return succeed;
 	}
+
+	bool ept_hook_kernel_break_point_int3(  _In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function)
+
+	{
+		if (!target_api)
+		{
+			return false;
+		}
+
+		if (!new_api)
+		{
+			return false;
+
+		}
+
+		if (origin_function)
+		{
+			*origin_function = nullptr;
+		}
+
+	 
+		uint64_t target_pa{};
+
+		  
+		//unsigned long long orignal_page = (unsigned long long)PAGE_ALIGN(target_api);
+		unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
+		 
+
+		target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+		if (target_pa == 0)
+		{
+			return false;
+
+		}
+
+		for (PLIST_ENTRY entry = g_ept_breakpoint_hook_list.Flink;
+			entry != &g_ept_breakpoint_hook_list;
+			entry = entry->Flink)
+		{
+			EptHookedPageContext* page_ctx = CONTAINING_RECORD(entry, EptHookedPageContext, PageEntry);
+
+			if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa))
+			{
+
+				auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+				if (!hook_info)
+				{
+					return false;
+
+				}
+
+				hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+
+				if (!hook_info->trampoline_va)
+				{
+					ExFreePool(hook_info); 
+					return false;
+				 
+					
+				}
+
+			    RtlZeroMemory(hook_info->trampoline_va, 100);
+
+				hook_info->handler_va = new_api;
+				hook_info->original_va = target_api;
+				hook_info->original_pa = target_pa;
+				hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
+				hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
+				hook_info->fake_page_contents = page_ctx->fake_page_contents;
+				if (origin_function)
+					*origin_function = hook_info->trampoline_va;
+				++page_ctx->ref_count;
+				hook_instruction_memory_int3(hook_info, target_api, page_offset,true,true);
+
+				 
+				InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
+				return true;
+			}
+		}
+
+
+
+		auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
+		if (!page_ctx)
+		{
+			return false;
+
+		}
+
+		page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+		if (!page_ctx->fake_page_contents)
+		{
+
+			ExFreePool(page_ctx);
+			return false;
+
+		}
+		uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart;
+		if (fake_pa == 0)
+		{
+
+			ExFreePool(page_ctx->fake_page_contents);
+			ExFreePool(page_ctx);
+			return false;
+
+
+		}
+		InitializeListHead(&page_ctx->hooked_info_list);
+
+		auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
+		if (!hook_info)
+		{
+
+			ExFreePool(page_ctx->fake_page_contents);
+			ExFreePool(page_ctx);
+			return false;
+
+		}
+		memset(hook_info, 0, sizeof(EptHookInfo));
+
+		hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+		 
+		if (!hook_info->trampoline_va)
+		{
+				ExFreePool(page_ctx->fake_page_contents);
+				ExFreePool(page_ctx);
+				ExFreePool(hook_info);
+				return false;
+
+		}
+		RtlZeroMemory(hook_info->trampoline_va,100);
+		  
+		RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
+
+
+
+		page_ctx->process_id = utils::internal_functions::pfn_ps_get_current_process_id();
+		page_ctx->HookedPageFrameNumber = GET_PFN(target_pa);
+		page_ctx->FakePageFrameNumber = GET_PFN(utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart);
+
+		hook_info->handler_va = new_api;
+		hook_info->original_va = target_api;
+		hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
+		hook_info->original_pa = target_pa;
+		hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
+		hook_info->fake_page_contents = page_ctx->fake_page_contents;
+		hook_info->is_user_mode = true;
+		++page_ctx->ref_count;
+		if (origin_function)
+			*origin_function = hook_info->trampoline_va;
+
+
+
+		if (!hook_instruction_memory_int3(hook_info, target_api, page_offset, true, true))
+		{
+			ExFreePool(page_ctx->fake_page_contents);
+			ExFreePool(page_ctx);
+			ExFreePool(hook_info->original_instructions_backup);
+			ExFreePool(  hook_info->trampoline_va );
+			ExFreePool(hook_info);
+			return false;
+		}
+
+		prevmcall::install_ept_hook(hook_info->original_pa, hook_info->fake_pa);
+
+
+	 
+		InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
+		InsertHeadList(&g_ept_breakpoint_hook_list, &page_ctx->PageEntry);
+		return  true;
+ 
+		 
+
+		 
+	}
   
-	//bool ept_hook_r3(_In_ HANDLE process_id, _In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function)
-	//{
-
-
-	//	if (!target_api)
-	//	{
-	//		return false;
-	//	}
-
-	//	if (!new_api)
-	//	{
-	//		return false;
-
-	//	}
-
-	//	if (origin_function)
-	//	{
-	//		*origin_function = nullptr;
-	//	}
-
-	//	PEPROCESS process = nullptr;
-	//	KAPC_STATE apc_state{};
-	//	PMDL mdl = nullptr;
-	//	uint64_t target_pa{};
-	//	bool is_64_bit = false;
-	//	bool succeed = false;
-	//	if (!NT_SUCCESS(utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process)))
-	//	{
-	//		return false;
-	//	}
-
-	//	is_64_bit = utils::process_utils::is_process_64_bit(process);
-
-
-
-
-
-	//	utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-
-
-
-
-
-	//	unsigned long long orignal_page = (unsigned long long)PAGE_ALIGN(target_api);
-	//	unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
-
-
-	//	SIZE_T bytes = 0;
-	//	NTSTATUS status = utils::internal_functions::pfn_mm_copy_virtual_memory(
-	//		process,
-	//		(PVOID)target_api,              // 任意用户态地址
-	//		process,
-	//		(PVOID)target_api,
-	//		1,                         // 拷贝 1 字节
-	//		UserMode,
-	//		&bytes
-	//	);
-	//	/*if (!NT_SUCCESS(utils::memory::lock_memory(orignal_page, 0x1000, &mdl)))
-	//	{
-	//		goto clear;
-
-	//	}*/
-
-	//	target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
-	//	if (target_pa == 0)
-	//	{
-	//		goto clear;
-
-	//	}
-
-	//	for (PLIST_ENTRY entry = g_ept_breakpoint_hook_list.Flink;
-	//		entry != &g_ept_breakpoint_hook_list;
-	//		entry = entry->Flink)
-	//	{
-	//		EptHookedPageContext* page_ctx = CONTAINING_RECORD(entry, EptHookedPageContext, PageEntry);
-
-	//		if (page_ctx->HookedPageFrameNumber == GET_PFN(target_pa) && page_ctx->process_id == process_id)
-	//		{
-
-	//			auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
-	//			if (!hook_info)
-	//			{
-	//				goto clear;
-
-	//			}
-
-
-	//			if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
-	//			{
-
-	//				ExFreePool(hook_info);
-	//				goto clear;
-
-	//			}
-	//			RtlZeroMemory(hook_info->trampoline_va, 0X1000);
-
-	//			hook_info->handler_va = new_api;
-	//			hook_info->original_va = target_api;
-	//			hook_info->original_pa = target_pa;
-	//			hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
-	//			hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
-	//			hook_info->fake_page_contents = page_ctx->fake_page_contents;
-	//			if (origin_function)
-	//				*origin_function = hook_info->trampoline_va;
-	//			++page_ctx->ref_count;
-	//			hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit);
-	//			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-	//			utils::internal_functions::pfn_ob_dereference_object(process);
-	//			InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
-	//			return true;
-	//		}
-	//	}
-
-
-
-	//	auto* page_ctx = reinterpret_cast<EptHookedPageContext*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookedPageContext), POOL_TAG));
-	//	if (!page_ctx)
-	//	{
-	//		goto clear;
-
-	//	}
-
-	//	page_ctx->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
-	//	if (!page_ctx->fake_page_contents)
-	//	{
-
-	//		ExFreePool(page_ctx);
-	//		goto clear;
-
-	//	}
-	//	uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart;
-	//	if (fake_pa == 0)
-	//	{
-
-	//		ExFreePool(page_ctx->fake_page_contents);
-	//		ExFreePool(page_ctx);
-	//		goto clear;
-
-
-	//	}
-	//	InitializeListHead(&page_ctx->hooked_info_list);
-
-	//	auto* hook_info = reinterpret_cast<EptHookInfo*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(EptHookInfo), POOL_TAG));
-	//	if (!hook_info)
-	//	{
-
-	//		ExFreePool(page_ctx->fake_page_contents);
-	//		ExFreePool(page_ctx);
-	//		goto clear;
-
-	//	}
-	//	memset(hook_info, 0, sizeof(EptHookInfo));
-
-	//	if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x1000)))
-	//	{
-	//		ExFreePool(page_ctx->fake_page_contents);
-	//		ExFreePool(page_ctx);
-	//		ExFreePool(hook_info);
-	//		goto clear;
-
-	//	}
-	//	RtlZeroMemory(hook_info->trampoline_va, 0X1000);
-	//	RtlCopyMemory(page_ctx->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
-
-
-
-	//	page_ctx->process_id = process_id;
-	//	page_ctx->HookedPageFrameNumber = GET_PFN(target_pa);
-	//	page_ctx->FakePageFrameNumber = GET_PFN(utils::internal_functions::pfn_mm_get_physical_address(page_ctx->fake_page_contents).QuadPart);
-
-	//	hook_info->handler_va = new_api;
-	//	hook_info->original_va = target_api;
-	//	hook_info->fake_va = &page_ctx->fake_page_contents[page_offset];
-	//	hook_info->original_pa = target_pa;
-	//	hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&page_ctx->fake_page_contents[page_offset]).QuadPart;
-	//	hook_info->fake_page_contents = page_ctx->fake_page_contents;
-	//	++page_ctx->ref_count;
-	//	if (origin_function)
-	//		*origin_function = hook_info->trampoline_va;
-
-	//	hook_instruction_memory_r3(hook_info, target_api, page_offset, is_64_bit);
-
-
-	//	prevmcall::install_ept_hook(hook_info->original_pa, hook_info->fake_pa);
-
-
-	//	utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-	//	utils::internal_functions::pfn_ob_dereference_object(process);
-	//	InsertHeadList(&page_ctx->hooked_info_list, &hook_info->list_entry);
-	//	InsertHeadList(&g_ept_breakpoint_hook_list, &page_ctx->PageEntry);
-	//	return  true;
-	//clear:
-
-	//	utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-	//	utils::internal_functions::pfn_ob_dereference_object(process);
-
-
-	//	return succeed;
-	//}
+ 
 
 	bool find_hook_info_by_rip(
 		LIST_ENTRY* hook_page_list,
@@ -790,13 +781,27 @@ namespace hyper
 		_In_ void* rip,
 		_Out_ hyper::EptHookInfo** out_hook_info)
 	{
+		if (utils::memory:: is_user_address(rip))
+			return find_user_hook_break_point_int3(rip, out_hook_info);
+		else
+			return find_kernel_hook_break_point_int3(rip, out_hook_info);
+ 
+	}
+
+
+	bool find_user_hook_break_point_int3(
+		_In_ void* rip,
+		_Out_ hyper::EptHookInfo** out_hook_info)
+	{
 		*out_hook_info = nullptr;
-		LIST_ENTRY  *hook_page_list = &g_ept_breakpoint_hook_list;
+		LIST_ENTRY* hook_page_list = &g_ept_breakpoint_hook_list;
+
 		for (PLIST_ENTRY page_entry = hook_page_list->Flink;
 			page_entry != hook_page_list;
 			page_entry = page_entry->Flink)
 		{
 			auto* hooked_page = CONTAINING_RECORD(page_entry, hyper::EptHookedPageContext, PageEntry);
+
 			if (hooked_page->process_id != utils::internal_functions::pfn_ps_get_current_process_id())
 				continue;
 
@@ -804,7 +809,6 @@ namespace hyper
 				func_entry != &hooked_page->hooked_info_list;
 				func_entry = func_entry->Flink)
 			{
-
 				auto* hook_info = CONTAINING_RECORD(func_entry, hyper::EptHookInfo, list_entry);
 
 				if (reinterpret_cast<void*>(rip) == hook_info->original_va)
@@ -814,9 +818,40 @@ namespace hyper
 				}
 			}
 		}
-
 		return false;
 	}
+
+	bool find_kernel_hook_break_point_int3(
+		_In_ void* rip,
+		_Out_ hyper::EptHookInfo** out_hook_info)
+	{
+		*out_hook_info = nullptr;
+		LIST_ENTRY* hook_page_list = &g_ept_breakpoint_hook_list;
+
+		for (PLIST_ENTRY page_entry = hook_page_list->Flink;
+			page_entry != hook_page_list;
+			page_entry = page_entry->Flink)
+		{
+			auto* hooked_page = CONTAINING_RECORD(page_entry, hyper::EptHookedPageContext, PageEntry);
+
+			// 内核态 Hook 忽略进程 ID
+
+			for (PLIST_ENTRY func_entry = hooked_page->hooked_info_list.Flink;
+				func_entry != &hooked_page->hooked_info_list;
+				func_entry = func_entry->Flink)
+			{
+				auto* hook_info = CONTAINING_RECORD(func_entry, hyper::EptHookInfo, list_entry);
+
+				if (reinterpret_cast<void*>(rip) == hook_info->original_va)
+				{
+					*out_hook_info = hook_info;
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 
 	bool unhook_all_ept_hooks_for_pid(_In_ HANDLE process_id)
 	{
@@ -848,9 +883,17 @@ namespace hyper
 
 				 
 				prevmcall::remove_ept_hook(hook_info->original_pa);
+				
 				if (hook_info->trampoline_va)
 				{
-					utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+					if (hook_info->is_user_mode)
+					{
+						utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+					}
+					else
+					{
+						ExFreePool(hook_info->trampoline_va);
+					}
 
 				}
 

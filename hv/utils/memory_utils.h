@@ -44,5 +44,7 @@ namespace utils
 
 		void mem_copy(PVOID dst, PVOID src, ULONG size);
 
+		bool is_user_address(void* virtual_address);
+
 	}
 }

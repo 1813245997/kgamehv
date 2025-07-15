@@ -21,6 +21,7 @@ namespace utils
 		extern unsigned long long g_dxgi_size ;
 		extern unsigned long long g_offset_stack ;
 		extern unsigned long long g_ccomposition_present ;
+		extern unsigned long long g_cocclusion_context_pre_sub_graph;
 		extern unsigned long long g_cocclusion_context_post_sub_graph;
 		extern unsigned long long g_cdxgi_swapchain_present_multiplane_overlay ;
 		extern unsigned long long g_cdxgi_swapchain_present_dwm;
@@ -75,6 +76,12 @@ namespace utils
 			IN PEPROCESS process,
 			IN unsigned long long dwmcore_base,
 			OUT unsigned long long* ccomposition_present_addr_out);
+
+
+		NTSTATUS find_cocclusion_context_pre_sub_graph(
+			IN PEPROCESS process,
+			IN unsigned long long dwmcore_base,
+			OUT unsigned long long* cocclusion_context_pre_sub_graph_addr_out);
 
 		NTSTATUS find_cocclusion_context_post_sub_graph(
 			IN PEPROCESS process,
@@ -143,6 +150,8 @@ namespace utils
 		 NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process);
 		  
 		 NTSTATUS  hook_get_buffer(IN PEPROCESS process);
+
+		 NTSTATUS hook_cocclusion_context_pre_sub_graph(IN PEPROCESS process);
 
 		 NTSTATUS  hook_cocclusion_context_post_sub_graph(IN PEPROCESS process);
 

@@ -362,5 +362,9 @@ namespace utils
 		   void mem_copy(PVOID dst, PVOID src, ULONG size) {
 			   __movsb((PUCHAR)dst, (const PUCHAR)src, size);
 		   }
+		   bool is_user_address(void* virtual_address)
+		   {
+			   return virtual_address <= MM_HIGHEST_USER_ADDRESS;
+		   }
 	}
 }

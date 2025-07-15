@@ -496,18 +496,51 @@ namespace hook_functions
 
 		   return TRUE;
 	   }
+	   BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   // 保存原始返回地址
+		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
+		   unsigned long long cocclusion_context_pre_sub_graph_fun =
+			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va); 
 
+		   unsigned long long usercall_retval_ptr =
+			   utils::user_call::call(
+				   cocclusion_context_pre_sub_graph_fun,
+				   ContextRecord->Rcx,
+				   ContextRecord->Rdx,
+				   ContextRecord->R8, 0);
+
+		   if (usercall_retval_ptr)
+		   {
+			   
+			   HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			 
+
+			   ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
+			   bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
+			   *a3 = true;
+			   //告诉他窗口是窗口化的
+
+			   // 关键修复：直接返回到调用者的下一条指令
+			   ContextRecord->Rip = original_return_address;
+			   ContextRecord->Rsp += sizeof(ULONG64);
+		   }
+	 
+		 
+		   return TRUE;
+
+	   }
 	   BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_post_sub_graph_fun =
 			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
-
-		   // 保存原始返回地址
-		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
-
 		   unsigned long long usercall_retval_ptr =
 			   utils::user_call::call(
 				   cocclusion_context_post_sub_graph_fun,
@@ -515,20 +548,20 @@ namespace hook_functions
 				   ContextRecord->Rdx,
 				   ContextRecord->R8, 0);
 
-		   if (usercall_retval_ptr)
-		   {
-			   // 强制设置返回值为 -1
-			   HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			   hr = -1;
-			   ContextRecord->Rax = hr;  // 设置返回值
+		 if (usercall_retval_ptr)
+		 {
+			
+			 HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			 ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
+			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
+			 *a3 = false;
+			 //告诉他窗口不是全屏
 
-			   // 关键修复：直接返回到调用者的下一条指令
-			   ContextRecord->Rip = original_return_address;
-			   ContextRecord->Rsp += sizeof(ULONG64);
-		   }
-		 /*  ContextRecord->Rax = -1;
-		   ContextRecord->Rip = original_return_address;
-		   ContextRecord->Rsp += sizeof(ULONG64);*/
+			 // 关键修复：直接返回到调用者的下一条指令
+			 ContextRecord->Rip = original_return_address;
+			 ContextRecord->Rsp += sizeof(ULONG64);
+			 }
+	 
 		   return TRUE;
 	   }
 
@@ -997,5 +1030,45 @@ namespace hook_functions
 		   return TRUE;
 	   }
 
+	   BOOLEAN  __fastcall new_dxgk_get_device_state(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   // 保存原始返回地址
+		 //  ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
+
+
+		   //绘制有问题会导致DWM卡住
+		   unsigned long long dxgk_get_device_state_fun =
+			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
+
+		   ContextRecord->Rip = dxgk_get_device_state_fun;
+
+		   if (utils::dwm_draw::g_dwm_process == nullptr)
+		   {
+			   return TRUE;
+		   }
+
+		   if (utils::internal_functions::pfn_ps_get_current_process() != utils::dwm_draw::g_dwm_process)
+		   {
+			   return TRUE;
+		   }
+
+	 
+		   if (!utils::dwm_draw::g_pswap_chain)
+		   {
+			   return TRUE;
+		   }
+
+		   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (utils::dwm_draw::g_pswap_chain)))
+		   {
+			   return TRUE;
+		   }
+		    
+		   utils::strong_dx::draw_utils();
+
+		   return TRUE;
+	   }
 
 }

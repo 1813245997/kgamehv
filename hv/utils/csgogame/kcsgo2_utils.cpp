@@ -157,6 +157,8 @@ namespace game
 			}
 
 		 
+
+
 			HANDLE  game_handle = find_cs2_window();
 			if (!game_handle)
 			{
@@ -176,7 +178,12 @@ namespace game
 				return false;
 
 			}
+		/*	if (PsGetProcessExitStatus(Process) != STATUS_PENDING)
+			{
+				ObDereferenceObject(Process);
 
+				return 0;
+			}*/
 			// 尝试获取进程对象
 			PEPROCESS process = nullptr;
 			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
@@ -288,6 +295,7 @@ namespace game
 			{
 				return false;
 			}
+
 			if (!get_cs2_window_info(g_game_handle, &g_game_size))
 			{
 				return false;

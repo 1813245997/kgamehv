@@ -124,11 +124,20 @@ namespace hook_functions
 		_Inout_ PCONTEXT ContextRecord,
 		_Inout_ hyper::EptHookInfo* matched_hook_info);
 
+	BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
+		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		_Inout_ PCONTEXT ContextRecord,
+		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
 	BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
 		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		_Inout_ PCONTEXT ContextRecord,
 		_Inout_ hyper::EptHookInfo* matched_hook_info);
 
+
+
+
+	//new_cocclusion_context_pre_sub_graph
 	extern  INT64(__fastcall* original_present_multiplane_overlay)(
 		void* thisptr,
 		PVOID dxgi_swap_chain,
@@ -266,6 +275,11 @@ namespace hook_functions
 
 
 	  BOOLEAN  __fastcall new_get_csgo_hp(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	  BOOLEAN  __fastcall new_dxgk_get_device_state(
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		  _Inout_ PCONTEXT ContextRecord,
 		  _Inout_ hyper::EptHookInfo* matched_hook_info);

@@ -9,22 +9,18 @@ namespace cs2SDK {
 		// 玩家场景节点指针的偏移量，用于处理玩家的3D位置信息
 		constexpr 	unsigned long long m_pGameSceneNode = 0x328; // CGameSceneNode*
 
-		constexpr 	unsigned long long m_OoffsetBone = 0x1F0; // CGameSceneNode*
-
 		// 本地玩家控制器的偏移量
-		constexpr 	unsigned long long dwLocalPlayerController = 0x1A52D00;
+		constexpr 	unsigned long long dwLocalPlayerController = 0x1A52D20;
 
-		// 实体列表的偏移量，用于获取所有游戏实体
-		constexpr 	unsigned long long dwEntityList = 0x1A044C0;
 
 		// 视图矩阵的偏移量，用于绘制3D到2D坐标
-		constexpr 	unsigned long long dwViewMatrix = 0x1A6D260;
+		constexpr 	unsigned long long dwViewMatrix = 0x1A6D280;
 
 		// 放置C4的偏移量， 
-		constexpr 	unsigned long long dwPlantedC4 = 0x1A71C30;
+		constexpr 	unsigned long long  dwPlantedC4 = 0x1A71C40;
 
 		// C4爆炸时间的偏移量
-		constexpr 	unsigned long long m_flC4Blow = 0x9B4; // GameTime_t
+		constexpr 	unsigned long long m_flC4Blow = 0xFC0; // GameTime_t
 
 		// C4下次嘀嗒声时间的偏移量
 		constexpr 	unsigned long long m_flNextBeep = 0xFBC; // GameTime_t
@@ -87,9 +83,11 @@ namespace cs2SDK {
 		constexpr 	unsigned long long m_offsettema = 0xE68;
 
 		// 玩家数组偏移
-		constexpr 	unsigned long long m_offestPlayerArray = 0X18652A0;//
+		constexpr 	unsigned long long m_offestPlayerArray = 0X18652B0;//
 
 		// 玩家是否存在的偏移量
 		constexpr 	unsigned long long m_offestbIsPlayerExists = 0x320; // 新增
+
+		constexpr 	unsigned long long m_OoffsetBone = 0x1F0; // CGameSceneNode*
 	}
 }
