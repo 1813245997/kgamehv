@@ -35,6 +35,7 @@ namespace game
 			g_engine2_base = 0;
 			g_engine2_size = 0;
 			g_game_handle = 0;
+			g_process_time.QuadPart = 0;
 			return STATUS_SUCCESS;
 		}
 
