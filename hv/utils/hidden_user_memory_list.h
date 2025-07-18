@@ -17,20 +17,20 @@ namespace utils
 		typedef struct _HIDDEN_PROCESS_ENTRY
 		{
 			LIST_ENTRY list_entry;         // 挂入全局进程链表
-			ULONG process_pid;                     // 进程 PID
+			HANDLE process_pid;                     // 进程 PID
 			LIST_ENTRY address_list_head;  // 地址节点链表头
 		} HIDDEN_PROCESS_ENTRY, * PHIDDEN_PROCESS_ENTRY;
 
 
 		void initialize_hidden_user_memory();
 
-		NTSTATUS insert_hidden_address_for_pid(ULONG process_id, unsigned long long start_address, unsigned long long end_address);
-		bool is_address_hidden_for_pid(ULONG process_id, unsigned long long address);
+		NTSTATUS insert_hidden_address_for_pid(HANDLE process_id, unsigned long long start_address, unsigned long long end_address);
+		bool is_address_hidden_for_pid(HANDLE process_id, unsigned long long address);
 		bool remove_hidden_address_for_pid(
-			ULONG process_id,
+			HANDLE process_id,
 			unsigned long long start_address,
 			unsigned long long end_address
 		);
-		bool remove_hidden_addresses_for_pid(ULONG process_id);
+		bool remove_hidden_addresses_for_pid(HANDLE process_id);
 	}
 }

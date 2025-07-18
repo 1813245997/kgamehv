@@ -133,7 +133,8 @@ namespace utils
 		{
 			unsigned char v;
 			int unidx = 0;
-			for (int i = 0; v = utf8[i]; i++) {
+			for (int i = 0;  utf8[i] != '\0'; i++) {
+				  v = utf8[i];
 				if ((v & 0b10000000) == 0) {
 					uni[unidx] = v;
 				}

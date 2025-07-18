@@ -205,12 +205,6 @@
     <ClInclude Include="utils\Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\font.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\dx_draw\kdxrender.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\dx_draw\LegacyRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -251,6 +245,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\window_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\imgui_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\csgogame\KMenuConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -387,9 +390,6 @@
     <ClCompile Include="utils\user_call_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\dx_draw\kdxrender.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="utils\time_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -412,6 +412,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\window_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\dx_draw\imgui_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\csgogame\KMenuConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\dx_draw\LegacyRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

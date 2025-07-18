@@ -23,6 +23,8 @@ namespace utils
 			unsigned long long ptr, 
 			char* user_rsp, 
 			void** call_data);
+
+		HRESULT call_ret_hr(unsigned long long func_ptr, unsigned long long arg1, unsigned long long arg2, unsigned long long arg3, unsigned long long arg4);
  
 	 }
 

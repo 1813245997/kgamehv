@@ -21,9 +21,10 @@ namespace game
 		POINT  g_game_size{};
 
 		FAST_MUTEX g_player_data_lock;
-		  LARGE_INTEGER g_process_time = {   };
+		LARGE_INTEGER g_process_time = {   };
 		NTSTATUS cleanup_game_process(_In_ PEPROCESS process)
 		{ 
+			UNREFERENCED_PARAMETER(process);
 			g_game_process = nullptr;
 			g_is_initialized = false;
 
@@ -223,7 +224,7 @@ namespace game
 
 		HANDLE find_cs2_window()
 		{
-			static PVOID g_user_buffer = nullptr;
+			 
 			HANDLE handle{};
 			if (!g_user_buffer)
 			{
@@ -459,12 +460,29 @@ namespace game
 						continue;
 					memcpy(&player.gameSceneNode, scene_node_addr, sizeof(uintptr_t));
 
+
+					// 显示玩家骨骼
+					if (KMenuConfig::ShowBone.enabled)
+					{
+						void* bone_array_addr_ptr = reinterpret_cast<void*>(player.gameSceneNode + cs2SDK::offsets::m_OoffsetBone);
+						if (utils::internal_functions::pfn_mm_is_address_valid_ex(bone_array_addr_ptr))
+						{
+							memcpy(&player.boneArray, bone_array_addr_ptr, sizeof(uint64_t));
+							player.ReadBones( &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size);
+						}
+						 
+						
+					}
+
+
 					// 读取 view matrix（每次都读，不太必要）
 					void* view_matrix_addr = reinterpret_cast<void*>(g_client_base + cs2SDK::offsets::dwViewMatrix);
 					if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
 					{
 						memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
 					}
+
+
 
 					temp_count++;
 			}

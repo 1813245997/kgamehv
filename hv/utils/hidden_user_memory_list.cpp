@@ -15,7 +15,7 @@ namespace utils
 		}
 
 
-		NTSTATUS insert_hidden_address_for_pid(ULONG process_id, unsigned long long start_address, unsigned long long end_address)
+		NTSTATUS insert_hidden_address_for_pid(HANDLE process_id, unsigned long long start_address, unsigned long long end_address)
 		{
 			if (start_address >= end_address)
 				return STATUS_INVALID_PARAMETER;
@@ -86,7 +86,7 @@ namespace utils
 		}
 
 
-		bool is_address_hidden_for_pid(ULONG process_id, unsigned long long address)
+		bool is_address_hidden_for_pid(HANDLE process_id, unsigned long long address)
 		{
 			BOOLEAN found = FALSE;
 
@@ -127,7 +127,7 @@ namespace utils
 		}
 
 
-		bool remove_hidden_addresses_for_pid(ULONG process_id)
+		bool remove_hidden_addresses_for_pid(HANDLE process_id)
 		{
 			ExAcquireResourceExclusiveLite(&g_hidden_process_resource, TRUE);
 
@@ -170,7 +170,7 @@ namespace utils
 
 
 		bool remove_hidden_address_for_pid(
-			ULONG process_id,
+			HANDLE process_id,
 			unsigned long long start_address,
 			unsigned long long end_address
 		)

@@ -72,7 +72,8 @@ namespace utils
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature offsets initialized successfully.\n");
 
 			
-
+			game::kcsgo2::initialize_player_data_lock();
+			
 			// Æô¶¯ÐéÄâ»¯
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Starting virtualization...\n");
 			if (!hv::start())

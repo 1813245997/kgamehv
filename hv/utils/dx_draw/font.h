@@ -20,6 +20,7 @@ private:
 	USHORT g_FontIdxList[MAX_CHAR_VALUE];
 public:
 	BOOL InitFont(const BYTE* file_base, ULONG file_size) {
+		UNREFERENCED_PARAMETER(file_size);
 		RtlZeroMemory(g_FontList, sizeof(g_FontList));
 		RtlZeroMemory(g_FontIdxList, sizeof(g_FontIdxList));
 		struct FileHeader {
@@ -67,7 +68,7 @@ public:
 			Glyph.bitmap_sz = info->bitmap_sz;
 			Glyph.stroke_sz = info->stroke_sz;
 			 
-			g_FontIdxList[Glyph.Char] = fidx;
+			g_FontIdxList[Glyph.Char] = static_cast<USHORT> (fidx);
 			g_FontList[fidx] = Glyph;
 			fidx++;
 			if (fidx >= MAX_CHAR_COUNT)

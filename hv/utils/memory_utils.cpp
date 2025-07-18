@@ -71,7 +71,7 @@ namespace utils
 
 			if (NT_SUCCESS(status))
 			{
-				ULONG pid = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_process_id(process));
+				HANDLE pid =  utils::internal_functions::pfn_ps_get_process_id(process) ;
 				unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
 				unsigned long long end_addr = start_addr + region_size;
 
@@ -108,7 +108,7 @@ namespace utils
 
 
 			if (NT_SUCCESS(status)) {
-				ULONG pid = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
+				HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id() ;
 				unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
 				unsigned long long end_addr = start_addr + region_size;
 
@@ -165,7 +165,7 @@ namespace utils
 				unsigned long long end_addr = start_addr + size;
 
 				utils::hidden_user_memory::remove_hidden_address_for_pid(
-					reinterpret_cast<ULONG>(process_id),
+					 process_id ,
 					start_addr,
 					end_addr);
 			}
@@ -174,7 +174,7 @@ namespace utils
 		}
 
 
-		NTSTATUS lock_memory(unsigned long long  address, size_t size, OUT PMDL* out_mdl)
+		NTSTATUS lock_memory(unsigned long long  address,ULONG size, OUT PMDL* out_mdl)
 		{
 			PMDL mdl = NULL;
 

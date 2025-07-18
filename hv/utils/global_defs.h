@@ -1,4 +1,11 @@
 #pragma once
+//
+// Success codes
+//
+#define S_OK                                   ((HRESULT)0L)
+#define S_FALSE                                ((HRESULT)1L)
+
+
 #include <ntifs.h>
 #include <ntimage.h>
 #include <intrin.h>
@@ -45,3 +52,5 @@
 #include "csgogame\kcsgo2_utils.h"
 #include "csgogame\Kcsgo2_data.h"
 #include "csgogame\kcsgo2_CPlayer.h"
+#include "csgogame\KMenuConfig.h"
+

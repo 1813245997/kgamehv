@@ -74,7 +74,7 @@ namespace hook_functions
 	)
 	{
 
-		ULONG process_id = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
+		HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
 	   {
@@ -131,7 +131,7 @@ namespace hook_functions
 		  }
 
 		  PVOID64 virtual_address = nullptr;
-		  ULONG process_id = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
+		 HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 		  if (flags == MM_COPY_MEMORY_PHYSICAL)
 		  {
 			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
@@ -179,7 +179,7 @@ namespace hook_functions
 	 {
 		 
 
-		 ULONG process_id = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
+		 HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
@@ -224,7 +224,7 @@ namespace hook_functions
 	 {
 		  
 
-		 ULONG process_id = reinterpret_cast<ULONG>(utils::internal_functions::pfn_ps_get_current_process_id());
+		HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 // 判断是否是隐藏模块地址
 		 if (utils::hidden_modules::is_address_hidden(reinterpret_cast<PVOID>(control_pc)))
@@ -469,11 +469,23 @@ namespace hook_functions
 
 
 
-		   if (!utils::dwm_draw::g_pswap_chain)
-		   {
-			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
-		   }
+		   //if (!utils::dwm_draw::g_pswap_chain)
+		   //{
+			  // utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
+			  // utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
+		   //}
+
+
+		   //if (utils::dwm_draw::g_pswap_chain)
+		   //{
+			  // if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
+			  // {
+				 //  /*   if (utils::strong_dx::initialize_d3d_resources())
+				 //  {
+					//   utils::strong_dx::draw_utils();
+				 //  }*/
+			  // }
+		   //}
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
 
@@ -495,17 +507,82 @@ namespace hook_functions
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
 			  
 			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
+			  
+		   }
+
+		   if (utils::dwm_draw::g_pswap_chain)
+		   {
+
+			  
+			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
+			   {
+				   // 防止并发调用
+				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
+				   {
+					   if (utils::strong_dx::initialize_d3d_resources())
+					   {
+						  
+						   utils::strong_dx::draw_utils();
+					   }
+					   InterlockedExchange(&utils::strong_dx::g_dwm_render_lock, 0);
+				   }
+			   }
+			  
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
 
 		   return TRUE;
 	   }
+
+	   BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hyper::EptHookInfo* matched_hook_info)
+	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
+
+
+		   if (!utils::dwm_draw::g_pswap_chain)
+		   {
+			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
+			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
+
+		   }
+
+
+		   if (utils::dwm_draw::g_pswap_chain)
+		   {
+
+
+			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
+			   {
+				   // 防止并发调用
+				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
+				   {
+					   if (utils::strong_dx::initialize_d3d_resources())
+					   {
+						   utils::strong_dx::draw_utils();
+					   }
+					   InterlockedExchange(&utils::strong_dx::g_dwm_render_lock, 0);
+				   }
+					   
+				  
+			   }
+
+		   }
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+
+		   return TRUE;
+	   }
+
+
 	   BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   // 保存原始返回地址
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_pre_sub_graph_fun =
@@ -543,6 +620,7 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_post_sub_graph_fun =
 			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
@@ -558,7 +636,7 @@ namespace hook_functions
 			
 			 HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
 			 ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
-			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
+			// bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
 			//// *a3 = false;
 			// //告诉他窗口不是全屏
 
@@ -581,31 +659,14 @@ namespace hook_functions
 		   PVOID a9, unsigned int a10) = nullptr;
 
 
-	   BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
-		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ hyper::EptHookInfo* matched_hook_info)
-	   {
-		   UNREFERENCED_PARAMETER(ExceptionRecord);
-		 
-
-		   if (!utils::dwm_draw::g_pswap_chain)
-		   {
-			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
-			  
-		   }
-		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-
-		   return TRUE;
-	   }
-
+	 
 
 	   BOOLEAN __fastcall  new_get_buffer(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   static volatile LONG g_screen_capture_count = 0;
 
 		 
@@ -680,6 +741,7 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
 		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
@@ -698,6 +760,7 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
 		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
 			   "[NVFBC_HOOK] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
@@ -759,10 +822,7 @@ namespace hook_functions
 				return  original_dxgk_get_device_state(unnamedParam1);
 			}
 			
-			if (!utils::dwm_draw::g_dwm_render_thread)
-			{
-				utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
-			}
+			 
 
 			if (utils::dwm_draw::g_dwm_render_thread != utils::internal_functions::pfn_ps_get_current_thread())
 			{
@@ -818,7 +878,7 @@ namespace hook_functions
 		   }
 
 
-		   if (!utils::hidden_user_memory::is_address_hidden_for_pid( ProcessBasicInfo.UniqueProcessId ,reinterpret_cast<unsigned long long > ( BaseAddress))) {
+		   if (!utils::hidden_user_memory::is_address_hidden_for_pid( (HANDLE) ProcessBasicInfo.UniqueProcessId ,reinterpret_cast<unsigned long long > ( BaseAddress))) {
 			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
 		   }
 
@@ -891,7 +951,7 @@ namespace hook_functions
 			   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
 		   }
 
-		   if (utils::hidden_user_memory::is_address_hidden_for_pid(ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
+		   if (utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
 
 			   
 			   return STATUS_ACCESS_VIOLATION;
@@ -1030,6 +1090,7 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   // 保存原始返回地址
 		 //  ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 
