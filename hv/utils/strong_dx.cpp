@@ -318,20 +318,54 @@ namespace utils
 				// ==== Head Tracker (Circle) ====
 				if (KMenuConfig::Showheadtracker.enabled)
 				{
-					const float height = foot_screen.y - head_screen.y;
-					const float width = height / 2.4f;
-					const float radius = width / 5.0f;
-
-					FColor color(KMenuConfig::Showheadtracker.color[0], KMenuConfig::Showheadtracker.color[1], KMenuConfig::Showheadtracker.color[2]);
 					const auto& head_bone = player.bones.bone_positions[game::kcsgo2struct::BONE_HEAD];
 
-					rend.DrawCircle(
-						head_bone.x,
-						head_bone.y - (width / 12.0f),
-						radius,
-						color,
-						2.0f
-					);
+					// 确保骨骼位置有效
+
+					if (head_bone.x != 0.0f && head_bone.y!= 0.0f)
+					{
+						const float height = foot_screen.y - head_screen.y;
+						const float width = height / 2.4f;
+						const float radius = width / 5.0f;
+
+						FColor color(KMenuConfig::Showheadtracker.color[0], KMenuConfig::Showheadtracker.color[1], KMenuConfig::Showheadtracker.color[2]);
+
+
+
+
+						rend.DrawCircle(
+							head_bone.x,
+							head_bone.y - (width / 12.0f),
+							radius,
+							color,
+							2.0f
+						);
+					}
+
+				
+					/*if (head_bone.x != 0.0f &&head_bone.y != 0.0f && head_bone.z != 0.0f)
+					{
+						const float height = foot_screen.y - head_screen.y;
+						const float width = height / 2.4f;
+						const float radius = width / 5.0f;
+
+						FColor color(KMenuConfig::Showheadtracker.color[0], KMenuConfig::Showheadtracker.color[1], KMenuConfig::Showheadtracker.color[2]);
+
+
+
+						rend.DrawCircle(
+							head_bone.x,
+							head_bone.y - (width / 12.0f),
+							radius,
+							color,
+							2.0f
+						);
+					}*/
+					/*if (is_on_screen(head_bone, game::kcsgo2::g_game_size))
+					{
+						
+					}*/
+			
 				}
 
 				// ==== Bone ESP ====
@@ -342,17 +376,21 @@ namespace utils
 					for (size_t j = 0; j < BONE_CONNECTION_COUNT; ++j)
 					{
 						const auto& connection = game::kcsgo2struct::g_bone_connections[j];
-						Vector2 screen_from = {
-							player.bones.bone_positions[connection.from].x,
-							player.bones.bone_positions[connection.from].y
-						};
+					  
+						const auto& from_pos = player.bones.bone_positions[connection.from];
+						const auto& to_pos = player.bones.bone_positions[connection.to];
 
-						Vector2 screen_to = {
-							player.bones.bone_positions[connection.to].x,
-							player.bones.bone_positions[connection.to].y
-						};
+						// 骨骼坐标为 (0, 0, 0) 时通常表示无效
+						if ((from_pos.x != 0.f && from_pos.y != 0.f) &&
+							(to_pos.x != 0.f && to_pos.y != 0.f ))
+						{
+							Vector2 screen_from = { from_pos.x, from_pos.y };
+							Vector2 screen_to = { to_pos.x, to_pos.y };
 
-						rend.Line(screen_from, screen_to, color, 3);
+							rend.Line(screen_from, screen_to, color, 3);
+						}
+
+						 
 					}
 				}
 			}

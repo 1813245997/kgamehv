@@ -604,7 +604,7 @@ namespace hook_functions
 			   ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
 			   bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
 			   *a3 = true;
-			   //告诉他窗口是窗口化的
+			    
 
 			   // 关键修复：直接返回到调用者的下一条指令
 			   ContextRecord->Rip = original_return_address;
@@ -635,13 +635,14 @@ namespace hook_functions
 		 {
 			
 			 HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			 
 			 ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
-			// bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
-			//// *a3 = false;
+			 
+			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
+			  *a3 = false;
 			// //告诉他窗口不是全屏
 
-			// *a3 = true;
-			 //是全屏
+		 
 			 // 关键修复：直接返回到调用者的下一条指令
 			 ContextRecord->Rip = original_return_address;
 			 ContextRecord->Rsp += sizeof(ULONG64);

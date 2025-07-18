@@ -435,5 +435,14 @@ inline bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3 * out, _In_ 
 	out->y = -(screen_size.y / 2 * NDC.y) + (NDC.y + screen_size.y / 2);
 	out->z = v->z;  // 保持原 z 坐标
 
+	if (out->x < 0 || out->x > screen_size.x || out->y < 0 || out->y > screen_size.y)
+		return false;
+
 	return true;
+}
+
+inline bool is_on_screen(const Vector3& pos, const POINT& screen_size)
+{
+	return pos.x >= 0 && pos.x <= screen_size.x &&
+		pos.y >= 0 && pos.y <= screen_size.y;
 }

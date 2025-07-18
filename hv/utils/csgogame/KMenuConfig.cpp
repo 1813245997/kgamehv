@@ -32,9 +32,9 @@ void KMenuConfig::initialize_visual_config_once()
 	KMenuConfig::ShowBoxEsp2d.color[2] = 0.0f;
 
 	// 骨骼颜色 (黄色)
-	KMenuConfig::ShowBone.color[0] = 255.0f;
+	KMenuConfig::ShowBone.color[0] = 0.0f;
 	KMenuConfig::ShowBone.color[1] = 255.0f;
-	KMenuConfig::ShowBone.color[2] = 0.0f;
+	KMenuConfig::ShowBone.color[2] = 255.0f;
 
 	// 名字颜色 (红色)
 	KMenuConfig::ShowName.color[0] = 255.0f;
@@ -52,9 +52,9 @@ void KMenuConfig::initialize_visual_config_once()
 	KMenuConfig::ShowXianshiWuQi.color[2] = 0.0f;
 
 	// 头部颜色 (红)
-	KMenuConfig::Showheadtracker.color[0] = 1.0f;
-	KMenuConfig::Showheadtracker.color[1] = 0.0f;
-	KMenuConfig::Showheadtracker.color[2] = 0.0f;
+	KMenuConfig::Showheadtracker.color[0] = 51.0f;   // 蓝色
+	KMenuConfig::Showheadtracker.color[1] = 51.0f;   // 绿色
+	KMenuConfig::Showheadtracker.color[2] = 255.0f;  // 红色
 
 	// 血量颜色 (红)
 	KMenuConfig::ShowHealthBar.color[0] = 255.0f;

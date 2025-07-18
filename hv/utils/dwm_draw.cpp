@@ -184,12 +184,12 @@ namespace utils
 			{
 				return status;
 			}
-			/*
-				status = hook_swapchain_present_dwm(g_dwm_process);
-				if (!NT_SUCCESS(status))
-				{
-					return status;
-				}*/
+
+			status = hook_swapchain_present_dwm(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
 			//物理机走这个
 			status = hook_present_multiplane_overlay(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -204,19 +204,23 @@ namespace utils
 				return status;
 			}
 			 
-			////全屏DWM可能会卡死 需要找原因TODO
-	/*		status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
+			 
+			status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				return status;
-			}*/
+			}
 
-			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
-			//if (!NT_SUCCESS(status))
-			//{
-			//	return status;
-			//}
+			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				return status;
+			}
+			// 
+			// 
 			//内核HOOK貌似多余了 
+
+
 			/*status = hook_dxgk_get_device_state(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{

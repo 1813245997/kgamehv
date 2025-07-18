@@ -12,30 +12,30 @@ namespace utils
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
 			UNREFERENCED_PARAMETER(ContextRecord);
-			//还要处理页面异常  处理注入DWM绘制截图相关事宜
-	        //https://github.com/lainswork/dwm-screen-shot 是通过页面异常hook  游戏反作弊也极有可能通过VEH这类hook   要处理几个可能会被拿到swap指针的函数
-			//不可以dprinftf 输出 因为是触发异常输出的
+			////还要处理页面异常  处理注入DWM绘制截图相关事宜
+	  //      //https://github.com/lainswork/dwm-screen-shot 是通过页面异常hook  游戏反作弊也极有可能通过VEH这类hook   要处理几个可能会被拿到swap指针的函数
+			////不可以dprinftf 输出 因为是触发异常输出的
 			if (PreviousMode != MODE::UserMode)
 			{
-			 
+
 				return FALSE;
 			}
 
 			if (dwm_draw::g_dwm_process != internal_functions::pfn_ps_get_current_process())
-			{ 
+			{
 				return FALSE;
 			}
 
 	 
 
-			utils::strong_dx::g_should_hide_overlay = true;
+			 utils::strong_dx::g_should_hide_overlay = true;
 
-			PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
-		 
+			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
+		 //
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[PAGE_FAULT_FIX] Address: 0x%p  PageBase: 0x%p  \n",
-				ExceptionRecord->ExceptionAddress, page_base );
+			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+			//	"[PAGE_FAULT_FIX] Address: 0x%p  PageBase: 0x%p  \n",
+			//	ExceptionRecord->ExceptionAddress, page_base );
 
 			 
 
@@ -52,8 +52,14 @@ namespace utils
 		{
 		
 
-						//不可以dprinftf 输出 因为是触发异常输出的
+			 //不可以dprinftf 输出 因为是触发异常输出的
 			hyper::EptHookInfo* matched_hook_info = nullptr;
+ 
+			if (PreviousMode != MODE::UserMode) 
+			{
+				return FALSE;
+			}
+
  
 
 			if (!hyper::find_hook_break_point_int3(ExceptionRecord->ExceptionAddress, &matched_hook_info))
@@ -85,26 +91,26 @@ namespace utils
 		{
 			UNREFERENCED_PARAMETER(ContextRecord);
 			if (PreviousMode != MODE::UserMode)
-			{ 
+			{
 				return FALSE;
 			}
 
 			if (dwm_draw::g_dwm_process != internal_functions::pfn_ps_get_current_process())
 			{
-			 
+
 				return FALSE;
 			}
- 
+
 
 			utils::strong_dx::g_should_hide_overlay = true;
 
-			PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
-			//SIZE_T region_size = PAGE_SIZE;
-		 
+			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
+			////SIZE_T region_size = PAGE_SIZE;
+		 //
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[SINGLE_STEP_HOOK] Address: 0x%p  PageBase: 0x%p  \n",
-				ExceptionRecord->ExceptionAddress, page_base );
+			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+			//	"[SINGLE_STEP_HOOK] Address: 0x%p  PageBase: 0x%p  \n",
+			//	ExceptionRecord->ExceptionAddress, page_base );
 
 			// 可选恢复页权限逻辑...
 
