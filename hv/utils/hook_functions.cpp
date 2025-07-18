@@ -267,6 +267,8 @@ namespace hook_functions
 			   if (game::kcsgo2::is_game_process(process))
 			   {
 				   game::kcsgo2::cleanup_game_process(process);
+
+				   hyper::unhook_all_ept_hooks_for_pid(utils::internal_functions::pfn_ps_get_process_id(process));
 			   }
 
 
@@ -301,14 +303,14 @@ namespace hook_functions
 	   {
 
 		   
-	/*	   NTSTATUS status{};
+		   NTSTATUS status{};
 		   PFILE_OBJECT pfile_object{};
 		   PEPROCESS  process{};
 		   POBJECT_NAME_INFORMATION ObjectNameInformation{};
 		   HANDLE  process_id{};
 		   process = utils::internal_functions::pfn_ps_get_current_process();
 		   process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-		
+
 		   if (!file_handle)
 		   {
 			   return original_nt_create_section(
@@ -323,9 +325,9 @@ namespace hook_functions
 		   }
 
 
-		   if (allocation_attributes != 0X1000000 )
+		   if (allocation_attributes != 0X1000000)
 		   {
-			 
+
 			   return original_nt_create_section(
 				   section_handle,
 				   desired_access,
@@ -352,83 +354,85 @@ namespace hook_functions
 			   );
 		   }
 
-		  status =  utils::internal_functions::pfn_ob_reference_object_by_handle (
+		   status = utils::internal_functions::pfn_ob_reference_object_by_handle(
 			   file_handle,
-			   0,  
 			   0,
-			   KernelMode,  
+			   0,
+			   KernelMode,
 			   (PVOID*)&pfile_object,
 			   NULL
 		   );
 
-		  if (!NT_SUCCESS(status))
-		  {
-			  return original_nt_create_section(
-				  section_handle,
-				  desired_access,
-				  object_attributes,
-				  maximum_size,
-				  section_page_protection,
-				  allocation_attributes,
-				  file_handle
-			  );
-		  }
+		   if (!NT_SUCCESS(status))
+		   {
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+
+		   status = utils::internal_functions::pfn_io_query_file_dos_device_name(pfile_object, &ObjectNameInformation);
+		   if (!NT_SUCCESS(status))
+		   {
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+
+		   utils::internal_functions::pfn_ob_dereference_object(pfile_object);
+
+
+		   if (!ObjectNameInformation)
+		   {
+
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+		   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(ObjectNameInformation->Name.Buffer)
+			   )
+		   {
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+		   }
+
+		    
+
+		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll",TRUE))
+		   {
+			   game::kcsgo2::initialize_game_process(process);
+		   }
 		 
 
-		  status = utils::internal_functions::pfn_io_query_file_dos_device_name(pfile_object, &ObjectNameInformation);
-		  if (!NT_SUCCESS(status))
-		  {
-			  return original_nt_create_section(
-				  section_handle,
-				  desired_access,
-				  object_attributes,
-				  maximum_size,
-				  section_page_protection,
-				  allocation_attributes,
-				  file_handle
-			  );
-		  }
-	 
-		    
-		  utils::internal_functions::pfn_ob_dereference_object(pfile_object);
+		  
 
-
-		  if (!ObjectNameInformation)
-		  {
-
-			  return original_nt_create_section(
-				  section_handle,
-				  desired_access,
-				  object_attributes,
-				  maximum_size,
-				  section_page_protection,
-				  allocation_attributes,
-				  file_handle
-			  );
-		  }
-
-		  if (!utils::internal_functions::pfn_mm_is_address_valid_ex(ObjectNameInformation->Name.Buffer)
-			  )
-		  {
-			  return original_nt_create_section(
-				  section_handle,
-				  desired_access,
-				  object_attributes,
-				  maximum_size,
-				  section_page_protection,
-				  allocation_attributes,
-				  file_handle
-			  );
-		  }
-
-		   
-		  if (game::kcsgo2::is_game_module(process, ObjectNameInformation->Name.Buffer))
-		  {
-			    
-			  game::kcsgo2::initialize_game_process(process);
-			  
-		  }
-		   */
 		  return original_nt_create_section(
 			  section_handle,
 			  desired_access,
@@ -555,9 +559,11 @@ namespace hook_functions
 			 HRESULT hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
 			 ContextRecord->Rax = (ContextRecord->Rax & 0xFFFFFFFF00000000) | (hr & 0xFFFFFFFF);
 			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
-			 *a3 = false;
-			 //告诉他窗口不是全屏
+			//// *a3 = false;
+			// //告诉他窗口不是全屏
 
+			// *a3 = true;
+			 //是全屏
 			 // 关键修复：直接返回到调用者的下一条指令
 			 ContextRecord->Rip = original_return_address;
 			 ContextRecord->Rsp += sizeof(ULONG64);
@@ -1006,29 +1012,16 @@ namespace hook_functions
 		   UNREFERENCED_PARAMETER(matched_hook_info);
 
 		   // 读取 RCX 中的本地玩家对象指针
-		   uintptr_t local_player = static_cast<uintptr_t>(ContextRecord->Rcx);
+		   unsigned long long orig_func =
+			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
 
-		   // 安全检查
-		   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_player)))
-		   {
-			   return TRUE;
-		   }
+		    
+		    ContextRecord->Rip = orig_func;
+			 
+			game::kcsgo2:: initialize_game_data();
 
-		   // HP 偏移
-		   constexpr size_t hp_offset = 0x344;
 
-		   // 读取 HP 值
-		   int hp = 0;
-		   if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_player + hp_offset)))
-		   {
-			   hp = *reinterpret_cast<int*>(local_player + hp_offset);
-		   }
-
-  
-		    ContextRecord->Rax = hp;
-
-		    ContextRecord->Rip += matched_hook_info->hook_size;
-			game::kcsgo2::initialize_game_data();
+		 
 		   return TRUE;
 	   }
 
@@ -1073,8 +1066,8 @@ namespace hook_functions
 			   return TRUE;
 		   }
 
-
-		   utils::strong_dx::draw_utils();
+		   
+		    utils::strong_dx::draw_utils();
 
 		   return TRUE;
 	   }

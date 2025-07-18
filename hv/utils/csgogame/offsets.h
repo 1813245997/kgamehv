@@ -9,12 +9,9 @@ namespace cs2SDK {
 		// 玩家场景节点指针的偏移量，用于处理玩家的3D位置信息
 		constexpr 	unsigned long long m_pGameSceneNode = 0x328; // CGameSceneNode*
 
-		// 本地玩家控制器的偏移量
-		constexpr 	unsigned long long dwLocalPlayerController = 0x1A52D20;
-
-
+	  
 		// 视图矩阵的偏移量，用于绘制3D到2D坐标
-		constexpr 	unsigned long long dwViewMatrix = 0x1A6D280;
+		constexpr 	unsigned long long dwViewMatrix = 0x1A6E3F0;
 
 		// 放置C4的偏移量， 
 		constexpr 	unsigned long long  dwPlantedC4 = 0x1A71C40;
@@ -77,17 +74,21 @@ namespace cs2SDK {
 
 		//下面这几个是自己根据结构分析的
 		//本地玩家指针
-		constexpr 	unsigned long long dwLocalPlayerPawn = 0X18580D0; //DUMP的不准
+		constexpr 	unsigned long long dwLocalPlayerPawn = 0X18590D0; //DUMP的不准
+
+		// 玩家数组偏移
+		constexpr 	unsigned long long m_offestPlayerArray = 0X18662B0;//
 
 		// 玩家队伍偏移量
 		constexpr 	unsigned long long m_offsettema = 0xE68;
 
-		// 玩家数组偏移
-		constexpr 	unsigned long long m_offestPlayerArray = 0X18652B0;//
+
 
 		// 玩家是否存在的偏移量
 		constexpr 	unsigned long long m_offestbIsPlayerExists = 0x320; // 新增
 
 		constexpr 	unsigned long long m_OoffsetBone = 0x1F0; // CGameSceneNode*
+
+		constexpr   unsigned long long m_hook_offset = 0X7D7CCD; //client.dll+7D7CCD;
 	}
 }

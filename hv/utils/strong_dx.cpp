@@ -196,7 +196,7 @@ namespace utils
 
 				memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
 
-				;
+				  
 
 
 				create_texture2D_fun = reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(g_pdevice, 5));
@@ -279,104 +279,48 @@ namespace utils
 
 		void draw_overlay_elements(int width, int height, void* data)
 		{
-		
 			memset(pagehit, 0, sizeof(pagehit));
 			memset(pagevaild, 0, sizeof(pagevaild));
 
 			ByteRender rend;
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
-			//太过耗时 导致GUI系统卡死
-			if (!game::kcsgo2::initialize_game_data())
-			{
-				
-				return;
-			}
-
-		 
-			
-
-			for ( size_t i =0;i<game::kcsgo2::g_player_count;i++)
-			{
-
-				int box_h{};
-				int box_w{};
-				int box_x{};
-				int box_y{};
-				Vector3 ov{}, ov2{};
-				game::kcsgo2struct::CPlayer& player =   game::kcsgo2::g_player_array[i];
- 
-				if (!world_to_screen(&player.origin, &ov, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
-				{
-					continue;
-				}
-				player.origin.z += 70;
 
 
-				if (!world_to_screen(&player.origin, &ov2, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
-				{
-					continue; // 如果转换失败，跳过该玩家
-				}
+			//// 先安全获取一份玩家数据副本
+			//game:: kcsgo2struct::CPlayer players_copy[MAX_PLAYER_NUM] = {};
+			//int player_count = 0;
 
-				// 绘制矩形框
-				int box_height = static_cast<int> (ov.y - ov2.y);   // 视角高
-				int box_weight = box_height / 2; // 视角宽
-				box_h = box_height;
-				box_w = box_weight;
-				box_x = static_cast<float> (ov2.x - box_weight / 2);
-				box_y = ov2.y;
+			//if (!game::kcsgo2::get_player_data(players_copy, MAX_PLAYER_NUM, &player_count))
+			//{
+			//	return; // 获取数据失败，直接返回
+			//}
 
-			
-				 
-				 
+			//for (int i = 0; i < player_count; ++i)
+			//{
+			//	const auto& player = players_copy[i];
+			//	if (!player.bIsPlayerExists)
+			//		continue;
 
-			 
+			//	Vector3 ov{}, ov2{};
+			//	if (!world_to_screen( &player.origin, &ov, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+			//		continue;
 
-				
-				/*unsigned long long current_irql = asm_read_cr8();
-				asm_write_cr8(DISPATCH_LEVEL);*/
-				/*	bool old_state = asm_read_rflags() & 0x200;
-					if (old_state)
-					{
-						asm_cli();
-					}*/
-					/*	KIRQL old_irql;
-						KeRaiseIrql(DISPATCH_LEVEL, &old_irql);
-						cr4 cr4vlaue{ __readcr4() };
-						bool smap = cr4vlaue.smap_enable;
-						if (smap) {
-							cr4vlaue.smap_enable = 0;
-							__writecr4(cr4vlaue.flags);
-						}*/
-				////防止其他绘制打断 
-			
-			
-				rend.Rectangle(box_x, box_y, static_cast<float> (box_weight), static_cast<float> (box_height), FColor(0, 255, 0), 1);
-				
-				//if (smap)
-				//{
-				//	cr4vlaue.smap_enable = true;
-				//	__writecr4(cr4vlaue.flags);
-				//}
-				///*	if (old_state)
-				//	{
-				//		asm_sti();
-				//	}*/
-		  //  	// asm_write_cr8(current_irql);
-				//KeLowerIrql(old_irql);
-				 
-			}
+			//	Vector3 head_pos = player.origin;
+			//	head_pos.z += 70;
 
-			 
-			  
+			//	if (!world_to_screen(&head_pos, &ov2, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+			//		continue;
 
-			
-			//rend.String(&g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
+			//	int box_height = static_cast<int>(ov.y - ov2.y);
+			//	int box_width = box_height / 2;
+			//	int box_x = static_cast<int>(ov2.x - box_width / 2);
+			//	int box_y = static_cast<int>(ov2.y);
 
-		    
-
-			
+			//	rend.Rectangle(box_x, box_y, static_cast<float>(box_width), static_cast<float>(box_height), FColor(0, 255, 0), 1);
+			//}
 		}
+
 		PULONG64 get_user_rsp_ptr()
 		{
 			const ULONG64 syscall_address = __readmsr(IA32_LSTAR);
@@ -456,8 +400,19 @@ namespace utils
 				utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
 				has_hooked_get_buffer = true;
 			}*/
+			 
 
-			  
+			if (!game::kcsgo2::is_initialize_game())
+			{
+				InterlockedExchange(&g_dwm_render_lock, 0);
+				return;
+			}
+
+			if (!game::kcsgo2::is_create_time())
+			{
+				InterlockedExchange(&g_dwm_render_lock, 0);
+				return;
+			}
 			render_overlay_frame(draw_overlay_elements);
 
 
