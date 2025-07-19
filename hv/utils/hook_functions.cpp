@@ -1069,20 +1069,31 @@ namespace hook_functions
 		   _Inout_ PCONTEXT ContextRecord,
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
-		   UNREFERENCED_PARAMETER(ExceptionRecord);
-		   UNREFERENCED_PARAMETER(matched_hook_info);
-
-		   // 读取 RCX 中的本地玩家对象指针
-		   unsigned long long orig_func =
-			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
-
-		    
-		    ContextRecord->Rip = orig_func;
-			 
-			game::kcsgo2:: initialize_game_data();
-
-
 		 
+		    
+		   uint64_t rsi = ContextRecord->Rsi;
+		   uint64_t rdi = ContextRecord->Rdi;
+
+		   uint64_t target_value = *reinterpret_cast<uint64_t*>(rsi + 0x180);
+		    
+		   // 设置或清除 ZF（第 6 位）
+		   if (target_value == rdi) {
+			   ContextRecord->EFlags |= (1 << 6);
+			  
+		   }
+		   else {
+			   ContextRecord->EFlags &= ~(1 << 6);
+			   
+		   }
+
+		   ULONG64 new_rip =  ContextRecord->Rip  + matched_hook_info->hook_size;
+		    
+		   ContextRecord->Rip = new_rip;
+
+		   // 初始化游戏数据
+		   game::kcsgo2::initialize_game_data();
+
+			 
 		   return TRUE;
 	   }
 

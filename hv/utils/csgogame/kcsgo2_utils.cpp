@@ -22,6 +22,79 @@ namespace game
 
 		FAST_MUTEX g_player_data_lock;
 		LARGE_INTEGER g_process_time = {   };
+
+		bool initialize_game_process(_In_ PEPROCESS process)
+		{
+
+			if (g_is_initialized && g_game_process != nullptr) {
+				return true;
+			}
+
+
+			if (!utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
+			{
+				return false;
+			}
+
+			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
+			{
+				return false;
+			}
+
+			unsigned long long client_base = 0;
+			unsigned long long client_size = 0;
+			unsigned long long engine2_base = 0;
+			unsigned long long engine2_size = 0;
+
+			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
+			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
+
+
+			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
+
+				return false;
+			}
+
+			if (client_base == 0 || client_size == 0)
+			{
+				return false;
+			}
+
+			if (engine2_base == 0 || engine2_size == 0)
+			{
+				return false;
+			}
+
+
+
+
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
+			hyper::ept_hook_break_point_int3(
+				process_id,
+				reinterpret_cast<PVOID>(get_hp_fun),
+				hook_functions::new_get_csgo_hp,
+				nullptr,
+				false
+			);
+
+
+
+			KeQuerySystemTime(&g_process_time);
+			g_game_process = process;
+			g_client_base = client_base;
+			g_client_size = client_size;
+			g_engine2_base = engine2_base;
+			g_engine2_size = engine2_size;
+			g_is_initialized = true;
+
+
+			return true;
+
+
+		}
+
+
 		NTSTATUS cleanup_game_process(_In_ PEPROCESS process)
 		{ 
 			UNREFERENCED_PARAMETER(process);
@@ -39,30 +112,7 @@ namespace game
 			return STATUS_SUCCESS;
 		}
 
-		bool is_game_module(_In_ PEPROCESS process, _In_ PWCHAR module_name)
-		{
-		 
-
-			if (!module_name)
-			{
-				return false;
-			}
-
-			if (!process)
-			{
-				return false;
-			}
-			 
-
-		 if (!utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
-		 {
-				  return false;
-		  }
-
-		   
-		  
-			return true;
-		}
+	 
 
 		bool is_game_process(_In_ PEPROCESS process)
 		{
@@ -144,83 +194,14 @@ namespace game
 			 
 			LARGE_INTEGER current_time;
 			KeQuerySystemTime(&current_time);
-			if ((current_time.QuadPart - g_process_time.QuadPart) < 20 * 10000000LL) {
+			if ((current_time.QuadPart - g_process_time.QuadPart) < 10 * 10000000LL) {
 				return false; // 未超过10秒，跳过
 			}
 
 			return true;
 		}
 
-		bool initialize_game_process(_In_ PEPROCESS process)
-		{
-		 
-			if (g_is_initialized && g_game_process != nullptr) {
-				return true;
-			}
- 
-		  
-			if (!utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
-			{
-				return false;
-			}
-
-			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
-			{
-				return false;
-			}
-		 
-			unsigned long long client_base = 0;
-			unsigned long long client_size = 0;
-			unsigned long long engine2_base = 0;
-			unsigned long long engine2_size = 0;
-
-			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
-			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
-
-		 
-			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
-				 
-				return false;
-			}
-
-			if (client_base ==0 || client_size==0)
-			{
-				return false;
-			}
-
-			if (engine2_base == 0 || engine2_size == 0)
-			{
-				return false;
-			}
-
-
-			 
-		 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-		   unsigned  long long get_hp_fun =	client_base + cs2SDK::offsets::m_hook_offset;
-			  hyper::ept_hook_break_point_int3(
-				process_id,
-				reinterpret_cast<PVOID>(get_hp_fun),
-				hook_functions::new_get_csgo_hp,
-				nullptr
-			);
-
-		
-		 
-			  KeQuerySystemTime(&g_process_time);
-			g_game_process = process;
-			g_client_base = client_base;
-			g_client_size = client_size;
-			g_engine2_base = engine2_base;
-			g_engine2_size = engine2_size;
-			g_is_initialized = true;
-		 
-
-			return true;
-			 
-
-		}
-
+	
 		 
 
 		HANDLE find_cs2_window()
@@ -495,35 +476,7 @@ namespace game
 
 		}
 
-		NTSTATUS hook_get_cosg_hp(_In_ PEPROCESS process)
-		{
-
-			if (!process)
-			{
-				return STATUS_INVALID_PARAMETER;
-			}
-
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-
-			//client.dll +85DA80
-			//获取人物血量 利用这个钩子来获取要绘制的人物数据
-			unsigned long long client_base{};
-			unsigned  long long client_size{};
-			unsigned long long get_csgo_hp_fun  =  client_base + 0x85DA80;
-			if (!NT_SUCCESS(utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size)))
-			{
-				return  STATUS_UNSUCCESSFUL;
-			}
-
-			bool hook_result = hyper::ept_hook_break_point_int3(
-				process_id,
-				reinterpret_cast<PVOID>(get_csgo_hp_fun),
-				hook_functions::new_get_csgo_hp,
-				nullptr
-			);
-
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
-		}
+	 
 
 	}
 }

@@ -29,8 +29,6 @@ namespace game
 
 		bool is_create_time();
 
-		bool is_game_module(_In_ PEPROCESS process, _In_ PWCHAR module_name);
-
 		bool is_initialize_game();
 
 		bool initialize_game_data();
@@ -41,7 +39,7 @@ namespace game
 
 		NTSTATUS cleanup_game_process(_In_ PEPROCESS process);
 
-		NTSTATUS hook_get_cosg_hp(_In_ PEPROCESS process);
+		 
 
 		HANDLE find_cs2_window();
 

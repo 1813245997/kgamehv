@@ -26,9 +26,9 @@ namespace utils
 				return FALSE;
 			}
 
-	 
 
-			 utils::strong_dx::g_should_hide_overlay = true;
+
+			utils::strong_dx::g_should_hide_overlay = true;
 
 			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
 		 //
