@@ -135,6 +135,7 @@
     <ClInclude Include="gdt.h" />
     <ClInclude Include="guest-context.h" />
     <ClInclude Include="hookutils.h" />
+    <ClInclude Include="utils\auth\auth.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
     <ClInclude Include="utils\csgogame\Kcsgo2_data.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="utils\fault_uitls.h" />
     <ClInclude Include="utils\feature_data_initializer.h" />
     <ClInclude Include="utils\feature_offset_initializer.h" />
+    <ClInclude Include="utils\file_utils.h" />
     <ClInclude Include="utils\global_defs.h" />
     <ClInclude Include="utils\hidden_module_list.h" />
     <ClInclude Include="utils\hidden_user_memory_list.h" />
@@ -180,6 +182,7 @@
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
     <ClInclude Include="utils\LegacyRender.h" />
+    <ClInclude Include="utils\log_utils.h" />
     <ClInclude Include="utils\Math.h" />
     <ClInclude Include="utils\memory_utils.h" />
     <ClInclude Include="utils\module_info.h" />
@@ -199,6 +202,8 @@
     <ClInclude Include="utils\time_utils.h" />
     <ClInclude Include="utils\types.h" />
     <ClInclude Include="utils\user_call_utils.h" />
+    <ClInclude Include="utils\user_comm\user_comm.h" />
+    <ClInclude Include="utils\user_comm\user_comm_struct.h" />
     <ClInclude Include="utils\vfun_utils.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\window_utils.h" />
@@ -213,6 +218,7 @@
     <ClCompile Include="gdt.cpp" />
     <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
+    <ClCompile Include="utils\auth\auth.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp" />
     <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp" />
@@ -224,6 +230,7 @@
     <ClCompile Include="utils\fault_uitls.cpp" />
     <ClCompile Include="utils\feature_data_initializer.cpp" />
     <ClCompile Include="utils\feature_offset_initializer.cpp" />
+    <ClCompile Include="utils\file_utils.cpp" />
     <ClCompile Include="utils\hidden_module_list.cpp" />
     <ClCompile Include="utils\hidden_user_memory_list.cpp" />
     <ClCompile Include="utils\hook_functions.cpp" />
@@ -246,6 +253,7 @@
     <ClCompile Include="utils\import_encrypt.cpp" />
     <ClCompile Include="utils\internal_function_defs.cpp" />
     <ClCompile Include="utils\kernel_hide_utils.cpp" />
+    <ClCompile Include="utils\log_utils.cpp" />
     <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />
     <ClCompile Include="utils\os_info.cpp" />
@@ -260,6 +268,7 @@
     <ClCompile Include="utils\thread_utils.cpp" />
     <ClCompile Include="utils\time_utils.cpp" />
     <ClCompile Include="utils\user_call_utils.cpp" />
+    <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
     <ClCompile Include="vcpu.cpp" />

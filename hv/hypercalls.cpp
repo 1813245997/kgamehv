@@ -6,6 +6,8 @@
 #include "exception-routines.h"
 #include "introspection.h"
 #include "utils/kernel_hide_utils.h"
+#include "utils/user_comm/user_comm_struct.h"
+#include "utils/user_comm/user_comm.h"
 
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
@@ -611,6 +613,11 @@ void clear_unloaded_drivers_entry(vcpu* cpu)
 
 	skip_instruction();
 }
+
+
+ 
+
+ 
 
 } // namespace hv::hc
 

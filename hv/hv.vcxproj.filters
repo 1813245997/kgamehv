@@ -256,6 +256,21 @@
     <ClInclude Include="utils\dx_draw\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\user_comm\user_comm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\user_comm\user_comm_struct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\auth\auth.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\file_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\log_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exit-handlers.cpp">
@@ -424,6 +439,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\dx_draw\LegacyRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\user_comm\user_comm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\auth\auth.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\file_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\log_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

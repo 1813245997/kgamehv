@@ -459,5 +459,15 @@ namespace utils
 			_In_ HANDLE hWnd,
 			_In_ WINDOWINFOCLASS window_info_class
 			);
+
+		extern NTSTATUS(NTAPI* pfn_nt_write_virtual_memory)(
+			HANDLE ProcessHandle,
+			PVOID BaseAddress,
+			PVOID Buffer,
+			SIZE_T NumberOfBytesToWrite,
+			PSIZE_T NumberOfBytesWritten
+			);
+
+
 	} 
 }

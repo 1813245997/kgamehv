@@ -29,8 +29,9 @@ enum hypercall_code : uint64_t {
   hypercall_get_hv_base,
   hypercall_install_mmr,
   hypercall_remove_mmr,
-  hypercall_remove_all_mmrs,
-  hypercall_clear_unloaded_drivers_entry,
+  hypercall_remove_all_mmrs
+ 
+ 
 };
 
 // hypercall input
@@ -103,6 +104,10 @@ void remove_all_mmrs(vcpu* cpu);
 
 // clear an unloaded driver entry from the list
 void clear_unloaded_drivers_entry(vcpu* cpu);
+
+
+ 
+ 
 
 } // namespace hc
 

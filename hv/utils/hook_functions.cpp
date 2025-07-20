@@ -445,6 +445,196 @@ namespace hook_functions
 
 	   } 
 
+	   NTSTATUS(NTAPI* original_nt_query_virtual_memory) (
+		   _In_ HANDLE ProcessHandle,
+		   _In_opt_ PVOID BaseAddress,
+		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+		   _In_ SIZE_T MemoryInformationLength,
+		   _Out_opt_ PSIZE_T ReturnLength
+		   ) = nullptr;
+
+	   NTSTATUS NTAPI  new_nt_query_virtual_memory(
+		   _In_ HANDLE ProcessHandle,
+		   _In_opt_ PVOID BaseAddress,
+		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
+		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
+		   _In_ SIZE_T MemoryInformationLength,
+		   _Out_opt_ PSIZE_T ReturnLength
+	   )
+	   {
+
+		   if (MemoryInformationClass != MemoryBasicInformation &&
+			   MemoryInformationClass != 2)
+		   {
+			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
+		   }
+
+		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
+			   ProcessHandle,
+			   ProcessBasicInformation,
+			   (PVOID)&ProcessBasicInfo,
+			   sizeof(ProcessBasicInfo),
+			   NULL
+		   );
+
+		   if (!NT_SUCCESS(QueryStatus)) {
+
+			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
+		   }
+
+
+		   if (!utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
+			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
+		   }
+
+
+
+		   NTSTATUS  Status = original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
+		   if (!NT_SUCCESS(Status))
+		   {
+			   return Status;
+		   }
+		   PMEMORY_BASIC_INFORMATION pMBI = static_cast<PMEMORY_BASIC_INFORMATION>(
+			   MemoryInformation);
+
+		   PVOID NextBase = reinterpret_cast<PUCHAR>(pMBI->BaseAddress) +
+			   pMBI->RegionSize;
+
+		   MEMORY_BASIC_INFORMATION NextBlock;
+		   SIZE_T NextLength = 0;
+		   Status = original_nt_query_virtual_memory(ProcessHandle, NextBase,
+			   MemoryInformationClass, &NextBlock, sizeof(NextBlock), &NextLength);
+
+
+		   pMBI->AllocationBase = 0;
+		   pMBI->AllocationProtect = 0;
+		   pMBI->State = MEM_FREE;
+		   pMBI->Protect = PAGE_NOACCESS;
+		   pMBI->Type = 0;
+
+		   // If next block is free too, add it to the region size
+		   if (NextBlock.State == MEM_FREE)
+			   pMBI->RegionSize += NextBlock.RegionSize;
+
+
+		   // Clear the output buffer if the address is hidden
+
+
+		   return Status;
+
+
+	   }
+
+	   extern NTSTATUS(NTAPI* original_nt_read_virtual_memory)(
+		   _In_ HANDLE ProcessHandle,
+		   _In_opt_ PVOID BaseAddress,
+		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+		   _In_ SIZE_T NumberOfBytesToRead,
+		   _Out_opt_ PSIZE_T NumberOfBytesRead
+		   ) = nullptr;
+
+
+	   NTSTATUS NTAPI new_nt_read_virtual_memory(
+		   _In_ HANDLE ProcessHandle,
+		   _In_opt_ PVOID BaseAddress,
+		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
+		   _In_ SIZE_T NumberOfBytesToRead,
+		   _Out_opt_ PSIZE_T NumberOfBytesRead
+	   )
+	   {
+		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
+			   ProcessHandle,
+			   ProcessBasicInformation,
+			   (PVOID)&ProcessBasicInfo,
+			   sizeof(ProcessBasicInfo),
+			   NULL
+		   );
+
+		   if (!NT_SUCCESS(QueryStatus)) {
+
+			   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
+		   }
+
+		   if (utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
+
+
+			   return STATUS_ACCESS_VIOLATION;
+		   }
+
+
+		   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
+	   }
+
+
+	   NTSTATUS(NTAPI* original_nt_protect_virtual_memory)(
+		   _In_ HANDLE ProcessHandle,
+		   _Inout_ PVOID* BaseAddress,
+		   _Inout_ PSIZE_T NumberOfBytesToProtect,
+		   _In_ ULONG NewAccessProtection,
+		   _Out_ PULONG OldAccessProtection
+		   ) = nullptr;
+
+	   NTSTATUS NTAPI  new_nt_protect_virtual_memory(
+		   _In_ HANDLE ProcessHandle,
+		   _Inout_ PVOID* BaseAddress,
+		   _Inout_ PSIZE_T NumberOfBytesToProtect,
+		   _In_ ULONG NewAccessProtection,
+		   _Out_ PULONG OldAccessProtection
+	   )
+	   {
+
+
+		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
+	   }
+
+	   NTSTATUS(NTAPI* original_nt_write_virtual_memory)(
+		   HANDLE ProcessHandle,
+		   PVOID BaseAddress,
+		   PVOID Buffer,
+		   SIZE_T NumberOfBytesToWrite,
+		   PSIZE_T NumberOfBytesWritten
+		   ) = nullptr;
+
+	   NTSTATUS NTAPI new_nt_write_virtual_memory(
+		   HANDLE ProcessHandle,
+		   PVOID BaseAddress,
+		   PVOID Buffer,
+		   SIZE_T NumberOfBytesToWrite,
+		   PSIZE_T NumberOfBytesWritten
+	   )
+	   {
+		   if (!Buffer)
+		   {
+
+			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
+		   }
+
+		  
+
+		   if (!utils::user_comm::is_valid_comm(reinterpret_cast<user_comm_request *>(Buffer)))
+		   {
+			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
+		   }
+
+		   if (NumberOfBytesToWrite != sizeof(user_comm_request))
+		   {
+			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
+		   }
+
+
+
+
+		   utils::user_comm::handle_user_comm_request(reinterpret_cast<user_comm_request*>(Buffer));
+		   return STATUS_SUCCESS;
+
+
+		    
+
+	   }
+
 
 	   INT64(__fastcall* original_present_multiplane_overlay)(
 		   void* thisptr,
@@ -686,7 +876,7 @@ namespace hook_functions
 		   ExSystemTimeToLocalTime(&system_time_before, &local_time_before);
 		   RtlTimeToTimeFields(&local_time_before, &time_fields_before);
 
-		   DbgPrintEx(77, 0, "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+		 LogDebug( "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
 			   time_fields_before.Year,
 			   time_fields_before.Month,
 			   time_fields_before.Day,
@@ -717,7 +907,7 @@ namespace hook_functions
 		   ExSystemTimeToLocalTime(&system_time_after, &local_time_after);
 		   RtlTimeToTimeFields(&local_time_after, &time_fields_after);
 
-		   DbgPrintEx(77, 0, "[DWM-HOOK] After Sleep Time:  %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+		   LogDebug(  "[DWM-HOOK] After Sleep Time:  %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
 			   time_fields_after.Year,
 			   time_fields_after.Month,
 			   time_fields_after.Day,
@@ -726,7 +916,7 @@ namespace hook_functions
 			   time_fields_after.Second,
 			   time_fields_after.Milliseconds);
 
-		   DbgPrintEx(77, 0, "[DWM-HOOK] Screen capture attempt detected. Count=%lu RSP=0x%llX\n",
+		   LogDebug( "[DWM-HOOK] Screen capture attempt detected. Count=%lu RSP=0x%llX\n",
 			   count, ContextRecord->Rsp);
 		  
 
@@ -745,7 +935,7 @@ namespace hook_functions
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
+		   LogDebug( 
 			   "[NVFBC_HOOK_EX] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
 			   ContextRecord->Rcx,
 			   ContextRecord->Rdx,
@@ -763,7 +953,7 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
+		   LogDebug( 
 			   "[NVFBC_HOOK] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
 			   ContextRecord->Rcx,
 			   ContextRecord->Rdx,
@@ -839,150 +1029,7 @@ namespace hook_functions
 		   return  original_dxgk_get_device_state(unnamedParam1);
 	   }
 
-	   NTSTATUS(NTAPI* original_nt_query_virtual_memory) (
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
-		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
-		   _In_ SIZE_T MemoryInformationLength,
-		   _Out_opt_ PSIZE_T ReturnLength
-		   ) = nullptr;
-
-	   NTSTATUS NTAPI  new_nt_query_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
-		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
-		   _In_ SIZE_T MemoryInformationLength,
-		   _Out_opt_ PSIZE_T ReturnLength
-	   )
-	   {
-
-		   if (MemoryInformationClass != MemoryBasicInformation &&
-			   MemoryInformationClass != 2)
-		   {
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
-			   ProcessHandle,
-			   ProcessBasicInformation,
-			   (PVOID)&ProcessBasicInfo,
-			   sizeof(ProcessBasicInfo),
-			   NULL
-		   );
-
-		   if (!NT_SUCCESS(QueryStatus)) {
-
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-
-		   if (!utils::hidden_user_memory::is_address_hidden_for_pid( (HANDLE) ProcessBasicInfo.UniqueProcessId ,reinterpret_cast<unsigned long long > ( BaseAddress))) {
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-
-
-		   NTSTATUS  Status = original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   if (!NT_SUCCESS(Status))
-		   {
-			   return Status;
-		   }
-		   PMEMORY_BASIC_INFORMATION pMBI = static_cast<PMEMORY_BASIC_INFORMATION>(
-			   MemoryInformation);
-
-		   PVOID NextBase = reinterpret_cast<PUCHAR>(pMBI->BaseAddress) +
-			   pMBI->RegionSize;
-
-		   MEMORY_BASIC_INFORMATION NextBlock;
-		   SIZE_T NextLength = 0;
-		   Status = original_nt_query_virtual_memory(ProcessHandle, NextBase,
-			   MemoryInformationClass, &NextBlock, sizeof(NextBlock), &NextLength);
-
-
-		   pMBI->AllocationBase = 0;
-		   pMBI->AllocationProtect = 0;
-		   pMBI->State = MEM_FREE;
-		   pMBI->Protect = PAGE_NOACCESS;
-		   pMBI->Type = 0;
-
-		   // If next block is free too, add it to the region size
-		   if (NextBlock.State == MEM_FREE)
-			   pMBI->RegionSize += NextBlock.RegionSize;
-
-
-		   // Clear the output buffer if the address is hidden
-
-
-		   return Status;
-
-
-	   }
-	    
-	   extern NTSTATUS(NTAPI* original_nt_read_virtual_memory)(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
-		   _In_ SIZE_T NumberOfBytesToRead,
-		   _Out_opt_ PSIZE_T NumberOfBytesRead
-		   )=nullptr;
-
-
-	   NTSTATUS NTAPI new_nt_read_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
-		   _In_ SIZE_T NumberOfBytesToRead,
-		   _Out_opt_ PSIZE_T NumberOfBytesRead
-	   )
-	   {
-		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
-			   ProcessHandle,
-			   ProcessBasicInformation,
-			   (PVOID)&ProcessBasicInfo,
-			   sizeof(ProcessBasicInfo),
-			   NULL
-		   );
-
-		   if (!NT_SUCCESS(QueryStatus)) {
-
-			   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
-		   }
-
-		   if (utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
-
-			   
-			   return STATUS_ACCESS_VIOLATION;
-		   }
-
-
-		   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
-	   }
-
-
-	     NTSTATUS(NTAPI* original_nt_protect_virtual_memory)(
-		   _In_ HANDLE ProcessHandle,
-		   _Inout_ PVOID* BaseAddress,
-		   _Inout_ PSIZE_T NumberOfBytesToProtect,
-		   _In_ ULONG NewAccessProtection,
-		   _Out_ PULONG OldAccessProtection
-		   )=nullptr;
-
-	   NTSTATUS NTAPI  new_nt_protect_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _Inout_ PVOID* BaseAddress,
-		   _Inout_ PSIZE_T NumberOfBytesToProtect,
-		   _In_ ULONG NewAccessProtection,
-		   _Out_ PULONG OldAccessProtection
-	   )
-	   {
-
-
-		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
-	   }
+	  
 
 
 
@@ -1070,7 +1117,7 @@ namespace hook_functions
 		   _Inout_ hyper::EptHookInfo* matched_hook_info)
 	   {
 		 
-		    
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   uint64_t rsi = ContextRecord->Rsi;
 		   uint64_t rdi = ContextRecord->Rdi;
 

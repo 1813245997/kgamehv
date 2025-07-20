@@ -53,4 +53,8 @@
 #include "csgogame\Kcsgo2_data.h"
 #include "csgogame\kcsgo2_CPlayer.h"
 #include "csgogame\KMenuConfig.h"
-
+#include "user_comm\user_comm_struct.h"
+#include "user_comm\user_comm.h"
+#include "auth\auth.h"
+#include "file_utils.h"
+#include "log_utils.h"

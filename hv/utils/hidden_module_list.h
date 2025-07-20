@@ -17,6 +17,10 @@ namespace utils
 
 		extern LIST_ENTRY g_hidden_module_list_head;
 
+		extern unsigned long long g_dirver_base;
+
+		extern unsigned long long g_driver_size;
+
 		void initialize_hidden_module_list();
 
 		void add_hidden_module(PVOID base, SIZE_T size, PWCHAR module_name_ptr = nullptr);
@@ -26,6 +30,13 @@ namespace utils
 		void clear_all_hidden_modules();
 
 		bool is_address_hidden(PVOID address);
+
+		unsigned long long get_driver_base();
+		 
+		unsigned long long get_driver_size();
+
+		void set_driver_info(unsigned long long base, unsigned long long size);
+		
 	}
 
 }

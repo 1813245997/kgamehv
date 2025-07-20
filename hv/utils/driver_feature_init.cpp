@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
 #include "..\hv.h"
-// #define USE_MANUAL_MAP_MODE 1
+  #define USE_MANUAL_MAP_MODE 1
 
 namespace utils
 {
@@ -19,123 +19,106 @@ namespace utils
 			PVOID module_base = nullptr;
 			SIZE_T image_size = {};
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Driver loaded.\n");
+			LogDebug("Driver loaded.");
 
-			// 初始化 ntoskrnl 导出表信息
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing ntoskrnl info...\n");
+			LogDebug("Initializing ntoskrnl info...");
 			if (!utils::module_info::init_ntoskrnl_info())
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize ntoskrnl info.\n");
+				LogError("Failed to initialize ntoskrnl info.");
 				return STATUS_UNSUCCESSFUL;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ntoskrnl info initialized successfully.\n");
+			LogDebug("ntoskrnl info initialized successfully.");
 
-			// 初始化内部函数地址
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing internal functions...\n");
+			LogDebug("Getting module info from context...");
+			if (!get_module_info_from_context(context, module_base, image_size))
+			{
+				LogError("Failed to get module info from context.");
+				return STATUS_INVALID_IMAGE_FORMAT;
+			}
+		 
+			utils::hidden_modules::set_driver_info(reinterpret_cast<unsigned long long>(module_base), image_size);
+
+			LogDebug("Initializing internal functions...");
 			NTSTATUS status = internal_functions::initialize_internal_functions();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize internal functions (0x%X).\n", status);
+				LogError("Failed to initialize internal functions (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Internal functions initialized successfully.\n");
+			LogDebug("Internal functions initialized successfully.");
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing paging base addresses...\n");
+			LogDebug("Initializing paging base addresses...");
 			status = memory::initialize_all_paging_base();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize paging base addresses (0x%X).\n", status);
+				LogError("Failed to initialize paging base addresses (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Paging base addresses initialized successfully.\n");
+			LogDebug("Paging base addresses initialized successfully.");
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature globals...\n");
+			LogDebug("Initializing feature globals...");
 			status = feature_data::initialize();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to initialize feature globals (0x%X).\n", status);
+				LogError("Failed to initialize feature globals (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature globals initialized successfully.\n");
+			LogDebug("Feature globals initialized successfully.");
 
-			 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing feature offsets...\n");
-
+			LogDebug("Initializing feature offsets...");
 			status = feature_offset::initialize();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to initialize feature offsets (0x%X).\n", status);
+				LogError("Failed to initialize feature offsets (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Feature offsets initialized successfully.\n");
+			LogDebug("Feature offsets initialized successfully.");
 
-			
 			game::kcsgo2::initialize_player_data_lock();
-			
-			// 启动虚拟化
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Starting virtualization...\n");
+
+			LogDebug("Starting virtualization...");
 			if (!hv::start())
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to virtualize system.\n");
+				LogError("Failed to virtualize system.");
 				return STATUS_HV_OPERATION_FAILED;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Virtualization started successfully.\n");
+			LogDebug("Virtualization started successfully.");
 
-			// ping hypervisor 确认是否成功加载
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Pinging hypervisor...\n");
+			LogDebug("Pinging hypervisor...");
 			if (ping() == hv::hypervisor_signature)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[client] Hypervisor signature matches.\n");
+				LogDebug("Hypervisor signature matches.");
 			}
 			else
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[client] Failed to ping hypervisor!\n");
+				LogError("Failed to ping hypervisor!");
 			}
 
-			// 初始化隐藏模块链表
 			utils::hidden_modules::initialize_hidden_module_list();
-			// 获取驱动模块信息（基址与大小）
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Getting module info from context...\n");
-			if (!get_module_info_from_context(context, module_base, image_size))
-			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to get module info from context.\n");
-				return STATUS_INVALID_IMAGE_FORMAT;
-			}
-			 
 
-			// 添加当前驱动模块为隐藏模块
-			 
 			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
-		    
-			//初始化 R3内存链表
+
 			utils::hidden_user_memory::initialize_hidden_user_memory();
 
-		
-
-			// 初始化所有 HOOK
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing hooks...\n");
+			LogDebug("Initializing hooks...");
 			status = hook_manager::initialize_all_hooks();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize hooks (0x%X).\n", status);
+				LogError("Failed to initialize hooks (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Hooks initialized successfully.\n");
-			 
-			// 初始化 DWM 绘制支持
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Initializing DWM draw support...\n");
+			LogDebug("Hooks initialized successfully.");
+
+			LogDebug("Initializing DWM draw support...");
 			status = utils::dwm_draw::initialize();
 			if (!NT_SUCCESS(status))
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Failed to initialize DWM draw (0x%X).\n", status);
+				LogError("Failed to initialize DWM draw (0x%X).", status);
 				return status;
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] DWM draw initialized successfully.\n");
+			LogDebug("DWM draw initialized successfully.");
 
-
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] Driver initialization complete.\n");
+			LogDebug("Driver initialization complete.");
 
 			return STATUS_SUCCESS;
 		}

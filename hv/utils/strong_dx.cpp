@@ -258,8 +258,15 @@ namespace utils
 
 		void draw_overlay_elements(int width, int height, void* data)
 		{
+
+			if (utils::auth:: is_license_expired())
+			{
+				return  ;
+			}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
+
+
 
 			ByteRender rend;
 			rend.Setup(width, height, data);

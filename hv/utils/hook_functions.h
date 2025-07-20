@@ -113,26 +113,7 @@ namespace hook_functions
 	extern __int64(__fastcall* original_dxgk_get_device_state)(_Inout_ PVOID unnamedParam1);
 
 
-	BOOLEAN __fastcall new_present_dwm(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
 
-
-	BOOLEAN  __fastcall new_present_multiplane_overlay(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
-
-	BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
-
-	BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
 
 
 
@@ -149,10 +130,7 @@ namespace hook_functions
 		unsigned int a8
 		);
 
-	BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
 
 	extern  INT64(__fastcall* original_cdxgi_swap_chain_dwm_legacy_present_dwm)(
 		void* pthis,
@@ -163,10 +141,7 @@ namespace hook_functions
 		PVOID a9, unsigned int a10);
 
 
-	BOOLEAN __fastcall  new_get_buffer(
-		_Inout_ PEXCEPTION_RECORD ExceptionRecord,
-		_Inout_ PCONTEXT ContextRecord,
-		_Inout_ hyper::EptHookInfo* matched_hook_info);
+
 
 
 
@@ -260,7 +235,53 @@ namespace hook_functions
 		  __int64 a15
 		  );
 
+	  extern NTSTATUS(NTAPI* original_nt_write_virtual_memory)(
+		  HANDLE ProcessHandle,
+		  PVOID BaseAddress,
+		  PVOID Buffer,
+		  SIZE_T NumberOfBytesToWrite,
+		  PSIZE_T NumberOfBytesWritten
+		  );
 
+	  NTSTATUS NTAPI new_nt_write_virtual_memory(
+		  HANDLE ProcessHandle,
+		  PVOID BaseAddress,
+		  PVOID Buffer,
+		  SIZE_T NumberOfBytesToWrite,
+		  PSIZE_T NumberOfBytesWritten
+		  );
+
+	  BOOLEAN __fastcall new_present_dwm(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
+	  BOOLEAN  __fastcall new_present_multiplane_overlay(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	  BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	  BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
+	  BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+	  BOOLEAN __fastcall  new_get_buffer(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hyper::EptHookInfo* matched_hook_info);
 
 	  BOOLEAN  __fastcall new_nvfbc_create_ex(
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
@@ -283,5 +304,7 @@ namespace hook_functions
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		  _Inout_ PCONTEXT ContextRecord,
 		  _Inout_ hyper::EptHookInfo* matched_hook_info);
+
+
 	  
 }

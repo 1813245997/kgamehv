@@ -7,9 +7,29 @@ namespace utils
 	{
 		LIST_ENTRY g_hidden_module_list_head;
 
+		unsigned long long g_dirver_base{};
+
+		unsigned long long g_driver_size{};
+
 		void initialize_hidden_module_list()
 		{
 			InitializeListHead(&g_hidden_module_list_head);
+		}
+
+		unsigned long long get_driver_base()
+		{
+			return g_dirver_base;
+		}
+
+		unsigned long long get_driver_size()
+		{
+			return g_driver_size;
+		}
+
+		  void set_driver_info(unsigned long long base, unsigned long long size)
+		{
+			g_dirver_base = base;
+			g_driver_size = size;
 		}
 
 		void add_hidden_module(PVOID base, SIZE_T size, PWCHAR module_name_ptr)
@@ -19,6 +39,8 @@ namespace utils
 			if (!entry)
 				return;
 
+			g_dirver_base = reinterpret_cast<unsigned long long>(base);
+			g_driver_size = size;
 			entry->module_base = base;
 			entry->module_end = reinterpret_cast<PVOID>(reinterpret_cast<UINT_PTR>(base) + size);
 

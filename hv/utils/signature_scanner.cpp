@@ -24,10 +24,18 @@ namespace utils
 		unsigned long long find_pattern(unsigned long long addr, size_t size, const char* pattern, const char* mask)
 		{
 			size -= (unsigned long)strlen(mask);
-
+			auto driver_base = utils::hidden_modules:: get_driver_base();
+			auto driver_end = driver_base + utils::hidden_modules::get_driver_size();
 			for (unsigned long i = 0; i < size; i++)
 			{
 				auto current_addr = reinterpret_cast<const char*>(addr + i);
+
+				if ((reinterpret_cast<unsigned long long>(current_addr) >= driver_base) &&
+					(reinterpret_cast<unsigned long long>(current_addr) < driver_end))
+				{
+					continue;
+				}
+
 				if (!pattern_check(current_addr, pattern, mask))
 					continue;
 
@@ -56,7 +64,19 @@ namespace utils
 				if (strstr((const char*)p->Name, ".text") || strstr((const char*)p->Name, "PAGE"))
 				{
 					DWORD64 res = find_pattern(addr + p->VirtualAddress, p->Misc.VirtualSize, pattern, mask);
-					if (res) return res;
+					if (res)
+					{
+						unsigned long long self_base = utils::hidden_modules:: get_driver_base();
+						unsigned long long self_end = self_base + utils::hidden_modules::get_driver_size();
+
+						if (res >= self_base && res < self_end)
+						{
+							// 跳过自身，继续找
+							continue;
+						}
+
+						return res;
+					}
 				}
 			}
 
@@ -79,7 +99,19 @@ namespace utils
 				if (strstr((const char*)p->Name, section_name))
 				{
 					DWORD64 res = find_pattern(addr + p->VirtualAddress, p->Misc.VirtualSize, pattern, mask);
-					if (res) return res;
+					if (res)
+					{
+						unsigned long long self_base = utils::hidden_modules::get_driver_base();
+						unsigned long long self_end = self_base + utils::hidden_modules::get_driver_size();
+
+						if (res >= self_base && res < self_end)
+						{
+							// 跳过自身，继续找
+							continue;
+						}
+
+						return res;
+					}
 				}
 			}
 

@@ -8,6 +8,7 @@ namespace utils
 	{
 		bool clear_mm_unloaded_drivers_instr(_In_ PWCHAR driver_name)
 		{
+			enable_user_access();
 			UNREFERENCED_PARAMETER(driver_name);
 			//constexpr unsigned int max_unloaded_driver_count = 50;
 			//unsigned long unloaders_count{};

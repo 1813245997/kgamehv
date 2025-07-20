@@ -278,43 +278,43 @@ namespace utils
 			// ntdll.dll
 			status = module_info::get_process_module_info(process, L"ntdll.dll", &ntdll_base, &ntdll_size);
 			if (!NT_SUCCESS(status)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get ntdll.dll module info (0x%X)\n", status);
+				LogDebug(
+					"Failed to get ntdll.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			// user32.dll
 			status = module_info::get_process_module_info(process, L"user32.dll", &user32_base, &user32_size);
 			if (!NT_SUCCESS(status)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get user32.dll module info (0x%X)\n", status);
+				LogDebug(
+					"Failed to get user32.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			// dwmcore.dll
 			status = module_info::get_process_module_info(process, L"dwmcore.dll", &dwmcore_base, &dwmcore_size);
 			if (!NT_SUCCESS(status)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get dwmcore.dll module info (0x%X)\n", status);
+				LogDebug( 
+					"Failed to get dwmcore.dll module info (0x%X)\n", status);
 				return status;
 			}
 			status = module_info::get_process_module_info(process, L"dxgi.dll", &dxgi_base, &dxgi_size);
 			if (!NT_SUCCESS(status)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get dxgi.dll module info (0x%X)\n", status);
+				LogDebug(
+					"Failed to get dxgi.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			if (!module_info::get_driver_module_info("dxgkrnl.sys", dxgkrnl_size, (PVOID&)dxgkrnl_base)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get dxgkrnl.sys module info (0x%X)\n", status);
+				LogDebug(
+					"Failed to get dxgkrnl.sys module info (0x%X)\n", status);
 				return STATUS_INVALID_PARAMETER;
 			}
 
 			status = module_info::get_process_module_info(process, L"gdi32.dll", &gdi32_base, &gdi32_size);
 			if (!NT_SUCCESS(status)) {
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to get gdi32.dll module info (0x%X)\n", status);
+				LogDebug( 
+					"Failed to get gdi32.dll module info (0x%X)\n", status);
 				return status;
 			}
 
@@ -335,18 +335,18 @@ namespace utils
 
 			
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
-				"[hv] ntdll.dll  -> Base: 0x%llX, Size: 0x%llX\n", g_ntdll_base, g_ntdll_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
-				"[hv] user32.dll -> Base: 0x%llX, Size: 0x%llX\n", g_user32_base, g_user32_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID,0,
-				"[hv] dwmcore.dll -> Base: 0x%llX, Size: 0x%llX\n", g_dwmcore_base, g_dwmcore_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] dxgi.dll    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgi_base, g_dxgi_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] gdi32.dll   -> Base: 0x%llX, Size: 0x%llX\n", g_gdi32_base, g_gdi32_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] dxgkrnl.sys    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgkrnl_base, g_dxgkrnl_size);
+			LogDebug(
+				"ntdll.dll  -> Base: 0x%llX, Size: 0x%llX\n", g_ntdll_base, g_ntdll_size);
+			LogDebug( 
+				"user32.dll -> Base: 0x%llX, Size: 0x%llX\n", g_user32_base, g_user32_size);
+			LogDebug( 
+				"dwmcore.dll -> Base: 0x%llX, Size: 0x%llX\n", g_dwmcore_base, g_dwmcore_size);
+			LogDebug(  
+				"dxgi.dll    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgi_base, g_dxgi_size);
+			LogDebug( 
+				"gdi32.dll   -> Base: 0x%llX, Size: 0x%llX\n", g_gdi32_base, g_gdi32_size);
+			LogDebug( 
+				"dxgkrnl.sys    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgkrnl_base, g_dxgkrnl_size);
 	
 
 			return STATUS_SUCCESS;
@@ -520,15 +520,15 @@ namespace utils
 
 			if (!match_addr)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to locate PreCall pattern in ntdll.dll.\n");
+				LogError(
+					"Failed to locate PreCall pattern in ntdll.dll.\n");
 				return STATUS_NOT_FOUND;
 			}
 
 			*precall_addr_out = match_addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] PreCall found at: 0x%llX\n", *precall_addr_out);
+			LogDebug(
+				"PreCall found at: 0x%llX\n", *precall_addr_out);
 
 			return STATUS_SUCCESS;
 		}
@@ -555,15 +555,15 @@ namespace utils
 
 			if (!match_addr)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to locate PostCall pattern in user32.dll.\n");
+				LogError(
+					"Failed to locate PostCall pattern in user32.dll.\n");
 				return STATUS_NOT_FOUND;
 			}
 
 			*postcall_addr_out = match_addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] PostCall found at: 0x%llX\n", *postcall_addr_out);
+			LogDebug(
+				"PostCall found at: 0x%llX\n", *postcall_addr_out);
 
 			return STATUS_SUCCESS;
 		}
@@ -619,8 +619,8 @@ namespace utils
 
 			if (!match_addr)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to locate context pattern (all signatures failed).\n");
+				LogError(
+					"Failed to locate context pattern (all signatures failed).\n");
 				return STATUS_NOT_FOUND;
 			}
 
@@ -632,8 +632,8 @@ namespace utils
 
 			*context_offset_out = abs_addr - ntdll_base;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found context offset = 0x%llX\n", *context_offset_out);
+			LogDebug(
+				"Found context offset = 0x%llX\n", *context_offset_out);
 
 
 		 
@@ -696,13 +696,13 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			if (resolved_addr == 0)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to locate CComposition::Present function.\n");
+				LogError( 
+					"Failed to locate CComposition::Present function.\n");
 				return STATUS_NOT_FOUND;
 			}
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found CComposition::Present at 0x%llX\n", resolved_addr);
+			LogDebug(
+				"Found CComposition::Present at 0x%llX\n", resolved_addr);
 			*ccomposition_present_addr_out = resolved_addr;
 			 
 
@@ -728,8 +728,8 @@ namespace utils
 
 			*cocclusion_context_pre_sub_graph_addr_out = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found COcclusionContext::PreSubgraph at 0x%llX\n", addr);
+			LogDebug(
+				"Found COcclusionContext::PreSubgraph at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 			   
@@ -755,8 +755,8 @@ namespace utils
 
 			*cocclusion_context_post_sub_graph_addr_out = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found COcclusionContext::PostSubgraph at 0x%llX\n", addr);
+			LogDebug( 
+				"Found COcclusionContext::PostSubgraph at 0x%llX\n", addr);
 		 
 			return STATUS_SUCCESS;
 		}
@@ -782,8 +782,8 @@ namespace utils
 
 			*cdxgi_swapchain_present_dwm_out = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found CDXGISwapChain::PresentDWM at 0x%llX\n", addr);
+			LogDebug( 
+				"Found CDXGISwapChain::PresentDWM at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -807,8 +807,8 @@ namespace utils
 
 			*cdxgi_swapchain_present_multiplane_overlay_out = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found CDXGISwapChain::PresentMultiplaneOverlay at 0x%llX\n", addr);
+			LogDebug( 
+				"Found CDXGISwapChain::PresentMultiplaneOverlay at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -834,8 +834,8 @@ namespace utils
 
 			*cdxgi_swap_chain_dwm_legacy_present_dwm_out = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found CDXGISwapChainDWMLegacy::PresentDWM at 0x%llX\n", addr);
+			LogDebug( 
+				"Found CDXGISwapChainDWMLegacy::PresentDWM at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -863,8 +863,8 @@ namespace utils
 
 			*find_windoww_addr = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found FindWindowW at 0x%llX\n", addr);
+			LogDebug( 
+				"Found FindWindowW at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -894,8 +894,8 @@ namespace utils
 
 			*client_to_screen_addr = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found ClientToScreen at 0x%llX\n", addr);
+			LogDebug( 
+				"Found ClientToScreen at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -926,8 +926,8 @@ namespace utils
 
 			*get_client_rect_addr = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found GetClientRect at 0x%llX\n", addr);
+			LogDebug( 
+				"Found GetClientRect at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -958,8 +958,8 @@ namespace utils
 
 			*get_foreground_window_addr = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found GetForegroundWindow at 0x%llX\n", addr);
+			LogDebug(
+				"Found GetForegroundWindow at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -990,8 +990,8 @@ namespace utils
 
 			*get_window_rect_addr = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found GetWindowRect at 0x%llX\n", addr);
+			LogDebug( 
+				"Found GetWindowRect at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -1021,8 +1021,8 @@ namespace utils
 
 			*dxgk_get_device_state = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found DxgkGetDeviceState at 0x%llX\n", addr);
+			LogDebug(
+				"Found DxgkGetDeviceState at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}
@@ -1050,8 +1050,8 @@ namespace utils
 
 			*dxgk_open_resource = addr;
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Found DxgkOpenResource at 0x%llX\n", addr);
+			LogDebug(
+				"Found DxgkOpenResource at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
 		}

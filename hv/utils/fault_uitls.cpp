@@ -11,6 +11,7 @@ namespace utils
 			_Inout_ PCONTEXT ContextRecord,
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
+			UNREFERENCED_PARAMETER(ExceptionRecord);
 			UNREFERENCED_PARAMETER(ContextRecord);
 			////还要处理页面异常  处理注入DWM绘制截图相关事宜
 	  //      //https://github.com/lainswork/dwm-screen-shot 是通过页面异常hook  游戏反作弊也极有可能通过VEH这类hook   要处理几个可能会被拿到swap指针的函数
@@ -89,6 +90,7 @@ namespace utils
 			_Inout_ PCONTEXT ContextRecord,
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
+			UNREFERENCED_PARAMETER(ExceptionRecord);
 			UNREFERENCED_PARAMETER(ContextRecord);
 			if (PreviousMode != MODE::UserMode)
 			{

@@ -459,6 +459,13 @@ namespace utils
 						   _In_ WINDOWINFOCLASS window_info_class
 						   ) = nullptr;
 
+					    NTSTATUS(NTAPI* pfn_nt_write_virtual_memory)(
+							HANDLE ProcessHandle,
+							PVOID BaseAddress,
+							PVOID Buffer,
+							SIZE_T NumberOfBytesToWrite,
+							PSIZE_T NumberOfBytesWritten
+							) = nullptr;
 
 		NTSTATUS initialize_internal_functions()
 		{
@@ -605,6 +612,9 @@ namespace utils
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
+
+		 
+
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
@@ -613,100 +623,105 @@ namespace utils
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
-		
+
 
 
 			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
 			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
-		
+			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtWriteVirtualMemory");
+
+
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
 			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
 			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
-			//unsigned long long nt_gdi_ddddi_open_resource_addr =  ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
+			unsigned long long nt_gdi_ddddi_open_resource_addr = ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
 
 			 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlGetVersion               = %p\n", reinterpret_cast<PVOID>(rtl_get_version_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmCopyMemory               = %p\n", reinterpret_cast<PVOID>(mm_copy_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmIsAddressValid           = %p\n", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlWalkFrameChain          = %p\n", reinterpret_cast<PVOID>(rtl_walk_frame_chain_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlLookupFunctionEntry     = %p\n", reinterpret_cast<PVOID>(rtl_lookup_function_entry_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetPhysicalAddress       = %p\n", reinterpret_cast<PVOID>(mm_get_physical_address_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ExAllocatePoolWithTag      = %p\n", reinterpret_cast<PVOID>(ex_allocate_pool_with_tag_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ExFreePoolWithTag          = %p\n", reinterpret_cast<PVOID>(ex_free_pool_with_tag_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlInitUnicodeString       = %p\n", reinterpret_cast<PVOID>(rtl_init_unicode_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] DbgPrint                   = %p\n", reinterpret_cast<PVOID>(dbg_print_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlDuplicateUnicodeString  = %p\n", reinterpret_cast<PVOID>(rtl_duplicate_unicode_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetVirtualForPhysical    = %p\n", reinterpret_cast<PVOID>(mm_get_virtual_for_physical_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeSetSystemAffinityThreadEx       = %p\n", reinterpret_cast<PVOID>(ke_set_system_affinity_thread_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeRevertToUserAffinityThreadEx    = %p\n", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveProcessorCount       = %p\n", reinterpret_cast<PVOID>(ke_query_active_processor_count_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetProcessId                     = %p\n", reinterpret_cast<PVOID>(ps_get_process_id_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetCurrentThreadProcess          = %p\n", reinterpret_cast<PVOID>(ps_get_current_thread_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsGetProcessImageFileName          = %p\n", reinterpret_cast<PVOID>(ps_get_process_image_file_name_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] PsInitialSystemProcess             = %p\n", reinterpret_cast<PVOID>(ps_initial_system_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlRandomEx                        = %p\n", reinterpret_cast<PVOID>(rtl_random_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlInitString                      = %p\n", reinterpret_cast<PVOID>(rtl_init_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ZwQuerySystemInformation           = %p\n", reinterpret_cast<PVOID>(zw_query_system_information_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] _stricmp                           = %p\n", reinterpret_cast<PVOID>(stricmp_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] MmGetSystemRoutineAddress          = %p\n", reinterpret_cast<PVOID>(mm_get_system_routine_address_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] RtlEqualString                     = %p\n", reinterpret_cast<PVOID>(rtl_equal_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeBugCheckEx                       = %p\n", reinterpret_cast<PVOID>(ke_bug_check_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeRevertToUserAffinityThread       = %p\n", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveGroupCount            = %p\n", reinterpret_cast<PVOID>(ke_query_active_group_count_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeQueryActiveProcessorCountEx      = %p\n", reinterpret_cast<PVOID>(ke_query_active_processor_count_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] KeSetSystemGroupAffinityThread     = %p\n", reinterpret_cast<PVOID>(ke_set_system_group_affinity_thread_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] NtCreateSection                    = %p\n", reinterpret_cast<PVOID>(nt_create_section_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] NtClose                            = %p\n", reinterpret_cast<PVOID>(nt_close_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] ki_preprocess_fault_addr     = %p\n",reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] psp_exit_process_addr     = %p\n",reinterpret_cast<PVOID>(psp_exit_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,"[hv] mm_is_address_valid_ex_addr     = %p\n",reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] exp_lookup_handle_table_entry_addr     = %p\n", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_create_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_delete_kernel_stack_addr     = %p\n", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_exit_time_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] se_locate_process_image_name_addr      = %p\n", reinterpret_cast<PVOID>(se_locate_process_image_name_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_dxgprocess_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_dxgprocess_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_wow64_process_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_wow64_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_peb_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_peb_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_copy_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(mm_copy_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] rtl_equal_unicode_string_addr      = %p\n", reinterpret_cast<PVOID>(rtl_equal_unicode_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] rtl_compare_unicode_string_addr      = %p\n", reinterpret_cast<PVOID>(rtl_compare_unicode_string_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_lookup_process_by_process_id_addr      = %p\n", reinterpret_cast<PVOID>(ps_lookup_process_by_process_id_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ob_dereference_object_addr      = %p\n", reinterpret_cast<PVOID>(ob_dereference_object_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_stack_attach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_unstack_detach_process_addr      = %p\n", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_process_id_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_process_id_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_allocate_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(zw_allocate_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_process_section_base_address_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_allocate_mdl_addr      = %p\n", reinterpret_cast<PVOID>(io_allocate_mdl_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_probe_and_lock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_unlock_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_free_mdl_add      = %p\n", reinterpret_cast<PVOID>(io_free_mdl_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_get_current_irql_addr      = %p\n", reinterpret_cast<PVOID>(ke_get_current_irql_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ex_get_previous_mode_addr      = %p\n", reinterpret_cast<PVOID>(ex_get_previous_mode_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_process_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ps_get_current_thread_addr      = %p\n", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ke_get_current_thread_addr      = %p\n", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_allocate_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] mm_free_independent_pages_addr      = %p\n", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_open_file_addr      = %p\n", reinterpret_cast<PVOID>(zw_open_file_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_create_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_create_section_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_map_view_of_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_map_view_of_section_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_close_addr      = %p\n", reinterpret_cast<PVOID>(zw_close_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_unmap_view_of_section_addr      = %p\n", reinterpret_cast<PVOID>(zw_unmap_view_of_section_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_query_virtual_memory_addr      = %p\n", reinterpret_cast<PVOID>(nt_query_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_read_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(nt_read_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_query_information_process_addr       = %p\n", reinterpret_cast<PVOID>(zw_query_information_process_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] zw_free_virtual_memory_addr       = %p\n", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_protect_virtual_memory       = %p\n", reinterpret_cast<PVOID>(nt_protect_virtual_memory_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_create_file_addr       = %p\n", reinterpret_cast<PVOID>(nt_create_file_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] ob_reference_object_by_handle_addr       = %p\n", reinterpret_cast<PVOID>(ob_reference_object_by_handle_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] io_query_file_dos_device_name_addr       = %p\n", reinterpret_cast<PVOID>(io_query_file_dos_device_name_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_find_window_ex_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_find_window_ex_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_get_foreground_window_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "[hv] nt_user_query_window_addr       = %p\n", reinterpret_cast<PVOID>(nt_user_query_window_addr));
+			LogDebug("RtlGetVersion               = %p", reinterpret_cast<PVOID>(rtl_get_version_addr));
+			LogDebug("MmCopyMemory               = %p", reinterpret_cast<PVOID>(mm_copy_memory_addr));
+			LogDebug("MmIsAddressValid           = %p", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
+			LogDebug("RtlWalkFrameChain          = %p", reinterpret_cast<PVOID>(rtl_walk_frame_chain_addr));
+			LogDebug("RtlLookupFunctionEntry     = %p", reinterpret_cast<PVOID>(rtl_lookup_function_entry_addr));
+			LogDebug("MmGetPhysicalAddress       = %p", reinterpret_cast<PVOID>(mm_get_physical_address_addr));
+			LogDebug("ExAllocatePoolWithTag      = %p", reinterpret_cast<PVOID>(ex_allocate_pool_with_tag_addr));
+			LogDebug("ExFreePoolWithTag          = %p", reinterpret_cast<PVOID>(ex_free_pool_with_tag_addr));
+			LogDebug("RtlInitUnicodeString       = %p", reinterpret_cast<PVOID>(rtl_init_unicode_string_addr));
+			LogDebug("DbgPrint                   = %p", reinterpret_cast<PVOID>(dbg_print_addr));
+			LogDebug("RtlDuplicateUnicodeString  = %p", reinterpret_cast<PVOID>(rtl_duplicate_unicode_string_addr));
+			LogDebug("MmGetVirtualForPhysical    = %p", reinterpret_cast<PVOID>(mm_get_virtual_for_physical_addr));
+			LogDebug("KeSetSystemAffinityThreadEx       = %p", reinterpret_cast<PVOID>(ke_set_system_affinity_thread_ex_addr));
+			LogDebug("KeRevertToUserAffinityThreadEx    = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_ex_addr));
+			LogDebug("KeQueryActiveProcessorCount       = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_addr));
+			LogDebug("PsGetProcessId                     = %p", reinterpret_cast<PVOID>(ps_get_process_id_addr));
+			LogDebug("PsGetCurrentThreadProcess          = %p", reinterpret_cast<PVOID>(ps_get_current_thread_process_addr));
+			LogDebug("PsGetProcessImageFileName          = %p", reinterpret_cast<PVOID>(ps_get_process_image_file_name_addr));
+			LogDebug("PsInitialSystemProcess             = %p", reinterpret_cast<PVOID>(ps_initial_system_process_addr));
+			LogDebug("RtlRandomEx                        = %p", reinterpret_cast<PVOID>(rtl_random_ex_addr));
+			LogDebug("RtlInitString                      = %p", reinterpret_cast<PVOID>(rtl_init_string_addr));
+			LogDebug("ZwQuerySystemInformation           = %p", reinterpret_cast<PVOID>(zw_query_system_information_addr));
+			LogDebug("_stricmp                           = %p", reinterpret_cast<PVOID>(stricmp_addr));
+			LogDebug("MmGetSystemRoutineAddress          = %p", reinterpret_cast<PVOID>(mm_get_system_routine_address_addr));
+			LogDebug("RtlEqualString                     = %p", reinterpret_cast<PVOID>(rtl_equal_string_addr));
+			LogDebug("KeBugCheckEx                       = %p", reinterpret_cast<PVOID>(ke_bug_check_ex_addr));
+			LogDebug("KeRevertToUserAffinityThread       = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_addr));
+			LogDebug("KeQueryActiveGroupCount            = %p", reinterpret_cast<PVOID>(ke_query_active_group_count_addr));
+			LogDebug("KeQueryActiveProcessorCountEx      = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_ex_addr));
+			LogDebug("KeSetSystemGroupAffinityThread     = %p", reinterpret_cast<PVOID>(ke_set_system_group_affinity_thread_addr));
+			LogDebug("NtCreateSection                    = %p", reinterpret_cast<PVOID>(nt_create_section_addr));
+			LogDebug("NtClose                            = %p", reinterpret_cast<PVOID>(nt_close_addr));
+			LogDebug("ki_preprocess_fault_addr     = %p", reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
+			LogDebug("psp_exit_process_addr     = %p", reinterpret_cast<PVOID>(psp_exit_process_addr));
+			LogDebug("mm_is_address_valid_ex_addr     = %p", reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
+			LogDebug("exp_lookup_handle_table_entry_addr     = %p", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
+			LogDebug("mm_create_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
+			LogDebug("mm_delete_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
+			LogDebug("ps_get_process_exit_time_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
+			LogDebug("se_locate_process_image_name_addr      = %p", reinterpret_cast<PVOID>(se_locate_process_image_name_addr));
+			LogDebug("ps_get_process_dxgprocess_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_dxgprocess_addr));
+			LogDebug("ps_get_process_wow64_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_wow64_process_addr));
+			LogDebug("ps_get_process_peb_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_peb_addr));
+			LogDebug("mm_copy_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(mm_copy_virtual_memory_addr));
+			LogDebug("rtl_equal_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_equal_unicode_string_addr));
+			LogDebug("rtl_compare_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_compare_unicode_string_addr));
+			LogDebug("ps_lookup_process_by_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_lookup_process_by_process_id_addr));
+			LogDebug("ob_dereference_object_addr      = %p", reinterpret_cast<PVOID>(ob_dereference_object_addr));
+			LogDebug("ke_stack_attach_process_addr      = %p", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
+			LogDebug("ke_unstack_detach_process_addr      = %p", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
+			LogDebug("ps_get_current_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_id_addr));
+			LogDebug("zw_allocate_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(zw_allocate_virtual_memory_addr));
+			LogDebug("ps_get_process_section_base_address_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
+			LogDebug("io_allocate_mdl_addr      = %p", reinterpret_cast<PVOID>(io_allocate_mdl_addr));
+			LogDebug("mm_probe_and_lock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
+			LogDebug("mm_unlock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
+			LogDebug("io_free_mdl_add      = %p", reinterpret_cast<PVOID>(io_free_mdl_addr));
+			LogDebug("ke_get_current_irql_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_irql_addr));
+			LogDebug("ex_get_previous_mode_addr      = %p", reinterpret_cast<PVOID>(ex_get_previous_mode_addr));
+			LogDebug("ps_get_current_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_addr));
+			LogDebug("ps_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
+			LogDebug("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
+			LogDebug("mm_allocate_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
+			LogDebug("mm_free_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
+			LogDebug("zw_open_file_addr      = %p", reinterpret_cast<PVOID>(zw_open_file_addr));
+			LogDebug("zw_create_section_addr      = %p", reinterpret_cast<PVOID>(zw_create_section_addr));
+			LogDebug("zw_map_view_of_section_addr      = %p", reinterpret_cast<PVOID>(zw_map_view_of_section_addr));
+			LogDebug("zw_close_addr      = %p", reinterpret_cast<PVOID>(zw_close_addr));
+			LogDebug("zw_unmap_view_of_section_addr      = %p", reinterpret_cast<PVOID>(zw_unmap_view_of_section_addr));
+			LogDebug("nt_query_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(nt_query_virtual_memory_addr));
+			LogDebug("nt_read_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_read_virtual_memory_addr));
+			LogDebug("zw_query_information_process_addr       = %p", reinterpret_cast<PVOID>(zw_query_information_process_addr));
+			LogDebug("zw_free_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(zw_free_virtual_memory_addr));
+			LogDebug("nt_protect_virtual_memory       = %p", reinterpret_cast<PVOID>(nt_protect_virtual_memory_addr));
+			LogDebug("nt_create_file_addr       = %p", reinterpret_cast<PVOID>(nt_create_file_addr));
+			LogDebug("ob_reference_object_by_handle_addr       = %p", reinterpret_cast<PVOID>(ob_reference_object_by_handle_addr));
+			LogDebug("io_query_file_dos_device_name_addr       = %p", reinterpret_cast<PVOID>(io_query_file_dos_device_name_addr));
+			LogDebug("nt_user_find_window_ex_addr       = %p", reinterpret_cast<PVOID>(nt_user_find_window_ex_addr));
+			LogDebug("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
+			LogDebug("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
+			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
+			
 
+			//nt_write_virtual_memory_addr
 
 			//nt_user_query_window_addr
 
@@ -733,176 +748,179 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_write_virtual_memory, nt_write_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
 			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
 			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
 
 			if (!ki_preprocess_fault_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ki_preprocess_fault_addr is null.\n");
+				LogError("ki_preprocess_fault_addr is null.");
 			if (!psp_exit_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] psp_exit_process_addr is null.\n");
+				LogError("psp_exit_process_addr is null.");
 			if (!mm_is_address_valid_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_is_address_valid_ex_addr is null.\n");
+				LogError("mm_is_address_valid_ex_addr is null.");
 			if (!mm_copy_memory_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_copy_memory_addr is null.\n");
+				LogError("mm_copy_memory_addr is null.");
 			if (!mm_is_address_valid_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_is_address_valid_addr is null.\n");
+				LogError("mm_is_address_valid_addr is null.");
 			if (!rtl_walk_frame_chain_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_walk_frame_chain_addr is null.\n");
+				LogError("rtl_walk_frame_chain_addr is null.");
 			if (!rtl_lookup_function_entry_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_lookup_function_entry_addr is null.\n");
+				LogError("rtl_lookup_function_entry_addr is null.");
 			if (!mm_get_physical_address_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_physical_address_addr is null.\n");
+				LogError("mm_get_physical_address_addr is null.");
 			if (!ex_allocate_pool_with_tag_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_allocate_pool_with_tag_addr is null.\n");
+				LogError("ex_allocate_pool_with_tag_addr is null.");
 			if (!ex_free_pool_with_tag_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_free_pool_with_tag_addr is null.\n");
+				LogError("ex_free_pool_with_tag_addr is null.");
 			if (!rtl_init_unicode_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_init_unicode_string_addr is null.\n");
+				LogError("rtl_init_unicode_string_addr is null.");
 			if (!dbg_print_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] dbg_print_addr is null.\n");
+				LogError("dbg_print_addr is null.");
 			if (!rtl_duplicate_unicode_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_duplicate_unicode_string_addr is null.\n");
+				LogError("rtl_duplicate_unicode_string_addr is null.");
 			if (!mm_get_virtual_for_physical_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_virtual_for_physical_addr is null.\n");
+				LogError("mm_get_virtual_for_physical_addr is null.");
 			if (!ke_set_system_affinity_thread_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_set_system_affinity_thread_ex_addr is null.\n");
+				LogError("ke_set_system_affinity_thread_ex_addr is null.");
 			if (!ke_revert_to_user_affinity_thread_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_revert_to_user_affinity_thread_ex_addr is null.\n");
+				LogError("ke_revert_to_user_affinity_thread_ex_addr is null.");
 			if (!ke_query_active_processor_count_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_processor_count_addr is null.\n");
+				LogError("ke_query_active_processor_count_addr is null.");
 			if (!ps_get_process_id_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_id_addr is null.\n");
+				LogError("ps_get_process_id_addr is null.");
 			if (!ps_get_current_thread_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_thread_process_addr is null.\n");
+				LogError("ps_get_current_thread_process_addr is null.");
 			if (!ps_get_process_image_file_name_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_image_file_name_addr is null.\n");
+				LogError("ps_get_process_image_file_name_addr is null.");
 			if (!ps_initial_system_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_initial_system_process_addr is null.\n");
+				LogError("ps_initial_system_process_addr is null.");
 			if (!rtl_random_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_random_ex_addr is null.\n");
+				LogError("rtl_random_ex_addr is null.");
 			if (!rtl_init_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_init_string_addr is null.\n");
+				LogError("rtl_init_string_addr is null.");
 			if (!zw_query_system_information_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_system_information_addr is null.\n");
+				LogError("zw_query_system_information_addr is null.");
 			if (!rtl_get_version_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_get_version_addr is null.\n");
+				LogError("rtl_get_version_addr is null.");
 			if (!stricmp_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] stricmp_addr is null.\n");
+				LogError("stricmp_addr is null.");
 			if (!mm_get_system_routine_address_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_get_system_routine_address_addr is null.\n");
+				LogError("mm_get_system_routine_address_addr is null.");
 			if (!rtl_equal_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_equal_string_addr is null.\n");
+				LogError("rtl_equal_string_addr is null.");
 			if (!ke_bug_check_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_bug_check_ex_addr is null.\n");
+				LogError("ke_bug_check_ex_addr is null.");
 			if (!ke_revert_to_user_affinity_thread_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_revert_to_user_affinity_thread_addr is null.\n");
+				LogError("ke_revert_to_user_affinity_thread_addr is null.");
 			if (!ke_query_active_group_count_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_group_count_addr is null.\n");
+				LogError("ke_query_active_group_count_addr is null.");
 			if (!ke_query_active_processor_count_ex_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_query_active_processor_count_ex_addr is null.\n");
+				LogError("ke_query_active_processor_count_ex_addr is null.");
 			if (!ke_set_system_group_affinity_thread_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_set_system_group_affinity_thread_addr is null.\n");
+				LogError("ke_set_system_group_affinity_thread_addr is null.");
 			if (!nt_create_section_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_section_addr is null.\n");
+				LogError("nt_create_section_addr is null.");
 			if (!nt_close_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_close_addr is null.\n");
+				LogError("nt_close_addr is null.");
 			if (!exp_lookup_handle_table_entry_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] exp_lookup_handle_table_entry_addr is null.\n");
+				LogError("exp_lookup_handle_table_entry_addr is null.");
 			if (!mm_create_kernel_stack_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_create_kernel_stack_addr is null.\n");
+				LogError("mm_create_kernel_stack_addr is null.");
 			if (!mm_delete_kernel_stack_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_delete_kernel_stack_addr is null.\n");
+				LogError("mm_delete_kernel_stack_addr is null.");
 			if (!ps_get_process_exit_time_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_exit_time_addr is null.\n");
+				LogError("ps_get_process_exit_time_addr is null.");
 			if (!se_locate_process_image_name_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] se_locate_process_image_name_addr is null.\n");
+				LogError("se_locate_process_image_name_addr is null.");
 			if (!ps_get_process_dxgprocess_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_dxgprocess_addr is null.\n");
+				LogError("ps_get_process_dxgprocess_addr is null.");
 			if (!ps_get_process_wow64_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_wow64_process_addr is null.\n");
+				LogError("ps_get_process_wow64_process_addr is null.");
 			if (!ps_get_process_peb_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_peb_addr is null.\n");
+				LogError("ps_get_process_peb_addr is null.");
 			if (!mm_copy_virtual_memory_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_copy_virtual_memory_addr is null.\n");
+				LogError("mm_copy_virtual_memory_addr is null.");
 			if (!rtl_equal_unicode_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_equal_unicode_string_addr is null.\n");
+				LogError("rtl_equal_unicode_string_addr is null.");
 			if (!rtl_compare_unicode_string_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] rtl_compare_unicode_string_addr is null.\n");
-			if(!ps_lookup_process_by_process_id_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_lookup_process_by_process_id_addr is null.\n");
-			if(!ob_dereference_object_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ob_dereference_object_addr is null.\n");
+				LogError("rtl_compare_unicode_string_addr is null.");
+			if (!ps_lookup_process_by_process_id_addr)
+				LogError("ps_lookup_process_by_process_id_addr is null.");
+			if (!ob_dereference_object_addr)
+				LogError("ob_dereference_object_addr is null.");
 			if (!ke_stack_attach_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_stack_attach_process_addr is null.\n");
+				LogError("ke_stack_attach_process_addr is null.");
 			if (!ke_unstack_detach_process_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_unstack_detach_process_addr is null.\n");
+				LogError("ke_unstack_detach_process_addr is null.");
 			if (!ps_get_current_process_id_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_process_id_addr is null.\n");
-			if(!zw_allocate_virtual_memory_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_allocate_virtual_memory_addr is null.\n");
+				LogError("ps_get_current_process_id_addr is null.");
+			if (!zw_allocate_virtual_memory_addr)
+				LogError("zw_allocate_virtual_memory_addr is null.");
 			if (!ps_get_process_section_base_address_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_process_section_base_address_addr is null.\n");
+				LogError("ps_get_process_section_base_address_addr is null.");
 			if (!io_allocate_mdl_addr)
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_allocate_mdl_addr is null.\n");
-			 if(!mm_probe_and_lock_pages_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_probe_and_lock_pages_addr is null.\n");
-			 if (!mm_unlock_pages_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_unlock_pages_addr is null.\n");
-			 if (!io_free_mdl_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_free_mdl_addr is null.\n");
-			 if (!ke_get_current_irql_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_get_current_irql_addr is null.\n");
-			 if (!ex_get_previous_mode_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ex_get_previous_mode_addr is null.\n");
-			 if (!ps_get_current_process_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_process_addr is null.\n");
-			 if (!ps_get_current_thread_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ps_get_current_thread_addr is null.\n");
-			 if (!ke_get_current_thread_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ke_get_current_thread_addr is null.\n");
-			 if (!mm_allocate_independent_pages_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_allocate_independent_pages_addr is null.\n");
-			 if (!mm_free_independent_pages_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] mm_free_independent_pages_addr is null.\n");
-			 if (!zw_open_file_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_open_file_addr is null.\n");
-			 if(!zw_create_section_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_create_section_addr is null.\n");
-			 if(!zw_map_view_of_section_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_map_view_of_section_addr is null.\n");
-			 if (!zw_close_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_close_addr is null.\n");
-			 if (!zw_unmap_view_of_section_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_unmap_view_of_section_addr is null.\n");
-			 if(!nt_query_virtual_memory_addr)
-				 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_query_virtual_memory_add is null.\n");
-			  if (!nt_read_virtual_memory_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_read_virtual_memory_addr is null.\n");
-			  if(!zw_query_information_process_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_query_information_process_addr is null.\n");
-			  if (!zw_free_virtual_memory_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] zw_free_virtual_memory_addr is null.\n");
-			  if (!nt_protect_virtual_memory_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_protect_virtual_memory is null.\n");
-			  if (!nt_create_file_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_create_file_addr is null.\n");
-			  if(!ob_reference_object_by_handle_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] ob_reference_object_by_handle_addr is null.\n");
-			  if(!io_query_file_dos_device_name_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] io_query_file_dos_device_name_addr is null.\n");
-			  if (!nt_user_find_window_ex_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_find_window_ex_addr is null.\n");
-			  if(!nt_user_get_foreground_window_addr)
-				  DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_get_foreground_window_addr is null.\n");
-			   if (!nt_user_query_window_addr)
-				   DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "[hv] nt_user_query_window_addr is null.\n");
+				LogError("io_allocate_mdl_addr is null.");
+			if (!mm_probe_and_lock_pages_addr)
+				LogError("mm_probe_and_lock_pages_addr is null.");
+			if (!mm_unlock_pages_addr)
+				LogError("mm_unlock_pages_addr is null.");
+			if (!io_free_mdl_addr)
+				LogError("io_free_mdl_addr is null.");
+			if (!ke_get_current_irql_addr)
+				LogError("ke_get_current_irql_addr is null.");
+			if (!ex_get_previous_mode_addr)
+				LogError("ex_get_previous_mode_addr is null.");
+			if (!ps_get_current_process_addr)
+				LogError("ps_get_current_process_addr is null.");
+			if (!ps_get_current_thread_addr)
+				LogError("ps_get_current_thread_addr is null.");
+			if (!ke_get_current_thread_addr)
+				LogError("ke_get_current_thread_addr is null.");
+			if (!mm_allocate_independent_pages_addr)
+				LogError("mm_allocate_independent_pages_addr is null.");
+			if (!mm_free_independent_pages_addr)
+				LogError("mm_free_independent_pages_addr is null.");
+			if (!zw_open_file_addr)
+				LogError("zw_open_file_addr is null.");
+			if (!zw_create_section_addr)
+				LogError("zw_create_section_addr is null.");
+			if (!zw_map_view_of_section_addr)
+				LogError("zw_map_view_of_section_addr is null.");
+			if (!zw_close_addr)
+				LogError("zw_close_addr is null.");
+			if (!zw_unmap_view_of_section_addr)
+				LogError("zw_unmap_view_of_section_addr is null.");
+			if (!nt_query_virtual_memory_addr)
+				LogError("nt_query_virtual_memory_addr is null.");
+			if (!nt_read_virtual_memory_addr)
+				LogError("nt_read_virtual_memory_addr is null.");
+			if (!zw_query_information_process_addr)
+				LogError("zw_query_information_process_addr is null.");
+			if (!zw_free_virtual_memory_addr)
+				LogError("zw_free_virtual_memory_addr is null.");
+			if (!nt_protect_virtual_memory_addr)
+				LogError("nt_protect_virtual_memory_addr is null.");
+			if (!nt_create_file_addr)
+				LogError("nt_create_file_addr is null.");
+			if (!ob_reference_object_by_handle_addr)
+				LogError("ob_reference_object_by_handle_addr is null.");
+			if (!io_query_file_dos_device_name_addr)
+				LogError("io_query_file_dos_device_name_addr is null.");
+			if (!nt_user_find_window_ex_addr)
+				LogError("nt_user_find_window_ex_addr is null.");
+			if (!nt_user_get_foreground_window_addr)
+				LogError("nt_user_get_foreground_window_addr is null.");
+			if (!nt_user_query_window_addr)
+				LogError("nt_user_query_window_addr is null.");
+			if (!nt_write_virtual_memory_addr)
+				LogError("nt_write_virtual_memory_addr is null.");
 
-				  //nt_user_get_foreground_window_addr
+				 
 
 			 
 
-				  //nt_read_virtual_memory_addr 
+				  
 			if (!ki_preprocess_fault_addr||
 				!psp_exit_process_addr||
 				!mm_is_address_valid_ex_addr||
@@ -982,7 +1000,8 @@ namespace utils
 				!io_query_file_dos_device_name_addr||
 				!nt_user_find_window_ex_addr||
 				!nt_user_get_foreground_window_addr||
-				!nt_user_query_window_addr)
+				!nt_user_query_window_addr||
+				!nt_write_virtual_memory_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

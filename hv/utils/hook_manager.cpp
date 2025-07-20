@@ -87,6 +87,15 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_nt_read_virtual_memory)
 			);
 		}
+		if (pfn_nt_write_virtual_memory)
+		{
+
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_write_virtual_memory),
+				hook_functions::new_nt_write_virtual_memory,
+				reinterpret_cast<void**>(&hook_functions::original_nt_write_virtual_memory)
+			);
+		}
 
 		return STATUS_SUCCESS;
 	}
