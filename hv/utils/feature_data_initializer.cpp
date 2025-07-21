@@ -21,20 +21,20 @@ namespace utils {
 			mm_unloaded_drivers = reinterpret_cast<PMM_UNLOADED_DRIVER >(mm_unloaded_drivers_addr);
 			mm_last_unloaded_driver = reinterpret_cast<PULONG>(mm_last_unloaded_driver_addr);
 			g_psp_cid_table = reinterpret_cast<PHANDLE_TABLE>(psp_cid_table_addr);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] mm_unloaded_drivers       = %p\n", mm_unloaded_drivers);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] mm_last_unloaded_driver   = %p\n", mm_last_unloaded_driver);
+			LogDebug( 
+				"mm_unloaded_drivers       = %p\n", mm_unloaded_drivers);
+			LogDebug( 
+				"mm_last_unloaded_driver   = %p\n", mm_last_unloaded_driver);
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] g_psp_cid_table   = %p\n", g_psp_cid_table);
+			LogDebug(
+				"g_psp_cid_table   = %p\n", g_psp_cid_table);
 		 
 			if (!mm_unloaded_drivers_addr || 
 				!mm_last_unloaded_driver_addr||
 				!psp_cid_table_addr)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL,
-					"[hv] Failed to locate MmUnloadedDrivers or MmLastUnloadedDriver\n");
+				LogDebug( 
+					"Failed to locate MmUnloadedDrivers or MmLastUnloadedDriver\n");
 				return STATUS_UNSUCCESSFUL;
 			}
 

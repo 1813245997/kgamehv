@@ -7,17 +7,10 @@ void LogPrint(__log_type type, const char* fmt, ...)
 	const ULONG MSG_BUF_SIZE = 512;
 	const ULONG OUTPUT_BUF_SIZE = 1024;
 
-	char* time_buffer = (char*)ExAllocatePoolWithTag(NonPagedPoolNx, TIME_BUF_SIZE, 'golT');     // 'Tlog'
-	char* message_buffer = (char*)ExAllocatePoolWithTag(NonPagedPoolNx, MSG_BUF_SIZE, 'golM');   // 'Mlog'
-	char* output_buffer = (char*)ExAllocatePoolWithTag(NonPagedPoolNx, OUTPUT_BUF_SIZE, 'golO'); // 'Olog'
-
-	if (!time_buffer || !message_buffer || !output_buffer) {
-		if (time_buffer) ExFreePoolWithTag(time_buffer, 'golT');
-		if (message_buffer) ExFreePoolWithTag(message_buffer, 'golM');
-		if (output_buffer) ExFreePoolWithTag(output_buffer, 'golO');
-		return;
-	}
-
+	char time_buffer[32] = {};
+	char message_buffer[1024] = {};
+	char output_buffer[1024] = {};
+	   
 	const char* log_type_str = nullptr;
 	LARGE_INTEGER system_time = {};
 	LARGE_INTEGER local_time = {};
@@ -59,10 +52,15 @@ void LogPrint(__log_type type, const char* fmt, ...)
 		message_buffer
 	);
 
+#if ENABLE_HV_DEBUG_LOG
+
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "%s", output_buffer);
 
-	// ÊÍ·ÅÄÚ´æ
-	ExFreePoolWithTag(time_buffer, 'golT');
-	ExFreePoolWithTag(message_buffer, 'golM');
-	ExFreePoolWithTag(output_buffer, 'golO');
+#else
+
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "%s", output_buffer);
+
+#endif
+
+	 
 }

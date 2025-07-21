@@ -39,7 +39,7 @@ enum __log_type
 void LogPrint(__log_type type, const char* fmt, ...);
 
 
-#if ENABLE_HV_DEBUG_LOG
+ 
 
 #define LogError(format, ...) \
         LogPrint(LOG_TYPE_ERROR, "  [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
@@ -53,14 +53,5 @@ void LogPrint(__log_type type, const char* fmt, ...);
 #define LogInfo(format, ...) \
         LogPrint(LOG_TYPE_INFO, "  [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
-#else
-
-// 如果禁用日志，则宏为空，不传入参数、不调用函数
-#define LogError(format, ...)  ((void)0)
-#define LogDebug(format, ...)  ((void)0)
-#define LogDump(format, ...)   ((void)0)
-#define LogInfo(format, ...)   ((void)0)
-
-#endif
-
+ 
 
