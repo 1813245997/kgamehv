@@ -626,6 +626,15 @@ namespace utils
 
 
 
+			 
+			if ( !NT_SUCCESS(ssdt::initialize_ssdt_tables()) )
+			{
+
+				LogError("Failed to initialize SSDT and Win32k SSDT tables.");
+				return STATUS_UNSUCCESSFUL;
+				 
+			  }
+			 
 			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
 			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
@@ -635,7 +644,7 @@ namespace utils
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
 			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
 			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
-			unsigned long long nt_gdi_ddddi_open_resource_addr = ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
+			//unsigned long long nt_gdi_ddddi_open_resource_addr = ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
 
 			 
 			LogDebug("RtlGetVersion               = %p", reinterpret_cast<PVOID>(rtl_get_version_addr));
@@ -998,17 +1007,16 @@ namespace utils
 				!nt_create_file_addr||
 				!ob_reference_object_by_handle_addr||
 				!io_query_file_dos_device_name_addr||
-				!nt_user_find_window_ex_addr||
-				!nt_user_get_foreground_window_addr||
-				!nt_user_query_window_addr||
-				!nt_write_virtual_memory_addr)
+				!nt_user_find_window_ex_addr ||
+				!nt_user_get_foreground_window_addr ||
+				!nt_user_query_window_addr ||
+				!nt_write_virtual_memory_addr)    
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
 
 			 
-
-		 
+ 
 
 
 			return STATUS_SUCCESS;

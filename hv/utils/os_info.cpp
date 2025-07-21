@@ -7,7 +7,7 @@ namespace utils
 {
 	namespace os_info
 	{
-		static ULONG dw_build_number;
+		static ULONG dw_build_number{};
 
 		bool initialize_os_version()
 		{
@@ -40,13 +40,12 @@ namespace utils
 
 		ULONG get_build_number()
 		{
-			if (!dw_build_number)
-			{
+			 
 				 
-				OSVERSIONINFOW os_version;
-				utils::internal_functions::pfn_rtl_get_version(&os_version);
-				dw_build_number = os_version.dwBuildNumber;
-			}
+			OSVERSIONINFOW os_version;
+			utils::internal_functions::pfn_rtl_get_version(&os_version);
+			dw_build_number = os_version.dwBuildNumber;
+			 
 
 			return dw_build_number;
 		}

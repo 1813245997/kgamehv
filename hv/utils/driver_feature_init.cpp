@@ -50,79 +50,80 @@ namespace utils
 			}
 			LogDebug("Internal functions initialized successfully.");
 
-			LogDebug("Initializing paging base addresses...");
-			status = memory::initialize_all_paging_base();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize paging base addresses (0x%X).", status);
-				return status;
-			}
-			LogDebug("Paging base addresses initialized successfully.");
+			/*	LogDebug("Initializing paging base addresses...");
+				status = memory::initialize_all_paging_base();
+				if (!NT_SUCCESS(status))
+				{
+					LogError("Failed to initialize paging base addresses (0x%X).", status);
+					return status;
+				}
+				LogDebug("Paging base addresses initialized successfully.");
 
-			LogDebug("Initializing feature globals...");
-			status = feature_data::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize feature globals (0x%X).", status);
-				return status;
-			}
-			LogDebug("Feature globals initialized successfully.");
+				LogDebug("Initializing feature globals...");
+				status = feature_data::initialize();
+				if (!NT_SUCCESS(status))
+				{
+					LogError("Failed to initialize feature globals (0x%X).", status);
+					return status;
+				}
+				LogDebug("Feature globals initialized successfully.");
 
-			LogDebug("Initializing feature offsets...");
-			status = feature_offset::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize feature offsets (0x%X).", status);
-				return status;
-			}
-			LogDebug("Feature offsets initialized successfully.");
+				LogDebug("Initializing feature offsets...");
+				status = feature_offset::initialize();
+				if (!NT_SUCCESS(status))
+				{
+					LogError("Failed to initialize feature offsets (0x%X).", status);
+					return status;
+				}
+				LogDebug("Feature offsets initialized successfully.");
 
-			game::kcsgo2::initialize_player_data_lock();
+				game::kcsgo2::initialize_player_data_lock();
 
-			LogDebug("Starting virtualization...");
-			if (!hv::start())
-			{
-				LogError("Failed to virtualize system.");
-				return STATUS_HV_OPERATION_FAILED;
-			}
-			LogDebug("Virtualization started successfully.");
+				LogDebug("Starting virtualization...");
+				if (!hv::start())
+				{
+					LogError("Failed to virtualize system.");
+					return STATUS_HV_OPERATION_FAILED;
+				}
+				LogDebug("Virtualization started successfully.");
 
-			LogDebug("Pinging hypervisor...");
-			if (ping() == hv::hypervisor_signature)
-			{
-				LogDebug("Hypervisor signature matches.");
-			}
-			else
-			{
-				LogError("Failed to ping hypervisor!");
-			}
+				LogDebug("Pinging hypervisor...");
+				if (ping() == hv::hypervisor_signature)
+				{
+					LogDebug("Hypervisor signature matches.");
+				}
+				else
+				{
+					LogError("Failed to ping hypervisor!");
+				}
 
-			utils::hidden_modules::initialize_hidden_module_list();
+				utils::hidden_modules::initialize_hidden_module_list();
 
-			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
+				utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
 
-			utils::hidden_user_memory::initialize_hidden_user_memory();
+				utils::hidden_user_memory::initialize_hidden_user_memory();
 
-			LogDebug("Initializing hooks...");
-			status = hook_manager::initialize_all_hooks();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize hooks (0x%X).", status);
-				return status;
-			}
-			LogDebug("Hooks initialized successfully.");
+				LogDebug("Initializing hooks...");
+				status = hook_manager::initialize_all_hooks();
+				if (!NT_SUCCESS(status))
+				{
+					LogError("Failed to initialize hooks (0x%X).", status);
+					return status;
+				}
+				LogDebug("Hooks initialized successfully.");
 
-			LogDebug("Initializing DWM draw support...");
-			status = utils::dwm_draw::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize DWM draw (0x%X).", status);
-				return status;
-			}
-			LogDebug("DWM draw initialized successfully.");
+				LogDebug("Initializing DWM draw support...");
+				status = utils::dwm_draw::initialize();
+				if (!NT_SUCCESS(status))
+				{
+					LogError("Failed to initialize DWM draw (0x%X).", status);
+					return status;
+				}
+				LogDebug("DWM draw initialized successfully.");
 
-			LogDebug("Driver initialization complete.");
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "Driver initialization complete." );
+				LogDebug("Driver initialization complete.");
+				*/
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "Driver initialization complete.");
 			return STATUS_SUCCESS;
 		}
 

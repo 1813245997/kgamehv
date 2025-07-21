@@ -96,8 +96,6 @@ namespace utils
 		unsigned long long find_ki_preprocess_fault()
 		{
 			unsigned long long ki_preprocess_fault_addr{};
-			 
-			 
 			unsigned long long temp_addr{};
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
@@ -115,6 +113,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 				break;
@@ -130,6 +129,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 				break;
@@ -145,6 +145,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 				break;
@@ -160,6 +161,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 				break;
@@ -175,6 +177,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -190,6 +193,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -205,6 +209,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -220,6 +225,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -235,6 +241,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -250,6 +257,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -265,6 +273,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -280,6 +289,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -295,6 +305,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -310,6 +321,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -325,6 +337,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -340,6 +353,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -356,6 +370,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -371,6 +386,7 @@ namespace utils
 				  ki_preprocess_fault_addr =
 					  signature_scanner::resolve_relative_address(
 						  reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				  LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 				 
 			}
 			break;
@@ -386,6 +402,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -401,6 +418,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -416,6 +434,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
@@ -431,10 +450,12 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 
 			}
 			break;
 			default:
+				LogDebug("default  Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
 				break;
 			}
 			return ki_preprocess_fault_addr;

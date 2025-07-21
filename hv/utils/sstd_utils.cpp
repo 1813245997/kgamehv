@@ -8,28 +8,41 @@ namespace utils
 		  PSSDT g_win32k_table = nullptr;
 		  NTSTATUS initialize_ssdt_tables()
 		  {
-			  if (g_ssdt_table && g_win32k_table)
-			  {
-				  return STATUS_ALREADY_REGISTERED;  // ÒÑ³õÊ¼»¯
-			  }
+			  
 
 			  PSSDT tmp_nt_table = nullptr;
 			  PSSDT tmp_win32k_table = nullptr;
 
 			  if (!get_ke_service_descriptor_table_addr(module_info::ntoskrnl_base, &tmp_nt_table, &tmp_win32k_table))
 			  {
+				  LogError("Failed to locate KeServiceDescriptorTable.");
 				  return STATUS_NOT_FOUND;
 			  }
 
 			  if (!tmp_nt_table || !tmp_win32k_table)
 			  {
+				  LogError("Invalid SSDT address: nt=0x%p, win32k=0x%p", tmp_nt_table, tmp_win32k_table);
 				  return STATUS_INVALID_ADDRESS;
 			  }
 
 			  g_ssdt_table = tmp_nt_table;
 			  g_win32k_table = tmp_win32k_table;
 
+			  LogInfo("SSDT (nt) table found:");
+			  LogInfo(" - Address       : 0x%p", g_ssdt_table);
+			  LogInfo(" - ServiceTable  : 0x%p", g_ssdt_table->ServiceTable);
+			  LogInfo(" - ArgumentTable : 0x%p", g_ssdt_table->ArgumentTable);
+			  LogInfo(" - ServicesCount : %u", g_ssdt_table->SyscallsNumber);
+
+			  LogInfo("SSDT (win32k) table found:");
+			  LogInfo(" - Address       : 0x%p", g_win32k_table);
+			  LogInfo(" - ServiceTable  : 0x%p", g_win32k_table->ServiceTable);
+			  LogInfo(" - ArgumentTable : 0x%p", g_win32k_table->ArgumentTable);
+			  LogInfo(" - ServicesCount : %u", g_win32k_table->SyscallsNumber);
+
 			  return STATUS_SUCCESS;
+
+			  
 		  }
 		NTSTATUS get_syscall_number(IN const char* fun_name, OUT unsigned int* syscall_number)
 		{
@@ -205,23 +218,7 @@ namespace utils
 
 		unsigned long long get_ssdt_fun_addr(void* module_base, unsigned long syscall_number)
 		{
-			 
-			if (!g_ssdt_table)
-			{
-				PSSDT tmp_nt_table = nullptr;
-				PSSDT tmp_win32k_table = nullptr;
-
-				if (!get_ke_service_descriptor_table_addr(module_base ,&tmp_nt_table, &tmp_win32k_table) )
-				{
-					return 0;
-				}
-
-				 
-				g_ssdt_table = tmp_nt_table;
-				g_win32k_table = tmp_win32k_table;
-			}
-
-		 
+			  
 			PULONG service_table_base = reinterpret_cast<PULONG>(g_ssdt_table->ServiceTable);
 			if (!service_table_base)
 			{

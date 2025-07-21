@@ -29,13 +29,7 @@ namespace utils
 			for (unsigned long i = 0; i < size; i++)
 			{
 				auto current_addr = reinterpret_cast<const char*>(addr + i);
-
-				if ((reinterpret_cast<unsigned long long>(current_addr) >= driver_base) &&
-					(reinterpret_cast<unsigned long long>(current_addr) < driver_end))
-				{
-					continue;
-				}
-
+				 
 				if (!pattern_check(current_addr, pattern, mask))
 					continue;
 
@@ -66,15 +60,7 @@ namespace utils
 					DWORD64 res = find_pattern(addr + p->VirtualAddress, p->Misc.VirtualSize, pattern, mask);
 					if (res)
 					{
-						unsigned long long self_base = utils::hidden_modules:: get_driver_base();
-						unsigned long long self_end = self_base + utils::hidden_modules::get_driver_size();
-
-						if (res >= self_base && res < self_end)
-						{
-							// 跳过自身，继续找
-							continue;
-						}
-
+					  
 						return res;
 					}
 				}
