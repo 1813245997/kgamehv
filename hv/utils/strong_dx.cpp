@@ -20,7 +20,6 @@ namespace utils
 			PVOID g_swap_chain{};
 			PVOID  g_pdevice{};
 			PVOID g_pContext{};
-			PVOID g_pRenderTargetView;
 			PVOID g_Surface{};
 			
 			bool g_should_hide_overlay = false;
@@ -32,8 +31,8 @@ namespace utils
 		 
 		   bool initialize_d3d_resources()
 		   {
-			   static bool initialized = false;
-			   if (initialized)
+			  
+			   if (g_initialized)
 				   return true;
 
 			   const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
@@ -115,8 +114,8 @@ namespace utils
 				   g_Surface = *(PVOID*)(g_user_buffer + sizeof(ID3D11Texture2DVar));
 			   }
 
-			   initialized = g_pdevice && g_pContext && g_Surface;
-			   return initialized;
+			   g_initialized = g_pdevice && g_pContext && g_Surface;
+			   return g_initialized;
 		   }
 		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data))
 		{
@@ -281,7 +280,7 @@ namespace utils
 			if (!game::kcsgo2::is_create_time())
 				return;
 
-			//game::kcsgo2::initialize_game_data();
+			 // game::kcsgo2::initialize_game_data2();
 
 			// === ªÊ÷∆ ESP œ‡πÿ ===
 			draw_players_esp(rend);

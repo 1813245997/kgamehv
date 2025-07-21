@@ -51,8 +51,11 @@ namespace utils
 			 utils::strong_dx::  g_swap_chain = 0;
 			 utils::strong_dx::  g_pdevice = 0;
 			 utils::strong_dx::  g_pContext = 0;
+			 utils::strong_dx::g_Surface = 0;
 			 utils::strong_dx::  g_dwm_render_lock = 0;
 			 utils::strong_dx::g_should_hide_overlay = 0;
+
+			 
 
 
 			 game::kcsgo2::g_game_process = 0;;

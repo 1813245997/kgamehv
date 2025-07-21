@@ -7,12 +7,9 @@ namespace utils
 		unsigned long long find_mm_unloaded_drivers_instr()
 		{
 
-			static	unsigned long long mm_unloaded_drivers_instr_addr{};
-			unsigned long long temp_addr{};
-			if (mm_unloaded_drivers_instr_addr != 0)
-			{
-				return mm_unloaded_drivers_instr_addr;
-			}
+			 	unsigned long long mm_unloaded_drivers_instr_addr{};
+				unsigned long long temp_addr{};
+				 
 			
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
@@ -202,12 +199,9 @@ namespace utils
 		}
 		unsigned long long find_mm_last_unloaded_driver_instr()
 		{
-			static	unsigned long long  mm_last_unloaded_driver_instr{};
+			 unsigned long long  mm_last_unloaded_driver_instr{};
 			unsigned long long temp_addr{};
-			if (mm_last_unloaded_driver_instr != 0)
-			{
-				return  mm_last_unloaded_driver_instr;
-			}
+			
 
 			 
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
@@ -398,12 +392,9 @@ namespace utils
 		}
 		unsigned long long find_psp_cid_table()
 		{
-			static	unsigned long long  psp_cid_table_addr{};
+			 unsigned long long  psp_cid_table_addr{};
 			unsigned long long temp_addr{};
-			if (psp_cid_table_addr != 0)
-			{
-				return  psp_cid_table_addr;
-			}
+			 
 
 
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());

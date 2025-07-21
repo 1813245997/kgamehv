@@ -7,10 +7,7 @@ void KMenuConfig::  initialize_menu()
 
 void KMenuConfig::initialize_visual_config_once()
 {
-	static bool initialized = false;
-	if (initialized)
-		return;
-	initialized = true;
+	 
 
 	KMenuConfig::ShowBoxEsp2d.enabled = true;
 	KMenuConfig::ShowBone.enabled = true;

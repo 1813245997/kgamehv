@@ -61,7 +61,7 @@ namespace utils
 			NTSTATUS status{};
 			
 		
-
+			
 			status = get_stack_offset();
 			if (!NT_SUCCESS(status))
 			{

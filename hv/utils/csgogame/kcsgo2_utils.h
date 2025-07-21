@@ -33,6 +33,7 @@ namespace game
 		bool is_initialize_game();
 
 		bool initialize_game_data();
+		bool initialize_game_data2();
 
 		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
 

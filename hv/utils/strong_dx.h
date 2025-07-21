@@ -10,6 +10,7 @@ namespace utils
 		extern PVOID g_swap_chain;
 		extern PVOID g_pdevice ;
 		extern PVOID g_pContext;
+		extern PVOID g_Surface;
 	
 		extern volatile LONG g_dwm_render_lock ;
 		extern bool g_should_hide_overlay;

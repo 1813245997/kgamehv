@@ -509,7 +509,7 @@ namespace utils
 
 		unsigned long long find_psp_exit_process()
 		{
-			//static unsigned long long psp_exit_process_addr = 0;
+			 
 			unsigned long long psp_exit_process_addr = 0;
 			 
 			unsigned long long temp_addr{};
