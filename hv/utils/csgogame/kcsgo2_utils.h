@@ -17,10 +17,11 @@ namespace game
 		extern unsigned long long g_engine2_base;
 		extern unsigned long long g_engine2_size;
 		extern bool g_is_initialized;
+		extern HANDLE  g_game_handle;
 		extern  POINT  g_game_size;
 		extern kcsgo2struct::CPlayer g_player_array[60] ;
 		extern int g_player_count  ;
-		extern HANDLE  g_game_handle ;
+		
 		extern   LARGE_INTEGER g_process_time;
 		bool initialize_game_process(_In_ PEPROCESS process);
 	 

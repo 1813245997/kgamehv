@@ -271,6 +271,9 @@
     <ClInclude Include="utils\log_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\global_initializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exit-handlers.cpp">
@@ -451,6 +454,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\log_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\global_initializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

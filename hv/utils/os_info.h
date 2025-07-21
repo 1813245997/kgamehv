@@ -3,6 +3,7 @@ namespace utils
 {
     namespace os_info
     {
+        extern  ULONG dw_build_number;
         /**
          * @brief Initializes the OS version information.
          *

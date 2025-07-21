@@ -58,3 +58,4 @@
 #include "auth\auth.h"
 #include "file_utils.h"
 #include "log_utils.h"
+#include "global_initializer.h"

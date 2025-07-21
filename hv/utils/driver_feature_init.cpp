@@ -28,6 +28,7 @@ namespace utils
 				return STATUS_UNSUCCESSFUL;
 			}
 			LogDebug("ntoskrnl info initialized successfully.");
+			utils::global::initialize_all_globals();
 
 			LogDebug("Getting module info from context...");
 			if (!get_module_info_from_context(context, module_base, image_size))
