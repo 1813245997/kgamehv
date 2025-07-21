@@ -281,6 +281,8 @@ namespace utils
 			if (!game::kcsgo2::is_create_time())
 				return;
 
+			//game::kcsgo2::initialize_game_data();
+
 			// === ªÊ÷∆ ESP œ‡πÿ ===
 			draw_players_esp(rend);
 

@@ -38,10 +38,10 @@ namespace utils
 			}
 		 
 			utils::hidden_modules::set_driver_info(reinterpret_cast<unsigned long long>(module_base), image_size);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+			/*DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 				"[hv] Driver Base: 0x%p, Image Size: 0x%llX\n",
 				module_base,
-				static_cast<ULONGLONG>(image_size));
+				static_cast<ULONGLONG>(image_size));*/
 			LogDebug("Initializing internal functions...");
 			NTSTATUS status = internal_functions::initialize_internal_functions();
 			if (!NT_SUCCESS(status))
@@ -51,7 +51,7 @@ namespace utils
 			}
 			LogDebug("Internal functions initialized successfully.");
 
-			/*	LogDebug("Initializing paging base addresses...");
+			 	LogDebug("Initializing paging base addresses...");
 				status = memory::initialize_all_paging_base();
 				if (!NT_SUCCESS(status))
 				{
@@ -123,7 +123,7 @@ namespace utils
 				LogDebug("DWM draw initialized successfully.");
 
 				LogDebug("Driver initialization complete.");
-				*/
+				 
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "Driver initialization complete.");
 			return STATUS_SUCCESS;
 		}

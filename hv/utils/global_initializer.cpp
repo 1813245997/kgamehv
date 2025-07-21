@@ -62,7 +62,8 @@ namespace utils
 			 game::kcsgo2::g_engine2_size = 0;;
 			 game::kcsgo2::g_is_initialized = 0;;
 			 game::kcsgo2::g_game_handle = 0;;
-		 
+		  
+			 utils::auth::g_license_expire_timestamp = 0;
 			 return true;
 		}
 	}

@@ -138,7 +138,7 @@ namespace game
 
 			if (!g_user_buffer)
 			{
-				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, true)))
+				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
 				{
 					return false;
 				}
@@ -176,8 +176,8 @@ namespace game
 					RECT* rect = reinterpret_cast<RECT*>(rect_ptr);
 					screen_size->x = rect->right - rect->left;
 					screen_size->y = rect->bottom - rect->top;
-					utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, true);
-					g_user_buffer = nullptr;
+					//utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
+					//g_user_buffer = nullptr;
 				}
 			}
 
@@ -210,7 +210,7 @@ namespace game
 			HANDLE handle{};
 			if (!g_user_buffer)
 			{
-				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, true)))
+				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
 				{
 					return nullptr;
 				}
@@ -245,8 +245,8 @@ namespace game
 				 handle =   reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				 if (handle)
 				 {
-					 utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, true);
-					 g_user_buffer = nullptr;
+					 // utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
+					  //g_user_buffer = nullptr;
 					 return handle;
 				 }
 
@@ -270,8 +270,8 @@ namespace game
 				handle = reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				if (handle)
 				{
-					utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, true);
-					g_user_buffer = nullptr;
+					//utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
+					//g_user_buffer = nullptr;
 					return handle;
 				}
 			}

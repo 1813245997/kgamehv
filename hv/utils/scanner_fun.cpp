@@ -3801,11 +3801,8 @@ namespace utils
 	  
 		unsigned long long find_mm_allocate_independent_pages()
 		{
-			static unsigned long long mm_allocate_independent_pages_addr{};
-			if (mm_allocate_independent_pages_addr != 0)
-			{
-				return mm_allocate_independent_pages_addr;
-			}
+			  unsigned long long mm_allocate_independent_pages_addr{};
+			 
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
 			auto ntoskrnl_size = module_info::ntoskrnl_size;
 			unsigned long long temp_addr{};
@@ -4161,11 +4158,8 @@ namespace utils
 		}
 		unsigned long long find_mm_free_independent_pages()
 		{
-			static unsigned long long mm_free_independent_pages_addr{};
-			if (mm_free_independent_pages_addr != 0)
-			{
-				return mm_free_independent_pages_addr;
-			}
+			  unsigned long long mm_free_independent_pages_addr{};
+			 
 			auto ntoskrnl_base = module_info::ntoskrnl_base;
 			auto ntoskrnl_size = module_info::ntoskrnl_size;
 			unsigned long long temp_addr{};

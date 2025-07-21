@@ -24,8 +24,7 @@ namespace utils
 		unsigned long long find_pattern(unsigned long long addr, size_t size, const char* pattern, const char* mask)
 		{
 			size -= (unsigned long)strlen(mask);
-			auto driver_base = utils::hidden_modules:: get_driver_base();
-			auto driver_end = driver_base + utils::hidden_modules::get_driver_size();
+		
 			for (unsigned long i = 0; i < size; i++)
 			{
 				auto current_addr = reinterpret_cast<const char*>(addr + i);
