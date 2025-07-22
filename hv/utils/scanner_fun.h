@@ -42,7 +42,7 @@ namespace utils
 
 		unsigned long long find_mm_free_independent_pages();
 
-
+		unsigned long long find_mm_set_page_protection();
 	
 
 		

@@ -46,5 +46,6 @@ namespace utils
 
 		bool is_user_address(void* virtual_address);
 
+		bool is_executable_address(unsigned long long virtual_address);
 	}
 }

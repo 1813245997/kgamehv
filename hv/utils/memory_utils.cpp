@@ -366,5 +366,60 @@ namespace utils
 		   {
 			   return virtual_address <= MM_HIGHEST_USER_ADDRESS;
 		   }
+		   bool is_executable_address(unsigned long long virtual_address)
+		   {
+			   PULONG64  pml4 = reinterpret_cast<PULONG64>	(get_pml4(virtual_address));
+			   unsigned long long entry = *pml4;
+			   if (!MmiCheckFlag(entry, MmiEntryFlag_Present))
+			   {
+				   return false;
+			   }
+			   PULONG64  pdpte = reinterpret_cast<PULONG64>	(get_pdpte(virtual_address));
+			   entry = *pdpte;
+			   if (!MmiCheckFlag(entry, MmiEntryFlag_Present))
+			   {
+				   return false;
+			   }
+
+
+			   if (MmiCheckFlag(entry, MmiEntryFlag_HugePage))
+			   {
+				   if (!MmiCheckFlag(entry, MmiEntryFlag_NoExecute))
+				   {
+					   return true;
+				   }
+				   return false;
+			   }
+
+			   PULONG64 pde = reinterpret_cast<PULONG64>	(get_pde(virtual_address));
+			   entry = *pde;
+
+			   if (!MmiCheckFlag(entry, MmiEntryFlag_Present))
+			   {
+				   return false;
+			   }
+			   if (MmiCheckFlag(entry, MmiEntryFlag_HugePage))
+			   {
+				   if (!MmiCheckFlag(entry, MmiEntryFlag_NoExecute))
+				   {
+					   return true;
+				   }
+				   return false;
+			   }
+
+			   PULONG64 pte = reinterpret_cast<PULONG64>	(get_pte(virtual_address));
+			   entry = *pte;
+			   if (!MmiCheckFlag(entry, MmiEntryFlag_Present))
+			   {
+				   return false;
+			   }
+
+			   if (!MmiCheckFlag(entry, MmiEntryFlag_NoExecute))
+			   {
+				   return true;
+			   }
+
+			   return false;
+		   }
 	}
 }

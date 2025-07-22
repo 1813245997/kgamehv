@@ -2,14 +2,13 @@
 //
 // Success codes
 //
-#define S_OK                                   ((HRESULT)0L)
-#define S_FALSE                                ((HRESULT)1L)
 
 
 #include <ntifs.h>
 #include <ntimage.h>
 #include <intrin.h>
 #include <minwindef.h>
+#include "macros.h"
 #include "types.h"
 #include "ntos_struct_def.h"
 #include "native_api.h"

@@ -468,6 +468,11 @@ namespace utils
 			PSIZE_T NumberOfBytesWritten
 			);
 
+		extern BOOLEAN(__fastcall* pfn_mm_set_page_protection)(
+			__in_bcount(NumberOfBytes) PVOID virtual_address,
+			__in ULONG64 number_of_bytes,
+			__in ULONG new_protect
+			);
 
 	} 
 }

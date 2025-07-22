@@ -216,7 +216,7 @@ namespace utils
 			return syscall_number;
 		}
 
-		unsigned long long get_ssdt_fun_addr(void* module_base, unsigned long syscall_number)
+		unsigned long long get_ssdt_fun_addr( unsigned long syscall_number)
 		{
 			  
 			PULONG service_table_base = reinterpret_cast<PULONG>(g_ssdt_table->ServiceTable);
@@ -287,7 +287,7 @@ namespace utils
 
 		}
 
-		unsigned long long get_syscall_fun_addr(void* module_base, const char* fun_name)
+		unsigned long long get_syscall_fun_addr(  const char* fun_name)
 		{
 			unsigned int syscall_number = get_syscall_number_simple(fun_name);
 			 if (!syscall_number)
@@ -295,7 +295,7 @@ namespace utils
 				 return 0;
 			 }
 
-			unsigned long long fun_addr =  get_ssdt_fun_addr(module_base,syscall_number);
+			unsigned long long fun_addr =  get_ssdt_fun_addr( syscall_number);
 			return fun_addr;
 		}
 

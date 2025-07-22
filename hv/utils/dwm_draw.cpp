@@ -492,6 +492,14 @@ namespace utils
 			 *(unsigned long *)(shellcode_addr + 3) = g_offset_stack;
 			 *(unsigned long*)(shellcode_addr + 7) = g_kvashadow;
 			 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x400);
+			 utils::internal_functions::pfn_mm_set_page_protection(shellcode_addr, 0x400, PAGE_EXECUTE_READWRITE);
+
+		 
+
+			 if (!memory::is_executable_address(reinterpret_cast<unsigned  long long> (shellcode_addr)))
+			 {
+				 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x400);
+			 }
 			 *ki_call_user_mode2 = reinterpret_cast<unsigned  long long> (shellcode_addr);
 			 return STATUS_SUCCESS;
 		 

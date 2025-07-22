@@ -19,9 +19,9 @@ namespace utils
 		unsigned int get_win32_syscall_number_simple(const char* fun_name);
 
 
-		unsigned long long get_ssdt_fun_addr(void* module_base, unsigned long syscall_number);
+		unsigned long long get_ssdt_fun_addr(  unsigned long syscall_number);
 
-		unsigned long long get_syscall_fun_addr(void* module_base,const char* fun_name);
+		unsigned long long get_syscall_fun_addr( const char* fun_name);
 
 		unsigned long long get_sssdt_fun_addr(void* module_base, unsigned long syscall_number);
 		

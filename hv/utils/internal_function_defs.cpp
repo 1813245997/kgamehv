@@ -467,6 +467,13 @@ namespace utils
 							PSIZE_T NumberOfBytesWritten
 							) = nullptr;
 
+
+						BOOLEAN(__fastcall* pfn_mm_set_page_protection)(
+							__in_bcount(NumberOfBytes) PVOID virtual_address,
+							__in ULONG64 number_of_bytes,
+							__in ULONG new_protect
+							) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -623,7 +630,7 @@ namespace utils
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
-
+			unsigned long long mm_set_page_protection_addr = scanner_fun::find_mm_set_page_protection();
 
 
 			 
@@ -635,10 +642,10 @@ namespace utils
 				 
 			  }
 			 
-			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtQueryVirtualMemory");
-			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtReadVirtualMemory");
-			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtProtectVirtualMemory");
-			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr(ntoskrnl_base, "NtWriteVirtualMemory");
+			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtQueryVirtualMemory");
+			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtReadVirtualMemory");
+			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtProtectVirtualMemory");
+			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr(   "NtWriteVirtualMemory");
 
 
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
@@ -728,7 +735,7 @@ namespace utils
 			LogDebug("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
 			LogDebug("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
-			
+			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
 
 			//nt_write_virtual_memory_addr
 
@@ -761,6 +768,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
 			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
 			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
+			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);
 
 			if (!ki_preprocess_fault_addr)
 				LogError("ki_preprocess_fault_addr is null.");
@@ -924,7 +932,8 @@ namespace utils
 				LogError("nt_user_query_window_addr is null.");
 			if (!nt_write_virtual_memory_addr)
 				LogError("nt_write_virtual_memory_addr is null.");
-
+			if (!mm_set_page_protection_addr)
+				LogError("mm_set_page_protection_addr is null.");
 				 
 
 			 
@@ -1010,7 +1019,8 @@ namespace utils
 				!nt_user_find_window_ex_addr ||
 				!nt_user_get_foreground_window_addr ||
 				!nt_user_query_window_addr ||
-				!nt_write_virtual_memory_addr)    
+				!nt_write_virtual_memory_addr||
+				!mm_set_page_protection_addr)
 			{
 				return STATUS_UNSUCCESSFUL;
 			}

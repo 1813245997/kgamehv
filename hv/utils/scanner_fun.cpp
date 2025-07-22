@@ -4535,5 +4535,427 @@ namespace utils
 		}
 
 
+		unsigned long long find_mm_set_page_protection()
+		{
+			unsigned long long mm_set_page_protection_addr{};
+			unsigned long long temp_addr{};
+			auto ntoskrnl_base = module_info::ntoskrnl_base;
+		 
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			//PAGE:0000000140791E48                                                 MmAllocateIsrStack proc near; CODE XREF : KiStartDynamicProcessor + 1CA¡ýp
+			//	PAGE : 0000000140791E48; KiStartDynamicProcessor + 1DB¡ýp ...
+			//	PAGE:0000000140791E48
+			//	PAGE : 0000000140791E48                                                 arg_0 = qword ptr  8
+			//	PAGE : 0000000140791E48
+			//	PAGE : 0000000140791E48 48 89 5C 24 08                                                  mov[rsp + arg_0], rbx
+			//	PAGE : 0000000140791E4D 57                                                              push    rdi
+			//	PAGE : 0000000140791E4E 48 83 EC 20                                                     sub     rsp, 20h
+			//	PAGE : 0000000140791E52 48 8B 19                                                        mov     rbx, [rcx]
+			//	PAGE : 0000000140791E55 48 8B F9                                                        mov     rdi, rcx
+			//	PAGE : 0000000140791E58 48 85 DB                                                        test    rbx, rbx
+			//	PAGE : 0000000140791E5B 75 40                                                           jnz     short loc_140791E9D
+			//	PAGE : 0000000140791E5D 45 33 C9 xor r9d, r9d
+			//	PAGE : 0000000140791E60 45 33 C0 xor r8d, r8d
+			//	PAGE : 0000000140791E63 B9 00 70 00 00                                                  mov     ecx, 7000h
+			//	PAGE : 0000000140791E68 E8 0F 39 FC FF                                                  call    MmAllocateIndependentPagesEx
+			//	PAGE : 0000000140791E6D 48 8B D8                                                        mov     rbx, rax
+			//	PAGE : 0000000140791E70 48 85 C0                                                        test    rax, rax
+			//	PAGE : 0000000140791E73 74 4B                                                           jz      short loc_140791EC0
+			//	PAGE : 0000000140791E75 48 8D 88 00 70 00 00                                            lea     rcx, [rax + 7000h]
+			//	PAGE : 0000000140791E7C 48 89 0F                                                        mov[rdi], rcx
+			//	PAGE : 0000000140791E7F
+			//	PAGE : 0000000140791E7F                                                 loc_140791E7F : ; CODE XREF : MmAllocateIsrStack + 76¡ýj
+			//	PAGE : 0000000140791E7F 48 8B CB                                                        mov     rcx, rbx
+			//	PAGE : 0000000140791E82 E8 89 C0 B4 FF                                                  call    MiGetPteAddress
+			//	PAGE : 0000000140791E87 48 8B C8                                                        mov     rcx, rax
+			//	PAGE : 0000000140791E8A E8 3D 00 00 00                                                  call    MiMarkBootGuardPage
+			//	PAGE : 0000000140791E8F B0 01                                                           mov     al, 1
+			//	PAGE : 0000000140791E91
+			//	PAGE : 0000000140791E91                                                 loc_140791E91 : ; CODE XREF : MmAllocateIsrStack + 7A¡ýj
+			//	PAGE : 0000000140791E91 48 8B 5C 24 30                                                  mov     rbx, [rsp + 28h + arg_0]
+			//	PAGE : 0000000140791E96 48 83 C4 20                                                     add     rsp, 20h
+			//	PAGE : 0000000140791E9A 5F                                                              pop     rdi
+			//	PAGE : 0000000140791E9B C3                                                              retn
+			//	PAGE : 0000000140791E9B; -------------------------------------------------------------------------- -
+			//	PAGE:0000000140791E9C CC                                                              db 0CCh
+			//	PAGE : 0000000140791E9D; -------------------------------------------------------------------------- -
+			//	PAGE:0000000140791E9D
+			//	PAGE : 0000000140791E9D                                                 loc_140791E9D : ; CODE XREF : MmAllocateIsrStack + 13¡üj
+			//	PAGE : 0000000140791E9D BA 00 60 00 00                                                  mov     edx, 6000h
+			//	PAGE : 0000000140791EA2 41 B8 04 00 00 00                                               mov     r8d, 4
+			//	PAGE : 0000000140791EA8 48 2B DA                                                        sub     rbx, rdx
+			//	PAGE : 0000000140791EAB 48 8B CB                                                        mov     rcx, rbx
+			//	PAGE : 0000000140791EAE E8 9D 65 BE FF                                                  call    MmSetPageProtection
+			//	PAGE : 0000000140791EB3 84 C0                                                           test    al, al
+			//	PAGE : 0000000140791EB5 74 09                                                           jz      short loc_140791EC0
+			//	PAGE : 0000000140791EB7 48 81 EB 00 10 00 00                                            sub     rbx, 1000h
+			//	PAGE : 0000000140791EBE EB BF                                                           jmp     short loc_140791E7F
+
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x83\xEC\x30\x48\x8B\xC1",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+				mm_set_page_protection_addr = temp_addr;
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\x48\x89\x5C\x24\x10\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x83\xEC\x30\x48\x8B\xC1",
+					"xxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+				mm_set_page_protection_addr = temp_addr;
+
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+
+				temp_addr += 7;
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x74\x09\x48\x81\xEB\x00\x10\x00\x00",
+					"x????xxxxxxxxxxx",
+					"PAGE"
+				);
+
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x04\x1F\xBE\x01\x00\x00\x00",
+					"x????xxxxxxxxx",
+					"PAGE"
+				);
+
+				mm_set_page_protection_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+			return mm_set_page_protection_addr;
+		}
+
+
 	}
 }
