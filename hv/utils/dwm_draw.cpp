@@ -385,7 +385,7 @@ namespace utils
 
 		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long* ki_call_user_mode2)
 		{
-			 char *  shellcode_addr = reinterpret_cast<char*> (internal_functions::pfn_mm_allocate_independent_pages(0x400, 0));
+			 char *  shellcode_addr = reinterpret_cast<char*> (internal_functions::pfn_mm_allocate_independent_pages(0x1000, 0));
 			 if (!shellcode_addr)
 			 {
 				 return STATUS_INSUFFICIENT_RESOURCES;
@@ -491,14 +491,14 @@ namespace utils
 
 			 *(unsigned long *)(shellcode_addr + 3) = g_offset_stack;
 			 *(unsigned long*)(shellcode_addr + 7) = g_kvashadow;
-			 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x400);
-			 utils::internal_functions::pfn_mm_set_page_protection(shellcode_addr, 0x400, PAGE_EXECUTE_READWRITE);
+			 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x1000);
+			 utils::internal_functions::pfn_mm_set_page_protection(shellcode_addr, 0x1000, PAGE_EXECUTE_READWRITE);
 
 		 
 
 			 if (!memory::is_executable_address(reinterpret_cast<unsigned  long long> (shellcode_addr)))
 			 {
-				 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x400);
+				 memory::set_execute_page(reinterpret_cast<unsigned long long> (shellcode_addr), 0x1000);
 			 }
 			 *ki_call_user_mode2 = reinterpret_cast<unsigned  long long> (shellcode_addr);
 			 return STATUS_SUCCESS;
