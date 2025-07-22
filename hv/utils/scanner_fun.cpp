@@ -113,7 +113,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 				break;
@@ -129,7 +129,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 				break;
@@ -145,7 +145,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 				break;
@@ -161,7 +161,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 				break;
@@ -177,7 +177,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -193,7 +193,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -209,7 +209,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -225,7 +225,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -241,7 +241,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -257,7 +257,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -273,7 +273,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -289,7 +289,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -305,7 +305,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -321,7 +321,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -337,7 +337,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -353,7 +353,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -370,7 +370,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -386,7 +386,7 @@ namespace utils
 				  ki_preprocess_fault_addr =
 					  signature_scanner::resolve_relative_address(
 						  reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				  LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				  
 				 
 			}
 			break;
@@ -402,7 +402,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -418,7 +418,7 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
@@ -434,29 +434,45 @@ namespace utils
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
+				 
 
 			}
 			break;
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern_image(
+				ki_preprocess_fault_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
-					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x4D\x44\x8A\x45\x00", "x????xxxxxxxx"
+					"\x48\x8B\xC4\x48\x89\x58\x10\x48\x89\x68\x18\x48\x89\x70\x20\x57\x41\x56\x41\x57\x48\x81\xEC\xA0\x00\x00\x00", 
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxx",
+					".text"
+					 
+				);
+
+				  
+
+			}
+			break;
+			default:
+				 
+				break;
+			}
+
+			//最新WIN11
+			if (!ki_preprocess_fault_addr)
+			{
+				//"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x4F\x07\x00\x00", "x????xxxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x4F\x07\x00\x00",
+					"x????xxxxxxxx",
+					".text"
 				);
 
 
 				ki_preprocess_fault_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-				LogDebug("Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
-
-			}
-			break;
-			default:
-				LogDebug("default  Windows_X: temp_addr = 0x%llX, ki_preprocess_fault_addr = 0x%llX", temp_addr, ki_preprocess_fault_addr);
-				break;
 			}
 			return ki_preprocess_fault_addr;
 		}
@@ -477,15 +493,270 @@ namespace utils
 		{
 			// Static variable to hold the cached address once found
 		   unsigned long long mm_is_address_valid_ex_addr = 0;
-			// Start by getting the address of MmIsAddressValid
-			unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
-			unsigned long long curr_addr = mm_is_address_valid_addr + 4;
-		 
-			// Use resolve_relative_address to get the address being called by the call instruction
-			mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+			 
+
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				// Start by getting the address of MmIsAddressValid
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+				 
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+				unsigned long long mm_is_address_valid_addr = find_mm_is_address_valid();
+				unsigned long long curr_addr = mm_is_address_valid_addr + 4;
+
+				// Use resolve_relative_address to get the address being called by the call instruction
+				mm_is_address_valid_ex_addr = signature_scanner::resolve_relative_address((PVOID)curr_addr, 1, 5);  // 1-byte offset, 5-byte instruction size
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				mm_is_address_valid_ex_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x40\x48\x8B\xC1",
+					"xxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+			 
+
+			}
+			break;
+			default:
+				break;
+			}
+			//最新win11
+			if (!mm_is_address_valid_ex_addr)
+			{
+				mm_is_address_valid_ex_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x10\x57\x48\x83\xEC\x20\x48\x8B\xC1\x4C\x8B\xD9", "xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+			}
+
 			return mm_is_address_valid_ex_addr;
-		 
- 
 		}
 
 		unsigned long long find_rtl_walk_frame_chain()
@@ -844,7 +1115,7 @@ namespace utils
 				psp_exit_process_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-
+				 
 			}
 			break;
 			default:
@@ -1183,20 +1454,29 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern_image(
+				exp_lookup_handle_table_entry_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xB1\x01\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x54\x65", "xxx????xxxxx", "PAGE"
+					"\x8B\x01\x48\x83\xE2\xFC", 
+					"xxxxxx",
+					"PAGE"
 				);
-				temp_addr += 2;
+				 
 
-				exp_lookup_handle_table_entry_addr =
-					signature_scanner::resolve_relative_address(
-						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-
+				 
 			}
 			break;
 			default:
 				break;
+			}
+
+			if (!exp_lookup_handle_table_entry_addr)
+			{
+				exp_lookup_handle_table_entry_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x8B\x01\x48\x83\xE2\xFC",
+					"xxxxxx",
+					"PAGE"
+				);
 			}
 
 			return exp_lookup_handle_table_entry_addr;
@@ -1489,8 +1769,11 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xE8\x48\x85\xC0\x0F\x84\x34\x01\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xB8\x1E\x14\x00",
+					"x????xxxxxxxxx", 
+					"PAGE"
 				);
+
 				 
 
 				mm_create_kernel_stack_addr =
@@ -1504,7 +1787,9 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xE8\x48\x85\xC0\x0F\x84\x38\x01\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xA1\x73\x0F\x00", 
+					"x????xxxxxxxxx",
+					"PAGE"
 				);
 
 				 
@@ -1519,7 +1804,9 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xE8\x48\x85\xC0\x0F\x84\x38\x01\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\x97\x41\x0C\x00", 
+					"x????xxxxxxxxx", 
+					"PAGE"
 				);
 			 
 
@@ -1534,19 +1821,35 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x4C\x8B\x7D\x9F", "x????xxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4D\xE8\x48\x85\xC9\x74\x46",
+					"x????xxxxxxxxx",
+					"PAGE"
 				);
-				 
 
 				mm_create_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
-
+				
 			}
 			break;
 			default:
 				break;
 			}
+
+			if (!mm_create_kernel_stack_addr)
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4D\xE8\x48\x85\xC9\x74\x46", 
+					"x????xxxxxxxxx",
+					"PAGE"
+				);
+				mm_create_kernel_stack_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			 
 
 			return mm_create_kernel_stack_addr;
 		}
@@ -1840,10 +2143,12 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x8B\xD5\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "xxx????xxx????xxxxxx", "PAGE"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00",
+					"x????xxx????xxxxxx",
+					"PAGE"
 				);
-
-				temp_addr += 2;
+				 
+				 
 				mm_delete_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1855,10 +2160,11 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x8B\xD5\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "xxx????xxx????xxxxxx", "PAGE"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "x????xxx????xxxxxx",
+					"PAGE"
 				);
 
-				temp_addr += 2;
+				 
 				mm_delete_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1870,10 +2176,11 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x8B\xD5\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "xxx????xxx????xxxxxx", "PAGE"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "x????xxx????xxxxxx", 
+					"PAGE"
 				);
 
-				temp_addr += 2;
+				
 				mm_delete_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1885,7 +2192,8 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "x????xxx????xxxxxx", "PAGE"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "x????xxx????xxxxxx", 
+					"PAGE"
 				);
 
 
@@ -1897,6 +2205,20 @@ namespace utils
 			break;
 			default:
 				break;
+			}
+
+			if (!mm_delete_kernel_stack_addr)
+			{
+								temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x48\x05\x00\x10\x00\x00", "x????xxx????xxxxxx", 
+					"PAGE"
+				);
+
+
+				mm_delete_kernel_stack_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
 			}
 
 			return mm_delete_kernel_stack_addr;
@@ -4090,13 +4412,12 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x41\x8B\xD6\xB9\x00\x10\x00\x00\xE8",
-					"xxxxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xD8\x48\x85\xC0\x74\x2C\xBE\x0C\x00\x00\x00",
+					"x????xxxxxxxxxxxxx",
+					".text"
 				);
-
-				temp_addr += 8;
 
 				mm_allocate_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
@@ -4106,13 +4427,14 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
-
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x41\x8B\xD6\xB9\x00\x10\x00\x00", "xxxxxxxx"
+				//
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xD8\x48\x85\xC0\x74\x2C\xBE\x0C\x00\x00\x00", 
+					"x????xxxxxxxxxxxxx",
+					".text"
 				);
-
-				temp_addr += 8;
+				 
 				mm_allocate_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -4122,13 +4444,14 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_23H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
-					"xxxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), 
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xD8\x48\x85\xC0\x74\x2C\xBE\x0C\x00\x00\x00", 
+					"x????xxxxxxxxxxxxx",
+					".text"
 				);
 
-				temp_addr += 8;
+			 
 				mm_allocate_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -4138,21 +4461,31 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x41\x8B\xD6\xB9\x00\x10\x00\x00",
-					"xxxxxxxx"
+				mm_allocate_independent_pages_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),  
+					"\x44\x89\x4C\x24\x20\x4C\x89\x44\x24\x18\x53\x55\x57", 
+					"xxxxxxxxxxxxx",
+					"PAGE"
 				);
 
-				temp_addr += 8;
-				mm_allocate_independent_pages_addr =
-					signature_scanner::resolve_relative_address(
-						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				 
+				 
 
 			}
 			break;
 			default:
 				break;
+			}
+
+			if (!mm_allocate_independent_pages_addr)
+			{
+				mm_allocate_independent_pages_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\x44\x89\x4C\x24\x20\x4C\x89\x44\x24\x18\x53\x55\x57",
+					"xxxxxxxxxxxxx",
+					"PAGE"
+				);
+
 			}
 			return mm_allocate_independent_pages_addr;
 		}
@@ -4892,7 +5225,7 @@ namespace utils
 
 
 				temp_addr += 7;
-
+				 
 				mm_set_page_protection_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);

@@ -548,6 +548,65 @@ namespace utils
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
 			//unsigned long long zw_query_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryVirtualMemory");
+
+
+
+			LogDebug("RtlGetVersion               = %p", reinterpret_cast<PVOID>(rtl_get_version_addr));
+			LogDebug("MmCopyMemory               = %p", reinterpret_cast<PVOID>(mm_copy_memory_addr));
+			LogDebug("MmIsAddressValid           = %p", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
+			LogDebug("RtlWalkFrameChain          = %p", reinterpret_cast<PVOID>(rtl_walk_frame_chain_addr));
+			LogDebug("RtlLookupFunctionEntry     = %p", reinterpret_cast<PVOID>(rtl_lookup_function_entry_addr));
+			LogDebug("MmGetPhysicalAddress       = %p", reinterpret_cast<PVOID>(mm_get_physical_address_addr));
+			LogDebug("ExAllocatePoolWithTag      = %p", reinterpret_cast<PVOID>(ex_allocate_pool_with_tag_addr));
+			LogDebug("ExFreePoolWithTag          = %p", reinterpret_cast<PVOID>(ex_free_pool_with_tag_addr));
+			LogDebug("RtlInitUnicodeString       = %p", reinterpret_cast<PVOID>(rtl_init_unicode_string_addr));
+			LogDebug("DbgPrint                   = %p", reinterpret_cast<PVOID>(dbg_print_addr));
+			LogDebug("RtlDuplicateUnicodeString  = %p", reinterpret_cast<PVOID>(rtl_duplicate_unicode_string_addr));
+			LogDebug("MmGetVirtualForPhysical    = %p", reinterpret_cast<PVOID>(mm_get_virtual_for_physical_addr));
+			LogDebug("KeSetSystemAffinityThreadEx       = %p", reinterpret_cast<PVOID>(ke_set_system_affinity_thread_ex_addr));
+			LogDebug("KeRevertToUserAffinityThreadEx    = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_ex_addr));
+			LogDebug("KeQueryActiveProcessorCount       = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_addr));
+			LogDebug("PsGetProcessId                     = %p", reinterpret_cast<PVOID>(ps_get_process_id_addr));
+			LogDebug("PsGetCurrentThreadProcess          = %p", reinterpret_cast<PVOID>(ps_get_current_thread_process_addr));
+			LogDebug("PsGetProcessImageFileName          = %p", reinterpret_cast<PVOID>(ps_get_process_image_file_name_addr));
+			LogDebug("PsInitialSystemProcess             = %p", reinterpret_cast<PVOID>(ps_initial_system_process_addr));
+			LogDebug("RtlRandomEx                        = %p", reinterpret_cast<PVOID>(rtl_random_ex_addr));
+			LogDebug("RtlInitString                      = %p", reinterpret_cast<PVOID>(rtl_init_string_addr));
+			LogDebug("ZwQuerySystemInformation           = %p", reinterpret_cast<PVOID>(zw_query_system_information_addr));
+			LogDebug("_stricmp                           = %p", reinterpret_cast<PVOID>(stricmp_addr));
+			LogDebug("MmGetSystemRoutineAddress          = %p", reinterpret_cast<PVOID>(mm_get_system_routine_address_addr));
+			LogDebug("RtlEqualString                     = %p", reinterpret_cast<PVOID>(rtl_equal_string_addr));
+			LogDebug("KeBugCheckEx                       = %p", reinterpret_cast<PVOID>(ke_bug_check_ex_addr));
+			LogDebug("KeRevertToUserAffinityThread       = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_addr));
+			LogDebug("KeQueryActiveGroupCount            = %p", reinterpret_cast<PVOID>(ke_query_active_group_count_addr));
+			LogDebug("KeQueryActiveProcessorCountEx      = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_ex_addr));
+			LogDebug("KeSetSystemGroupAffinityThread     = %p", reinterpret_cast<PVOID>(ke_set_system_group_affinity_thread_addr));
+			LogDebug("NtCreateSection                    = %p", reinterpret_cast<PVOID>(nt_create_section_addr));
+			LogDebug("NtClose                            = %p", reinterpret_cast<PVOID>(nt_close_addr));
+			LogDebug("ps_get_process_exit_time_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
+			LogDebug("se_locate_process_image_name_addr      = %p", reinterpret_cast<PVOID>(se_locate_process_image_name_addr));
+			LogDebug("ps_get_process_dxgprocess_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_dxgprocess_addr));
+			LogDebug("ps_get_process_wow64_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_wow64_process_addr));
+			LogDebug("ps_get_process_peb_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_peb_addr));
+			LogDebug("mm_copy_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(mm_copy_virtual_memory_addr));
+			LogDebug("rtl_equal_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_equal_unicode_string_addr));
+			LogDebug("rtl_compare_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_compare_unicode_string_addr));
+			LogDebug("ps_lookup_process_by_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_lookup_process_by_process_id_addr));
+			LogDebug("ob_dereference_object_addr      = %p", reinterpret_cast<PVOID>(ob_dereference_object_addr));
+			LogDebug("ke_stack_attach_process_addr      = %p", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
+			LogDebug("ke_unstack_detach_process_addr      = %p", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
+			LogDebug("ps_get_current_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_id_addr));
+			LogDebug("zw_allocate_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(zw_allocate_virtual_memory_addr));
+			LogDebug("ps_get_process_section_base_address_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
+			LogDebug("io_allocate_mdl_addr      = %p", reinterpret_cast<PVOID>(io_allocate_mdl_addr));
+			LogDebug("mm_probe_and_lock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
+			LogDebug("mm_unlock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
+			LogDebug("io_free_mdl_add      = %p", reinterpret_cast<PVOID>(io_free_mdl_addr));
+			LogDebug("ke_get_current_irql_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_irql_addr));
+			LogDebug("ex_get_previous_mode_addr      = %p", reinterpret_cast<PVOID>(ex_get_previous_mode_addr));
+			LogDebug("ps_get_current_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_addr));
+			LogDebug("ps_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
+			LogDebug("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
 			 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
@@ -623,16 +682,34 @@ namespace utils
 		 
 
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
+			LogDebug("ki_preprocess_fault_addr     = %p", reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
+
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
+			LogDebug("psp_exit_process_addr     = %p", reinterpret_cast<PVOID>(psp_exit_process_addr));
+
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
+			LogDebug("mm_is_address_valid_ex_addr     = %p", reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
+
 			unsigned long long exp_lookup_handle_table_entry_addr = scanner_fun::find_exp_lookup_handle_table_entry();
+			LogDebug("exp_lookup_handle_table_entry_addr     = %p", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
+
 			unsigned long long mm_create_kernel_stack_addr = scanner_fun::find_mm_create_kernel_stack();
+			LogDebug("mm_create_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
+
 			unsigned long long mm_delete_kernel_stack_addr = scanner_fun::find_mm_delete_kernel_stack();
+			LogDebug("mm_delete_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
+
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
+			LogDebug("mm_allocate_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
+
+			//TODO TEST WINDOWS11
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
+			LogDebug("mm_free_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
+
 			unsigned long long mm_set_page_protection_addr = scanner_fun::find_mm_set_page_protection();
+			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
 
-
+		  
 			 
 			if ( !NT_SUCCESS(ssdt::initialize_ssdt_tables()) )
 			{
@@ -653,71 +730,8 @@ namespace utils
 			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
 			//unsigned long long nt_gdi_ddddi_open_resource_addr = ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
 
-			 
-			LogDebug("RtlGetVersion               = %p", reinterpret_cast<PVOID>(rtl_get_version_addr));
-			LogDebug("MmCopyMemory               = %p", reinterpret_cast<PVOID>(mm_copy_memory_addr));
-			LogDebug("MmIsAddressValid           = %p", reinterpret_cast<PVOID>(mm_is_address_valid_addr));
-			LogDebug("RtlWalkFrameChain          = %p", reinterpret_cast<PVOID>(rtl_walk_frame_chain_addr));
-			LogDebug("RtlLookupFunctionEntry     = %p", reinterpret_cast<PVOID>(rtl_lookup_function_entry_addr));
-			LogDebug("MmGetPhysicalAddress       = %p", reinterpret_cast<PVOID>(mm_get_physical_address_addr));
-			LogDebug("ExAllocatePoolWithTag      = %p", reinterpret_cast<PVOID>(ex_allocate_pool_with_tag_addr));
-			LogDebug("ExFreePoolWithTag          = %p", reinterpret_cast<PVOID>(ex_free_pool_with_tag_addr));
-			LogDebug("RtlInitUnicodeString       = %p", reinterpret_cast<PVOID>(rtl_init_unicode_string_addr));
-			LogDebug("DbgPrint                   = %p", reinterpret_cast<PVOID>(dbg_print_addr));
-			LogDebug("RtlDuplicateUnicodeString  = %p", reinterpret_cast<PVOID>(rtl_duplicate_unicode_string_addr));
-			LogDebug("MmGetVirtualForPhysical    = %p", reinterpret_cast<PVOID>(mm_get_virtual_for_physical_addr));
-			LogDebug("KeSetSystemAffinityThreadEx       = %p", reinterpret_cast<PVOID>(ke_set_system_affinity_thread_ex_addr));
-			LogDebug("KeRevertToUserAffinityThreadEx    = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_ex_addr));
-			LogDebug("KeQueryActiveProcessorCount       = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_addr));
-			LogDebug("PsGetProcessId                     = %p", reinterpret_cast<PVOID>(ps_get_process_id_addr));
-			LogDebug("PsGetCurrentThreadProcess          = %p", reinterpret_cast<PVOID>(ps_get_current_thread_process_addr));
-			LogDebug("PsGetProcessImageFileName          = %p", reinterpret_cast<PVOID>(ps_get_process_image_file_name_addr));
-			LogDebug("PsInitialSystemProcess             = %p", reinterpret_cast<PVOID>(ps_initial_system_process_addr));
-			LogDebug("RtlRandomEx                        = %p", reinterpret_cast<PVOID>(rtl_random_ex_addr));
-			LogDebug("RtlInitString                      = %p", reinterpret_cast<PVOID>(rtl_init_string_addr));
-			LogDebug("ZwQuerySystemInformation           = %p", reinterpret_cast<PVOID>(zw_query_system_information_addr));
-			LogDebug("_stricmp                           = %p", reinterpret_cast<PVOID>(stricmp_addr));
-			LogDebug("MmGetSystemRoutineAddress          = %p", reinterpret_cast<PVOID>(mm_get_system_routine_address_addr));
-			LogDebug("RtlEqualString                     = %p", reinterpret_cast<PVOID>(rtl_equal_string_addr));
-			LogDebug("KeBugCheckEx                       = %p", reinterpret_cast<PVOID>(ke_bug_check_ex_addr));
-			LogDebug("KeRevertToUserAffinityThread       = %p", reinterpret_cast<PVOID>(ke_revert_to_user_affinity_thread_addr));
-			LogDebug("KeQueryActiveGroupCount            = %p", reinterpret_cast<PVOID>(ke_query_active_group_count_addr));
-			LogDebug("KeQueryActiveProcessorCountEx      = %p", reinterpret_cast<PVOID>(ke_query_active_processor_count_ex_addr));
-			LogDebug("KeSetSystemGroupAffinityThread     = %p", reinterpret_cast<PVOID>(ke_set_system_group_affinity_thread_addr));
-			LogDebug("NtCreateSection                    = %p", reinterpret_cast<PVOID>(nt_create_section_addr));
-			LogDebug("NtClose                            = %p", reinterpret_cast<PVOID>(nt_close_addr));
-			LogDebug("ki_preprocess_fault_addr     = %p", reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
-			LogDebug("psp_exit_process_addr     = %p", reinterpret_cast<PVOID>(psp_exit_process_addr));
-			LogDebug("mm_is_address_valid_ex_addr     = %p", reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
-			LogDebug("exp_lookup_handle_table_entry_addr     = %p", reinterpret_cast<PVOID>(exp_lookup_handle_table_entry_addr));
-			LogDebug("mm_create_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_create_kernel_stack_addr));
-			LogDebug("mm_delete_kernel_stack_addr     = %p", reinterpret_cast<PVOID>(mm_delete_kernel_stack_addr));
-			LogDebug("ps_get_process_exit_time_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_time_addr));
-			LogDebug("se_locate_process_image_name_addr      = %p", reinterpret_cast<PVOID>(se_locate_process_image_name_addr));
-			LogDebug("ps_get_process_dxgprocess_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_dxgprocess_addr));
-			LogDebug("ps_get_process_wow64_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_wow64_process_addr));
-			LogDebug("ps_get_process_peb_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_peb_addr));
-			LogDebug("mm_copy_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(mm_copy_virtual_memory_addr));
-			LogDebug("rtl_equal_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_equal_unicode_string_addr));
-			LogDebug("rtl_compare_unicode_string_addr      = %p", reinterpret_cast<PVOID>(rtl_compare_unicode_string_addr));
-			LogDebug("ps_lookup_process_by_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_lookup_process_by_process_id_addr));
-			LogDebug("ob_dereference_object_addr      = %p", reinterpret_cast<PVOID>(ob_dereference_object_addr));
-			LogDebug("ke_stack_attach_process_addr      = %p", reinterpret_cast<PVOID>(ke_stack_attach_process_addr));
-			LogDebug("ke_unstack_detach_process_addr      = %p", reinterpret_cast<PVOID>(ke_unstack_detach_process_addr));
-			LogDebug("ps_get_current_process_id_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_id_addr));
-			LogDebug("zw_allocate_virtual_memory_addr      = %p", reinterpret_cast<PVOID>(zw_allocate_virtual_memory_addr));
-			LogDebug("ps_get_process_section_base_address_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
-			LogDebug("io_allocate_mdl_addr      = %p", reinterpret_cast<PVOID>(io_allocate_mdl_addr));
-			LogDebug("mm_probe_and_lock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_probe_and_lock_pages_addr));
-			LogDebug("mm_unlock_pages_addr      = %p", reinterpret_cast<PVOID>(mm_unlock_pages_addr));
-			LogDebug("io_free_mdl_add      = %p", reinterpret_cast<PVOID>(io_free_mdl_addr));
-			LogDebug("ke_get_current_irql_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_irql_addr));
-			LogDebug("ex_get_previous_mode_addr      = %p", reinterpret_cast<PVOID>(ex_get_previous_mode_addr));
-			LogDebug("ps_get_current_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_addr));
-			LogDebug("ps_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
-			LogDebug("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
-			LogDebug("mm_allocate_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
-			LogDebug("mm_free_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
+			
+
 			LogDebug("zw_open_file_addr      = %p", reinterpret_cast<PVOID>(zw_open_file_addr));
 			LogDebug("zw_create_section_addr      = %p", reinterpret_cast<PVOID>(zw_create_section_addr));
 			LogDebug("zw_map_view_of_section_addr      = %p", reinterpret_cast<PVOID>(zw_map_view_of_section_addr));
@@ -735,7 +749,8 @@ namespace utils
 			LogDebug("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
 			LogDebug("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
-			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
+
+	 
 
 			//nt_write_virtual_memory_addr
 
@@ -753,14 +768,8 @@ namespace utils
 		 
  
 
-			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
-			INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
-			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
-			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
-			INIT_FUNC_PTR(pfn_mm_create_kernel_stack , mm_create_kernel_stack_addr);
-			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
-			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
-			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
+			
+		
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory_addr);
@@ -768,14 +777,19 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
 			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
 			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
-			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);
 
-			if (!ki_preprocess_fault_addr)
-				LogError("ki_preprocess_fault_addr is null.");
-			if (!psp_exit_process_addr)
-				LogError("psp_exit_process_addr is null.");
-			if (!mm_is_address_valid_ex_addr)
-				LogError("mm_is_address_valid_ex_addr is null.");
+
+			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
+	/*		INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
+			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
+			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
+			INIT_FUNC_PTR(pfn_mm_create_kernel_stack, mm_create_kernel_stack_addr);
+			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
+			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
+			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
+			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);*/
+
+
 			if (!mm_copy_memory_addr)
 				LogError("mm_copy_memory_addr is null.");
 			if (!mm_is_address_valid_addr)
@@ -840,12 +854,7 @@ namespace utils
 				LogError("nt_create_section_addr is null.");
 			if (!nt_close_addr)
 				LogError("nt_close_addr is null.");
-			if (!exp_lookup_handle_table_entry_addr)
-				LogError("exp_lookup_handle_table_entry_addr is null.");
-			if (!mm_create_kernel_stack_addr)
-				LogError("mm_create_kernel_stack_addr is null.");
-			if (!mm_delete_kernel_stack_addr)
-				LogError("mm_delete_kernel_stack_addr is null.");
+
 			if (!ps_get_process_exit_time_addr)
 				LogError("ps_get_process_exit_time_addr is null.");
 			if (!se_locate_process_image_name_addr)
@@ -894,10 +903,7 @@ namespace utils
 				LogError("ps_get_current_thread_addr is null.");
 			if (!ke_get_current_thread_addr)
 				LogError("ke_get_current_thread_addr is null.");
-			if (!mm_allocate_independent_pages_addr)
-				LogError("mm_allocate_independent_pages_addr is null.");
-			if (!mm_free_independent_pages_addr)
-				LogError("mm_free_independent_pages_addr is null.");
+
 			if (!zw_open_file_addr)
 				LogError("zw_open_file_addr is null.");
 			if (!zw_create_section_addr)
@@ -932,16 +938,32 @@ namespace utils
 				LogError("nt_user_query_window_addr is null.");
 			if (!nt_write_virtual_memory_addr)
 				LogError("nt_write_virtual_memory_addr is null.");
-			if (!mm_set_page_protection_addr)
-				LogError("mm_set_page_protection_addr is null.");
-				 
+
+			if (!ki_preprocess_fault_addr)
+				LogError("ki_preprocess_fault_addr is null.");
+			//if (!psp_exit_process_addr)
+			//	LogError("psp_exit_process_addr is null.");
+			//if (!mm_is_address_valid_ex_addr)
+			//	LogError("mm_is_address_valid_ex_addr is null.");
+			//if (!exp_lookup_handle_table_entry_addr)
+			//	LogError("exp_lookup_handle_table_entry_addr is null.");
+			//if (!mm_create_kernel_stack_addr)
+			//	LogError("mm_create_kernel_stack_addr is null.");
+			//if (!mm_delete_kernel_stack_addr)
+			//	LogError("mm_delete_kernel_stack_addr is null.");
+			//if (!mm_allocate_independent_pages_addr)
+			//	LogError("mm_allocate_independent_pages_addr is null.");
+			//if (!mm_free_independent_pages_addr)
+			//	LogError("mm_free_independent_pages_addr is null.");
+			//if (!mm_set_page_protection_addr)
+			//	LogError("mm_set_page_protection_addr is null.");
+			//	 
 
 			 
 
 				  
 			if (!ki_preprocess_fault_addr||
-				!psp_exit_process_addr||
-				!mm_is_address_valid_ex_addr||
+				
 				!mm_copy_memory_addr||
 				!mm_is_address_valid_addr||
 				!rtl_walk_frame_chain_addr||
@@ -974,9 +996,7 @@ namespace utils
 				!ke_set_system_group_affinity_thread_addr||
 				!nt_create_section_addr||
 				!nt_close_addr||
-				!exp_lookup_handle_table_entry_addr||
-				!mm_create_kernel_stack_addr||
-				!mm_delete_kernel_stack_addr||
+				
 				!ps_get_process_exit_time_addr||
 				!se_locate_process_image_name_addr||
 				!ps_get_process_dxgprocess_addr||
@@ -1001,8 +1021,7 @@ namespace utils
 				!ps_get_current_process_addr||
 				!ps_get_current_thread_addr||
 				!ke_get_current_thread_addr||
-				!mm_allocate_independent_pages_addr||
-				!mm_free_independent_pages_addr||
+				
 				!zw_open_file_addr||
 				!zw_create_section_addr||
 				!zw_map_view_of_section_addr||
@@ -1019,13 +1038,20 @@ namespace utils
 				!nt_user_find_window_ex_addr ||
 				!nt_user_get_foreground_window_addr ||
 				!nt_user_query_window_addr ||
-				!nt_write_virtual_memory_addr||
-				!mm_set_page_protection_addr)
+				!nt_write_virtual_memory_addr 
+				)             
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
 
-			 
+			//!psp_exit_process_addr ||
+			//	!mm_is_address_valid_ex_addr ||
+			//	!exp_lookup_handle_table_entry_addr ||
+			//	!mm_create_kernel_stack_addr ||
+			//	!mm_delete_kernel_stack_addr ||
+			//	!mm_allocate_independent_pages_addr ||
+			//	!mm_free_independent_pages_addr ||
+			//	!mm_set_page_protection_addr
  
 
 

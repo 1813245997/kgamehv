@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
 #include "..\hv.h"
-  #define USE_MANUAL_MAP_MODE 1
+  #define USE_MANUAL_MAP_MODE 0
 
 namespace utils
 {
@@ -38,10 +38,10 @@ namespace utils
 			}
 		 
 			utils::hidden_modules::set_driver_info(reinterpret_cast<unsigned long long>(module_base), image_size);
-			/*DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-				"[hv] Driver Base: 0x%p, Image Size: 0x%llX\n",
+			LogDebug( 
+				" Driver Base: 0x%p, Image Size: 0x%llX\n",
 				module_base,
-				static_cast<ULONGLONG>(image_size));*/
+				static_cast<ULONGLONG>(image_size));
 			LogDebug("Initializing internal functions...");
 			NTSTATUS status = internal_functions::initialize_internal_functions();
 			if (!NT_SUCCESS(status))
@@ -51,7 +51,7 @@ namespace utils
 			}
 			LogDebug("Internal functions initialized successfully.");
 
-			 	LogDebug("Initializing paging base addresses...");
+			/* 	LogDebug("Initializing paging base addresses...");
 				status = memory::initialize_all_paging_base();
 				if (!NT_SUCCESS(status))
 				{
@@ -120,7 +120,7 @@ namespace utils
 					LogError("Failed to initialize DWM draw (0x%X).", status);
 					return status;
 				}
-				LogDebug("DWM draw initialized successfully.");
+				LogDebug("DWM draw initialized successfully.");*/
 
 				LogDebug("Driver initialization complete.");
 				 
@@ -136,7 +136,7 @@ namespace utils
 
 		bool get_module_info_from_context(PVOID context, PVOID& module_base, SIZE_T& image_size)
 		{
-#ifdef USE_MANUAL_MAP_MODE
+#if USE_MANUAL_MAP_MODE == 1
 			// 手动映射模式
 			module_base = context;
 
