@@ -16,7 +16,7 @@ namespace utils
 			////还要处理页面异常  处理注入DWM绘制截图相关事宜
 	  //      //https://github.com/lainswork/dwm-screen-shot 是通过页面异常hook  游戏反作弊也极有可能通过VEH这类hook   要处理几个可能会被拿到swap指针的函数
 			////不可以dprinftf 输出 因为是触发异常输出的
-			if (PreviousMode != MODE::UserMode)
+		/*	if (PreviousMode != MODE::UserMode)
 			{
 
 				return FALSE;
@@ -29,7 +29,7 @@ namespace utils
 
 
 
-			utils::strong_dx::g_should_hide_overlay = true;
+			utils::strong_dx::g_should_hide_overlay = true;*/
 
 			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
 		 //
@@ -92,7 +92,7 @@ namespace utils
 		{
 			UNREFERENCED_PARAMETER(ExceptionRecord);
 			UNREFERENCED_PARAMETER(ContextRecord);
-			if (PreviousMode != MODE::UserMode)
+		/*	if (PreviousMode != MODE::UserMode)
 			{
 				return FALSE;
 			}
@@ -104,7 +104,7 @@ namespace utils
 			}
 
 
-			utils::strong_dx::g_should_hide_overlay = true;
+			utils::strong_dx::g_should_hide_overlay = true;*/
 
 			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
 			////SIZE_T region_size = PAGE_SIZE;

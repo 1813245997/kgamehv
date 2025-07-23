@@ -68,7 +68,7 @@ namespace game
 
 
 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		/*	HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
 			hyper::ept_hook_break_point_int3(
 				process_id,
@@ -76,10 +76,71 @@ namespace game
 				hook_functions::new_get_csgo_hp,
 				nullptr,
 				false
-			);
+			);*/
 
 
 
+			KeQuerySystemTime(&g_process_time);
+			g_game_process = process;
+			g_client_base = client_base;
+			g_client_size = client_size;
+			g_engine2_base = engine2_base;
+			g_engine2_size = engine2_size;
+			g_is_initialized = true;
+
+
+			return true;
+
+
+		}
+
+
+		bool initialize_game_process2( )
+		{
+
+			PEPROCESS process = nullptr;
+
+			if (g_is_initialized)
+			{
+				return true;
+			}
+			 
+			if (!utils::process_utils::get_process_by_name(L"cs2.exe", &process))
+			{
+				return false;
+			}
+
+			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
+			{
+				utils:: internal_functions::pfn_ob_dereference_object(process);
+				return false;
+			}
+
+			
+			unsigned long long client_base = 0;
+			unsigned long long client_size = 0;
+			unsigned long long engine2_base = 0;
+			unsigned long long engine2_size = 0;
+
+			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
+			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
+
+
+			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
+
+				return false;
+			}
+
+			if (client_base == 0 || client_size == 0)
+			{
+				return false;
+			}
+
+			if (engine2_base == 0 || engine2_size == 0)
+			{
+				return false;
+			}
+			 
 			KeQuerySystemTime(&g_process_time);
 			g_game_process = process;
 			g_client_base = client_base;
@@ -346,21 +407,42 @@ namespace game
 			
 			uintptr_t local_pawn_addr = g_client_base + cs2SDK::offsets::dwLocalPlayerPawn;
 			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
+			{
 				return false;
+			}
 
 			memcpy(&kcsgo2data::g_local_pcsplayer_pawn, reinterpret_cast<void*>(local_pawn_addr), sizeof(kcsgo2data::g_local_pcsplayer_pawn));
 			if (!kcsgo2data::g_local_pcsplayer_pawn)
+			{
 				return false;
+			}
 
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_local_pcsplayer_pawn)))
+			{
+				return false;
+			}
 			kcsgo2data::g_entity_list = g_client_base + cs2SDK::offsets::m_offestPlayerArray;
 			if (!kcsgo2data::g_entity_list)
+			{
 				return false;
+
+
+			}
+
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_entity_list)))
+			{
+				return false;
+			}
+
 
 			int health = 0;
 			if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth)))
 			{
+
 				memcpy(&health, reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth), sizeof(int));
 			}
+
+
 			// 获取本地玩家血量与队伍
 			if (health > 0 && health <= 100)
 			{
@@ -510,6 +592,13 @@ namespace game
 				return false;
 			}
 
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn)))
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+		 
+
 			kcsgo2data::g_entity_list = g_client_base + cs2SDK::offsets::m_offestPlayerArray;
 			if (!kcsgo2data::g_entity_list)
 			{
@@ -517,6 +606,11 @@ namespace game
 				return false;
 			}
 
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_entity_list)))
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
 			int health = 0;
 			if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth)))
 			{

@@ -4796,12 +4796,12 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x74\x0A\xBA\x00\x50\x00\x00", "xxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x8B\x00\xF0\xFF\xFF",
+					"x????xxxxxxx",
+					"PAGE"
 				);
-
-				temp_addr += 7;
 
 				mm_free_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
@@ -4812,12 +4812,12 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x74\x0A\xBA\x00\x50\x00\x00", "xxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x8B\x00\xF0\xFF\xFF",
+					"x????xxxxxxx",
+					"PAGE"
 				);
-
-				temp_addr += 7;
 				mm_free_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -4827,13 +4827,13 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_23H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x74\x0A\xBA\x00\x50\x00\x00",
-					"xxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x8B\x00\xF0\xFF\xFF",
+					"x????xxxxxxx",
+					"PAGE"
 				);
 
-				temp_addr += 7;
 				mm_free_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -4843,13 +4843,14 @@ namespace utils
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
 
-				temp_addr = signature_scanner::find_pattern(
-					reinterpret_cast<ULONG_PTR>(ntoskrnl_base), ntoskrnl_size,
-					"\x74\x0A\xBA\x00\x50\x00\x00",
-					"xxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),  
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x8B\x00\xF0\xFF\xFF",
+					"x????xxxxxxx",
+					"PAGE"
 				);
 
-				temp_addr += 7;
+				 
 				mm_free_independent_pages_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -5224,7 +5225,6 @@ namespace utils
 				);
 
 
-				temp_addr += 7;
 				 
 				mm_set_page_protection_addr =
 					signature_scanner::resolve_relative_address(
@@ -5241,7 +5241,6 @@ namespace utils
 					"x????xxxxxxxxxxx",
 					"PAGE"
 				);
-
 
 				mm_set_page_protection_addr =
 					signature_scanner::resolve_relative_address(
@@ -5260,7 +5259,6 @@ namespace utils
 					"PAGE"
 				);
 
-
 				mm_set_page_protection_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -5272,9 +5270,9 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8D\x04\x1F\xBE\x01\x00\x00\x00",
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x8B\xE0\x00\x00\x00\x8B\xD6", 
 					"x????xxxxxxxxx",
-					"PAGE"
+					".text"
 				);
 
 				mm_set_page_protection_addr =
@@ -5286,6 +5284,9 @@ namespace utils
 			default:
 				break;
 			}
+
+
+			 
 			return mm_set_page_protection_addr;
 		}
 

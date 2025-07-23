@@ -547,7 +547,7 @@ namespace utils
 			unsigned long long nt_create_file_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateFile");
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
-			//unsigned long long zw_query_virtual_memory_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ZwQueryVirtualMemory");
+			 
 
 
 
@@ -702,7 +702,7 @@ namespace utils
 			unsigned long long mm_allocate_independent_pages_addr = scanner_fun::find_mm_allocate_independent_pages();
 			LogDebug("mm_allocate_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_allocate_independent_pages_addr));
 
-			//TODO TEST WINDOWS11
+		 
 			unsigned long long mm_free_independent_pages_addr = scanner_fun::find_mm_free_independent_pages();
 			LogDebug("mm_free_independent_pages_addr      = %p", reinterpret_cast<PVOID>(mm_free_independent_pages_addr));
 
@@ -751,24 +751,7 @@ namespace utils
 			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
 
 	 
-
-			//nt_write_virtual_memory_addr
-
-			//nt_user_query_window_addr
-
-
-			//nt_user_get_foreground_window_addr
-		 //io_query_file_dos_device_name_addr
-			
- 
-		 
-		 
-
-		 
-		 
- 
-
-			
+  
 		
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
@@ -780,14 +763,14 @@ namespace utils
 
 
 			INIT_FUNC_PTR(pfn_ki_preprocess_fault, ki_preprocess_fault_addr);
-	/*		INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
+			INIT_FUNC_PTR(pfn_psp_exit_process, psp_exit_process_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid_ex, mm_is_address_valid_ex_addr);
 			INIT_FUNC_PTR(pfn_exp_lookup_handle_table_entry, exp_lookup_handle_table_entry_addr);
 			INIT_FUNC_PTR(pfn_mm_create_kernel_stack, mm_create_kernel_stack_addr);
 			INIT_FUNC_PTR(pfn_mm_delete_kernel_stack, mm_delete_kernel_stack_addr);
 			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
-			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);*/
+			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);
 
 
 			if (!mm_copy_memory_addr)
@@ -939,30 +922,32 @@ namespace utils
 			if (!nt_write_virtual_memory_addr)
 				LogError("nt_write_virtual_memory_addr is null.");
 
+
+
 			if (!ki_preprocess_fault_addr)
 				LogError("ki_preprocess_fault_addr is null.");
-			//if (!psp_exit_process_addr)
-			//	LogError("psp_exit_process_addr is null.");
-			//if (!mm_is_address_valid_ex_addr)
-			//	LogError("mm_is_address_valid_ex_addr is null.");
-			//if (!exp_lookup_handle_table_entry_addr)
-			//	LogError("exp_lookup_handle_table_entry_addr is null.");
-			//if (!mm_create_kernel_stack_addr)
-			//	LogError("mm_create_kernel_stack_addr is null.");
-			//if (!mm_delete_kernel_stack_addr)
-			//	LogError("mm_delete_kernel_stack_addr is null.");
-			//if (!mm_allocate_independent_pages_addr)
-			//	LogError("mm_allocate_independent_pages_addr is null.");
-			//if (!mm_free_independent_pages_addr)
-			//	LogError("mm_free_independent_pages_addr is null.");
-			//if (!mm_set_page_protection_addr)
-			//	LogError("mm_set_page_protection_addr is null.");
-			//	 
+			if (!psp_exit_process_addr)
+				LogError("psp_exit_process_addr is null.");
+			if (!mm_is_address_valid_ex_addr)
+				LogError("mm_is_address_valid_ex_addr is null.");
+			if (!exp_lookup_handle_table_entry_addr)
+				LogError("exp_lookup_handle_table_entry_addr is null.");
+			if (!mm_create_kernel_stack_addr)
+				LogError("mm_create_kernel_stack_addr is null.");
+			if (!mm_delete_kernel_stack_addr)
+				LogError("mm_delete_kernel_stack_addr is null.");
+			if (!mm_allocate_independent_pages_addr)
+				LogError("mm_allocate_independent_pages_addr is null.");
+			if (!mm_free_independent_pages_addr)
+				LogError("mm_free_independent_pages_addr is null.");
+			if (!mm_set_page_protection_addr)
+				LogError("mm_set_page_protection_addr is null.");
+
 
 			 
 
 				  
-			if (!ki_preprocess_fault_addr||
+			if (
 				
 				!mm_copy_memory_addr||
 				!mm_is_address_valid_addr||
@@ -1038,20 +1023,21 @@ namespace utils
 				!nt_user_find_window_ex_addr ||
 				!nt_user_get_foreground_window_addr ||
 				!nt_user_query_window_addr ||
-				!nt_write_virtual_memory_addr 
+				!nt_write_virtual_memory_addr ||
+				!ki_preprocess_fault_addr ||
+				!psp_exit_process_addr ||
+				!mm_is_address_valid_ex_addr ||
+				!exp_lookup_handle_table_entry_addr ||
+				!mm_create_kernel_stack_addr ||
+				!mm_delete_kernel_stack_addr ||
+				!mm_allocate_independent_pages_addr ||
+				!mm_free_independent_pages_addr ||
+				!mm_set_page_protection_addr
 				)             
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
-
-			//!psp_exit_process_addr ||
-			//	!mm_is_address_valid_ex_addr ||
-			//	!exp_lookup_handle_table_entry_addr ||
-			//	!mm_create_kernel_stack_addr ||
-			//	!mm_delete_kernel_stack_addr ||
-			//	!mm_allocate_independent_pages_addr ||
-			//	!mm_free_independent_pages_addr ||
-			//	!mm_set_page_protection_addr
+	
  
 
 

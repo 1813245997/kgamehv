@@ -24,9 +24,11 @@ namespace game
 		
 		extern   LARGE_INTEGER g_process_time;
 		bool initialize_game_process(_In_ PEPROCESS process);
+		bool initialize_game_process2();
 	 
 		 
 		bool is_game_process(_In_ PEPROCESS process);
+
 
 		bool is_create_time();
 

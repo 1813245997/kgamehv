@@ -74,19 +74,19 @@ namespace hook_functions
 	)
 	{
 
-		HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+	//	HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
 	   {
 		   return FALSE;
 	   }
 
-	   if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(VirtualAddress)))
-	   {
-		   return FALSE;
-	   }
+	   /*  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(VirtualAddress)))
+		 {
+			 return FALSE;
+		 }*/
 
-		return utils::internal_functions::pfn_mm_is_address_valid_ex (VirtualAddress);
+		return   original_mm_is_address_valid(VirtualAddress);
 	}
 
 
@@ -131,7 +131,7 @@ namespace hook_functions
 		  }
 
 		  PVOID64 virtual_address = nullptr;
-		 HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		// HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 		  if (flags == MM_COPY_MEMORY_PHYSICAL)
 		  {
 			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
@@ -148,11 +148,11 @@ namespace hook_functions
 			  return STATUS_CONFLICTING_ADDRESSES;
 		  }
 
-		  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
-		  {
-			  *number_of_bytes_transferred = 0;
-			  return STATUS_CONFLICTING_ADDRESSES;
-		  }
+		  /*  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
+			{
+				*number_of_bytes_transferred = 0;
+				return STATUS_CONFLICTING_ADDRESSES;
+			}*/
 		 
 		  return original_mm_copy_memory(
 			  target_address,
@@ -179,7 +179,7 @@ namespace hook_functions
 	 {
 		 
 
-		 HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		// HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
@@ -191,9 +191,8 @@ namespace hook_functions
 			 }
 
 			 PVOID addr = callers[i];
-
-			 if (utils::hidden_modules::is_address_hidden(addr) ||
-				 utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr)))
+			 //||utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr))
+			 if (utils::hidden_modules::is_address_hidden(addr) )
 			 {
 				 // 向前覆盖该帧
 				 for (ULONG j = i + 1; j < frames_captured; ++j)
@@ -224,7 +223,7 @@ namespace hook_functions
 	 {
 		  
 
-		HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
+		//HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 // 判断是否是隐藏模块地址
 		 if (utils::hidden_modules::is_address_hidden(reinterpret_cast<PVOID>(control_pc)))
@@ -237,14 +236,14 @@ namespace hook_functions
 		 }
 
 		 // 判断是否是该进程隐藏的用户态内存地址
-		 if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, control_pc))
+		/* if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, control_pc))
 		 {
 			 if (image_base)
 			 {
 				 *image_base = 0;
 			 }
 			 return nullptr;
-		 }
+		 }*/
 
 		 return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
 	 }
@@ -263,15 +262,12 @@ namespace hook_functions
 
 		   if (trim_address_space && process)
 		   {
-
+			   
 			   if (game::kcsgo2::is_game_process(process))
 			   {
-				   game::kcsgo2::cleanup_game_process(process);
-
-				   hyper::unhook_all_ept_hooks_for_pid(utils::internal_functions::pfn_ps_get_process_id(process));
-			   }
-
-
+				   game::kcsgo2::g_is_initialized = false;
+				}
+			     
 		   }
 	  
 		    
@@ -427,7 +423,7 @@ namespace hook_functions
 
 		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll",TRUE))
 		   {
-			   game::kcsgo2::initialize_game_process(process);
+			  // game::kcsgo2::initialize_game_process(process);
 		   }
 		 
 
@@ -1137,8 +1133,12 @@ namespace hook_functions
 		    
 		   ContextRecord->Rip = new_rip;
 
-		   // 初始化游戏数据
-		   game::kcsgo2::initialize_game_data();
+		   if ( game::kcsgo2::is_create_time())
+		   {
+			   // 初始化游戏数据
+			   game::kcsgo2::initialize_game_data();
+		   }
+		
 
 			 
 		   return TRUE;

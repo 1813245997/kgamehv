@@ -46,7 +46,7 @@ namespace utils
 			   if (!g_user_buffer)
 			   {
 				   PVOID desc_buffer_local{};
-				   NTSTATUS status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, true);
+				   NTSTATUS status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, false);
 				   if (!NT_SUCCESS(status))
 					   return false;
 
@@ -56,7 +56,7 @@ namespace utils
 			   if (!g_texture_buffer)
 			   {
 				   PVOID texture_buffer{};
-				   NTSTATUS status = memory::allocate_user_memory(&texture_buffer, 0x4000, PAGE_READWRITE, true, true);
+				   NTSTATUS status = memory::allocate_user_memory(&texture_buffer, 0x4000, PAGE_READWRITE, true, false);
 				   if (!NT_SUCCESS(status))
 					   return false;
 
@@ -220,6 +220,11 @@ namespace utils
 			);
 
 			hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			if (FAILED(hr))
+			{
+				vfun_utils::release(pTexture);
+				return;
+			}
 			memcpy(&MapRes, reinterpret_cast<PVOID>(g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
 
 			// 调用用户绘制回调
@@ -271,19 +276,18 @@ namespace utils
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
 
-		  
-			KMenuConfig::initialize_visual_config_once();
+		   
 
-			if (!game::kcsgo2::is_initialize_game())
-				return;
+			//if (!game::kcsgo2::initialize_game_process2())
+			//	return;
+			// 
+			//if (!game::kcsgo2::is_create_time())
+			//	return;
 
-			if (!game::kcsgo2::is_create_time())
-				return;
-
-			 // game::kcsgo2::initialize_game_data2();
+			//game::kcsgo2::initialize_game_data2();
 
 			// === 绘制 ESP 相关 ===
-			draw_players_esp(rend);
+			//draw_players_esp(rend);
 
 			// ToDo: draw other overlay elements like menu, C4, weapon, etc.
 
@@ -297,7 +301,7 @@ namespace utils
 			if (!game::kcsgo2::get_player_data(players_copy, MAX_PLAYER_NUM, &player_count))
 				return;
 
-			for (int i = 0; i < player_count; ++i)
+			for (int i = 0; i <=player_count; ++i)
 			{
 				const auto& player = players_copy[i];
 				if (!player.bIsPlayerExists)
@@ -374,7 +378,7 @@ namespace utils
 							Vector2 screen_from = { from_pos.x, from_pos.y };
 							Vector2 screen_to = { to_pos.x, to_pos.y };
 
-							rend.Line(screen_from, screen_to, color, 3);
+							rend.Line(screen_from, screen_to, color, 1);
 						}
 
 						 
