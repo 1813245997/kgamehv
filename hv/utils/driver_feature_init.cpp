@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
 #include "..\hv.h"
-  #define USE_MANUAL_MAP_MODE 1
+
 
 namespace utils
 {

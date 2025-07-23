@@ -1,6 +1,10 @@
 #pragma once
 
-#define ENABLE_GAME_DRAW_TYPE3 1
+#define ENABLE_HV_DEBUG_LOG 0 // Set to 0 to disable debug logging
+
+#define USE_MANUAL_MAP_MODE 1 // Enable manual mapping for driver loading
+
+#define ENABLE_GAME_DRAW_TYPE3 1 // 1 means using the first game drawing scheme
 
 
 #define S_OK                                   ((HRESULT)0L)
