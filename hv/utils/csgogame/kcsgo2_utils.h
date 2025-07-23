@@ -50,7 +50,7 @@ namespace game
 
 		HANDLE find_cs2_window();
 
-		bool get_player_data(kcsgo2struct::CPlayer* out_array, int max_count, int* out_actual_count);
+		bool get_player_data(kcsgo2struct::CPlayer* out_array,   int* out_actual_count);
 
 		void initialize_player_data_lock();
 		void clear_all_player_info();

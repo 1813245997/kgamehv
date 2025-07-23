@@ -37,9 +37,13 @@ namespace game
 			}
 
 			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
-			{
+			{ 
+				
+				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
 			}
+
+			utils::internal_functions::pfn_ob_dereference_object(process);
 
 			unsigned long long client_base = 0;
 			unsigned long long client_size = 0;
@@ -116,7 +120,7 @@ namespace game
 				return false;
 			}
 
-			
+			utils::internal_functions::pfn_ob_dereference_object(process);
 			unsigned long long client_base = 0;
 			unsigned long long client_size = 0;
 			unsigned long long engine2_base = 0;
@@ -143,6 +147,7 @@ namespace game
 			 
 			KeQuerySystemTime(&g_process_time);
 			g_game_process = process;
+
 			g_client_base = client_base;
 			g_client_size = client_size;
 			g_engine2_base = engine2_base;
@@ -327,6 +332,7 @@ namespace game
 				 handle =   reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				 if (handle)
 				 {
+					 RtlZeroMemory(g_user_buffer, 0X1000);
 					 // utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
 					  //g_user_buffer = nullptr;
 					 return handle;
@@ -352,6 +358,7 @@ namespace game
 				handle = reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				if (handle)
 				{
+					RtlZeroMemory(g_user_buffer, 0X1000);
 					//utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
 					//g_user_buffer = nullptr;
 					return handle;
@@ -377,28 +384,41 @@ namespace game
 
 			}
 
-			ExAcquireFastMutex(&g_player_data_lock);
+			if (count == 0)
+			{
+				ExAcquireFastMutex(&g_player_data_lock);
+				RtlZeroMemory(g_player_array, sizeof(g_player_array));
+				g_player_count = 0;
+				ExReleaseFastMutex(&g_player_data_lock);
+			}
+			else
+			{
+				ExAcquireFastMutex(&g_player_data_lock);
 
-			RtlZeroMemory(g_player_array, sizeof(g_player_array));
-			memcpy(g_player_array, player_array, sizeof(kcsgo2struct::CPlayer) * count);
-			g_player_count = count;
+				RtlZeroMemory(g_player_array, sizeof(g_player_array));
+				memcpy(g_player_array, player_array, sizeof(kcsgo2struct::CPlayer) * count);
+				g_player_count = count;
+				ExReleaseFastMutex(&g_player_data_lock);
+			}
 
-			ExReleaseFastMutex(&g_player_data_lock);
+			
 
 		}
 
-		bool get_player_data(kcsgo2struct::CPlayer* out_array, int max_count, int* out_actual_count)
+		bool get_player_data(kcsgo2struct::CPlayer* out_array,  int* out_actual_count)
 		{
-			if (!out_array || max_count <= 0 || !out_actual_count)
-			{
-				return false;
-			}
+		 
 
 			ExAcquireFastMutex(&g_player_data_lock);
 
-			int copy_count = (g_player_count < max_count) ? g_player_count : max_count;
-			memcpy(out_array, g_player_array, sizeof(kcsgo2struct::CPlayer) * copy_count);
-
+			int copy_count = g_player_count;
+			if (copy_count !=0)
+			{
+				memcpy(out_array, g_player_array, sizeof(kcsgo2struct::CPlayer) * copy_count);
+			}
+			 
+			
+			 
 			ExReleaseFastMutex(&g_player_data_lock);
 
 			*out_actual_count = copy_count;
@@ -489,57 +509,68 @@ namespace game
 			{
 				uintptr_t player_pawn = 0;
 				void* pawn_ptr = reinterpret_cast<void*>(kcsgo2data::g_entity_list + i * sizeof(uintptr_t));
-				if (utils::internal_functions::pfn_mm_is_address_valid_ex(pawn_ptr))
+
+
+
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(pawn_ptr))
 				{
-					memcpy(&player_pawn, pawn_ptr, sizeof(uintptr_t));
+					continue;
 				}
 
+				memcpy(&player_pawn, pawn_ptr, sizeof(uintptr_t));
+
 				if (!player_pawn || player_pawn == kcsgo2data::g_local_pcsplayer_pawn)
+				{
 					continue;
+				}
 
 				int team = 0;
 				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offsettema);
 				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
+				{
 					continue;
+				}
 				memcpy(&team, team_addr, sizeof(int));
 				if (team == kcsgo2data::g_local_team || team < 2)
+				{
 					continue;
+				}
 
 				void* health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
 				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(health_addr))
+				{
 					continue;
+				}
 				memcpy(&health, health_addr, sizeof(int));
 				if (health <= 0 || health > 100)
+				{
 					continue;
+				}
 
-				int is_valid = 0;
-				void* valid_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offestbIsPlayerExists);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(valid_addr))
-					continue;
-				memcpy(&is_valid, valid_addr, sizeof(int));
-				if (!is_valid)
-				    continue;
-
-				 
-
+			   
+				  
 					kcsgo2struct::CPlayer& player = temp_array[temp_count];
 					player.pCSPlayerPawn = player_pawn;
 					player.team = team;
 					player.health = health;
-					player.bIsPlayerExists = is_valid;
+					
 					player.is_local_player = false;
 
 					// 读取 origin
 					void* tagorigin_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
 					if (!utils::internal_functions::pfn_mm_is_address_valid_ex(tagorigin_addr))
+					{
 						continue;
+					}
 					memcpy(&player.origin, tagorigin_addr, sizeof(Vector3));
 					player.head = { player.origin.x, player.origin.y, player.origin.z + 70.f };
 
 					// 读取 scene node
 					void* scene_node_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_pGameSceneNode);
 					if (!utils::internal_functions::pfn_mm_is_address_valid_ex(scene_node_addr))
+					{
 						continue;
+					}
 					memcpy(&player.gameSceneNode, scene_node_addr, sizeof(uintptr_t));
 
 
@@ -564,7 +595,7 @@ namespace game
 						memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
 					}
 
-
+					 
 
 					temp_count++;
 			}
@@ -579,7 +610,7 @@ namespace game
 
 		bool initialize_game_data2()
 		{
-			if (!g_game_handle)
+			if (!g_game_handle) 
 			{
 				g_game_handle = find_cs2_window();
 
@@ -685,13 +716,7 @@ namespace game
 				if (health <= 0 || health > 100)
 					continue;
 
-				int is_valid = 0;
-				void* valid_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offestbIsPlayerExists);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(valid_addr))
-					continue;
-				memcpy(&is_valid, valid_addr, sizeof(int));
-				if (!is_valid)
-					continue;
+			 
 
 
 
@@ -699,7 +724,7 @@ namespace game
 				player.pCSPlayerPawn = player_pawn;
 				player.team = team;
 				player.health = health;
-				player.bIsPlayerExists = is_valid;
+				 
 				player.is_local_player = false;
 
 				// 读取 origin
@@ -885,14 +910,7 @@ namespace game
 				memcpy(&health, health_addr, sizeof(int));
 				if (health <= 0 || health > 100)
 					continue;
-
-				int is_valid = 0;
-				void* valid_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offestbIsPlayerExists);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(valid_addr))
-					continue;
-				memcpy(&is_valid, valid_addr, sizeof(int));
-				if (!is_valid)
-					continue;
+ 
 
 
 
@@ -900,7 +918,7 @@ namespace game
 				player.pCSPlayerPawn = player_pawn;
 				player.team = team;
 				player.health = health;
-				player.bIsPlayerExists = is_valid;
+			 
 				player.is_local_player = false;
 
 				// 读取 origin

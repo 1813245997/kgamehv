@@ -99,7 +99,7 @@ namespace game
 			int team;
 			int health;
 			float flashAlpha;
-			int bIsPlayerExists;
+			 
 			bool is_local_player;
 		 
 		

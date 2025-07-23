@@ -4,7 +4,7 @@
 
 #define USE_MANUAL_MAP_MODE 1 // Enable manual mapping for driver loading
 
-#define ENABLE_GAME_DRAW_TYPE3 1 // 1 means using the first game drawing scheme
+#define ENABLE_GAME_DRAW_TYPE3 2 // 1 means using the first game drawing scheme
 
 
 #define S_OK                                   ((HRESULT)0L)

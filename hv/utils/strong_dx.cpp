@@ -220,11 +220,11 @@ namespace utils
 			);
 
 			hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			if (FAILED(hr))
-			{
-				vfun_utils::release(pTexture);
-				return;
-			}
+			/*	if (FAILED(hr))
+				{
+					vfun_utils::release(pTexture);
+					return;
+				}*/
 			memcpy(&MapRes, reinterpret_cast<PVOID>(g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
 
 			// 调用用户绘制回调
@@ -275,30 +275,41 @@ namespace utils
 			ByteRender rend;
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
+			// 按方案类型执行初始化流程
+			bool initialized = false;
+#if defined(ENABLE_GAME_DRAW_TYPE3)
 
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
+			
 
-		   //第一套绘制逻辑 通过加载DLL来初始化进程
-			if (!game::kcsgo2::is_initialize_game())
-				return;
+#if ENABLE_GAME_DRAW_TYPE3 == 1
+			// 第一套绘制逻辑：通过 DLL 初始化
+			initialized = game::kcsgo2::is_initialize_game() && game::kcsgo2::is_create_time();
 
-			if (!game::kcsgo2::is_create_time())
-				return;
-#endif
-
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
-
-			//第二套绘制逻辑 自己遍历进程
-			if (!game::kcsgo2::initialize_game_process2())
-				return;
-
-
-			game::kcsgo2::initialize_game_data2();
-		 
-#endif
+#elif ENABLE_GAME_DRAW_TYPE3 == 2
+			// 第二套绘制逻辑：自己遍历进程
 			 
+		  
+			initialized = game::kcsgo2::initialize_game_process2()&&game::kcsgo2::initialize_game_data2();
+
+#elif ENABLE_GAME_DRAW_TYPE3 == 3
+			// 第三套绘制逻辑：自己初始化数据
+			initialized = game::kcsgo2::is_initialize_game() &&
+				game::kcsgo2::is_create_time() &&
+				game::kcsgo2::initialize_game_data3();
+
+#endif // ENABLE_GAME_DRAW_TYPE3
+ 
+
+#endif // defined(ENABLE_GAME_DRAW_TYPE3)
+
+			if (!initialized)
+			{
+				return;
+			}
 			// === 绘制 ESP 相关 ===
-			 draw_players_esp(rend);
+			draw_players_esp(rend);
+			 
+			 
 
 			// ToDo: draw other overlay elements like menu, C4, weapon, etc.
 
@@ -309,14 +320,23 @@ namespace utils
 			game::kcsgo2struct::CPlayer players_copy[MAX_PLAYER_NUM] = {};
 			int player_count = 0;
 
-			if (!game::kcsgo2::get_player_data(players_copy, MAX_PLAYER_NUM, &player_count))
+			if (!game::kcsgo2::get_player_data(players_copy,  &player_count))
 				return;
 
-			for (int i = 0; i <=player_count; ++i)
+			if (player_count==0)
+			{
+				RtlZeroMemory(players_copy, sizeof(players_copy));
+			}
+			
+
+			for (size_t i = 0; i < player_count; ++i)
 			{
 				const auto& player = players_copy[i];
-				if (!player.bIsPlayerExists)
+				 
+				if (player.health <= 0 || player.health > 100)
+				{
 					continue;
+				}
 
 				Vector3 foot_screen{}, head_screen{};
 				if (!world_to_screen(&player.origin, &foot_screen, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))

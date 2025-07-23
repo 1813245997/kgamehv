@@ -74,7 +74,7 @@ namespace hook_functions
 	)
 	{
 
-	//	HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+	 //HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
 	   {
@@ -131,7 +131,7 @@ namespace hook_functions
 		  }
 
 		  PVOID64 virtual_address = nullptr;
-		// HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		//  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 		  if (flags == MM_COPY_MEMORY_PHYSICAL)
 		  {
 			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
@@ -148,11 +148,11 @@ namespace hook_functions
 			  return STATUS_CONFLICTING_ADDRESSES;
 		  }
 
-		  /*  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
-			{
-				*number_of_bytes_transferred = 0;
-				return STATUS_CONFLICTING_ADDRESSES;
-			}*/
+		  //if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
+		  //{
+			 // *number_of_bytes_transferred = 0;
+			 // return STATUS_CONFLICTING_ADDRESSES;
+		  //}
 		 
 		  return original_mm_copy_memory(
 			  target_address,
@@ -179,7 +179,7 @@ namespace hook_functions
 	 {
 		 
 
-		// HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		 // HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
@@ -191,7 +191,7 @@ namespace hook_functions
 			 }
 
 			 PVOID addr = callers[i];
-			 //||utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr))
+			//|| utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr))
 			 if (utils::hidden_modules::is_address_hidden(addr) )
 			 {
 				 // ÏòÇ°¸²¸Ç¸ÃÖ¡
@@ -271,7 +271,7 @@ namespace hook_functions
 			     
 		   }
 		   hyper::unhook_all_ept_hooks_for_pid(proces_id);
-
+		   utils::hidden_user_memory:: remove_hidden_addresses_for_pid(proces_id);
 
 		   return original_psp_exit_process(trim_address_space, process);
 
@@ -430,7 +430,16 @@ namespace hook_functions
 			   game::kcsgo2::initialize_game_process(process);
 		   }
 #endif
-		  
+
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
+
+		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
+		   {
+			   game::kcsgo2::initialize_game_process3(process_id);
+		   }
+
+		 
+#endif  
 		 
 
 		  
@@ -702,28 +711,28 @@ namespace hook_functions
 		  );
 
 
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
-
-		  PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-		  NTSTATUS querystatus = ZwQueryInformationProcess(
-			  *ProcessHandle,
-			  ProcessBasicInformation,
-			  (PVOID)&ProcessBasicInfo,
-			  sizeof(ProcessBasicInfo),
-			  NULL
-		  );
-
-		  if (NT_SUCCESS(querystatus))
-		  {
-			  HANDLE process_id = reinterpret_cast<HANDLE>(ProcessBasicInfo.UniqueProcessId);
-
-			  if (utils::process_utils::is_process_name_match_wstr_by_pid(process_id, L"cs2.exe", TRUE))
-			  {
-				  game::kcsgo2::initialize_game_process3(process_id);
-			  }
-			  }
-
-#endif
+//#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
+//
+//		  PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+//		  NTSTATUS querystatus = ZwQueryInformationProcess(
+//			  *ProcessHandle,
+//			  ProcessBasicInformation,
+//			  (PVOID)&ProcessBasicInfo,
+//			  sizeof(ProcessBasicInfo),
+//			  NULL
+//		  );
+//
+//		  if (NT_SUCCESS(querystatus))
+//		  {
+//			  HANDLE process_id = reinterpret_cast<HANDLE>(ProcessBasicInfo.UniqueProcessId);
+//
+//			  if (utils::process_utils::is_process_name_match_wstr_by_pid(process_id, L"cs2.exe", TRUE))
+//			  {
+//				  game::kcsgo2::initialize_game_process3(process_id);
+//			  }
+//			  }
+//
+//#endif
 
 		   
 
