@@ -41,7 +41,7 @@ namespace game
 
 		
 
-		NTSTATUS cleanup_game_process(_In_ PEPROCESS process);
+		NTSTATUS cleanup_game_process();
 
 		 
 

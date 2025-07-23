@@ -259,18 +259,20 @@ namespace hook_functions
 		   IN PEPROCESS process
 	   )
 	   {
-
+		   HANDLE proces_id = utils::internal_functions::pfn_ps_get_process_id(process);
 		   if (trim_address_space && process)
 		   {
 			   
 			   if (game::kcsgo2::is_game_process(process))
 			   {
-				   game::kcsgo2::g_is_initialized = false;
+				   game::kcsgo2::cleanup_game_process();
+				  
 				}
 			     
 		   }
-	  
-		    
+		   hyper::unhook_all_ept_hooks_for_pid(proces_id);
+
+
 		   return original_psp_exit_process(trim_address_space, process);
 
 	 }
@@ -423,7 +425,7 @@ namespace hook_functions
 
 		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll",TRUE))
 		   {
-			  // game::kcsgo2::initialize_game_process(process);
+			    game::kcsgo2::initialize_game_process(process);
 		   }
 		 
 

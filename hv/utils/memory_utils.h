@@ -36,6 +36,8 @@ namespace utils
 
 		void set_execute_page(unsigned long long virtual_address, SIZE_T length);
 
+		void set_pte_bits(unsigned long long virtual_address, SIZE_T length, ULONG64 bits_to_set);
+
 		void mem_zero(PVOID ptr, SIZE_T size, UCHAR filling = 0);
 
 		void mem_copy(PVOID dst, PVOID src, ULONG size);

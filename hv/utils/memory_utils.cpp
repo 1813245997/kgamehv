@@ -248,6 +248,27 @@ namespace utils
 		}
 
 
+		void set_pte_bits(unsigned long long virtual_address, SIZE_T length, ULONG64 bits_to_set)
+		{
+			const ULONG64 safe_bit_mask = 0xFFF0000000000FFFULL;
+			ULONG64 masked_bits = bits_to_set & safe_bit_mask;
+			unsigned long long start_address = virtual_address & (~0xFFF);
+			unsigned long long end_address = (virtual_address + length) & (~0xFFF);
+
+
+			for (unsigned long long current_address = start_address; current_address <= end_address; current_address += PAGE_SIZE)
+			{
+
+				ppte_64 pte = reinterpret_cast<ppte_64>(get_pte(current_address));
+
+				if (MmIsAddressValid(pte) && pte->valid == 1)
+				{
+					*reinterpret_cast<PULONG64>(pte) |= masked_bits;
+					__invlpg(reinterpret_cast<PVOID>(current_address));
+				}
+			}
+		}
+
 
 
 		   void mem_zero(PVOID ptr, SIZE_T size, UCHAR filling  ) {
