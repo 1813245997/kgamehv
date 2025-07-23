@@ -6,15 +6,7 @@ namespace hook_manager
 	{
 		using namespace utils::internal_functions;
 
-		if (pfn_nt_write_virtual_memory)
-		{
-
-			hyper::hook(
-				reinterpret_cast<void*>(pfn_nt_write_virtual_memory),
-				hook_functions::new_nt_write_virtual_memory,
-				reinterpret_cast<void**>(&hook_functions::original_nt_write_virtual_memory)
-			);
-		}
+		hyper::HookManagerInitialize();
 
 		if (pfn_ki_preprocess_fault)
 		{
@@ -59,6 +51,17 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_rtl_lookup_function_entry)
 			);
 		}
+
+		if (pfn_nt_write_virtual_memory)
+		{
+
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_write_virtual_memory),
+				hook_functions::new_nt_write_virtual_memory,
+				reinterpret_cast<void**>(&hook_functions::original_nt_write_virtual_memory)
+			);
+		}
+
 		if (pfn_nt_query_virtual_memory)
 		{
 			hyper::hook(
@@ -76,24 +79,24 @@ namespace hook_manager
 			);
 		}
 
-		/*if (pfn_nt_create_section)
+		if (pfn_nt_create_section)
 		{
 			hyper::hook(
 				reinterpret_cast<void*>(pfn_nt_create_section),
 				hook_functions::hook_nt_create_section,
 				reinterpret_cast<void**>(&hook_functions::original_nt_create_section)
 			);
-		}*/
+		}
 
 
-	/*	if (pfn_psp_exit_process)
+		if (pfn_psp_exit_process)
 		{
 			hyper::hook(
 				reinterpret_cast<void*>(pfn_psp_exit_process),
 				hook_functions::hook_psp_exit_process,
 				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
 			);
-		}*/
+		}
 		
 		
 		 
