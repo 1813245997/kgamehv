@@ -23,13 +23,39 @@ namespace utils
 			{
 				return status;
 			}
+			
 			g_pde_base = mm_get_pte_address(g_pte_base);
 			g_ppe_base = mm_get_pte_address(g_pde_base);
 			g_pxe_base = mm_get_pte_address(g_ppe_base);
 
+			LogDebug("Paging Base Values:\n"
+				"  PTE Base: 0x%llX\n"
+				"  PDE Base: 0x%llX\n"
+				"  PPE Base: 0x%llX\n"
+				"  PXE Base: 0x%llX",
+				g_pte_base, g_pde_base, g_ppe_base, g_pxe_base);
 			return STATUS_SUCCESS;
 		}
+		unsigned long long new_get_pte_base()
+		{
+			PHYSICAL_ADDRESS physical_address;
+			unsigned long long pte_base{};
+			unsigned long long index{};
+			physical_address.QuadPart = __readcr3() & 0xfffffffffffff000;   // 获取CR3寄存器，清除低12位
+			PLONG64 pxe_ptr =  reinterpret_cast<PLONG64>  (MmGetVirtualForPhysical(physical_address));   // 获取其所在的虚拟地址 - 页表自映射
+			
+			// 遍历比较
+			while ((pxe_ptr[index] & 0xfffffffff000) != physical_address.QuadPart) {
+				index++;
+				if (index >= 512) {
+					return 0;
+				}
+			}
+			// 计算pte基址
+			pte_base = ((index + 0x1fffe00) << 39);
 
+			return pte_base;
+		}
 		NTSTATUS initialize_pte_base()
 		{
 			ULONG dw_build_number = utils::os_info::get_build_number();
@@ -39,21 +65,22 @@ namespace utils
 			}
 			else
 			{
-				wchar_t wa_MmGetVirtualForPhysical[] = { 0xE3AE, 0xE38E, 0xE3A4, 0xE386, 0xE397, 0xE3B5, 0xE38A, 0xE391, 0xE397, 0xE396, 0xE382, 0xE38F, 0xE3A5, 0xE38C, 0xE391, 0xE3B3, 0xE38B, 0xE39A, 0xE390, 0xE38A, 0xE380, 0xE382, 0xE38F, 0xE3E3, 0xE3E3 };
+				//wchar_t wa_MmGetVirtualForPhysical[] = { 0xE3AE, 0xE38E, 0xE3A4, 0xE386, 0xE397, 0xE3B5, 0xE38A, 0xE391, 0xE397, 0xE396, 0xE382, 0xE38F, 0xE3A5, 0xE38C, 0xE391, 0xE3B3, 0xE38B, 0xE39A, 0xE390, 0xE38A, 0xE380, 0xE382, 0xE38F, 0xE3E3, 0xE3E3 };
 
-				for (int i = 0; i < 25; i++)
-				{
-					wa_MmGetVirtualForPhysical[i] ^= 0x6D6D;
-					wa_MmGetVirtualForPhysical[i] ^= 0x8E8E;
-				};
+				//for (int i = 0; i < 25; i++)
+				//{
+				//	wa_MmGetVirtualForPhysical[i] ^= 0x6D6D;
+				//	wa_MmGetVirtualForPhysical[i] ^= 0x8E8E;
+				//};
 
-				UNICODE_STRING unFuncNameMmGetVirtualForPhysical = { 0 };
-				RtlInitUnicodeString(&unFuncNameMmGetVirtualForPhysical, wa_MmGetVirtualForPhysical);
-				PUCHAR funcMmGetVirtualForPhysical = (PUCHAR)MmGetSystemRoutineAddress(&unFuncNameMmGetVirtualForPhysical);
-				g_pte_base = *(PULONG64)(funcMmGetVirtualForPhysical + 0x22);
+				//UNICODE_STRING unFuncNameMmGetVirtualForPhysical = { 0 };
+				//RtlInitUnicodeString(&unFuncNameMmGetVirtualForPhysical, wa_MmGetVirtualForPhysical);
+				//PUCHAR funcMmGetVirtualForPhysical = (PUCHAR)MmGetSystemRoutineAddress(&unFuncNameMmGetVirtualForPhysical);
+				//g_pte_base = *(PULONG64)(funcMmGetVirtualForPhysical + 0x22);
+
+				g_pte_base = new_get_pte_base();
 			}
-
-
+			  
 			return STATUS_SUCCESS;
 		}
 
@@ -200,42 +227,50 @@ namespace utils
 		}
 
 		unsigned long long get_pte_base()
-		{
-			if (!g_pte_base)
-			{
-				initialize_pte_base();
-			}
-
+		{ 
 			return g_pte_base;
 		}
 
+		unsigned long long get_pde_base()
+		{
+			return g_pde_base;
+		}
+
+		unsigned long long get_ppe_base()
+		{
+			return g_ppe_base;
+		}
+
+		unsigned long long get_pxe_base()
+		{
+			return g_pxe_base;
+		}
+
+
+
 		unsigned long long get_pml4(unsigned long long virtual_address)
 		{
-			unsigned long long pdpte = get_pdpte(virtual_address);
-			unsigned long long pte_base = get_pte_base();
-			return ((pdpte >> 9) & PTE_MASK) + pte_base;
+		 
+			return  mm_get_pxe_address(virtual_address);
 		}
 
 		unsigned long long get_pdpte(unsigned long long virtual_address)
 		{
-			unsigned long long pde = get_pde(virtual_address);
-			unsigned long long pte_base = get_pte_base();
-			return ((pde >> 9) & PTE_MASK) + pte_base;
+			 
+			return mm_get_ppe_address(virtual_address);
 		}
 
 		unsigned long long get_pde(unsigned long long virtual_address)
 		{
-			ULONG64 pte = get_pte(virtual_address);
+			 
 
-			ULONG64 pteBase = get_pte_base();
-
-			return ((pte >> 9) & PTE_MASK) + pteBase;
+			return  mm_get_pde_address(virtual_address);
 		}
 
 		unsigned long long get_pte(unsigned long long virtual_address)
 		{
-			unsigned long long pte_base = get_pte_base();
-			return ((virtual_address >> 9) & PTE_MASK) + pte_base;
+			
+			return  mm_get_pte_address(virtual_address);
 		}
 
 		unsigned long long get_physical_address(unsigned long long virtual_address)

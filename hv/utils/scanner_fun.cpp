@@ -495,7 +495,7 @@ namespace utils
 		   unsigned long long mm_is_address_valid_ex_addr = 0;
 			 
 
-			unsigned long long temp_addr{};
+			 
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
 
 			switch (Version)
