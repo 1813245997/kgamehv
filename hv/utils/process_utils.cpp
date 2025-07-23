@@ -149,7 +149,27 @@ namespace utils
 			return NT_SUCCESS(status) && *process_name != nullptr;
 		}
 
-		bool get_process_name(_In_ PEPROCESS process, _Out_ PUNICODE_STRING* process_name)
+		bool get_process_name_by_pid(_In_ HANDLE pid, _Inout_ PUNICODE_STRING* process_name)
+		{
+			if (!pid || !process_name)
+			{
+				return false;
+			}
+
+			PEPROCESS process = nullptr;
+			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (pid, &process);
+			if (!NT_SUCCESS(status) || !process)
+			{
+				return false;
+			}
+
+			bool result = get_process_name(process, process_name);
+			utils::internal_functions::pfn_ob_dereference_object(process);
+			 
+			return result;
+		}
+
+		bool get_process_name(_In_ PEPROCESS process,_Inout_ PUNICODE_STRING* process_name)
 		{
 			if (!process)
 			{
@@ -304,6 +324,28 @@ namespace utils
 			return result;
 		}
 
+		bool is_process_name_match_wstr_by_pid(_In_ HANDLE pid, _In_ PWCHAR target_name_wstr, _In_ BOOLEAN case_insensitive)
+		{
+			if (target_name_wstr == nullptr)
+			{
+				return false;
+			}
+
+			UNICODE_STRING target_name_unicode;
+			RtlInitUnicodeString(&target_name_unicode, target_name_wstr);
+
+			PEPROCESS process = nullptr;
+			NTSTATUS status =  utils::internal_functions::pfn_ps_lookup_process_by_process_id (pid, &process);
+			if (!NT_SUCCESS(status) || process == nullptr)
+			{
+				return false;
+			}
+
+			BOOLEAN result = is_process_name_match(process, &target_name_unicode, case_insensitive);
+
+			utils::internal_functions::pfn_ob_dereference_object(process);  
+			return result;
+		}
 		bool is_process_name_match_wstr(_In_ PEPROCESS process, _In_ PWCHAR target_name_wstr, _In_ BOOLEAN case_insensitive)
 		{
 			if (target_name_wstr == nullptr)

@@ -276,21 +276,27 @@ namespace utils
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
 
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
+
 		   //第一套绘制逻辑 通过加载DLL来初始化进程
 			if (!game::kcsgo2::is_initialize_game())
 				return;
+
 			if (!game::kcsgo2::is_create_time())
+				return;
+#endif
+
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
+
+			//第二套绘制逻辑 自己遍历进程
+			if (!game::kcsgo2::initialize_game_process2())
 				return;
 
 
-			//第二套绘制逻辑 自己遍历进程
-			//if (!game::kcsgo2::initialize_game_process2())
-			//	return;
-			// 
-			//game::kcsgo2::initialize_game_data2();
-
+			game::kcsgo2::initialize_game_data2();
+		 
+#endif
 			 
-
 			// === 绘制 ESP 相关 ===
 			 draw_players_esp(rend);
 

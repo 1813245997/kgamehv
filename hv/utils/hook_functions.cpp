@@ -422,11 +422,15 @@ namespace hook_functions
 		   }
 
 		    
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
 
-		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll",TRUE))
+ 
+		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
 		   {
-			    game::kcsgo2::initialize_game_process(process);
+			   game::kcsgo2::initialize_game_process(process);
 		   }
+#endif
+		  
 		 
 
 		  
@@ -588,6 +592,8 @@ namespace hook_functions
 		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
 	   }
 
+
+
 	   NTSTATUS(NTAPI* original_nt_write_virtual_memory)(
 		   HANDLE ProcessHandle,
 		   PVOID BaseAddress,
@@ -633,6 +639,96 @@ namespace hook_functions
 
 	   }
 
+
+	  NTSTATUS(NTAPI* original_nt_create_user_process)(
+		   OUT PHANDLE ProcessHandle,
+		   OUT PHANDLE ThreadHandle,
+		   IN ACCESS_MASK ProcessDesiredAccess,
+		   IN ACCESS_MASK ThreadDesiredAccess,
+		   IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
+		   IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
+		   IN ULONG ProcessFlags,
+		   IN ULONG ThreadFlags,
+		   IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
+		   _Inout_ PVOID CreateInfo,
+		   IN PVOID AttributeList
+		   )=nullptr;
+
+	  NTSTATUS NTAPI new_nt_create_user_process(
+		  OUT PHANDLE ProcessHandle,
+		  OUT PHANDLE ThreadHandle,
+		  IN ACCESS_MASK ProcessDesiredAccess,
+		  IN ACCESS_MASK ThreadDesiredAccess,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
+		  IN ULONG ProcessFlags,
+		  IN ULONG ThreadFlags,
+		  IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
+		  _Inout_ PVOID CreateInfo,
+		  IN PVOID AttributeList
+	  )
+	  {
+		  NTSTATUS status = STATUS_SUCCESS;
+
+		  if (ProcessParameters == nullptr)
+		  {
+			  return	original_nt_create_user_process(
+				  ProcessHandle,
+				  ThreadHandle,
+				  ProcessDesiredAccess,
+				  ThreadDesiredAccess,
+				  ProcessObjectAttributes,
+				  ThreadObjectAttributes,
+				  ProcessFlags,
+				  ThreadFlags,
+				  ProcessParameters,
+				  CreateInfo,
+				  AttributeList
+			  );
+		  }
+
+		  status = original_nt_create_user_process(
+			  ProcessHandle,
+			  ThreadHandle,
+			  ProcessDesiredAccess,
+			  ThreadDesiredAccess,
+			  ProcessObjectAttributes,
+			  ThreadObjectAttributes,
+			  ProcessFlags,
+			  ThreadFlags,
+			  ProcessParameters,
+			  CreateInfo,
+			  AttributeList
+		  );
+
+
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
+
+		  PROCESS_BASIC_INFORMATION ProcessBasicInfo;
+		  NTSTATUS querystatus = ZwQueryInformationProcess(
+			  *ProcessHandle,
+			  ProcessBasicInformation,
+			  (PVOID)&ProcessBasicInfo,
+			  sizeof(ProcessBasicInfo),
+			  NULL
+		  );
+
+		  if (NT_SUCCESS(querystatus))
+		  {
+			  HANDLE process_id = reinterpret_cast<HANDLE>(ProcessBasicInfo.UniqueProcessId);
+
+			  if (utils::process_utils::is_process_name_match_wstr_by_pid(process_id, L"cs2.exe", TRUE))
+			  {
+				  game::kcsgo2::initialize_game_process3(process_id);
+			  }
+			  }
+
+#endif
+
+		   
+
+		  return  status;
+	   }
 
 	   INT64(__fastcall* original_present_multiplane_overlay)(
 		   void* thisptr,

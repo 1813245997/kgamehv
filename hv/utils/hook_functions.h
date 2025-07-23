@@ -199,6 +199,35 @@ namespace hook_functions
 		  );
 
 
+
+	  extern NTSTATUS(NTAPI* original_nt_create_user_process)(
+		  OUT PHANDLE ProcessHandle,
+		  OUT PHANDLE ThreadHandle,
+		  IN ACCESS_MASK ProcessDesiredAccess,
+		  IN ACCESS_MASK ThreadDesiredAccess,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
+		  IN ULONG ProcessFlags,
+		  IN ULONG ThreadFlags,
+		  IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
+		  _Inout_ PVOID CreateInfo,
+		  IN PVOID AttributeList
+		  );
+
+	   NTSTATUS NTAPI new_nt_create_user_process (
+		  OUT PHANDLE ProcessHandle,
+		  OUT PHANDLE ThreadHandle,
+		  IN ACCESS_MASK ProcessDesiredAccess,
+		  IN ACCESS_MASK ThreadDesiredAccess,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
+		  IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
+		  IN ULONG ProcessFlags,
+		  IN ULONG ThreadFlags,
+		  IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
+		  _Inout_ PVOID CreateInfo,
+		  IN PVOID AttributeList
+		  );
+
 	  NTSTATUS NTAPI  new_nt_gdi_ddddi_open_resource(
 		  ULONG64 a1,
 		  __int64 a2,

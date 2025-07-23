@@ -25,7 +25,11 @@ namespace game
 		extern   LARGE_INTEGER g_process_time;
 		bool initialize_game_process(_In_ PEPROCESS process);
 		bool initialize_game_process2();
-	 
+	    bool initialize_game_process3( HANDLE process_id);
+
+		bool initialize_game_data();
+		bool initialize_game_data2();
+		bool initialize_game_data3();
 		 
 		bool is_game_process(_In_ PEPROCESS process);
 
@@ -34,8 +38,7 @@ namespace game
 
 		bool is_initialize_game();
 
-		bool initialize_game_data();
-		bool initialize_game_data2();
+
 
 		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
 

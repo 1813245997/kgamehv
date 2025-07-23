@@ -1,5 +1,8 @@
 #pragma once
 
+#define ENABLE_GAME_DRAW_TYPE3 1
+
+
 #define S_OK                                   ((HRESULT)0L)
 #define S_FALSE                                ((HRESULT)1L)
 

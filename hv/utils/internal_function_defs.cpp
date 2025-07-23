@@ -474,6 +474,20 @@ namespace utils
 							__in ULONG new_protect
 							) = nullptr;
 
+					  NTSTATUS(NTAPI* pfn_nt_create_user_process)(
+							OUT PHANDLE ProcessHandle,
+							OUT PHANDLE ThreadHandle,
+							IN ACCESS_MASK ProcessDesiredAccess,
+							IN ACCESS_MASK ThreadDesiredAccess,
+							IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
+							IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
+							IN ULONG ProcessFlags,
+							IN ULONG ThreadFlags,
+							IN PRTL_USER_PROCESS_PARAMETERS  ProcessParameters,
+						   _Inout_ PVOID CreateInfo,
+							IN PVOID AttributeList
+							) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -723,6 +737,7 @@ namespace utils
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtReadVirtualMemory");
 			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtProtectVirtualMemory");
 			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr(   "NtWriteVirtualMemory");
+			unsigned long long nt_create_user_process_addr = ssdt::get_syscall_fun_addr("NtCreateUserProcess");
 
 
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
@@ -749,7 +764,8 @@ namespace utils
 			LogDebug("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
 			LogDebug("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
-
+			LogDebug("nt_create_user_process_addr       = %p", reinterpret_cast<PVOID>(nt_create_user_process_addr));
+		 
 	 
   
 		
@@ -757,6 +773,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_read_virtual_memory, nt_read_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_protect_virtual_memory, nt_protect_virtual_memory_addr);
 			INIT_FUNC_PTR(pfn_nt_write_virtual_memory, nt_write_virtual_memory_addr);
+			INIT_FUNC_PTR(pfn_nt_create_user_process, nt_create_user_process_addr);
 			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
 			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
 			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
@@ -921,7 +938,8 @@ namespace utils
 				LogError("nt_user_query_window_addr is null.");
 			if (!nt_write_virtual_memory_addr)
 				LogError("nt_write_virtual_memory_addr is null.");
-
+			if(!nt_create_user_process_addr)
+				LogError("nt_create_user_process_addr is null.");
 
 
 			if (!ki_preprocess_fault_addr)
@@ -1032,7 +1050,8 @@ namespace utils
 				!mm_delete_kernel_stack_addr ||
 				!mm_allocate_independent_pages_addr ||
 				!mm_free_independent_pages_addr ||
-				!mm_set_page_protection_addr
+				!mm_set_page_protection_addr||
+				!nt_create_user_process_addr
 				)             
 			{
 				return STATUS_UNSUCCESSFUL;

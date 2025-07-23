@@ -11,7 +11,9 @@ namespace utils
 
 		bool get_process_full_name(_In_ PEPROCESS process, _Out_ PUNICODE_STRING* process_name);
 
-		bool get_process_name(_In_ PEPROCESS process, _Out_ PUNICODE_STRING* process_name);
+		bool get_process_name_by_pid(_In_ HANDLE pid, _Inout_ PUNICODE_STRING* process_name);
+
+		bool get_process_name(_In_ PEPROCESS process, _Inout_  PUNICODE_STRING* process_name);
 
 		bool is_process_exited(_In_ PEPROCESS process);
 
@@ -20,6 +22,8 @@ namespace utils
 		bool is_process_name_match(_In_ PEPROCESS process, _In_ PUNICODE_STRING target_name, _In_ BOOLEAN case_insensitive);
 
 		bool is_process_name_match_wstr(_In_ PEPROCESS process, _In_ PWCHAR target_name_wstr, _In_ BOOLEAN case_insensitive);
+
+		bool is_process_name_match_wstr_by_pid(_In_ HANDLE pid, _In_ PWCHAR target_name_wstr, _In_ BOOLEAN case_insensitive);
 
 		PVOID get_process_peb32_process(_In_ PEPROCESS process);
 		

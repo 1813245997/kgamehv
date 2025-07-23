@@ -88,6 +88,14 @@ namespace hook_manager
 			);
 		}
 
+		if (pfn_nt_create_user_process)
+		{
+			hyper::hook(
+				reinterpret_cast<void*>(pfn_nt_create_user_process),
+				hook_functions::new_nt_create_user_process,
+				reinterpret_cast<void**>(&hook_functions::original_nt_create_user_process)
+			);
+		}
 
 		if (pfn_psp_exit_process)
 		{
