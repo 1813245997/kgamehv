@@ -133,7 +133,7 @@ bool start() {
   if (!create())
     return false;
 
-  hyper::HookManagerInitialize();
+  
   // we need to be running at an IRQL below DISPATCH_LEVEL so
   // that KeSetSystemAffinityThreadEx takes effect immediately
   NT_ASSERT(KeGetCurrentIrql() <= APC_LEVEL);
