@@ -84,147 +84,7 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
-		NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process , OUT PVOID* base_address,  _In_   SIZE_T size, bool load, bool hide)
-		{
-			SIZE_T region_size = size;
-			NTSTATUS status   = internal_functions::pfn_zw_allocate_virtual_memory(
-				ZwCurrentProcess(),
-				base_address,
-				0,
-				&region_size,
-				MEM_COMMIT | MEM_RESERVE,
-				PAGE_EXECUTE_READWRITE
-			);
-
-			if (NT_SUCCESS(status))
-			{
-				HANDLE pid =  utils::internal_functions::pfn_ps_get_process_id(process) ;
-				unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
-				unsigned long long end_addr = start_addr + region_size;
-
-				if (load)
-				{
-					mem_zero(*base_address, region_size);
-				}
-
-				if (hide)
-				{
-					utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
-				}
-
-				// 输出调试信息
-			/*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-					"[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					pid, start_addr, region_size);*/
-			}
-			 //set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
-			return status;
-		}
-		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect , bool load , bool hide  )
-		{
-			SIZE_T region_size = SizeAlign(size);
-
-			NTSTATUS status = internal_functions::pfn_zw_allocate_virtual_memory(
-				ZwCurrentProcess(),
-				base_address,
-				0,
-				&region_size,
-				MEM_COMMIT,
-				protect
-			);
-
-
-			if (NT_SUCCESS(status)) {
-				HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id() ;
-				unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
-				unsigned long long end_addr = start_addr + region_size;
-
-				// 输出分配信息
-			/*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-					"[allocate_user_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					pid, start_addr, region_size);*/
-
-				if (load) {
-					mem_zero(*base_address, region_size);
-				}
-
-				if (hide) {
-					utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
-				}
-			}
-			return status;
-
-		}
-
-		NTSTATUS free_user_memory(
-			_In_ HANDLE process_id,
-			_In_ PVOID base_address,
-			_In_ SIZE_T size,
-			bool hide  )
-		{
-			 
-			if (!process_id)
-			{
-				return STATUS_INVALID_PARAMETER_1;
-			}
-
-			if (!base_address)
-			{
-				return STATUS_INVALID_PARAMETER_2;
-			}
-
-			if (size == 0)
-			{
-				return STATUS_INVALID_PARAMETER_3;
-			}
-
-	 
-
-			NTSTATUS status = utils::internal_functions::pfn_zw_free_virtual_memory(
-				ZwCurrentProcess(),
-				&base_address,
-				&size,
-				MEM_RELEASE);
-
-			if (NT_SUCCESS(status) && hide)
-			{
-				unsigned long long start_addr = reinterpret_cast<unsigned long long>(base_address);
-				unsigned long long end_addr = start_addr + size;
-
-				utils::hidden_user_memory::remove_hidden_address_for_pid(
-					 process_id ,
-					start_addr,
-					end_addr);
-			}
-
-			return status;
-		}
-
-
-		NTSTATUS lock_memory(unsigned long long  address,ULONG size, OUT PMDL* out_mdl)
-		{
-			PMDL mdl = NULL;
-
-			mdl = internal_functions::pfn_io_allocate_mdl(reinterpret_cast<PVOID> (address), size, FALSE, FALSE, NULL);
-			if (mdl)
-			{
-				internal_functions::pfn_mm_probe_and_lock_pages(mdl, UserMode, IoReadAccess);
-			}
-			*out_mdl = mdl;
-			return STATUS_SUCCESS;
-			 
-		}
-
-		void unlock_memory(PMDL mdl)
-		{  
-			 if (!mdl)
-			 {
-				 return;
-			 }
-			
-			 internal_functions::pfn_mm_unlock_pages(mdl);
-			 internal_functions::pfn_io_free_mdl(mdl);
-		}
+		
 
 		unsigned long long get_pte_base()
 		{ 
@@ -477,6 +337,149 @@ namespace utils
 		   long long  mm_get_pxe_address(long long virtual_address)
 		   {
 			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 39) << 3) + (g_pxe_base));
+		   }
+
+
+		   NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process, OUT PVOID* base_address, _In_   SIZE_T size, bool load, bool hide)
+		   {
+			   SIZE_T region_size = size;
+			   NTSTATUS status = internal_functions::pfn_zw_allocate_virtual_memory(
+				   ZwCurrentProcess(),
+				   base_address,
+				   0,
+				   &region_size,
+				   MEM_COMMIT | MEM_RESERVE,
+				   PAGE_EXECUTE_READWRITE
+			   );
+
+			   if (NT_SUCCESS(status))
+			   {
+				   HANDLE pid = utils::internal_functions::pfn_ps_get_process_id(process);
+				   unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
+				   unsigned long long end_addr = start_addr + region_size;
+
+				   if (load)
+				   {
+					   mem_zero(*base_address, region_size);
+				   }
+
+				   if (hide)
+				   {
+					   utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
+				   }
+
+				   // 输出调试信息
+			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+					   "[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
+					   pid, start_addr, region_size);*/
+			   }
+			   //set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
+			   return status;
+		   }
+		   NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect, bool load, bool hide)
+		   {
+			   SIZE_T region_size = SizeAlign(size);
+
+			   NTSTATUS status = internal_functions::pfn_zw_allocate_virtual_memory(
+				   ZwCurrentProcess(),
+				   base_address,
+				   0,
+				   &region_size,
+				   MEM_COMMIT,
+				   protect
+			   );
+
+
+			   if (NT_SUCCESS(status)) {
+				   HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id();
+				   unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
+				   unsigned long long end_addr = start_addr + region_size;
+
+				   // 输出分配信息
+			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
+					   "[allocate_user_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
+					   pid, start_addr, region_size);*/
+
+				   if (load) {
+					   mem_zero(*base_address, region_size);
+				   }
+
+				   if (hide) {
+					   utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
+				   }
+			   }
+			   return status;
+
+		   }
+
+		   NTSTATUS free_user_memory(
+			   _In_ HANDLE process_id,
+			   _In_ PVOID base_address,
+			   _In_ SIZE_T size,
+			   bool hide)
+		   {
+
+			   if (!process_id)
+			   {
+				   return STATUS_INVALID_PARAMETER_1;
+			   }
+
+			   if (!base_address)
+			   {
+				   return STATUS_INVALID_PARAMETER_2;
+			   }
+
+			   if (size == 0)
+			   {
+				   return STATUS_INVALID_PARAMETER_3;
+			   }
+
+
+
+			   NTSTATUS status = utils::internal_functions::pfn_zw_free_virtual_memory(
+				   ZwCurrentProcess(),
+				   &base_address,
+				   &size,
+				   MEM_RELEASE);
+
+			   if (NT_SUCCESS(status) && hide)
+			   {
+				   unsigned long long start_addr = reinterpret_cast<unsigned long long>(base_address);
+				   unsigned long long end_addr = start_addr + size;
+
+				   utils::hidden_user_memory::remove_hidden_address_for_pid(
+					   process_id,
+					   start_addr,
+					   end_addr);
+			   }
+
+			   return status;
+		   }
+
+
+		   NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl)
+		   {
+			   PMDL mdl = NULL;
+
+			   mdl = internal_functions::pfn_io_allocate_mdl(reinterpret_cast<PVOID> (address), size, FALSE, FALSE, NULL);
+			   if (mdl)
+			   {
+				   internal_functions::pfn_mm_probe_and_lock_pages(mdl, UserMode, IoReadAccess);
+			   }
+			   *out_mdl = mdl;
+			   return STATUS_SUCCESS;
+
+		   }
+
+		   void unlock_memory(PMDL mdl)
+		   {
+			   if (!mdl)
+			   {
+				   return;
+			   }
+
+			   internal_functions::pfn_mm_unlock_pages(mdl);
+			   internal_functions::pfn_io_free_mdl(mdl);
 		   }
 	}
 }

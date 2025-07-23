@@ -13,17 +13,7 @@ namespace utils
 		NTSTATUS initialize_pte_base();
 
 		unsigned long long new_get_pte_base();
-
-		NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process ,OUT PVOID* base_address, _In_   SIZE_T size, bool load = true, bool hide = true);
-
-		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect = PAGE_READWRITE, bool load = true ,bool hide =true);
-
-		NTSTATUS free_user_memory(_In_ HANDLE process_id, _In_  PVOID base_address, _In_ SIZE_T size,  bool hide = true);
-
-		NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl);
-
-		void unlock_memory(PMDL mdl);
-
+		 
 		unsigned long long get_pte_base();
 
 		unsigned long long get_pde_base();
@@ -31,8 +21,6 @@ namespace utils
 		unsigned long long get_ppe_base();
 
 		unsigned long long get_pxe_base();
-
-
 
 		unsigned long long get_pml4(unsigned long long virtual_address);
 
@@ -64,6 +52,19 @@ namespace utils
 		long long mm_get_ppe_address(long long virtual_address);
 
 		long long mm_get_pxe_address(long long virtual_address);
+
+
+
+
+		NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process, OUT PVOID* base_address, _In_   SIZE_T size, bool load = true, bool hide = true);
+
+		NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect = PAGE_READWRITE, bool load = true, bool hide = true);
+
+		NTSTATUS free_user_memory(_In_ HANDLE process_id, _In_  PVOID base_address, _In_ SIZE_T size, bool hide = true);
+
+		NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl);
+
+		void unlock_memory(PMDL mdl);
 
 	}
 }
