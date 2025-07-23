@@ -23,9 +23,9 @@ namespace utils
 			{
 				return status;
 			}
-			g_pde_base = get_pte(g_pte_base);
-			g_ppe_base = get_pte(g_pde_base);
-			g_pxe_base = get_pte(g_ppe_base);
+			g_pde_base = mm_get_pte_address(g_pte_base);
+			g_ppe_base = mm_get_pte_address(g_pde_base);
+			g_pxe_base = mm_get_pte_address(g_ppe_base);
 
 			return STATUS_SUCCESS;
 		}
@@ -420,6 +420,28 @@ namespace utils
 			   }
 
 			   return false;
+		   }
+		   
+
+	 
+		   long long mm_get_pte_address(long long virtual_address)
+		   {
+			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 12) << 3) + (g_pte_base));
+		   }
+
+		   long long mm_get_pde_address(long long virtual_address)
+		   {
+			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 21) << 3) + (g_pde_base));
+		   }
+
+		   long long mm_get_ppe_address(long long virtual_address)
+		   {
+			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 30) << 3) + (g_ppe_base));
+		   }
+
+		   long long  mm_get_pxe_address(long long virtual_address)
+		   {
+			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 39) << 3) + (g_pxe_base));
 		   }
 	}
 }

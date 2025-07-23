@@ -47,5 +47,15 @@ namespace utils
 		bool is_user_address(void* virtual_address);
 
 		bool is_executable_address(unsigned long long virtual_address);
+
+		//新获取PTE 等算法
+		long long mm_get_pte_address(long long virtual_address);
+
+		long long mm_get_pde_address(long long virtual_address);
+
+		long long mm_get_ppe_address(long long virtual_address);
+
+		long long mm_get_pxe_address(long long virtual_address);
+
 	}
 }

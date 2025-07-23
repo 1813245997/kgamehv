@@ -67,6 +67,11 @@ namespace utils
 			 game::kcsgo2::g_game_handle = 0;;
 		  
 			 utils::auth::g_license_expire_timestamp = 0;
+
+		 utils:memory::g_pte_base=0;
+		 utils:memory::g_pde_base=0;
+		 utils:memory::g_ppe_base=0;
+		 utils:memory::g_pxe_base=0;
 			 return true;
 		}
 	}
