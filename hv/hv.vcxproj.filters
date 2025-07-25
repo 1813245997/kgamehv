@@ -19,84 +19,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="arch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="exit-handlers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gdt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="guest-context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="idt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="interrupt-handlers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="page-tables.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="segment.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="trap-frame.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vcpu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vmx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hypercalls.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ept.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="exception-routines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="mtrr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="timing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vmcs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="introspection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="spin-lock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="memory_pool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="processor_affinity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="prevmcall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hookutils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\hook_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -104,15 +26,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LDE64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="exception.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="hypervisor_routines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="interrupt.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\signature_scanner.h">
@@ -277,75 +190,60 @@
     <ClInclude Include="utils\macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\khyper_vt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\allocators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hypervisor_gateway.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hypervisor_routines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\interrupt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\invalidators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\poolmanager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\spinlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\vmcall_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\vmcall_reason.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\vmexit_handler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\vmm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\xsave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\hook_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="exit-handlers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gdt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hv.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="idt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="page-tables.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="segment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vcpu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hypercalls.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ept.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mtrr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="timing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vmcs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="introspection.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="memory_pool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="processor_affinity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="prevmcall.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hookutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\hook_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\hook_functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="hypervisor_routines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\signature_scanner.cpp">
@@ -462,26 +360,44 @@
     <ClCompile Include="utils\global_initializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="utils\khyper_vt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\ept.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\hypervisor_gateway.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\hypervisor_routines.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\invalidators.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\poolmanager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\spinlock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\vmcall_handler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\vmcs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\vmexit_handler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\vmm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="interrupt-handlers.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="vm-exit.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="vm-launch.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="vmx.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="exception-routines.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="arch.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
     <MASM Include="lde64.asm">
       <Filter>Source Files</Filter>
     </MASM>
@@ -491,11 +407,5 @@
     <MASM Include="utils\cpu_registers.asm">
       <Filter>Source Files</Filter>
     </MASM>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="vmx.inl">
-      <Filter>Header Files</Filter>
-    </None>
-    <None Include="cpp.hint" />
   </ItemGroup>
 </Project>

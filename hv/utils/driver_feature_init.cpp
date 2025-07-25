@@ -84,23 +84,18 @@ namespace utils
 
 			game::kcsgo2::initialize_player_data_lock();
 			KMenuConfig::  initialize_visual_config_once();
+
+
 			LogDebug("Starting virtualization...");
-			if (!hv::start())
+			status = khyper_vt::initialize_khyper_vt();
+			if (!NT_SUCCESS(status))
 			{
-				LogError("Failed to virtualize system.");
-				return STATUS_HV_OPERATION_FAILED;
+				LogError("Failed to initialize hooks (0x%X).", status);
+				return status;
 			}
 			LogDebug("Virtualization started successfully.");
 
-			LogDebug("Pinging hypervisor...");
-			if (ping() == hv::hypervisor_signature)
-			{
-				LogDebug("Hypervisor signature matches.");
-			}
-			else
-			{
-				LogError("Failed to ping hypervisor!");
-			}
+			 
 
 			utils::hidden_modules::initialize_hidden_module_list();
 

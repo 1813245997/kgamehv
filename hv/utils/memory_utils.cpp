@@ -502,5 +502,60 @@ namespace utils
 			   internal_functions::pfn_mm_unlock_pages(mdl);
 			   internal_functions::pfn_io_free_mdl(mdl);
 		   }
+
+		   //NTSTATUS rtl_super_copy_memory(IN VOID UNALIGNED* destination, IN CONST VOID UNALIGNED* source, IN ULONG length)
+		   //{
+			  // //Change memory properties.
+			  // PMDL g_pmdl = IoAllocateMdl(destination, length, 0, 0, NULL);
+			  // if (!g_pmdl)
+				 //  return STATUS_UNSUCCESSFUL;
+			  // MmBuildMdlForNonPagedPool(g_pmdl);
+			  // PVOID Mapped = MmMapLockedPages(g_pmdl, KernelMode);
+			  // if (!Mapped)
+			  // {
+				 //  IoFreeMdl(g_pmdl);
+				 //  return STATUS_UNSUCCESSFUL;
+			  // }
+			  // KIRQL kirql = KeRaiseIrqlToDpcLevel();
+			  // RtlCopyMemory(Mapped, source, length);
+			  // KeLowerIrql(kirql);
+			  // //Restore memory properties.
+			  // MmUnmapLockedPages((PVOID)Mapped, g_pmdl);
+			  // IoFreeMdl(g_pmdl);
+			  // return STATUS_SUCCESS;
+		   //}
+
+		   //NTSTATUS rtl_super_copy_memory_from_source(
+			  // IN VOID UNALIGNED* destination,
+			  // IN CONST VOID UNALIGNED* source,
+			  // IN ULONG length)
+		   //{
+			  // // Allocate an MDL for the source address
+			  // PMDL sourceMdl = IoAllocateMdl((PVOID)source, length, 0, 0, NULL);
+			  // if (!sourceMdl)
+				 //  return STATUS_UNSUCCESSFUL;
+
+			  // // Build the MDL for non-paged pool
+			  // MmBuildMdlForNonPagedPool(sourceMdl);
+
+			  // // Map the source address into kernel mode
+			  // PVOID mappedSource = MmMapLockedPages(sourceMdl, KernelMode);
+			  // if (!mappedSource)
+			  // {
+				 //  IoFreeMdl(sourceMdl);
+				 //  return STATUS_UNSUCCESSFUL;
+			  // }
+
+			  // // Perform the memory copy
+			  // KIRQL kirql = KeRaiseIrqlToDpcLevel();
+			  // RtlCopyMemory(destination, mappedSource, length);
+			  // KeLowerIrql(kirql);
+
+			  // // Restore memory properties
+			  // MmUnmapLockedPages(mappedSource, sourceMdl);
+			  // IoFreeMdl(sourceMdl);
+			  // return STATUS_SUCCESS;
+		   //}
+
 	}
 }

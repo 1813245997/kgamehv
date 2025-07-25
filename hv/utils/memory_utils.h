@@ -66,6 +66,14 @@ namespace utils
 
 		NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl);
 
+		//NTSTATUS rtl_super_copy_memory(IN VOID UNALIGNED* destination, IN CONST VOID UNALIGNED* source, IN ULONG length);
+
+		//NTSTATUS rtl_super_copy_memory_from_source(
+		//	IN VOID UNALIGNED* destination,
+		//	IN CONST VOID UNALIGNED* source,
+		//	IN ULONG length);
+
+
 		void unlock_memory(PMDL mdl);
 
 	}

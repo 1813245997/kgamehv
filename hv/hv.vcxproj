@@ -100,7 +100,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>..\extern\ia32-doc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <TreatWarningAsError>false</TreatWarningAsError>
@@ -127,14 +127,6 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="arch.h" />
-    <ClInclude Include="ept.h" />
-    <ClInclude Include="exception-routines.h" />
-    <ClInclude Include="exception.h" />
-    <ClInclude Include="exit-handlers.h" />
-    <ClInclude Include="gdt.h" />
-    <ClInclude Include="guest-context.h" />
-    <ClInclude Include="hookutils.h" />
     <ClInclude Include="utils\auth\auth.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
@@ -160,28 +152,12 @@
     <ClInclude Include="utils\hidden_user_memory_list.h" />
     <ClInclude Include="utils\hook_functions.h" />
     <ClInclude Include="utils\hook_manager.h" />
-    <ClInclude Include="hv.h" />
-    <ClInclude Include="hypercalls.h" />
-    <ClInclude Include="hypervisor_routines.h" />
-    <ClInclude Include="idt.h" />
-    <ClInclude Include="interrupt-handlers.h" />
-    <ClInclude Include="interrupt.h" />
-    <ClInclude Include="introspection.h" />
     <ClInclude Include="LDE64.h" />
-    <ClInclude Include="logger.h" />
-    <ClInclude Include="memory_pool.h" />
-    <ClInclude Include="mm.h" />
-    <ClInclude Include="mtrr.h" />
-    <ClInclude Include="page-tables.h" />
-    <ClInclude Include="prevmcall.h" />
-    <ClInclude Include="processor_affinity.h" />
-    <ClInclude Include="segment.h" />
-    <ClInclude Include="spin-lock.h" />
-    <ClInclude Include="timing.h" />
-    <ClInclude Include="trap-frame.h" />
+    <ClInclude Include="utils\hook_utils.h" />
     <ClInclude Include="utils\import_encrypt.h" />
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
+    <ClInclude Include="utils\khyper_vt.h" />
     <ClInclude Include="utils\LegacyRender.h" />
     <ClInclude Include="utils\log_utils.h" />
     <ClInclude Include="utils\macros.h" />
@@ -210,15 +186,21 @@
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
-    <ClInclude Include="vcpu.h" />
-    <ClInclude Include="vmcs.h" />
-    <ClInclude Include="vmx.h" />
+    <ClInclude Include="vtx\allocators.h" />
+    <ClInclude Include="vtx\common.h" />
+    <ClInclude Include="vtx\hypervisor_gateway.h" />
+    <ClInclude Include="vtx\hypervisor_routines.h" />
+    <ClInclude Include="vtx\interrupt.h" />
+    <ClInclude Include="vtx\invalidators.h" />
+    <ClInclude Include="vtx\poolmanager.h" />
+    <ClInclude Include="vtx\spinlock.h" />
+    <ClInclude Include="vtx\vmcall_handler.h" />
+    <ClInclude Include="vtx\vmcall_reason.h" />
+    <ClInclude Include="vtx\vmexit_handler.h" />
+    <ClInclude Include="vtx\vmm.h" />
+    <ClInclude Include="vtx\xsave.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ept.cpp" />
-    <ClCompile Include="exit-handlers.cpp" />
-    <ClCompile Include="gdt.cpp" />
-    <ClCompile Include="hookutils.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth\auth.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp" />
@@ -238,24 +220,12 @@
     <ClCompile Include="utils\hidden_user_memory_list.cpp" />
     <ClCompile Include="utils\hook_functions.cpp" />
     <ClCompile Include="utils\hook_manager.cpp" />
-    <ClCompile Include="hv.cpp" />
-    <ClCompile Include="hypercalls.cpp" />
-    <ClCompile Include="hypervisor_routines.cpp" />
-    <ClCompile Include="idt.cpp" />
-    <ClCompile Include="introspection.cpp" />
-    <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="memory_pool.cpp" />
-    <ClCompile Include="mm.cpp" />
-    <ClCompile Include="mtrr.cpp" />
-    <ClCompile Include="page-tables.cpp" />
-    <ClCompile Include="prevmcall.cpp" />
-    <ClCompile Include="processor_affinity.cpp" />
-    <ClCompile Include="segment.cpp" />
-    <ClCompile Include="timing.cpp" />
+    <ClCompile Include="utils\hook_utils.cpp" />
     <ClCompile Include="utils\import_encrypt.cpp" />
     <ClCompile Include="utils\internal_function_defs.cpp" />
     <ClCompile Include="utils\kernel_hide_utils.cpp" />
+    <ClCompile Include="utils\khyper_vt.cpp" />
     <ClCompile Include="utils\log_utils.cpp" />
     <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />
@@ -274,23 +244,21 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
-    <ClCompile Include="vcpu.cpp" />
-    <ClCompile Include="vmcs.cpp" />
+    <ClCompile Include="vtx\ept.cpp" />
+    <ClCompile Include="vtx\hypervisor_gateway.cpp" />
+    <ClCompile Include="vtx\hypervisor_routines.cpp" />
+    <ClCompile Include="vtx\invalidators.cpp" />
+    <ClCompile Include="vtx\poolmanager.cpp" />
+    <ClCompile Include="vtx\spinlock.cpp" />
+    <ClCompile Include="vtx\vmcall_handler.cpp" />
+    <ClCompile Include="vtx\vmcs.cpp" />
+    <ClCompile Include="vtx\vmexit_handler.cpp" />
+    <ClCompile Include="vtx\vmm.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="arch.asm" />
-    <MASM Include="exception-routines.asm" />
-    <MASM Include="interrupt-handlers.asm" />
     <MASM Include="lde64.asm" />
     <MASM Include="utils\cpu_registers.asm" />
     <MASM Include="utils\dx_draw\math.asm" />
-    <MASM Include="vm-exit.asm" />
-    <MASM Include="vm-launch.asm" />
-    <MASM Include="vmx.asm" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="cpp.hint" />
-    <None Include="vmx.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

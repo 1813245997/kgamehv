@@ -735,6 +735,13 @@ extern "C"
 
 
 
+	 struct __nt_kprocess
+	 {
+		 DISPATCHER_HEADER Header;                                       //0x0
+		 LIST_ENTRY ProfileListHead;                                     //0x18
+		 ULONGLONG DirectoryTableBase;
+	 };
+
 }
 
 extern "C"
@@ -746,5 +753,27 @@ extern "C"
 		IN  ULONG ProcessInformationLength,
 		IN  PULONG ReturnLength
 	);
+	NTSYSAPI
+		VOID
+		NTAPI
+		KeGenericCallDpc(
+			_In_ PKDEFERRED_ROUTINE Routine,
+			_In_opt_ PVOID Context
+		);
+
+	NTSYSAPI
+		VOID
+		NTAPI
+		KeSignalCallDpcDone(
+			_In_ PVOID SystemArgument1
+		);
+
+	NTSYSAPI
+		LOGICAL
+		NTAPI
+		KeSignalCallDpcSynchronize(
+			_In_ PVOID SystemArgument2
+		);
+
 }
 

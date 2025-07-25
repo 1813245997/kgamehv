@@ -26,7 +26,7 @@
 #include "scanner_offset.h"
 #include "hidden_module_list.h"
 #include "hook_manager.h"
-#include "..\hookutils.h"
+ 
 #include "hook_functions.h"
 #include "internal_function_defs.h"
 #include "feature_data_initializer.h"
@@ -36,7 +36,7 @@
 #include "process_utils.h"
 #include "feature_offset_initializer.h"
 #include "dwm_draw.h"
-#include "..\memory_pool.h"
+ 
 #include "time_utils.h"
 #include "cpu_registers.h"
 #include "strong_dx.h"
@@ -58,3 +58,7 @@
 #include "file_utils.h"
 #include "log_utils.h"
 #include "global_initializer.h"
+#include "khyper_vt.h"
+#include "driver_feature_init.h"
+#include "hook_utils.h"
+#include "../vtx/hypervisor_gateway.h"
