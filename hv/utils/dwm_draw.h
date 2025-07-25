@@ -157,7 +157,7 @@ namespace utils
 
 		 NTSTATUS  hook_dxgk_get_device_state(IN PEPROCESS process);
 	 
-	 	 NTSTATUS  hook_d3d_kmt_open_resource(IN PEPROCESS process);
+	 	 
 
 
 		 

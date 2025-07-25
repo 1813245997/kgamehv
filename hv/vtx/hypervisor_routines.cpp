@@ -3,14 +3,14 @@
 #include <ntddk.h>
 #include <intrin.h>
 #include "hypervisor_routines.h"
-#include "..\ia32\cpuid.h"
+#include "cpuid.h"
 #include "..\asm\vm_context.h"
-#include "..\ia32\cr.h"
-#include "..\ia32\msr.h"
-#include "../ia32\vmcs.h"
+#include "cr.h"
+#include "msr.h"
+#include "vmcs.h"
  
  
-#include "../ia32\vmcs_encodings.h"
+#include "vmcs_encodings.h"
 #include "vmcall_handler.h"
 #include "interrupt.h"
 #include "allocators.h"

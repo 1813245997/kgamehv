@@ -61,4 +61,6 @@
 #include "khyper_vt.h"
 #include "driver_feature_init.h"
 #include "hook_utils.h"
+#include "memory_pool.h"
 #include "../vtx/hypervisor_gateway.h"
+#include "vmcall_comm_args.h"

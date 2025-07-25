@@ -30,7 +30,7 @@ namespace hvgt
 	/// </summary>
 	/// <param name="process_id">The PID of the process whose hooks should be removed</param>
 	/// <returns>status</returns>
-	bool unhook_by_pid(HANDLE process_id);
+	//bool unhook_by_pid(HANDLE process_id);
 
 	/// <summary>
 	/// Hook function via ept and invalidates mappings
@@ -59,7 +59,7 @@ namespace hvgt
 	 *               failed. This typically indicates issues with setting up the hook or modifying the
 	 *               function's memory.
 	 */
-	bool InstallUserHook_function(void* target_address, void* hook_function, void** origin_function );
+//	bool InstallUserHook_function(void* target_address, void* hook_function, void** origin_function );
 	/// <summary>
 	/// Check if we can communicate with hypervisor
 	/// </summary>

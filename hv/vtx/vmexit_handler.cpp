@@ -1,24 +1,22 @@
 #pragma warning( disable : 4201 4244 4065)
-#include "../utils/global_defs.h"
+#include "common.h"
+#include "vmcall_handler.h"
 #include <ntddk.h>
 #include <intrin.h>
 #include "hypervisor_routines.h"
-#include "common.h"
 #include "vmexit_handler.h"
-#include "../ia32\cpuid.h"
-#include "../ia32\vmcs_encodings.h"
-#include "../ia32\msr.h"
- 
-#include "vmcall_handler.h"
+#include "cpuid.h"
+#include "vmcs_encodings.h"
+#include "msr.h"
 #include "interrupt.h"
 #include "../asm\vm_intrin.h"
-#include "../ia32\cr.h"
-#include "../ia32\rflags.h"
-#include "../ia32\dr.h"
+#include "cr.h"
+#include "dr.h"
 #include "invalidators.h"
 #include "xsave.h"
-#include "../ia32\segment.h"
-#include "../ia32\vmcs.h"
+#include "segment.h"
+#include "vmcs.h"
+#include "../utils/log_utils.h"
 
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
@@ -128,7 +126,7 @@ void vmexit_monitor_trap_flag_handler(__vcpu* vcpu)
 	{
 		hooked_entry->original_entry.execute = false;
 		vcpu->ept_state->page_to_change = nullptr;
-		ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::INVEPT_SINGLE_CONTEXT);
+		ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
 	}
 }
 
@@ -505,17 +503,17 @@ void vmexit_ept_violation_handler(__vcpu* vcpu)
 					hv::set_mtf(true);
 					hooked_entry->original_entry.execute = true;
 					vcpu->ept_state->page_to_change = hooked_entry;
-					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::INVEPT_SINGLE_CONTEXT);
+					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
 				}
 				else
 				{
-					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::INVEPT_SINGLE_CONTEXT);
+					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
 				}
 			}
 
 			else if (ept_violation.execute_access && (ept_violation.ept_readable || ept_violation.ept_writeable))
 			{
-				ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->changed_entry, invept_type::INVEPT_SINGLE_CONTEXT);
+				ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->changed_entry, invept_type::invept_single_context);
 			}
 
 			break;
@@ -634,7 +632,7 @@ void vmexit_invpcid_handler(__vcpu* vcpu)
 
 	unsigned __int64* type = &vcpu->vmexit_info.guest_registers->rax - instruction_information.reg2;
 
-	if (*type > INVPCID_ALL_CONTEXTS_EXCEPT_GLOBAL_TRANSLATIONS)
+	if (*type > invpcid_all_context)
 	{
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
@@ -665,28 +663,28 @@ void vmexit_invpcid_handler(__vcpu* vcpu)
 
 	__cr4 cr4 = { __readcr4() };
 
-	if ((*type == INVPCID_INVIDUAL_ADDRESS || *type == INVPCID_SINGLE_CONTEXT) && descriptor.pcid != 0 && cr4.pcid_enable == false)
+	if ((*type == invpcid_individual_address || *type == invpcid_single_context) && descriptor.pcid != 0 && cr4.pcid_enable == false)
 	{
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
 
-	if (*type == INVPCID_INVIDUAL_ADDRESS && !hv::is_address_canonical(descriptor.linear_address))
+	if (*type == invpcid_individual_address && !hv::is_address_canonical(descriptor.linear_address))
 	{
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
 
-	if (*type == INVPCID_INVIDUAL_ADDRESS)
+	if (*type == invpcid_individual_address)
 		invvpid_invidual_address(descriptor.linear_address, 1);
 
-	else if (*type == INVPCID_SINGLE_CONTEXT)
-		invvpid_single_context(1);
+	else if (*type == invpcid_single_context)
+		invvpid_single_context_address(1);
 
-	else if (*type == INVPCID_ALL_CONTEXTS)
-		invvpid_single_context(1);
+	else if (*type == invvpid_all_context)
+		invvpid_single_context_address(1);
 
-	else if (*type == INVPCID_ALL_CONTEXTS_EXCEPT_GLOBAL_TRANSLATIONS)
+	else if (*type == invvpid_single_context_retaining_globals)
 		invvpid_single_context_except_global_translations(1);
 
 	adjust_rip(vcpu);
@@ -851,7 +849,7 @@ void vmexit_mov_dr_handler(__vcpu* vcpu)
 void vmexit_io(__vcpu* vcpu)
 {
 	__exit_qualification_io io_information;
-	__rflags rflags = vcpu->vmexit_info.guest_rflags;
+	 rflags rflags = vcpu->vmexit_info.guest_rflags;
 
 	io_information.all = vcpu->vmexit_info.qualification;
 
@@ -1014,7 +1012,7 @@ void vmexit_io_handler(__vcpu* vcpu)
 /// <param name="guest_registers"></param>
 void vmexit_rdrand_handler(__vcpu* vcpu)
 {
-	__rflags rflags = vcpu->vmexit_info.guest_rflags;
+	 rflags rflags = vcpu->vmexit_info.guest_rflags;
 	__vmexit_instruction_information5 instruction_information;
 
 	instruction_information.all = vcpu->vmexit_info.instruction_information;
@@ -1053,7 +1051,7 @@ void vmexit_rdrand_handler(__vcpu* vcpu)
 		}
 	}
 
-	hv::vmwrite<unsigned __int64>(GUEST_RFLAGS, rflags.all);
+	hv::vmwrite<unsigned __int64>(GUEST_RFLAGS, rflags.flags);
 
 	adjust_rip(vcpu);
 }
@@ -1064,7 +1062,7 @@ void vmexit_rdrand_handler(__vcpu* vcpu)
 /// <param name="guest_registers"></param>
 void vmexit_rdseed_handler(__vcpu* vcpu)
 {
-	__rflags rflags = vcpu->vmexit_info.guest_rflags;
+	rflags rflags = vcpu->vmexit_info.guest_rflags;
 	__vmexit_instruction_information5 instruction_information;
 	
 	instruction_information.all = vcpu->vmexit_info.instruction_information;
@@ -1105,7 +1103,7 @@ void vmexit_rdseed_handler(__vcpu* vcpu)
 		}
 	}
 
-	hv::vmwrite<unsigned __int64>(GUEST_RFLAGS, rflags.all);
+	hv::vmwrite<unsigned __int64>(GUEST_RFLAGS, rflags.flags);
 
 	adjust_rip(vcpu);
 }
@@ -1528,7 +1526,7 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 
 	vcpu->vmexit_info.reason = hv::vmread(EXIT_REASON) & 0xffff;
 	vcpu->vmexit_info.qualification = hv::vmread(EXIT_QUALIFICATION);
-	vcpu->vmexit_info.guest_rflags.all = hv::vmread(GUEST_RFLAGS);
+	vcpu->vmexit_info.guest_rflags.flags = hv::vmread(GUEST_RFLAGS);
 	vcpu->vmexit_info.guest_rip = hv::vmread(GUEST_RIP);
 	vcpu->vmexit_info.instruction_length = hv::vmread(VM_EXIT_INSTRUCTION_LENGTH);
 	vcpu->vmexit_info.instruction_information = hv::vmread(VM_EXIT_INSTRUCTION_INFORMATION);

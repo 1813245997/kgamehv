@@ -1,6 +1,6 @@
 #include "../global_defs.h"
 #include "user_comm.h"
-#include "../../arch.h"
+ 
 
 #define USER_COMM_KEY1 0X88889922
 #define USER_COMM_KEY2 0X88889922

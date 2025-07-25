@@ -5,10 +5,10 @@
 #include "vmcall_handler.h"
 #include "../asm\vm_intrin.h"
 #include "vmcall_reason.h"
-#include "../ia32\vmcs_encodings.h"
-#include "../ia32\msr.h"
-#include "../ia32\cr.h"
-#include "../ia32\cpuid.h"
+#include "vmcs_encodings.h"
+#include "msr.h"
+#include "cr.h"
+#include "cpuid.h"
 #include "vmexit_handler.h"
 #include "hypervisor_routines.h"
 #include "interrupt.h"
@@ -97,9 +97,13 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 
 		case VMCALL_EPT_HOOK_FUNCTION:
 		{
-			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter4);
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
-			status = ept::hook_kernel_function (*vcpu->ept_state, (void*)vmcall_parameter1, (void*)vmcall_parameter2, (void**)vmcall_parameter3);
+			status = ept::hook_kernel_function (
+				*vcpu->ept_state, 
+				reinterpret_cast<void *>  (vmcall_parameter2),
+				reinterpret_cast<void*>  (vmcall_parameter3), 
+				reinterpret_cast<void**>  (vmcall_parameter4));
 
 			hv::restore_context(old_cr3);
 
@@ -109,9 +113,9 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 
 		case VMCALL_EPT_UNHOOK_FUNCTION:
 		{
-			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter3);
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
-			EptUnhookType unhook_type = static_cast<EptUnhookType>(vmcall_parameter1); // 使用枚举类型
+			EptUnhookType unhook_type = static_cast<EptUnhookType>(vmcall_parameter2); // 使用枚举类型
 
 			switch (unhook_type)
 			{
@@ -121,16 +125,16 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 
 			case UNHOOK_SINGLE:
 				 
-				status = ept::unhook_function(*vcpu->ept_state, vmcall_parameter2);
+				status = ept::unhook_function(*vcpu->ept_state, vmcall_parameter3);
 				break;
 
 			case UNHOOK_BY_PID:
 				 
-				status = ept::unhook_by_pid(*vcpu->ept_state, reinterpret_cast<HANDLE>(vmcall_parameter2));
+				status = ept::unhook_by_pid(*vcpu->ept_state, reinterpret_cast<HANDLE>(vmcall_parameter4));
 				break;
 
 			default:
-				status = STATUS_INVALID_PARAMETER; // 无效的操作类型
+				status = false; // 无效的操作类型
 				break;
 			}
 
@@ -139,19 +143,25 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			adjust_rip(vcpu);
 			break;
 		}
-		case VMCALL_EPT_HOOK_FUNCTIONR3:
+
+		case VMCALL_EPT_SET_BREAK_POINT:
 		{
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
-			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter4);
-
-			status = ept::InstallUserHook_function(*vcpu->ept_state, (void*)vmcall_parameter1, (void*)vmcall_parameter2, (void**)vmcall_parameter3);
+			status = ept::hook_break_ponint_int3(
+				*vcpu->ept_state,
+				reinterpret_cast<void*>  (vmcall_parameter2),
+				reinterpret_cast<void*>  (vmcall_parameter3),
+				reinterpret_cast<unsigned char*>  (vmcall_parameter4));
 
 			hv::restore_context(old_cr3);
 
 			adjust_rip(vcpu);
-			 
 			break;
 		}
+		
+
+
 
 		case VMCALL_DUMP_POOL_MANAGER:
 		{

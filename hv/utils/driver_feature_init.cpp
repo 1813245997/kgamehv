@@ -1,18 +1,18 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
-#include "..\hv.h"
+ 
 
 
 namespace utils
 {
 	namespace driver_features
 	{
-		static uint64_t ping() {
+		/*static uint64_t ping() {
 			hv::hypercall_input input;
 			input.code = hv::hypercall_ping;
 			input.key = hv::hypercall_key;
 			return hv::vmx_vmcall(input);
-		}
+		}*/
 
 		NTSTATUS initialize_all_features(IN PVOID context)
 		{

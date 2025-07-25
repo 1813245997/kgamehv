@@ -1,13 +1,5 @@
 #pragma once
-enum __mtrr_memory_types
-{
-	MEMORY_TYPE_UNCACHEABLE,
-	MEMORY_TYPE_WRITE_COMBINING,
-	MEMORY_TYPE_WRITE_THROUGH = 4,
-	MEMORY_TYPE_WRITE_PROTECTED,
-	MEMORY_TYPE_WRITE_BACK,
-	MEMORY_TYPE_INVALID = 255,
-};
+ 
 
 struct __mtrr_range_descriptor
 {

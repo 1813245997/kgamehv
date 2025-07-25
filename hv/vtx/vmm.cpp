@@ -4,14 +4,14 @@
 #include <ntddk.h>
 #include <intrin.h>
 #include "common.h"
-#include "../ia32\cpuid.h"
+#include "cpuid.h"
 #include "../asm\vm_context.h"
-#include "../ia32\cr.h"
-#include "../ia32\msr.h"
-#include "../ia32\vmcs.h"
+#include "cr.h"
+#include "msr.h"
+#include "vmcs.h"
  
  
-#include "../ia32\vmcs_encodings.h"
+#include "vmcs_encodings.h"
 #include "allocators.h"
 
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)

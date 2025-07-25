@@ -5,14 +5,15 @@
 #include <intrin.h>
 #include <stdlib.h>
 #include "common.h"
-#include "../ia32\msr.h"
-#include "../ia32\vmcs_encodings.h"
-#include "../ia32\ept.h"
+#include "msr.h"
+#include "vmcs_encodings.h"
+#include "ept.h"
  
 #include "hypervisor_routines.h"
-#include "../ia32\mtrr.h"
+#include "mtrr.h"
 #include "allocators.h"
 #include "spinlock.h"
+
 
 namespace ept
 {
@@ -443,9 +444,9 @@ namespace ept
 		entry_address->all = entry_value.all;
 
 		// Invalidate the cache
-		if (invalidation_type == INVEPT_SINGLE_CONTEXT)
+		if (invalidation_type == invept_type::invept_single_context)
 		{
-			invept_single_context(ept_state.ept_pointer->all);
+			invept_single_context_address(ept_state.ept_pointer->all);
 		}
 		else
 		{
@@ -479,6 +480,19 @@ namespace ept
 		write_int1(&hooked_function_info->fake_page_contents[page_offset]);
 
 
+
+		return true;
+	}
+
+	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset)
+	{   
+		unsigned __int64 hooked_instructions_size = LDE(target_function, 64);
+
+		hooked_function_info->hook_size = hooked_instructions_size;
+
+		RtlCopyMemory(hooked_function_info->original_instructions_backup, target_function, hooked_instructions_size);
+
+		write_int3(&hooked_function_info->fake_page_contents[page_offset]);
 
 		return true;
 	}
@@ -592,15 +606,16 @@ namespace ept
 					return false;
 				}
 
-				hooked_function_info->handler_va = new_function;
+				hooked_function_info->new_handler_va = new_function;
 				hooked_function_info->original_va = target_function;
 				hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
 				
-				hooked_function_info->handler_pa = utils::internal_functions::pfn_mm_get_physical_address(new_function).QuadPart;
+				hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(new_function).QuadPart;
 				hooked_function_info->original_pa = physical_address;
 				hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
 				hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
-
+				hooked_function_info->type = hook_type::hook_type_breakpoint_int1;
+				hooked_function_info->is_user_mode = false;
 				if (hook_instruction_memory_int1(hooked_function_info, target_function, page_offset) == false)
 				{
 					if (hooked_function_info->trampoline_va != nullptr)
@@ -721,17 +736,17 @@ namespace ept
 
 		hooked_page_info->process_id = PsGetCurrentProcessId();
 
-		hooked_function_info->handler_va = new_function;
+		hooked_function_info->new_handler_va = new_function;
 		hooked_function_info->original_va = target_function;
 		hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
 
 
-		hooked_function_info->handler_pa = utils::internal_functions::pfn_mm_get_physical_address(new_function).QuadPart;
+		hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(new_function).QuadPart;
 		hooked_function_info->original_pa = physical_address;
 		hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
 		hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
-	 
-
+		hooked_function_info->type = hook_type::hook_type_breakpoint_int1;
+		hooked_function_info->is_user_mode = false;
 	
 		if(hook_instruction_memory_int1(hooked_function_info, target_function,page_offset) == false)
 		{
@@ -752,11 +767,499 @@ namespace ept
 		// Track all hooked pages
 		InsertHeadList(&ept_state.hooked_page_list, &hooked_page_info->hooked_page_list);
 
-		invept_single_context(ept_state.ept_pointer->all);
+		invept_single_context_address(ept_state.ept_pointer->all);
 
 		return true;
 	}
+
+	bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte)
+	{
+		// 判断目标函数地址是否位于用户态地址空间
+		const bool is_user_mode_address = utils::memory::is_user_address(target_function);
+
+		if (is_user_mode_address)
+		{
+			// 用户态地址，调用用户态断点安装逻辑
+			return hook_user_break_point_int3(ept_state, target_function, breakpoint_handler, original_byte);
+		}
+		else
+		{
+			// 内核态地址，调用内核断点安装逻辑
+			return hook_kernel_break_point_int3(ept_state, target_function, breakpoint_handler, original_byte);
+		}
+	}
+
+	bool hook_kernel_break_point_int3(__ept_state& ept_state, void* target_function, void* breakpoint_handler, _Out_ unsigned char* original_byte)
+	{
+		if (!target_function)
+		{
+			return false;
+		}
+
+		if (!breakpoint_handler)
+		{
+			return false;
+		}
+
+		if (original_byte )
+		{
+			*original_byte = 0;
+		}
+		
+		  
+
+		unsigned __int64 physical_address = utils::internal_functions::pfn_mm_get_physical_address(target_function).QuadPart;
+
+		//
+		// Check if function exist in physical memory
+		//
+		if (physical_address == NULL)
+		{
+			LogError("Requested virtual memory doesn't exist in physical one");
+			return false;
+		}
+
+		unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_function);
+
+		//
+// Check if page isn't already hooked
+//
+		PLIST_ENTRY current = &ept_state.hooked_page_list;
+		while (&ept_state.hooked_page_list != current->Flink)
+		{
+			current = current->Flink;
+			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current, __ept_hooked_page_info, hooked_page_list);
+
+			if (hooked_page_info->pfn_of_hooked_page == GET_PFN(physical_address))
+			{
+				LogInfo("Page already hooked");
+
+				__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(__ept_hooked_function_info));
+				if (hooked_function_info == nullptr)
+				{
+					LogError("There is no pre-allocated pool for hooked function struct");
+					return false;
+				}
+
+			 
+				hooked_function_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
+				if (hooked_function_info->original_instructions_backup == nullptr)
+				{
+					pool_manager::release_pool(hooked_function_info->trampoline_va);
+					pool_manager::release_pool(hooked_function_info);
+					LogError("There is no pre-allocated pool for trampoline");
+					return false;
+				}
+
+				hooked_function_info->new_handler_va = breakpoint_handler;
+				hooked_function_info->original_va = target_function;
+				hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
+
+				hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(breakpoint_handler).QuadPart;
+				hooked_function_info->original_pa = physical_address;
+				hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
+				hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
+				hooked_function_info->type = hook_type::hook_type_breakpoint_int3;
+				hooked_function_info->is_user_mode = false;
+				if (hook_instruction_memory_int1(hooked_function_info, target_function, page_offset) == false)
+				{
+					
+					if (hooked_function_info->original_instructions_backup != nullptr)
+					{
+						pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+					}
+
+					pool_manager::release_pool(hooked_function_info);
+					LogError("Hook failed");
+					return false;
+				}
+				if (original_byte)
+				{
+					*original_byte = *reinterpret_cast<PUCHAR> (hooked_function_info->original_instructions_backup);
+				}
+
+				++hooked_page_info->ref_count;
+
+				 
+				// Track all hooked functions within page
+				InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
+
+				return true;
+			}
+		}
+
+		if (is_page_splitted(ept_state, physical_address) == false)
+		{
+			void* split_buffer = pool_manager::request_pool<void*>(pool_manager::INTENTION_SPLIT_PML2, true, sizeof(__ept_dynamic_split));
+			if (split_buffer == nullptr)
+			{
+				LogError("There is no preallocated pool for split");
+				return false;
+			}
+
+			if (split_pml2(ept_state, split_buffer, physical_address) == false)
+			{
+				pool_manager::release_pool(split_buffer);
+				LogError("Split failed");
+				return false;
+			}
+		}
+
+		__ept_pte* target_page = get_pml1_entry(ept_state, physical_address);
+		if (target_page == nullptr)
+		{
+			LogError("Failed to get PML1 entry of the target address");
+			return false;
+		}
+
+		__ept_hooked_page_info* hooked_page_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
+		if (hooked_page_info == nullptr)
+		{
+			LogError("There is no preallocated pool for hooked page info");
+			return false;
+		}
+
+		hooked_page_info->fake_page_contents = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, true, PAGE_SIZE);
+		if (hooked_page_info->fake_page_contents == nullptr)
+		{
+			pool_manager::release_pool(hooked_page_info);
+			LogError("There is no preallocated pool for fake page contents");
+			return false;
+		}
+
+		InitializeListHead(&hooked_page_info->hooked_functions_list);
+
+		__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, true, sizeof(__ept_hooked_function_info));
+		if (hooked_function_info == nullptr)
+		{
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			LogError("There is no preallocated pool for hooked function info");
+			return false;
+		}
+
+
+		hooked_function_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
+		if (hooked_function_info->original_instructions_backup == nullptr)
+		{
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			pool_manager::release_pool(hooked_function_info);
+			LogError("There is no pre-allocated pool for trampoline");
+			return false;
+		}
+
+		hooked_page_info->process_id = utils::internal_functions::pfn_ps_get_current_process_id();
+		hooked_page_info->pfn_of_hooked_page = GET_PFN(physical_address);
+		hooked_page_info->pfn_of_fake_page_contents = GET_PFN(MmGetPhysicalAddress(hooked_page_info->fake_page_contents).QuadPart);
+		hooked_page_info->entry_address = target_page;
+
+		hooked_page_info->entry_address->execute = 0;
+		hooked_page_info->entry_address->read = 1;
+		hooked_page_info->entry_address->write = 1;
+
+		hooked_page_info->original_entry = *target_page;
+		hooked_page_info->changed_entry = *target_page;
+
+		hooked_page_info->changed_entry.read = 0;
+		hooked_page_info->changed_entry.write = 0;
+		hooked_page_info->changed_entry.execute = 1;
+
+		hooked_page_info->changed_entry.physical_address = hooked_page_info->pfn_of_fake_page_contents;
+
+
+
+		RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_function), PAGE_SIZE);
+
+		hooked_page_info->process_id = PsGetCurrentProcessId();
+
+		hooked_function_info->new_handler_va = breakpoint_handler;
+		hooked_function_info->original_va = target_function;
+		hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
+
+
+		hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(breakpoint_handler).QuadPart;
+		hooked_function_info->original_pa = physical_address;
+		hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
+		hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
+		hooked_function_info->type = hook_type::hook_type_breakpoint_int3;
+		hooked_function_info->is_user_mode = false;
+
+		if (hook_instruction_memory_int3(hooked_function_info, target_function, page_offset) == false)
+		{
+			pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+			pool_manager::release_pool(hooked_function_info);
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			LogError("Hook failed");
+			return false;
+		}
+
+		if (original_byte)
+		{
+			*original_byte = *reinterpret_cast<PUCHAR> (hooked_function_info->original_instructions_backup);
+		}
+		++hooked_page_info->ref_count;
+	 
+		// Track all hooked functions
+		InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
+
+		// Track all hooked pages
+		InsertHeadList(&ept_state.hooked_page_list, &hooked_page_info->hooked_page_list);
+
+		invept_single_context_address(ept_state.ept_pointer->all);
+
+		return true;
+		 
+	}
  
+	bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte)
+	{
+		if (!target_function)
+		{
+			return false;
+		}
+
+		if (!breakpoint_handler)
+		{
+			return false;
+		}
+
+	 
+		 
+
+ 
+
+		unsigned __int64 physical_address = utils::internal_functions::pfn_mm_get_physical_address(target_function).QuadPart;
+
+		//
+		// Check if function exist in physical memory
+		//
+		if (physical_address == NULL)
+		{
+			LogError("Requested virtual memory doesn't exist in physical one");
+			return false;
+		}
+
+
+		unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_function);
+
+		PEPROCESS process = utils::internal_functions::pfn_ps_get_current_process();
+		HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+	 
+		 
+
+
+		//提前锁页 防止异常
+	/*	PMDL mdl{};
+		if (!NT_SUCCESS(utils::memory::lock_memory(page_offset, 0x1000, &mdl)))
+		{
+			return false;
+
+		}*/
+
+
+		//
+		// Check if page isn't already hooked
+		//
+		PLIST_ENTRY current = &ept_state.hooked_page_list;
+		while (&ept_state.hooked_page_list != current->Flink)
+		{
+			current = current->Flink;
+			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current, __ept_hooked_page_info, hooked_page_list);
+			 
+			if (hooked_page_info->pfn_of_hooked_page == GET_PFN(physical_address)&&hooked_page_info->process_id == process_id)
+			{
+				LogInfo("Page already hooked");
+
+				__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(__ept_hooked_function_info));
+				if (hooked_function_info == nullptr)
+				{
+					 
+					LogError("There is no pre-allocated pool for hooked function struct");
+					
+					return false;
+				}
+
+ 
+				hooked_function_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
+				if (hooked_function_info->original_instructions_backup == nullptr)
+				{
+					 
+					pool_manager::release_pool(hooked_function_info->trampoline_va);
+					pool_manager::release_pool(hooked_function_info);
+					LogError("There is no pre-allocated pool for trampoline");
+					return false;
+				}
+
+				hooked_function_info->new_handler_va = breakpoint_handler;
+				hooked_function_info->original_va = target_function;
+				hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
+
+				hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(breakpoint_handler).QuadPart;
+				hooked_function_info->original_pa = physical_address;
+				hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
+				hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
+				hooked_function_info->type = hook_type::hook_type_breakpoint_int3;
+				hooked_function_info->is_user_mode = true;
+				if (hook_instruction_memory_int3(hooked_function_info, target_function, page_offset) == false)
+				{
+					 
+					if (hooked_function_info->original_instructions_backup != nullptr)
+					{
+						pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+					}
+
+					pool_manager::release_pool(hooked_function_info);
+					 
+					LogError("Hook failed");
+					
+					return false;
+				}
+				if (original_byte)
+				{
+					*original_byte = *reinterpret_cast<PUCHAR> (hooked_function_info->original_instructions_backup);
+				}
+				++hooked_page_info->ref_count;
+				
+				// Track all hooked functions within page
+				InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
+				 
+				return true;
+			}
+		}
+
+		if (is_page_splitted(ept_state, physical_address) == false)
+		{
+			void* split_buffer = pool_manager::request_pool<void*>(pool_manager::INTENTION_SPLIT_PML2, true, sizeof(__ept_dynamic_split));
+			if (split_buffer == nullptr)
+			{
+				 
+				LogError("There is no preallocated pool for split");
+				return false;
+			}
+
+			if (split_pml2(ept_state, split_buffer, physical_address) == false)
+			{
+				 
+				pool_manager::release_pool(split_buffer);
+				LogError("Split failed");
+				return false;
+			}
+		}
+
+		__ept_pte* target_page = get_pml1_entry(ept_state, physical_address);
+		if (target_page == nullptr)
+		{
+			 
+			LogError("Failed to get PML1 entry of the target address");
+			return false;
+		}
+
+		__ept_hooked_page_info* hooked_page_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
+		if (hooked_page_info == nullptr)
+		{
+			 
+			LogError("There is no preallocated pool for hooked page info");
+			return false;
+		}
+
+		hooked_page_info->fake_page_contents = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, true, PAGE_SIZE);
+		if (hooked_page_info->fake_page_contents == nullptr)
+		{
+			 
+			pool_manager::release_pool(hooked_page_info);
+			LogError("There is no preallocated pool for fake page contents");
+			return false;
+		}
+
+		InitializeListHead(&hooked_page_info->hooked_functions_list);
+
+		__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, true, sizeof(__ept_hooked_function_info));
+		if (hooked_function_info == nullptr)
+		{
+			 
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			LogError("There is no preallocated pool for hooked function info");
+			return false;
+		}
+		 
+		hooked_function_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
+		if (hooked_function_info->original_instructions_backup == nullptr)
+		{
+			 
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			pool_manager::release_pool(hooked_function_info);
+			LogError("There is no pre-allocated pool for trampoline");
+			return false;
+		}
+
+		hooked_page_info->process_id = process_id;
+		hooked_page_info->pfn_of_hooked_page = GET_PFN(physical_address);
+		hooked_page_info->pfn_of_fake_page_contents = GET_PFN(MmGetPhysicalAddress(hooked_page_info->fake_page_contents).QuadPart);
+		hooked_page_info->entry_address = target_page;
+
+		hooked_page_info->entry_address->execute = 0;
+		hooked_page_info->entry_address->read = 1;
+		hooked_page_info->entry_address->write = 1;
+
+		hooked_page_info->original_entry = *target_page;
+		hooked_page_info->changed_entry = *target_page;
+
+		hooked_page_info->changed_entry.read = 0;
+		hooked_page_info->changed_entry.write = 0;
+		hooked_page_info->changed_entry.execute = 1;
+
+		hooked_page_info->changed_entry.physical_address = hooked_page_info->pfn_of_fake_page_contents;
+
+
+
+		RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_function), PAGE_SIZE);
+
+		hooked_page_info->process_id = PsGetCurrentProcessId();
+
+		hooked_function_info->new_handler_va = breakpoint_handler;
+		hooked_function_info->original_va = target_function;
+		hooked_function_info->fake_va = &hooked_page_info->fake_page_contents[page_offset];
+
+
+		hooked_function_info->new_handler_pa = utils::internal_functions::pfn_mm_get_physical_address(breakpoint_handler).QuadPart;
+		hooked_function_info->original_pa = physical_address;
+		hooked_function_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
+		hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
+		hooked_function_info->type = hook_type::hook_type_breakpoint_int3;
+		hooked_function_info->is_user_mode = true;
+
+		if (hook_instruction_memory_int3(hooked_function_info, target_function, page_offset) == false)
+		{
+			 
+		 
+			pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+			pool_manager::release_pool(hooked_function_info);
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			LogError("Hook failed");
+			return false;
+		}
+		if (original_byte)
+		{
+			*original_byte = *reinterpret_cast<PUCHAR> (hooked_function_info->original_instructions_backup);
+		}
+		++hooked_page_info->ref_count;
+		 
+		 
+		// Track all hooked functions
+		InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
+
+		// Track all hooked pages
+		InsertHeadList(&ept_state.hooked_page_list, &hooked_page_info->hooked_page_list);
+
+		invept_single_context_address(ept_state.ept_pointer->all);
+		 
+		return true;
+	}
   
 	//bool InstallUserHook_function(__ept_state& ept_state, void* original_function, void* hooked_function, void** origin_function  )
 	//{
@@ -989,7 +1492,7 @@ namespace ept
 						if (hooked_page_info->hooked_functions_list.Flink == hooked_page_info->hooked_functions_list.Blink)
 						{
 							hooked_page_info->original_entry.execute = 1;
-							swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, INVEPT_SINGLE_CONTEXT);
+							swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, invept_type::invept_single_context);
 
 							RemoveEntryList(current_hooked_page);
 							pool_manager::release_pool(hooked_page_info->fake_page_contents);
@@ -1042,7 +1545,7 @@ namespace ept
 
 				// After unhooking all functions, restore the original page entry and remove the page
 				hooked_page_info->original_entry.execute = 1;
-				swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, INVEPT_SINGLE_CONTEXT);
+				swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, invept_type::invept_single_context);
 
 				RemoveEntryList(current_hooked_page);
 				pool_manager::release_pool(hooked_page_info->fake_page_contents);
@@ -1087,7 +1590,7 @@ namespace ept
 
 			// Restore original pte value
 			hooked_entry->original_entry.execute = 1;
-			swap_pml1_and_invalidate_tlb(ept_state, hooked_entry->entry_address, hooked_entry->original_entry, INVEPT_SINGLE_CONTEXT);
+			swap_pml1_and_invalidate_tlb(ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
 
 			RemoveEntryList(current_hooked_page);
 

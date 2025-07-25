@@ -25,33 +25,14 @@ struct __invvpid_descriptor
 	unsigned __int64 linear_address;
 };
 
-enum invept_type
-{
-	INVEPT_SINGLE_CONTEXT = 0x00000001,
-	INVEPT_ALL_CONTEXTS = 0x00000002
-};
+  
 
-enum invvpid_type
-{
-	INVVPID_INVIDUAL_ADDRESS,
-	INVVPID_SINGLE_CONTEXT,
-	INVVPID_ALL_CONTEXTS,
-	INVVPID_SINGLE_EXCEPT_GLOBAL_TRANSLATIONS
-};
-
-enum invpcid_type
-{
-	INVPCID_INVIDUAL_ADDRESS,
-	INVPCID_SINGLE_CONTEXT,
-	INVPCID_ALL_CONTEXTS,
-	INVPCID_ALL_CONTEXTS_EXCEPT_GLOBAL_TRANSLATIONS
-};
-
+ 
 /// <summary>
 /// Invept single context
 /// </summary>
 /// <param name="EptPointer"></param>
-void invept_single_context(unsigned __int64 ept_pointer);
+void invept_single_context_address(unsigned __int64 ept_pointer);
 
 /// <summary>
 /// Invept all contexts
@@ -69,7 +50,7 @@ void invvpid_invidual_address(unsigned __int64 linear_address, unsigned __int8 v
 /// Invvpid single context
 /// </summary>
 /// <param name="vpid"> Invalidates entries in the TLBs and paging-structure caches based on this vpid </param>
-void invvpid_single_context(unsigned __int8 vpid);
+void invvpid_single_context_address(unsigned __int8 vpid);
 
 /// <summary>
 /// Invvpid all contexts

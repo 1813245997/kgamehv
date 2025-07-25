@@ -19,14 +19,7 @@ namespace hvgt
 		KeSignalCallDpcDone(SystemArgument1);
 	}
 
-	struct HookFunctionArgs
-	{
-		void* target_address;
-		void* hook_function;
-		void** origin_function;
-		unsigned __int64 current_cr3;
-		volatile SHORT statuses;
-	};
+
 
 
 
@@ -34,8 +27,16 @@ namespace hvgt
 	{
 		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call_ex(VMCALL_EPT_HOOK_FUNCTION, (unsigned __int64)args->target_address,
-			(unsigned __int64)args->hook_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
+		if (__vm_call_ex(VMCALL_EPT_HOOK_FUNCTION, 
+			args->current_cr3 ,
+			reinterpret_cast<unsigned long long> (args->target_address),
+			reinterpret_cast<unsigned long long> (args->hook_function),
+			reinterpret_cast<unsigned long long> (args->origin_function), 
+			0, 
+			0,
+			0,
+			0,
+			0))
 		{
 			InterlockedIncrement16(&args->statuses);
 		}
@@ -44,41 +45,70 @@ namespace hvgt
 		KeSignalCallDpcDone(SystemArgument1);
 	}
 
-	void broadcast_hook_functionr3(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
-	{
-		const auto args = reinterpret_cast<HookFunctionArgs*>(DeferredContext);
+ 
 
-		if (__vm_call_ex(VMCALL_EPT_HOOK_FUNCTIONR3, (unsigned __int64)args->target_address,
-			(unsigned __int64)args->hook_function, (unsigned __int64)args->origin_function, args->current_cr3, 0, 0, 0, 0, 0))
-		{
-			InterlockedIncrement16(&args->statuses);
-		}
-		 
-
-		KeSignalCallDpcSynchronize(SystemArgument2);
-		KeSignalCallDpcDone(SystemArgument1);
-	}
-
-	struct UnHookFunctionArgs
-	{
-		bool unhook_all_functions;
-		void* function_to_unhook;
-		unsigned __int64 current_cr3;
-		HANDLE   process_id;
-		volatile SHORT statuses;
-	};
 	void broadcast_unhook_function(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 	{
 		const auto args = reinterpret_cast<UnHookFunctionArgs*>(DeferredContext);
 
-		if (__vm_call(VMCALL_EPT_UNHOOK_FUNCTION, args->unhook_all_functions,
-			(unsigned __int64)args->function_to_unhook, args->current_cr3))
+		if (__vm_call(VMCALL_EPT_UNHOOK_FUNCTION, 
+			args->current_cr3,
+			args->unhook_all_functions,
+			(unsigned __int64)args->function_to_unhook
+			))
 		{
 			InterlockedIncrement16(&args->statuses);
 		}
 
 		KeSignalCallDpcSynchronize(SystemArgument2);
 		KeSignalCallDpcDone(SystemArgument1);
+	}
+
+	void broadcast_break_point_in3(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
+	{
+		const auto args = reinterpret_cast<SetBreakpointArgs*>(DeferredContext);
+
+		// 调用 VMCALL 设置 INT3 断点
+		if (__vm_call_ex(
+			VMCALL_EPT_SET_BREAK_POINT,              // 虚拟机调用号（假设这个用于设置断点）
+			args->current_cr3,                   // 目标 CR3（页表）
+			reinterpret_cast<unsigned __int64>(args->breakpoint_address), // 目标地址
+			reinterpret_cast<unsigned __int64>(args->breakpoint_handler) , // 命中断点后调用的处理函数
+			reinterpret_cast<unsigned __int64>(args->original_byte),
+			0,
+			0,
+			0,
+			0,
+			0
+
+		))
+		{
+			// 设置成功，标记状态
+			InterlockedIncrement16(&args->statuses);
+		}
+
+		// 同步 DPC 完成
+		KeSignalCallDpcSynchronize(SystemArgument2);
+		KeSignalCallDpcDone(SystemArgument1);
+	}
+
+	void broadcast_remove_break_point_in3(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
+	{
+		const auto args = reinterpret_cast<RemoveBreakpointArgs*>(DeferredContext);
+
+		// 调用 VMCALL 卸载 INT3 断点
+		if (__vm_call(
+			VMCALL_EPT_REMOVE_BREAK_POINT,               // 虚拟机调用号（假设这是用于卸载断点）
+			args->current_cr3,                           // 目标页表
+			static_cast<unsigned __int64>(args->remove_all_breakpoints), // true/false 标志
+			reinterpret_cast<unsigned __int64>(args->breakpoint_address) // 断点地址（或忽略）
+		))
+		{
+			InterlockedIncrement16(&args->statuses);     // 设置成功
+		}
+
+		KeSignalCallDpcSynchronize(SystemArgument2);     // 同步信号
+		KeSignalCallDpcDone(SystemArgument1);            // 通知 DPC 完成
 	}
 
 	void broadcast_test_vmcall(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
@@ -120,7 +150,7 @@ namespace hvgt
 	/// <returns> status </returns>
 	bool unhook_all_functions()
 	{
-		UnHookFunctionArgs args{ EptUnhookType::UNHOOK_ALL, nullptr, __readcr3(), 0 };
+		UnHookFunctionArgs args{ __readcr3(),EptUnhookType::UNHOOK_ALL, nullptr, 0 };
 		KeGenericCallDpc(broadcast_unhook_function, &args);
 
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
@@ -133,7 +163,7 @@ namespace hvgt
 	/// <returns> status </returns>
 	bool unhook_function(void* function_address)
 	{
-		UnHookFunctionArgs args{ EptUnhookType::UNHOOK_SINGLE, function_address, __readcr3(), 0 };
+		UnHookFunctionArgs args{ __readcr3(),EptUnhookType::UNHOOK_SINGLE, function_address, 0 };
 		KeGenericCallDpc(broadcast_unhook_function, &args);
 
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
@@ -144,13 +174,13 @@ namespace hvgt
 	/// </summary>
 	/// <param name="process_id">The PID of the process whose hooks should be removed</param>
 	/// <returns>status</returns>
-	bool unhook_by_pid(HANDLE process_id)
-	{
-		UnHookFunctionArgs args{ EptUnhookType::UNHOOK_BY_PID, nullptr, __readcr3(), process_id,0 };
-		KeGenericCallDpc(broadcast_unhook_function, &args);
+	//bool unhook_by_pid(HANDLE process_id)
+	//{
+	//	UnHookFunctionArgs args{ EptUnhookType::UNHOOK_BY_PID, nullptr, __readcr3(), process_id,0 };
+	//	KeGenericCallDpc(broadcast_unhook_function, &args);
 
-		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	}
+	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+	//}
 	/// <summary>
 	/// Hook function via ept and invalidates mappings
 	/// </summary>
@@ -160,18 +190,14 @@ namespace hvgt
 	/// <returns> status </returns>
 	bool hook_kernel_function(_In_ void* target_address, _In_ void* hook_function, _Inout_ void** origin_function)
 	{
-		HookFunctionArgs args{ target_address, hook_function, origin_function, __readcr3(), 0 };
+		HookFunctionArgs args{ __readcr3(), target_address, hook_function, origin_function, 0 };
 		KeGenericCallDpc(broadcast_hook_function, &args);
 
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
-	bool InstallUserHook_function(void* target_address, void* hook_function, void** origin_function )
-	{
-		HookFunctionArgs args{ target_address, hook_function, origin_function, __readcr3(), 0 };
-		KeGenericCallDpc(broadcast_hook_functionr3, &args);
+	 
+	//bool 
 
-		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	}
 	/// <summary>
 	/// Dump info about allocated pools (Use Dbgview to see information)
 	/// </summary>

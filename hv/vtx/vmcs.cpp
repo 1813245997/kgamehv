@@ -1,14 +1,14 @@
 #pragma warning( disable : 4201 4244)
 #include "../utils/global_defs.h"
 #include <intrin.h>
-#include "../ia32\segment.h"
+#include "segment.h"
 #include "common.h"
-#include "../ia32\vmcs.h"
-#include "../ia32\vmcs_encodings.h"
-#include "../ia32\msr.h"
+#include "vmcs.h"
+#include "vmcs_encodings.h"
+#include "msr.h"
 #include "../asm\vm_intrin.h"
 #include "../asm\vm_context.h"
-#include "../ia32\cr.h"
+#include "cr.h"
  
 #include "hypervisor_routines.h"
 /// <summary>

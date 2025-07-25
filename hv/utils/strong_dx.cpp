@@ -1,9 +1,9 @@
 #include "global_defs.h"
 #include "strong_dx.h"
-#include "../ia32-doc/ia32.hpp"
+#include "../vtx/msr.h"
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
-#include "../arch.h"
+ 
  
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 #define FAILED(hr) (((HRESULT)(hr)) < 0)

@@ -10,7 +10,7 @@ namespace hook_manager
 
 		if (pfn_ki_preprocess_fault)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_ki_preprocess_fault),
 				hook_functions::hook_ki_preprocess_fault,
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
@@ -19,7 +19,7 @@ namespace hook_manager
 
 		if (pfn_mm_copy_memory)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_mm_copy_memory),
 				hook_functions::hook_mm_copy_memory,
 				reinterpret_cast<void**>(&hook_functions::original_mm_copy_memory)
@@ -28,7 +28,7 @@ namespace hook_manager
 
 		if (pfn_mm_is_address_valid)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_mm_is_address_valid),
 				hook_functions::hook_mm_is_address_valid,
 				reinterpret_cast<void**>(&hook_functions::original_mm_is_address_valid)
@@ -37,7 +37,7 @@ namespace hook_manager
 
 		if (pfn_rtl_walk_frame_chain)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_rtl_walk_frame_chain),
 				hook_functions::hook_rtl_walk_frame_chain,
 				reinterpret_cast<void**>(&hook_functions::original_rtl_walk_frame_chain)
@@ -45,7 +45,7 @@ namespace hook_manager
 		}
 		if (pfn_rtl_lookup_function_entry)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_rtl_lookup_function_entry),
 				hook_functions::hook_rtl_lookup_function_entry,
 				reinterpret_cast<void**>(&hook_functions::original_rtl_lookup_function_entry)
@@ -55,7 +55,7 @@ namespace hook_manager
 		if (pfn_nt_write_virtual_memory)
 		{
 
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_nt_write_virtual_memory),
 				hook_functions::new_nt_write_virtual_memory,
 				reinterpret_cast<void**>(&hook_functions::original_nt_write_virtual_memory)
@@ -64,7 +64,7 @@ namespace hook_manager
 
 		if (pfn_nt_query_virtual_memory)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_nt_query_virtual_memory),
 				hook_functions::new_nt_query_virtual_memory,
 				reinterpret_cast<void**>(&hook_functions::original_nt_query_virtual_memory)
@@ -72,7 +72,7 @@ namespace hook_manager
 		}
 		if (pfn_nt_read_virtual_memory)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_nt_read_virtual_memory),
 				hook_functions::new_nt_read_virtual_memory,
 				reinterpret_cast<void**>(&hook_functions::original_nt_read_virtual_memory)
@@ -81,7 +81,7 @@ namespace hook_manager
 
 		if (pfn_nt_create_section)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_nt_create_section),
 				hook_functions::hook_nt_create_section,
 				reinterpret_cast<void**>(&hook_functions::original_nt_create_section)
@@ -90,7 +90,7 @@ namespace hook_manager
 
 		if (pfn_nt_create_user_process)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_nt_create_user_process),
 				hook_functions::new_nt_create_user_process,
 				reinterpret_cast<void**>(&hook_functions::original_nt_create_user_process)
@@ -99,7 +99,7 @@ namespace hook_manager
 
 		if (pfn_psp_exit_process)
 		{
-			utils::hook_utils::hook(
+			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_psp_exit_process),
 				hook_functions::hook_psp_exit_process,
 				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)

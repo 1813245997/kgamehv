@@ -74,13 +74,13 @@ namespace game
 
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
-			hyper::ept_hook_break_point_int3(
+			/*hyper::ept_hook_break_point_int3(
 				process_id,
 				reinterpret_cast<PVOID>(get_hp_fun),
 				hook_functions::new_get_csgo_hp,
 				nullptr,
 				false
-			);
+			);*/
 
 
 

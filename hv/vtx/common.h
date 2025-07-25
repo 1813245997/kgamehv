@@ -1,10 +1,11 @@
 #pragma once
 #include <ntddk.h>
-#include "../ia32\ept.h"
+#include <xmmintrin.h>
+#include "ept.h"
 #include "poolmanager.h"
-#include "../ia32\exception.h"
-#include "../ia32\mtrr.h"
-#include "../ia32\rflags.h"
+#include "exception.h"
+#include "mtrr.h"
+#include "../ia32/ia32.hpp"
 
 extern "C" size_t __fastcall LDE(const void* lpData, unsigned int size);
 
@@ -74,7 +75,7 @@ struct __vcpu
 
         unsigned __int64 guest_rip;
 
-       __rflags guest_rflags;
+        rflags guest_rflags;
 
         unsigned __int64 instruction_length;
 

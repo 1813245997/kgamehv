@@ -1,5 +1,7 @@
 #pragma once
-#include "invalidators.h"
+#include "../ia32/ia32.hpp"
+#include "../vtx/invalidators.h"
+
 
 #define MASK_EPT_PML1_OFFSET(_VAR_) ((unsigned __int64)_VAR_ & 0xFFFULL)
 #define MASK_EPT_PML1_INDEX(_VAR_) ((_VAR_ & 0x1FF000ULL) >> 12)
@@ -138,11 +140,17 @@ struct __vmm_ept_page_table
 	DECLSPEC_ALIGN(PAGE_SIZE) __ept_pde pml2[512][512];
 };
 
-struct __ept_hooked_function_info 
+typedef enum _hook_type
 {
-	//
-	// Linked list entires for each function hook.
-	//
+	hook_type_unknown = 0,                 // 未知类型
+	hook_type_breakpoint_int1,             // 普通函数 Hook（修改前几字节跳转）
+	hook_type_breakpoint_int3,             // INT3 断点 Hook
+ 
+} hook_type;
+
+typedef struct __ept_hooked_function_info 
+{
+	 
 	LIST_ENTRY hooked_function_list;
 	  
 	bool is_user_mode;
@@ -153,13 +161,13 @@ struct __ept_hooked_function_info
 
 	void* fake_va;
 
-	void* handler_va;
+	void* new_handler_va;
 
 	unsigned long long original_pa;
 
 	unsigned long long fake_pa;
 
-	unsigned long long handler_pa;
+	unsigned long long new_handler_pa;
 	 
 
 	unsigned __int8* trampoline_va;
@@ -168,11 +176,11 @@ struct __ept_hooked_function_info
 
 	unsigned __int8* original_instructions_backup;
 
+	hook_type type;
 
+}ept_hooked_function_info;
 
-};
-
-struct __ept_hooked_page_info
+typedef struct __ept_hooked_page_info
 { 
 
 	//
@@ -217,10 +225,10 @@ struct __ept_hooked_page_info
 
 	HANDLE  process_id;
 
-	uint32_t  ref_count;
+	unsigned int  ref_count;
 
 
-};
+} ept_hooked_page_info ;
 
 union __ept_violation
 {
@@ -367,7 +375,12 @@ namespace ept
 	/// <returns></returns>
 	bool hook_kernel_function(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* new_function, _Out_   void** origin_function);
 
+	bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler , _Out_ unsigned char* original_byte);
 
+
+	bool hook_kernel_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
+
+	bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
 
  
 
@@ -398,6 +411,10 @@ namespace ept
    
 	bool hook_instruction_memory_int1(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
+	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
+
 	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
+	
 
 }

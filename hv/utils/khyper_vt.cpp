@@ -1,7 +1,8 @@
 #include "global_defs.h"
 #include "khyper_vt.h"
-#include <ia32.hpp>
-
+#include "../ia32/ia32.hpp"
+#include "../vtx/vmm.h"
+#include "../vtx/hypervisor_routines.h"
 namespace utils
 {
 	namespace  khyper_vt
