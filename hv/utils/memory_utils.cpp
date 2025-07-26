@@ -565,7 +565,6 @@ namespace utils
 			   ULONG SizeLeftInPage{};
 			   ULONG Size{};
 			   ULONG64 PhysicalAddress{};
-			   ULONG64 PageSize{};
 			   ULONG64 PageAddress{};
 			   ULONG64 page_size{};
 
@@ -639,7 +638,7 @@ namespace utils
 			   }
 				  
 			   
-		   _EXIT:
+		  
 			   free_physical_page(&transfer_page_info);
 			   return status;
  

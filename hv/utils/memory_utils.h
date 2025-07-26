@@ -63,7 +63,7 @@ namespace utils
 
 		bool is_executable_address(unsigned long long virtual_address);
 
-		bool  is_va_physical_address_valid(unsigned long long virtual_address);
+		bool is_va_physical_address_valid(unsigned long long virtual_address);
 
 		bool is_phys_page_in_range(unsigned  long long phys_page_base, size_t size);
 

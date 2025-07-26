@@ -85,8 +85,8 @@ namespace game
 		{
 
 		public:
+			void ReadBones(_In_ unsigned long long directory_table_base,_In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size);
 			void ReadBones(_In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size);
-
 		public:
 			LIST_ENTRY list_entry;  
 			uintptr_t entity;
