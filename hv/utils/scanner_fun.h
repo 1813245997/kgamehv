@@ -44,7 +44,9 @@ namespace utils
 
 		unsigned long long find_mm_set_page_protection();
 	
+		unsigned long long find_ps_suspend_process(unsigned  long long addr);
 
+		unsigned long long find_ps_resume_process(unsigned  long long addr);
 		
 	}
 }

@@ -5291,5 +5291,760 @@ namespace utils
 		}
 
 
+		unsigned long long find_ps_suspend_process(unsigned  long long addr)
+		{
+			unsigned long long ps_suspend_process_addr{};
+			unsigned long long temp_addr{};
+			 
+
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+ 
+
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					  addr ,
+					  0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C\x24\x58\xBA\x50\x73\x53\x75\x8B\xD8\xE8", 
+					"x????xxxxxxxxxxxxx" 
+				);
+
+				ps_suspend_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+
+
+
+			return ps_suspend_process_addr;
+		}
+
+		unsigned long long find_ps_resume_process(unsigned  long long addr)
+		{
+			unsigned long long ps_resume_process_addr{};
+			unsigned long long temp_addr{};
+		 
+
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+
+
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C",
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern(
+					addr,
+					0x1000,
+					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\x4C", 
+					"x????xxx"
+				);
+
+				ps_resume_process_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+
+
+
+			return ps_resume_process_addr;
+		}
+		 
+
+
 	}
 }

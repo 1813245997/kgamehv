@@ -134,3 +134,4 @@ struct __vmm_context
 
 extern __vmm_context* g_vmm_context;
 
+extern LIST_ENTRY g_ept_breakpoint_hook_list;

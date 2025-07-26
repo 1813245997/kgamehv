@@ -552,11 +552,21 @@ void vmexit_exception_handler(__vcpu* vcpu)
 				__ept_hooked_function_info* hooked_function_entry =
 					CONTAINING_RECORD(current_hooked_function, __ept_hooked_function_info, hooked_function_list);
 
-				if (hooked_function_entry->original_va == (void*)vcpu->vmexit_info.guest_rip)
+
+				if (hooked_function_entry->original_va != (void*)vcpu->vmexit_info.guest_rip)
 				{
-					hv::vmwrite(GUEST_RIP, hooked_function_entry->fake_va);
-					return;
+					continue;
+				
 				}
+
+				if (hooked_function_entry->type != hook_type::hook_kernel_function_redirect)
+				{
+					continue;
+				}
+
+				hv::vmwrite(GUEST_RIP, hooked_function_entry->new_handler_va);
+				return;
+				  
 			}
 		}
 	}

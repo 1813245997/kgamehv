@@ -1,5 +1,5 @@
 #pragma once
-
+#include "common.h"
 enum __vm_exit_reason
 {
 	EXIT_REASON_EXCEPTION_NMI,

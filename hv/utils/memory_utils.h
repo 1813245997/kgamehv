@@ -3,6 +3,23 @@ namespace utils
 {
 	namespace memory
 	{
+		struct physical_page_info
+		{
+			unsigned  long long base_address;
+			unsigned  long long pte_address;
+			SIZE_T size;
+		};
+
+		struct PAGE_TABLE_INFO
+		{
+			ULONG64 Pxe;
+			ULONG64 Ppe;
+			ULONG64 Pde;
+			ULONG64 Pte;
+			ULONG PageType;
+		};
+
+
 		extern unsigned long long g_pte_base;
 		extern unsigned long long g_pde_base;
 		extern unsigned long long g_ppe_base;
@@ -46,6 +63,10 @@ namespace utils
 
 		bool is_executable_address(unsigned long long virtual_address);
 
+		bool  is_va_physical_address_valid(unsigned long long virtual_address);
+
+		bool is_phys_page_in_range(unsigned  long long phys_page_base, size_t size);
+
 		//新获取PTE 等算法
 		long long mm_get_pte_address(long long virtual_address);
 
@@ -66,15 +87,51 @@ namespace utils
 
 		NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl);
 
-		//NTSTATUS rtl_super_copy_memory(IN VOID UNALIGNED* destination, IN CONST VOID UNALIGNED* source, IN ULONG length);
-
-		//NTSTATUS rtl_super_copy_memory_from_source(
-		//	IN VOID UNALIGNED* destination,
-		//	IN CONST VOID UNALIGNED* source,
-		//	IN ULONG length);
-
-
 		void unlock_memory(PMDL mdl);
 
+		NTSTATUS read_virtual_memory(
+			unsigned long long directory_table_base,
+			void* target_address,
+			void* out_buffer,
+			PULONG pSizeRead);
+
+		NTSTATUS   allocate_physical_page(
+			physical_page_info* physical_page_info,
+			SIZE_T size);
+
+		NTSTATUS get_phys_page_address(
+			physical_page_info* transfer_page_info,
+			unsigned long long target_cr3,
+			PVOID page_va,
+			PULONG64 physical_address_out);
+
+		NTSTATUS   get_phys_page_size(
+			physical_page_info* transfer_page_info,
+			unsigned long long page_address,
+			size_t * page_size,
+			unsigned long long target_cr3);
+
+		NTSTATUS get_page_table_info(
+			physical_page_info* transfer_page_info,
+			ULONG64 cr3,
+			ULONG64 page_address,
+			PAGE_TABLE_INFO* page_table_info_out);
+
+
+		NTSTATUS read_physical_page(
+			physical_page_info* transfer_page_info,
+			ULONG64 phys_page_base,
+			PVOID buffer,
+			SIZE_T size);
+
+		void __fastcall free_physical_page(
+			physical_page_info* page_info);
+		 
+		template<typename T>
+		NTSTATUS read_virtual_object(ULONG64 cr3, PVOID address, T& out_value)
+		{
+			ULONG size = sizeof(T);
+			return read_virtual_memory(cr3, address, &out_value, &size);
+		}
 	}
 }

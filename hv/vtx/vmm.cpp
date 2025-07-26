@@ -14,6 +14,7 @@
 #include "vmcs_encodings.h"
 #include "allocators.h"
 
+LIST_ENTRY g_ept_breakpoint_hook_list{};
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
 	UNREFERENCED_PARAMETER(DeferredContext);
@@ -173,7 +174,8 @@ bool allocate_vmm_context()
 	//
 	// Allocate virtual cpu context for every logical core
 	//
-	g_vmm_context->processor_count = KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+	 
+	g_vmm_context->processor_count = utils::internal_functions::pfn_ke_query_active_processor_count_ex(ALL_PROCESSOR_GROUPS);
 	g_vmm_context->vcpu_table = allocate_pool<__vcpu**>(sizeof(__vcpu*) * (g_vmm_context->processor_count));
 	if (g_vmm_context->vcpu_table == nullptr)
 	{
@@ -206,6 +208,7 @@ bool allocate_vmm_context()
 /// <returns> Pointer to vcpu </returns>
 bool init_vcpu(__vcpu*& vcpu)
 {
+	InitializeListHead(&g_ept_breakpoint_hook_list);
 	vcpu = allocate_pool<__vcpu>();
 	if (vcpu == nullptr)
 	{

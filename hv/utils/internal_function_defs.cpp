@@ -488,6 +488,11 @@ namespace utils
 							IN PVOID AttributeList
 							) = nullptr;
 
+					   NTSTATUS(__fastcall* pfn_ps_suspend_process)(
+						  _In_ PEPROCESS process) = nullptr;
+
+					   extern NTSTATUS(__fastcall* pfn_ps_resume_process)(
+						   _In_ PEPROCESS process) = nullptr;
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -694,6 +699,7 @@ namespace utils
 			//These three search feature codes will cause errors. Find a way to solve it.
 
 		 
+	
 
 			unsigned long long ki_preprocess_fault_addr = scanner_fun::find_ki_preprocess_fault();
 			LogDebug("ki_preprocess_fault_addr     = %p", reinterpret_cast<PVOID>(ki_preprocess_fault_addr));
@@ -723,26 +729,33 @@ namespace utils
 			unsigned long long mm_set_page_protection_addr = scanner_fun::find_mm_set_page_protection();
 			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
 
-		  
-			 
-			if ( !NT_SUCCESS(ssdt::initialize_ssdt_tables()) )
+			if (!NT_SUCCESS(ssdt::initialize_ssdt_tables()))
 			{
 
 				LogError("Failed to initialize SSDT and Win32k SSDT tables.");
 				return STATUS_UNSUCCESSFUL;
-				 
-			  }
-			 
-			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtQueryVirtualMemory");
-			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtReadVirtualMemory");
-			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr(  "NtProtectVirtualMemory");
-			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr(   "NtWriteVirtualMemory");
+
+			}
+			unsigned long long nt_query_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtQueryVirtualMemory");
+			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtReadVirtualMemory");
+			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtProtectVirtualMemory");
+			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtWriteVirtualMemory");
 			unsigned long long nt_create_user_process_addr = ssdt::get_syscall_fun_addr("NtCreateUserProcess");
 
+			unsigned long long nt_suspend_process_addr = ssdt::get_syscall_fun_addr("NtSuspendProcess");
+			unsigned long long nt_resume_process_addr = ssdt::get_syscall_fun_addr("NtResumeProcess");
 
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
 			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
 			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
+			 
+
+
+
+			unsigned long long ps_suspend_process_addr = scanner_fun::find_ps_suspend_process(nt_suspend_process_addr);
+			unsigned long long ps_resume_process_addr = scanner_fun::find_ps_resume_process(nt_resume_process_addr);
+
+
 			//unsigned long long nt_gdi_ddddi_open_resource_addr = ssdt::get_win32_syscall_fun_addr(ntoskrnl_base, "NtGdiDdDDIOpenResource");
 
 			
@@ -765,8 +778,10 @@ namespace utils
 			LogDebug("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 			LogDebug("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
 			LogDebug("nt_create_user_process_addr       = %p", reinterpret_cast<PVOID>(nt_create_user_process_addr));
+			LogDebug("ps_suspend_process_addr       = %p", reinterpret_cast<PVOID>(ps_suspend_process_addr));
+			LogDebug("ps_resume_process_addr       = %p", reinterpret_cast<PVOID>(ps_resume_process_addr));
 		 
-	 
+ 
   
 		
 			INIT_FUNC_PTR(pfn_nt_query_virtual_memory, nt_query_virtual_memory_addr);
@@ -788,6 +803,9 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_allocate_independent_pages, mm_allocate_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_mm_free_independent_pages, mm_free_independent_pages_addr);
 			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);
+			INIT_FUNC_PTR(pfn_ps_suspend_process, ps_suspend_process_addr);
+			INIT_FUNC_PTR(pfn_ps_resume_process , ps_resume_process_addr);
+
 
 
 			if (!mm_copy_memory_addr)
@@ -960,10 +978,12 @@ namespace utils
 				LogError("mm_free_independent_pages_addr is null.");
 			if (!mm_set_page_protection_addr)
 				LogError("mm_set_page_protection_addr is null.");
+			if (!ps_suspend_process_addr)
+				LogError("mm_set_page_protection_addr is null.");
+			if (!ps_resume_process_addr)
+				LogError("mm_set_page_protection_addr is null.");
 
-
-			 
-
+ 
 				  
 			if (
 				
@@ -1051,13 +1071,15 @@ namespace utils
 				!mm_allocate_independent_pages_addr ||
 				!mm_free_independent_pages_addr ||
 				!mm_set_page_protection_addr||
-				!nt_create_user_process_addr
+				!nt_create_user_process_addr||
+				!ps_suspend_process_addr||
+				!ps_resume_process_addr
 				)             
 			{
 				return STATUS_UNSUCCESSFUL;
 			}
 	
- 
+		
 
 
 			return STATUS_SUCCESS;

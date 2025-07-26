@@ -3,11 +3,12 @@
 #include "../ia32/ia32.hpp"
 #include "../vtx/vmm.h"
 #include "../vtx/hypervisor_routines.h"
+__vmm_context* g_vmm_context = 0;
 namespace utils
 {
 	namespace  khyper_vt
 	{
-
+		
 		NTSTATUS initialize_khyper_vt()
 		{
 			NTSTATUS  status{};
@@ -211,6 +212,8 @@ namespace utils
 				break;
 			}
 
+
+			return status;
 		}
 
 		NTSTATUS initialize_intel_vtx()
@@ -250,11 +253,11 @@ namespace utils
 			memcpy(vendor + 8, &cpu_info[2], 4);
 
 			if (strcmp(vendor, "GenuineIntel") == 0) {
-				LogDebug("CPU Vendor: Intel");
+			 
 				return true;
 			}
 			else if (strcmp(vendor, "AuthenticAMD") == 0) {
-				LogDebug("CPU Vendor: AMD");
+			 
 			}
 			else {
 				LogDebug("CPU Vendor: Unknown");

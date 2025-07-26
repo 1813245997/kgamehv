@@ -488,6 +488,11 @@ namespace utils
 			IN PVOID AttributeList
 			);
 
+		extern NTSTATUS(__fastcall* pfn_ps_suspend_process)(
+			_In_ PEPROCESS process);
+
+		extern NTSTATUS(__fastcall* pfn_ps_resume_process)(
+			_In_ PEPROCESS process);
 
 	} 
 }

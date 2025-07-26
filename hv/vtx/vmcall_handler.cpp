@@ -160,7 +160,44 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			break;
 		}
 		
+		case VMCALL_EPT_REMOVE_BREAK_POINT:
+		{
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
+			 
+			 
+			hv::restore_context(old_cr3);
+			adjust_rip(vcpu);
+			break;
+			 
+		}
+
+		case  VMCALL_EPT_SET_BREAK_POINT_EXCEPTION:
+		{
+
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter2);
+
+			status = ept::hook_user_exception_int3(
+				*vcpu->ept_state,
+				reinterpret_cast<HANDLE>  (vmcall_parameter1),
+				reinterpret_cast<void*>  (vmcall_parameter3),
+				reinterpret_cast<void*>  (vmcall_parameter4),
+				reinterpret_cast<unsigned char*>  (vmcall_parameter5));
+
+			hv::restore_context(old_cr3);
+			adjust_rip(vcpu);
+			break;
+		}
+		case VMCALL_EPT_REMOVE_BREAK_POINT_EXCEPTION:
+		{
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
+
+
+
+			hv::restore_context(old_cr3);
+			adjust_rip(vcpu);
+			break;
+		}
 
 
 		case VMCALL_DUMP_POOL_MANAGER:
@@ -190,6 +227,8 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			adjust_rip(vcpu);
 			break;
 		}
+
+		 
 		 
 
 		default:

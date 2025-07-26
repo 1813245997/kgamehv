@@ -32,5 +32,7 @@ namespace utils
 
 		PHANDLE_TABLE_ENTRY exp_lookup_handle_table_entry(_In_ PHANDLE_TABLE handle_table, _In_ HANDLE pid);
 
+		unsigned long long get_process_cr3(_In_ PEPROCESS process);
+
 	}
 }

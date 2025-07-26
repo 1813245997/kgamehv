@@ -54,7 +54,8 @@ namespace utils
 		
 
 			 //不可以dprinftf 输出 因为是触发异常输出的
-			hyper::EptHookInfo* matched_hook_info = nullptr;
+			ept_breakpoint_info* matched_hook_info = nullptr;
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
  
 			if (PreviousMode != MODE::UserMode) 
 			{
@@ -63,13 +64,13 @@ namespace utils
 
  
 
-			if (!hyper::find_hook_break_point_int3(ExceptionRecord->ExceptionAddress, &matched_hook_info))
+			if (!ept::find_break_point_info(process_id,  hook_type::hook_user_exception_break_point_int3, ExceptionRecord->ExceptionAddress ,&matched_hook_info))
 			{
 				return FALSE;
 			}
-
-			using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, hyper::EptHookInfo*);
-			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->handler_va);
+			 
+			using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, ept_breakpoint_info*);
+			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->breakpoint_handler_va);
 
 			if (handler(ExceptionRecord, ContextRecord, matched_hook_info))
 			{

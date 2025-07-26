@@ -143,18 +143,23 @@ struct __vmm_ept_page_table
 typedef enum _hook_type
 {
 	hook_type_unknown = 0,                 // 未知类型
-	hook_type_breakpoint_int1,             // 普通函数 Hook（修改前几字节跳转）
-	hook_type_breakpoint_int3,             // INT3 断点 Hook
+	hook_kernel_function_redirect,               //内核 函数跳转重定向 Hook
+	hook_user_exception_break_point_int3,           // 用户层异常断点 Hook（如 INT3）
+	hook_dbg_break_point_int1,             // IN1  断点 Hook
+	hook_dbg_break_point_int3,             // INT3 断点 Hook
  
 } hook_type;
+ 
+
+
+
+
 
 typedef struct __ept_hooked_function_info 
 {
 	 
 	LIST_ENTRY hooked_function_list;
-	  
-	bool is_user_mode;
-
+	   
 	unsigned __int64 hook_size;
 
 	void* original_va;
@@ -227,8 +232,47 @@ typedef struct __ept_hooked_page_info
 
 	unsigned int  ref_count;
 
+	bool is_user_mode;
+
 
 } ept_hooked_page_info ;
+
+
+ 
+
+typedef struct _ept_breakpoint_info
+{
+	LIST_ENTRY breakpoint_list_entry;        // 用于挂入断点列表
+
+	unsigned __int64 instruction_size;       // 被覆盖的指令长度（跳板长度）
+
+	void* original_va;                       // 原始地址
+	void* fake_va;                           // 伪造页地址
+	void* breakpoint_handler_va;             // 中断处理器地址
+
+	unsigned __int8* trampoline_va;          // 跳板地址（跳回原始逻辑）
+	unsigned __int8* fake_page_contents;     // 模拟页内容
+	unsigned __int8* original_instruction_backup; // 原始指令备份（用于还原）
+
+	hook_type type;                          // 类型：INT3 / EPT HOOK / ShadowPage等
+
+} ept_breakpoint_info;
+
+typedef struct _ept_debugged_page_info
+{
+	LIST_ENTRY debugged_page_list_entry;     // 页级别断点列表
+	LIST_ENTRY breakpoints_list_head;        // 当前页上所有断点（ept_breakpoint_info）
+
+	HANDLE process_id;                       // 所属进程 ID
+
+	unsigned __int64 pfn_of_hooked_page;
+
+	unsigned __int8* fake_page_contents;     // 伪造页内容
+
+	unsigned int ref_count;                  // 引用计数
+
+} ept_debugged_page_info;
+
 
 union __ept_violation
 {
@@ -375,6 +419,8 @@ namespace ept
 	/// <returns></returns>
 	bool hook_kernel_function(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* new_function, _Out_   void** origin_function);
 
+	bool hook_user_exception_int3(_In_  __ept_state& ept_state, _In_ HANDLE process_id,  _In_  void* target_function, _In_  void* breakpoint_handler, _In_ uint8_t* trampoline_va);
+
 	bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler , _Out_ unsigned char* original_byte);
 
 
@@ -382,7 +428,14 @@ namespace ept
 
 	bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
 
- 
+	bool find_break_point_info(
+	 
+		_In_ HANDLE process_id,
+		_In_ hook_type type,
+		_In_ void* target_function,
+		_Out_ ept_breakpoint_info** out_hook_info);
+
+
 
 	/// <summary>
 	/// Unhook single function
@@ -411,10 +464,11 @@ namespace ept
    
 	bool hook_instruction_memory_int1(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
-	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
+	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function,  unsigned __int64 page_offset);
 
 	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
 
+	void  hook_write_absolute_jump_int3(unsigned __int8* target_buffer, unsigned __int64 destination_address);
 	
 
 }

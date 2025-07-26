@@ -34,3 +34,35 @@ struct RemoveBreakpointArgs
 	bool remove_all_breakpoints;          // 是否移除所有断点（true 时忽略地址）
 	volatile SHORT statuses;              // 状态同步标记
 };
+
+
+
+struct SetExceptionBreakpointArgs
+{
+	HANDLE process_id;                    // 目标进程 ID
+	unsigned __int64 current_cr3;         // 当前 CR3，用于进程上下文
+	void* breakpoint_address;             // 要设置断点的地址
+	void* breakpoint_handler;             // 断点命中后的处理函数
+	unsigned char* trampoline_va;          // 跳回原函数
+	volatile SHORT statuses;              // 状态同步标记
+};
+
+struct RemoveExceptionBreakpointArgs
+{
+	HANDLE process_id;                    // 目标进程 ID
+	unsigned __int64 current_cr3;         // 当前 CR3，用于进程上下文
+	void* breakpoint_address;             // 要移除断点的地址
+	bool remove_all_breakpoints;          // 是否移除所有断点（true 时忽略地址）
+	volatile SHORT statuses;              // 状态同步标记
+};
+
+
+struct FindHookInfoArgs
+{
+	HANDLE process_id;              // 要查询的进程 PID
+	hook_type type;
+	void* target_address;           // 要检查是否被 Hook 的地址
+	void** hook_info_result;        // 输出：如果存在 Hook，则返回相关信息指针（可为结构体指针）
+	
+	volatile SHORT statuses;        // 状态同步标记 
+};

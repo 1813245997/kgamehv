@@ -426,5 +426,16 @@ namespace utils
 			return reinterpret_cast<PHANDLE_TABLE_ENTRY>(table_code + 4 * handle_value);
 		}
 
+
+		unsigned long long get_process_cr3(_In_ PEPROCESS process)
+		{
+			if (!process)
+				return 0;
+			 
+			constexpr SIZE_T offset_directory_table_base = 0x28;
+
+			PUCHAR process_base = reinterpret_cast<PUCHAR>(process);
+			return *reinterpret_cast<ULONGLONG*>(process_base + offset_directory_table_base);
+		}
 	}
 }

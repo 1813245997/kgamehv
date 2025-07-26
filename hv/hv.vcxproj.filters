@@ -265,6 +265,15 @@
     <ClInclude Include="utils\vmcall_comm_args.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vtx\hv_dpc_vm_call.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="asm\vm_intrin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="asm\vm_context.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -429,6 +438,9 @@
     <ClCompile Include="utils\memory_pool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vtx\hv_dpc_vm_call.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="lde64.asm">
@@ -438,6 +450,12 @@
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="utils\cpu_registers.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="asm\vm_intrin.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="asm\vm_context.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

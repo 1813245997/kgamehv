@@ -26,31 +26,36 @@ namespace hook_functions
 
 		BOOLEAN is_succeed = FALSE;
 
-		switch (ExceptionRecord->ExceptionCode)
+		if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT)
 		{
-
-		case   STATUS_GUARD_PAGE_VIOLATION:
-		{
-			is_succeed = utils::falt_utils::handle_page_fault_exception(ExceptionRecord, ContextRecord, PreviousMode);
-
-			break;
-		}
-		case STATUS_BREAKPOINT:
-		{  
-			is_succeed = utils::falt_utils:: handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
-			break;
+			is_succeed = utils::falt_utils::handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
 		}
 
-		case   STATUS_SINGLE_STEP:
-		{
-			is_succeed = utils::falt_utils::handle_single_step_exception (ExceptionRecord, ContextRecord, PreviousMode);
-			break;
-		}
+		/*	switch (ExceptionRecord->ExceptionCode)
+			{
+
+			case   STATUS_GUARD_PAGE_VIOLATION:
+			{
+				is_succeed = utils::falt_utils::handle_page_fault_exception(ExceptionRecord, ContextRecord, PreviousMode);
+
+				break;
+			}
+			case STATUS_BREAKPOINT:
+			{
+				is_succeed = utils::falt_utils:: handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
+				break;
+			}
+
+			case   STATUS_SINGLE_STEP:
+			{
+				is_succeed = utils::falt_utils::handle_single_step_exception (ExceptionRecord, ContextRecord, PreviousMode);
+				break;
+			}
 
 
-		default:
-			break;
-		}
+			default:
+				break;
+			}*/
 
 		if (!is_succeed)
 		{
@@ -260,6 +265,7 @@ namespace hook_functions
 		   IN PEPROCESS process
 	   )
 	   {
+		   
 		   HANDLE proces_id = utils::internal_functions::pfn_ps_get_process_id(process);
 		   if (trim_address_space && process)
 		   {
@@ -755,7 +761,7 @@ namespace hook_functions
 	   (
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ ept_hooked_function_info* matched_hook_info)
+		   _Inout_ ept_breakpoint_info* matched_hook_info)
 	   {
 
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
@@ -789,7 +795,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_present_multiplane_overlay(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ ept_hooked_function_info* matched_hook_info)
+		   _Inout_ ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
@@ -799,7 +805,7 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-			  
+			   LogDebug("g_pswap_chain RCX value: 0x%llX", ContextRecord->Rcx);
 			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
 			  
 		   }
@@ -832,7 +838,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_cdxgi_swap_chain_dwm_legacy_present_dwm(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ ept_hooked_function_info* matched_hook_info)
+		   _Inout_ ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
@@ -874,7 +880,7 @@ namespace hook_functions
 	   BOOLEAN __fastcall new_cocclusion_context_pre_sub_graph(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ ept_hooked_function_info* matched_hook_info)
+		   _Inout_ ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   // 保存原始返回地址
@@ -912,7 +918,7 @@ namespace hook_functions
 	   BOOLEAN __fastcall new_cocclusion_context_post_sub_graph(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_  ept_hooked_function_info* matched_hook_info)
+		   _Inout_  ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
@@ -959,7 +965,7 @@ namespace hook_functions
 	   BOOLEAN __fastcall  new_get_buffer(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_  ept_hooked_function_info* matched_hook_info)
+		   _Inout_  ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   static volatile LONG g_screen_capture_count = 0;
@@ -1034,7 +1040,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_nvfbc_create_ex(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_  ept_hooked_function_info* matched_hook_info)
+		   _Inout_  ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
@@ -1053,7 +1059,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_nvfbc_create(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_ ept_hooked_function_info* matched_hook_info)
+		   _Inout_ ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
@@ -1218,7 +1224,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_get_csgo_hp(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_  ept_hooked_function_info* matched_hook_info)
+		   _Inout_  ept_breakpoint_info* matched_hook_info)
 	   {
 		 
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
@@ -1237,7 +1243,7 @@ namespace hook_functions
 			   
 		   }
 
-		   ULONG64 new_rip =  ContextRecord->Rip  + matched_hook_info->hook_size;
+		   ULONG64 new_rip =  ContextRecord->Rip  + matched_hook_info->instruction_size;
 		    
 		   ContextRecord->Rip = new_rip;
 
@@ -1255,7 +1261,7 @@ namespace hook_functions
 	   BOOLEAN  __fastcall new_dxgk_get_device_state(
 		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		   _Inout_ PCONTEXT ContextRecord,
-		   _Inout_  ept_hooked_function_info* matched_hook_info)
+		   _Inout_  ept_breakpoint_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   // 保存原始返回地址

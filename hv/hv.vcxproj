@@ -127,6 +127,8 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="asm\vm_context.h" />
+    <ClInclude Include="asm\vm_intrin.h" />
     <ClInclude Include="utils\auth\auth.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
@@ -189,6 +191,7 @@
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vtx\allocators.h" />
+    <ClInclude Include="vtx\hv_dpc_vm_call.h" />
     <ClInclude Include="vtx\common.h" />
     <ClInclude Include="vtx\cpuid.h" />
     <ClInclude Include="vtx\cr.h" />
@@ -255,6 +258,7 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
+    <ClCompile Include="vtx\hv_dpc_vm_call.cpp" />
     <ClCompile Include="vtx\ept.cpp" />
     <ClCompile Include="vtx\hypervisor_gateway.cpp" />
     <ClCompile Include="vtx\hypervisor_routines.cpp" />
@@ -267,6 +271,8 @@
     <ClCompile Include="vtx\vmm.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <MASM Include="asm\vm_context.asm" />
+    <MASM Include="asm\vm_intrin.asm" />
     <MASM Include="lde64.asm" />
     <MASM Include="utils\cpu_registers.asm" />
     <MASM Include="utils\dx_draw\math.asm" />

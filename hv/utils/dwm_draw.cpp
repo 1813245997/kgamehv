@@ -203,8 +203,8 @@ namespace utils
 			{
 				return status;
 			}
-			 
-			 
+
+
 			status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -216,8 +216,8 @@ namespace utils
 			{
 				return status;
 			}
-			// 
-			// 
+
+
 			//ƒ⁄∫ÀHOOK√≤À∆∂‡”‡¡À 
 
 
@@ -1073,13 +1073,13 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+		 
+			
+			bool hook_result = hook_utils::hook_user_exception_handler(
+				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_dwm),
-				hook_functions::new_present_dwm,
-				NULL
+				hook_functions::new_present_dwm
+				 
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
@@ -1094,13 +1094,13 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 			 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 
 		   
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+			bool hook_result = hook_utils::hook_user_exception_handler(
+				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_multiplane_overlay),
-				hook_functions:: new_present_multiplane_overlay,
-				reinterpret_cast<void**>(&hook_functions::original_present_multiplane_overlay)
+				hook_functions:: new_present_multiplane_overlay 
+			 
 			);
 			 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
@@ -1116,13 +1116,13 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 
 
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+			bool hook_result = hook_utils::hook_user_exception_handler(
+			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_pre_sub_graph),
-				hook_functions::new_cocclusion_context_pre_sub_graph,
-				nullptr
+				hook_functions::new_cocclusion_context_pre_sub_graph
+				 
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
@@ -1133,14 +1133,13 @@ namespace utils
 			{
 				return STATUS_INVALID_PARAMETER;
 			}
+ 
 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+			bool hook_result = hook_utils::hook_user_exception_handler(
+			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_post_sub_graph),
-				hook_functions::new_cocclusion_context_post_sub_graph,
-			    nullptr
+				hook_functions::new_cocclusion_context_post_sub_graph 
+			    
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
@@ -1154,13 +1153,13 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 
 
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+			bool hook_result = hook_utils::hook_user_exception_handler(
+				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swap_chain_dwm_legacy_present_dwm),
-				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm,
-				reinterpret_cast<void**>(&hook_functions::original_cdxgi_swap_chain_dwm_legacy_present_dwm)
+				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm 
+				 
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
@@ -1175,13 +1174,13 @@ namespace utils
 
 			KAPC_STATE apc_state{};
 			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-
-			bool hook_result = hook_utils::hook_break_point_int3(
-				NULL,
-				reinterpret_cast<PVOID>(g_dxgk_get_device_state),
-				hook_functions::new_dxgk_get_device_state,
-			  nullptr
-			);
+			bool hook_result = false;
+			//bool hook_result = hook_utils::hook_user_exception_handler(
+			//	NULL,
+			//	reinterpret_cast<PVOID>(g_dxgk_get_device_state),
+			//	hook_functions::new_dxgk_get_device_state 
+			//   
+			//);
 		 
 
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
@@ -1197,16 +1196,16 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 			
-			HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 
 
 			unsigned  long long get_buffer_fun = reinterpret_cast<unsigned long long>  (utils::vfun_utils::get_vfunc(reinterpret_cast<PVOID>(utils::dwm_draw::g_pswap_chain), 9));
 		 
 
-			bool hook_result = hook_utils::hook_break_point_int3(
-				process_id,
+			bool hook_result = hook_utils::hook_user_exception_handler(
+				process,
 				reinterpret_cast<PVOID>(get_buffer_fun),
-				hook_functions::new_get_buffer,
-				nullptr
+				hook_functions::new_get_buffer
+			 
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;

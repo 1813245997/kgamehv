@@ -94,9 +94,7 @@ namespace utils
 				return status;
 			}
 			LogDebug("Virtualization started successfully.");
-
-			 
-
+ 
 			utils::hidden_modules::initialize_hidden_module_list();
 
 			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");

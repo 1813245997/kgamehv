@@ -14,7 +14,7 @@ namespace utils
 		unsigned long long g_pde_base{};
 		unsigned long long g_ppe_base{};
 		unsigned long long g_pxe_base{};
-
+		PPHYSICAL_MEMORY_RANGE g_physical_memory_ranges = 0;
 
 		NTSTATUS initialize_all_paging_base()
 		{
@@ -338,7 +338,10 @@ namespace utils
 			   return false;
 		   }
 		   
-
+		   bool is_va_physical_address_valid(unsigned long long   virtual_address)
+		   {
+			   return utils::internal_functions::pfn_mm_get_physical_address (reinterpret_cast<PVOID> (virtual_address)).QuadPart > 0x1000;
+		   }
 	 
 		   long long mm_get_pte_address(long long virtual_address)
 		   {
@@ -503,59 +506,596 @@ namespace utils
 			   internal_functions::pfn_io_free_mdl(mdl);
 		   }
 
-		   //NTSTATUS rtl_super_copy_memory(IN VOID UNALIGNED* destination, IN CONST VOID UNALIGNED* source, IN ULONG length)
-		   //{
-			  // //Change memory properties.
-			  // PMDL g_pmdl = IoAllocateMdl(destination, length, 0, 0, NULL);
-			  // if (!g_pmdl)
-				 //  return STATUS_UNSUCCESSFUL;
-			  // MmBuildMdlForNonPagedPool(g_pmdl);
-			  // PVOID Mapped = MmMapLockedPages(g_pmdl, KernelMode);
-			  // if (!Mapped)
-			  // {
-				 //  IoFreeMdl(g_pmdl);
-				 //  return STATUS_UNSUCCESSFUL;
-			  // }
-			  // KIRQL kirql = KeRaiseIrqlToDpcLevel();
-			  // RtlCopyMemory(Mapped, source, length);
-			  // KeLowerIrql(kirql);
-			  // //Restore memory properties.
-			  // MmUnmapLockedPages((PVOID)Mapped, g_pmdl);
-			  // IoFreeMdl(g_pmdl);
-			  // return STATUS_SUCCESS;
-		   //}
+		   KIRQL __fastcall raise_irql(KIRQL NewIrql)
+		   {
+			   KIRQL CurrentIrql;
 
-		   //NTSTATUS rtl_super_copy_memory_from_source(
-			  // IN VOID UNALIGNED* destination,
-			  // IN CONST VOID UNALIGNED* source,
-			  // IN ULONG length)
-		   //{
-			  // // Allocate an MDL for the source address
-			  // PMDL sourceMdl = IoAllocateMdl((PVOID)source, length, 0, 0, NULL);
-			  // if (!sourceMdl)
-				 //  return STATUS_UNSUCCESSFUL;
+			   CurrentIrql = KeGetCurrentIrql();
+			   __writecr8(NewIrql);
+			   return CurrentIrql;
+		   }
 
-			  // // Build the MDL for non-paged pool
-			  // MmBuildMdlForNonPagedPool(sourceMdl);
+		   KIRQL __fastcall raise_irql_to_dpc_level()
+		   {
+			   return raise_irql(2u);
+		   }
 
-			  // // Map the source address into kernel mode
-			  // PVOID mappedSource = MmMapLockedPages(sourceMdl, KernelMode);
-			  // if (!mappedSource)
-			  // {
-				 //  IoFreeMdl(sourceMdl);
-				 //  return STATUS_UNSUCCESSFUL;
-			  // }
+		   void __fastcall lower_irql(KIRQL Irql)
+		   {
+			   __writecr8(Irql);
+		   }
 
-			  // // Perform the memory copy
-			  // KIRQL kirql = KeRaiseIrqlToDpcLevel();
-			  // RtlCopyMemory(destination, mappedSource, length);
-			  // KeLowerIrql(kirql);
+		   NTSTATUS read_virtual_memory(
+			   unsigned long long directory_table_base,
+			   void* target_address,
+			   void* out_buffer,
+			   PULONG pSizeRead)
+		   {
 
-			  // // Restore memory properties
-			  // MmUnmapLockedPages(mappedSource, sourceMdl);
-			  // IoFreeMdl(sourceMdl);
-			  // return STATUS_SUCCESS;
-		   //}
+			   if (!directory_table_base)
+			   {
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+			   if (!target_address)
+			   {
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+			   if (!out_buffer)
+			   {
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+			   if (!pSizeRead)
+			   {
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+			   if (!*pSizeRead)
+			   {
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+			   BOOLEAN IsDoneRead{};
+			   NTSTATUS status{};
+			   ULONG SizeLeft{};
+			   ULONG OffsetInPage{};
+			   ULONG SizeRead{};
+			   ULONG SizeLeftInPage{};
+			   ULONG Size{};
+			   ULONG64 PhysicalAddress{};
+			   ULONG64 PageSize{};
+			   ULONG64 PageAddress{};
+			   ULONG64 page_size{};
+
+			   physical_page_info transfer_page_info{};
+			    status = allocate_physical_page(&transfer_page_info, PAGE_SIZE);
+			   if (!NT_SUCCESS(status))
+			   {
+				   return status;
+			   }
+
+			 
+			   status =  get_phys_page_size(&transfer_page_info, (ULONG64)target_address, &page_size, directory_table_base);
+			   if (!NT_SUCCESS(status) || page_size > PAGE_SIZE)
+			   {
+				    free_physical_page(&transfer_page_info);
+				   return STATUS_INVALID_PARAMETER;
+			   }
+
+		 
+			   OffsetInPage = (ULONG64)target_address & 0xFFF;
+			   PageAddress = (ULONG64)target_address & 0xFFFFFFFFFFFFF000u;
+			   Size = *pSizeRead;
+			   SizeLeft = *pSizeRead;
+			   do
+			   {
+				   IsDoneRead = FALSE;
+				   if (SizeLeft >= PAGE_SIZE - OffsetInPage)
+				   {
+					   SizeLeftInPage = PAGE_SIZE - OffsetInPage;
+				   }
+				   else
+				   {
+					   SizeLeftInPage = SizeLeft;
+				   }
+				   
+				   PhysicalAddress = 0;
+				   status = get_phys_page_address(&transfer_page_info, directory_table_base, (PVOID)PageAddress, &PhysicalAddress);
+
+				   if (NT_SUCCESS(status) && PhysicalAddress)
+				   {
+					   if (NT_SUCCESS(read_physical_page(
+						   &transfer_page_info,
+						   PhysicalAddress + OffsetInPage,
+						   out_buffer,
+						   SizeLeftInPage)))
+					   {
+						   SizeRead += SizeLeftInPage;
+						   IsDoneRead = TRUE;
+					   }
+				   }
+				   
+				    
+				   if (!IsDoneRead)
+				   {
+					   memset(out_buffer, 0, SizeLeftInPage);
+				   }
+				   out_buffer = (PUCHAR)out_buffer + SizeLeftInPage;
+				   PageAddress += OffsetInPage + (ULONG64)SizeLeftInPage;
+				   OffsetInPage = 0;
+				   SizeLeft -= SizeLeftInPage;
+			   } while (SizeLeft && SizeLeft < Size);
+
+			   if (SizeRead)
+			   {
+				   *pSizeRead = SizeRead;
+				   status = STATUS_SUCCESS;
+			   }
+			   else
+			   {
+				   status = STATUS_CANT_WAIT;
+			   }
+				  
+			   
+		   _EXIT:
+			   free_physical_page(&transfer_page_info);
+			   return status;
+ 
+		   }
+
+		   NTSTATUS   allocate_physical_page(
+			   physical_page_info* physical_page_info,
+			   SIZE_T size)
+		   {
+			   if (!physical_page_info)
+			   {
+				   return STATUS_INVALID_BUFFER_SIZE;
+			   }
+
+			   if (size != 0x1000)
+			   {
+				   return STATUS_INVALID_BUFFER_SIZE;
+			   }
+
+
+			  
+
+			   unsigned long long base_address = reinterpret_cast<unsigned long long > (MmAllocateMappingAddress(0x1000, 'axe'));
+			   if (!base_address)
+			   {
+				   return STATUS_INSUFFICIENT_RESOURCES;
+
+			   }
+
+			   unsigned  long long pte_address =  get_pte(  base_address ) ;
+			   if (!pte_address || !is_va_physical_address_valid( pte_address )) {
+				   MmFreeMappingAddress(reinterpret_cast<PVOID> (base_address), 'axe');
+				   return STATUS_MEMORY_NOT_ALLOCATED;
+			   }
+
+			  physical_page_info->base_address = base_address;
+			  physical_page_info->size = 0x1000;
+			  physical_page_info->pte_address = pte_address;
+
+			   return STATUS_SUCCESS;
+		   }
+
+
+
+		   NTSTATUS get_phys_page_address(
+			   physical_page_info* transfer_page_info,
+			   unsigned long long target_cr3,
+			   PVOID page_va,
+			   PULONG64 physical_address_out)
+		   {
+
+			   if (!physical_address_out)
+				   return STATUS_INVALID_PARAMETER;
+
+			   *physical_address_out = 0;
+
+			   ULONG64 cr3 = target_cr3 ? target_cr3 : __readcr3();
+
+			   PAGE_TABLE_INFO page_table_info{};
+			   NTSTATUS status = get_page_table_info(transfer_page_info, cr3, (ULONG64)page_va, &page_table_info);
+			   if (!NT_SUCCESS(status))
+				   return status;
+
+			   ULONG64 page_phys = 0;
+			   SIZE_T page_size = 0;
+
+			   switch (page_table_info.PageType)
+			   {
+			   case 5u:
+				   page_phys = ( (page_table_info.Pte >> 12) & 0xFFFFFFFFFFi64) << 12;
+				   page_size = 0x1000;
+				   break;
+
+			   case 6u:
+				   page_phys =( (page_table_info.Pde >> 21) & 0x7FFFFFFF) << 21;
+				   page_size = 0x200000;
+				   break;
+
+			   case 7u:
+				   page_phys =( (page_table_info.Ppe >> 30) & 0x3FFFFF) << 30;
+				   page_size = 0x40000000;
+				   break;
+
+			   default:
+				   return STATUS_INVALID_PAGE_PROTECTION;
+			   }
+
+			   if (page_phys != 0)
+			   {
+				   *physical_address_out = (ULONG64)page_va + page_phys - (~(page_size - 1) & (ULONG64)page_va);
+				 
+				   return STATUS_SUCCESS;
+			   }
+
+			   return STATUS_NO_MORE_ENTRIES; // page_phys 为 0
+
+		   }
+		   NTSTATUS __fastcall get_phys_page_size(
+			   physical_page_info* transfer_page_info,
+			   unsigned long long page_address,
+			   size_t* page_size,
+			   unsigned long long target_cr3)
+		   {
+
+			   NTSTATUS status{};
+			   ULONG Flag;
+			   ULONG v8;
+			   ULONG v9;
+			   SIZE_T PageSize;
+			   PAGE_TABLE_INFO PageTableInfo{};
+			   unsigned long long cr3{ target_cr3 };
+			    
+			   memset(&PageTableInfo, 0, 0x24);
+			   
+			   if (get_page_table_info(transfer_page_info,cr3, page_address, &PageTableInfo))
+			   {
+				   status = 2;
+				   if ((PageTableInfo.Pxe & 1) != 0)
+				   {
+					   if ((PageTableInfo.Ppe & 1) != 0 && ((PageTableInfo.Ppe >> 7) & 1) == 0)
+					   {
+						   if ((PageTableInfo.Pde & 1) != 0 && ((PageTableInfo.Pde >> 7) & 1) == 0)
+							   PageSize = 0x1000;
+						   else
+							   PageSize = 0x200000;
+					   }
+					   else
+					   {
+						   PageSize = 0x40000000;
+					   }
+				   }
+				   else
+				   {
+					   PageSize = 0x8000000000;
+				   }
+			   }
+			   else
+			   {
+				   switch (PageTableInfo.PageType)
+				   {
+				   case 5u:
+					   PageSize = 0x1000;
+					   Flag = 16;
+					   if ((PageTableInfo.Ppe & 1) != 0)
+					   {
+						   if ((PageTableInfo.Ppe & 0x8000000000000000) != 0i64)
+							   Flag = 24;
+						   if (((PageTableInfo.Ppe >> 1) & 1) == 0)
+							   Flag |= 0x80u;
+						   if (((PageTableInfo.Ppe >> 2) & 1) == 0)
+							   Flag |= 4u;
+						   if ((PageTableInfo.Pde & 1) != 0)
+						   {
+							   if ((PageTableInfo.Pde & 0x8000000000000000) != 0i64)
+								   Flag |= 8u;
+							   if (((PageTableInfo.Pde >> 1) & 1) == 0)
+								   Flag |= 0x80u;
+							   if (((PageTableInfo.Pde >> 2) & 1) == 0)
+								   Flag |= 4u;
+							   if ((PageTableInfo.Pte & 1) != 0)
+							   {
+								   if ((PageTableInfo.Pte & 0x8000000000000000) != 0i64)
+									   Flag |= 8u;
+								   if (((PageTableInfo.Pte >> 1) & 1) == 0)
+									   Flag |= 0x80u;
+								   if (((PageTableInfo.Pte >> 2) & 1) == 0)
+									   Flag |= 4u;
+								   if (((PageTableInfo.Pte >> 5) & 1) != 0)
+									   Flag |= 0x100u;
+								   if (((PageTableInfo.Pte >> 6) & 1) != 0)
+									   Flag |= 0x200u;
+								   status = Flag | 1;
+							   }
+							   else
+							   {
+								   status = Flag | 2;
+							   }
+						   }
+						   else
+						   {
+							   status = Flag | 2;
+						   }
+					   }
+					   else
+					   {
+						   status = 18;
+					   }
+					   break;
+				   case 6u:
+					   PageSize = 0x200000;
+					   v8 = 32;
+					   if ((PageTableInfo.Ppe & 1) != 0)
+					   {
+						   if ((PageTableInfo.Ppe & 0x8000000000000000) != 0i64)
+							   v8 = 40;
+						   if (((PageTableInfo.Ppe >> 1) & 1) == 0)
+							   v8 |= 0x80u;
+						   if (((PageTableInfo.Ppe >> 2) & 1) == 0)
+							   v8 |= 4u;
+						   if ((PageTableInfo.Pde & 1) != 0)
+						   {
+							   if ((PageTableInfo.Pde & 0x8000000000000000) != 0i64)
+								   v8 |= 8u;
+							   if (((PageTableInfo.Pde >> 1) & 1) == 0)
+								   v8 |= 0x80u;
+							   if (((PageTableInfo.Pde >> 2) & 1) == 0)
+								   v8 |= 4u;
+							   if (((PageTableInfo.Pde >> 5) & 1) != 0)
+								   v8 |= 0x100u;
+							   if (((PageTableInfo.Pde >> 6) & 1) != 0)
+								   v8 |= 0x200u;
+							   status = v8 | 1;
+						   }
+						   else
+						   {
+							   status = v8 | 2;
+						   }
+					   }
+					   else
+					   {
+						   status = 34;
+					   }
+					   break;
+				   case 7u:
+					   PageSize = 0x40000000;
+					   v9 = 64;
+					   if ((PageTableInfo.Ppe & 1) != 0)
+					   {
+						   if ((PageTableInfo.Ppe & 0x8000000000000000) != 0i64)
+							   v9 = 72;
+						   if (((PageTableInfo.Ppe >> 1) & 1) == 0)
+							   v9 |= 0x80u;
+						   if (((PageTableInfo.Ppe >> 2) & 1) == 0)
+							   v9 |= 4u;
+						   if (((PageTableInfo.Ppe >> 5) & 1) != 0)
+							   v9 |= 0x100u;
+						   if (((PageTableInfo.Ppe >> 6) & 1) != 0)
+							   v9 |= 0x200u;
+						   status = v9 | 1;
+					   }
+					   else
+					   {
+						   status = 66;
+					   }
+					   break;
+				   default:
+					   PageSize = 0x1000;
+					   break;
+				   }
+			   }
+			   if (page_size)
+			   {
+				   *page_size = PageSize;
+			   }
+
+			   return  status;
+		   }
+
+
+		   NTSTATUS get_page_table_info(
+			   physical_page_info* transfer_page_info,
+			   ULONG64 cr3,
+			   ULONG64 page_address,
+			   PAGE_TABLE_INFO* page_table_info_out)
+		   {
+			   if (!transfer_page_info)
+			   {
+				   return 22;
+			   }
+			   memset(page_table_info_out, 0 , sizeof(PAGE_TABLE_INFO));
+
+			   if (read_physical_page(
+				   transfer_page_info,
+				   (((cr3 >> 12) & 0xFFFFFFFFFFi64) << 12) + 8 * ((page_address >> 39) & 0x1FF),
+				   page_table_info_out,
+				   8)
+				   || (page_table_info_out->Pxe & 1) == 0)
+			   {
+				   return 262;
+			   }
+
+			   if (((page_table_info_out->Pxe >> 12) & 0xFFFFFFFFFFi64) == ((cr3 >> 12) & 0xFFFFFFFFFFi64))
+			   {
+				   return 266;
+
+			   }
+			   if (read_physical_page(
+				   transfer_page_info,
+				   (((page_table_info_out->Pxe >> 12) & 0xFFFFFFFFFFi64) << 12) + 8 * ((page_address >> 30) & 0x1FF),
+				   &page_table_info_out->Ppe,
+				   8)
+				   || (page_table_info_out->Ppe & 1) == 0)
+			   {
+				   return 263;
+			   }
+			   if (((page_table_info_out->Ppe >> 7) & 1) != 0)
+			   {
+				   page_table_info_out->PageType = 7;                // 1GB large page
+				   return 0;
+			   }
+
+			   else if (!read_physical_page(
+				   transfer_page_info,
+				   (((page_table_info_out->Ppe >> 12) & 0xFFFFFFFFFFi64) << 12) + 8 * ((page_address >> 21) & 0x1FF),
+				   &page_table_info_out->Pde,
+				   8)
+				   && (page_table_info_out->Pde & 1) != 0)
+			   {
+				   if (((page_table_info_out->Pde >> 7) & 1) != 0)
+				   {
+					   page_table_info_out->PageType = 6;              // 2MB large page
+					   return 0;
+				   }
+				   else if (!read_physical_page(
+					   transfer_page_info,
+					   (((page_table_info_out->Pde >> 12) & 0xFFFFFFFFFFi64) << 12) + 8 * ((page_address >> 12) & 0x1FF),
+					   &page_table_info_out->Pte,
+					   8)
+					   && (page_table_info_out->Pte & 1) != 0)
+				   {
+					   page_table_info_out->PageType = 5;              // 4KB Page
+					   return 0;
+				   }
+				   else
+				   {
+					   return 265;
+				   }
+			   }
+			   else
+			   {
+				   return 264;
+			   }
+		   }
+
+
+
+		   NTSTATUS read_physical_page(
+			   physical_page_info* transfer_page_info,
+			   ULONG64 phys_page_base,
+			   PVOID buffer,
+			   SIZE_T size)
+		   {
+			   if (!phys_page_base || !buffer || !size)
+				   return STATUS_INVALID_PARAMETER;
+
+			   if (!transfer_page_info ||
+				   !transfer_page_info->base_address ||
+				   !transfer_page_info->pte_address)
+				   return STATUS_INVALID_PARAMETER_1;
+
+			   if (size > transfer_page_info->size)
+				   return STATUS_BUFFER_TOO_SMALL;
+
+			   // 跨页不支持
+			   if ((phys_page_base >> 12) != ((phys_page_base + size - 1) >> 12))
+				   return STATUS_INVALID_PARAMETER_MIX;
+
+			   if (!is_phys_page_in_range(phys_page_base, size))
+				   return STATUS_INVALID_ADDRESS;
+
+			   ULONG old_irql = 0;
+			   bool raised_irql = false;
+
+			   // 如果当前IRQL小于DPC_LEVEL，提升到DPC
+			   if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
+				   old_irql = raise_irql_to_dpc_level();
+				   raised_irql = true;
+			   }
+
+			  unsigned  long long  pte_addr = transfer_page_info->pte_address;
+			   if (!is_va_physical_address_valid( pte_addr )) {
+				   if (raised_irql) lower_irql(old_irql);
+				   return STATUS_INVALID_ADDRESS;
+			   }
+
+			   // 保存原始PTE并挂上目标物理页
+			   ULONG64* pte_entry = reinterpret_cast<ULONG64*>(pte_addr);
+			   ULONG64 old_pte = *pte_entry;
+
+			   *pte_entry =
+				   ((phys_page_base >> 12) & 0xFFFFFFFFFFULL) << 12 |
+				   (*pte_entry & 0xFFF0000000000EF8ULL) |
+				   0x103ULL; // Present | ReadWrite | NX 清除
+
+			   __invlpg((void*) transfer_page_info->base_address);
+
+			   memmove(
+				   reinterpret_cast<char*>(buffer),
+				   reinterpret_cast<char*>(transfer_page_info->base_address) + (phys_page_base & 0xFFF),
+				   size
+			   );
+
+			   // 恢复原始PTE
+			   *pte_entry = old_pte;
+
+			   if (raised_irql)
+				   lower_irql(old_irql);
+
+			   return STATUS_SUCCESS;
+		   }
+
+		   bool is_phys_page_in_range(unsigned  long long phys_page_base, size_t size)
+		   {
+			   if (!g_physical_memory_ranges)
+			   {
+				   // 仅在 IRQL = PASSIVE_LEVEL 时调用 MmGetPhysicalMemoryRanges
+				   if (KeGetCurrentIrql())
+					   return false;
+
+				   g_physical_memory_ranges = MmGetPhysicalMemoryRanges();
+			   }
+
+			   if (!g_physical_memory_ranges)
+				   return false;
+
+			   const ULONG64 phys_page_end = phys_page_base + size - 1;
+
+			   for (int i = 0;; ++i)
+			   {
+				   PHYSICAL_MEMORY_RANGE physical_memory_range = g_physical_memory_ranges[i];
+
+				   // 遇到终止项
+				   if (physical_memory_range.BaseAddress.QuadPart == 0 ||
+					   physical_memory_range.NumberOfBytes.QuadPart == 0)
+				   {
+					   break;
+				   }
+
+			 
+
+				   // 判断地址是否完全落在当前物理内存区间中
+				   if (phys_page_base >= (ULONG64)physical_memory_range.BaseAddress.QuadPart
+					   && phys_page_base < (ULONG64)physical_memory_range.NumberOfBytes.QuadPart + physical_memory_range.BaseAddress.QuadPart
+					   && phys_page_end >= (ULONG64)physical_memory_range.BaseAddress.QuadPart
+					   && phys_page_end < (ULONG64)physical_memory_range.NumberOfBytes.QuadPart + physical_memory_range.BaseAddress.QuadPart)
+				   {
+					   return true;
+				   }
+			   }
+
+			   return false;
+		   }
+
+
+		   void __fastcall free_physical_page(
+			   physical_page_info* page_info)
+		   {
+			   if (page_info)
+			   {
+				   if (page_info->base_address)
+				   {
+					   MmFreeMappingAddress((PVOID)page_info->base_address, 'axe');
+					   memset(page_info, 0i64, sizeof(physical_page_info));
+				   }
+			   }
+		   }
 
 	}
 }
