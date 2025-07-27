@@ -292,3 +292,6 @@ unsigned __int64 return_rip_for_vmxoff();
 bool vmexit_handler(__vmexit_guest_registers * guest_registers);
 
 void adjust_rip(__vcpu* vcpu);
+
+
+ 

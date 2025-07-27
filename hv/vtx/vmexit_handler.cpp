@@ -582,52 +582,17 @@ void vmexit_cpuid_handler(__vcpu* vcpu)
 {
 	__cpuid_info cpuid_reg = { 0 };
 
-	if (g_vmm_context->hv_presence == false &&
-		vcpu->vmexit_info.guest_registers->rax >= 0x40000000 &&
-		vcpu->vmexit_info.guest_registers->rax <= 0x4FFFFFFF)
-		__cpuidex((int*)&cpuid_reg.eax, g_vmm_context->highest_basic_leaf, 0);
+	auto const ctx = vcpu->vmexit_info.guest_registers ;
 
-	else 
-		__cpuidex((int*)&cpuid_reg.eax, vcpu->vmexit_info.guest_registers->rax, vcpu->vmexit_info.guest_registers->rcx);
+	int regs[4];
+	__cpuidex(regs, ctx->rax, ctx->rcx);
 
+	ctx->rax = regs[0];
+	ctx->rbx = regs[1];
+	ctx->rcx = regs[2];
+	ctx->rdx = regs[3];
 
-	switch (vcpu->vmexit_info.guest_registers->rax)
-	{
-		case CPUID_PROCESSOR_FEATURES:
-			cpuid_reg.cpuid_eax_01.feature_information_ecx.hypervisor_present = g_vmm_context->hv_presence; // Hypervisor present bit
-			break;
-		
-		case CPUID_HV_VENDOR_AND_MAX_FUNCTIONS:
-			if (g_vmm_context->hv_presence == true)
-			{
-				cpuid_reg.eax = CPUID_HV_INTERFACE;
-				cpuid_reg.ebx = 'hria';  // airhv
-				cpuid_reg.ecx = 'v\x00\x00\x00';
-				cpuid_reg.edx = 0;
-			}
-			break;
-
-		case CPUID_HV_INTERFACE:
-			if (g_vmm_context->hv_presence == true)
-			{
-				//
-				// This indicates that our hypervisor doesn't conform to microsoft hyperv interaface
-				//
-				cpuid_reg.eax = '0#vH';
-				cpuid_reg.ebx = cpuid_reg.ecx = cpuid_reg.edx = 0;
-			}
-			break;
-
-		case CPUID_EXTENDED_FEATURES:
-			if (vcpu->vmexit_info.guest_registers->rcx == 0)
-				CLR_CPUID_BIT(cpuid_reg.ecx, 5); // TPAUSE UMONITOR and UWAIT are not supported
-			break;
-	}
-
-	vcpu->vmexit_info.guest_registers->rax = cpuid_reg.eax;
-	vcpu->vmexit_info.guest_registers->rbx = cpuid_reg.ebx;
-	vcpu->vmexit_info.guest_registers->rcx = cpuid_reg.ecx;
-	vcpu->vmexit_info.guest_registers->rdx = cpuid_reg.edx;
+ 
 	
 	adjust_rip(vcpu);
 }
