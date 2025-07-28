@@ -6,7 +6,8 @@
 #include "exception.h"
 #include "mtrr.h"
 #include "../ia32/ia32.hpp"
-
+#include "gdt.h"
+#include "idt.h"
 extern "C" size_t __fastcall LDE(const void* lpData, unsigned int size);
 
 #define VMCALL_IDENTIFIER 0xCDAEFAEDBBAEBEEF
@@ -171,6 +172,15 @@ struct __vcpu
 	uint64_t vm_exit_tsc_overhead;
 	uint64_t vm_exit_mperf_overhead;
 	uint64_t vm_exit_ref_tsc_overhead;
+
+	// host interrupt descriptor table
+	alignas(0x1000) segment_descriptor_interrupt_gate_64 host_idt[hv::host_idt_descriptor_count];
+
+	// host global descriptor table
+	alignas(0x1000) segment_descriptor_32 host_gdt[hv::host_gdt_descriptor_count];
+
+	// host task state segment
+	alignas(0x1000) task_state_segment_64 host_tss;
 
 	// whether to use TSC offsetting for the current vm-exit--false by default
 	bool hide_vm_exit_overhead;

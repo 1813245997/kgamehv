@@ -13,6 +13,8 @@
  
 #include "vmcs_encodings.h"
 #include "allocators.h"
+#include "trap-frame.h"
+#include "exception-routines.h"
 
 LIST_ENTRY g_ept_breakpoint_hook_list{};
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
@@ -370,7 +372,7 @@ void init_logical_processor(void* guest_rsp)
 	vcpu->vcpu_status.vmx_on = true;
 	LogInfo("vcpu %d is now in VMX operation.\n", processor_number);
 	cache_cpu_data(vcpu->cached);
-	 
+	prepare_external_structures(vcpu);
 	fill_vmcs(vcpu, guest_rsp);
 	vcpu->vcpu_status.vmm_launched = true;
 
@@ -447,4 +449,79 @@ bool vmm_init()
 	  vmx_segment_access_rights ss;
 	  ss.flags = static_cast<uint32_t>(hv::vmread(VMCS_GUEST_SS_ACCESS_RIGHTS));
 	  return ss.descriptor_privilege_level;
+  }
+
+  ia32_vmx_procbased_ctls_register read_ctrl_proc_based() {
+	  ia32_vmx_procbased_ctls_register value;
+	  value.flags = hv::vmread(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS);
+	  return value;
+  }
+
+    void write_ctrl_proc_based(ia32_vmx_procbased_ctls_register const value) {
+	  hv::vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, value.flags);
+  }
+
+  void inject_nmi()
+  {
+	  vmentry_interrupt_information interrupt_info;
+	  interrupt_info.flags = 0;
+	  interrupt_info.vector = nmi;
+	  interrupt_info.interruption_type = non_maskable_interrupt;
+	  interrupt_info.deliver_error_code = 0;
+	  interrupt_info.valid = 1;
+	  hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt_info.flags);
+  }
+
+
+
+  namespace hv
+  {
+	  void handle_host_interrupt(trap_frame* const frame) {
+		  switch (frame->vector) {
+			  // host NMIs
+		  case nmi: {
+			  auto ctrl = read_ctrl_proc_based();
+			  ctrl.nmi_window_exiting = 1;
+			  write_ctrl_proc_based(ctrl);
+
+			  auto const cpu = reinterpret_cast<__vcpu*>(_readfsbase_u64());
+			  ++cpu->queued_nmis;
+
+			  break;
+		  }
+				  // host exceptions
+		  default: {
+			  // no registered exception handler
+			  if (!frame->r10 || !frame->r11) {
+				 /* HV_LOG_ERROR("Unhandled exception. RIP=hv.sys+%p. Vector=%u.",
+					  frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
+
+				  // ensure a triple-fault
+				  segment_descriptor_register_64 idtr;
+				  idtr.base_address = frame->rsp;
+				  idtr.limit = 0xFFF;
+				  __lidt(&idtr);
+
+				  break;
+			  }
+
+			/*  HV_LOG_HOST_EXCEPTION("Handling host exception. RIP=hv.sys+%p. Vector=%u",
+				  frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
+
+			  // jump to the exception handler
+			  frame->rip = frame->r10;
+
+			  auto const e = reinterpret_cast<hv::host_exception_info*>(frame->r11);
+
+			  e->exception_occurred = true;
+			  e->vector = frame->vector;
+			  e->error = frame->error;
+
+			  // slightly helps prevent infinite exceptions
+			  frame->r10 = 0;
+			  frame->r11 = 0;
+		  }
+		  }
+	  }
+
   }

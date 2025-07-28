@@ -19,3 +19,9 @@ cr0 read_effective_guest_cr0();
 cr4 read_effective_guest_cr4();
 
 uint16_t current_guest_cpl();
+
+ia32_vmx_procbased_ctls_register read_ctrl_proc_based();
+
+void write_ctrl_proc_based(ia32_vmx_procbased_ctls_register const value);
+
+void inject_nmi();

@@ -191,6 +191,8 @@
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vtx\allocators.h" />
+    <ClInclude Include="vtx\exception-routines.h" />
+    <ClInclude Include="vtx\gdt.h" />
     <ClInclude Include="vtx\hv_dpc_vm_call.h" />
     <ClInclude Include="vtx\common.h" />
     <ClInclude Include="vtx\cpuid.h" />
@@ -200,12 +202,15 @@
     <ClInclude Include="vtx\exception.h" />
     <ClInclude Include="vtx\hypervisor_gateway.h" />
     <ClInclude Include="vtx\hypervisor_routines.h" />
+    <ClInclude Include="vtx\idt.h" />
+    <ClInclude Include="vtx\interrupt-handlers.h" />
     <ClInclude Include="vtx\interrupt.h" />
     <ClInclude Include="vtx\invalidators.h" />
     <ClInclude Include="vtx\msr.h" />
     <ClInclude Include="vtx\mtrr.h" />
     <ClInclude Include="vtx\poolmanager.h" />
     <ClInclude Include="vtx\spinlock.h" />
+    <ClInclude Include="vtx\trap-frame.h" />
     <ClInclude Include="vtx\vmcall_handler.h" />
     <ClInclude Include="vtx\vmcall_reason.h" />
     <ClInclude Include="vtx\vmcs.h" />
@@ -258,10 +263,12 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
+    <ClCompile Include="vtx\gdt.cpp" />
     <ClCompile Include="vtx\hv_dpc_vm_call.cpp" />
     <ClCompile Include="vtx\ept.cpp" />
     <ClCompile Include="vtx\hypervisor_gateway.cpp" />
     <ClCompile Include="vtx\hypervisor_routines.cpp" />
+    <ClCompile Include="vtx\idt.cpp" />
     <ClCompile Include="vtx\invalidators.cpp" />
     <ClCompile Include="vtx\poolmanager.cpp" />
     <ClCompile Include="vtx\spinlock.cpp" />
@@ -276,6 +283,8 @@
     <MASM Include="lde64.asm" />
     <MASM Include="utils\cpu_registers.asm" />
     <MASM Include="utils\dx_draw\math.asm" />
+    <MASM Include="vtx\exception-routines.asm" />
+    <MASM Include="vtx\interrupt-handlers.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

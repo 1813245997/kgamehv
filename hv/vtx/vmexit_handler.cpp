@@ -18,6 +18,7 @@
 #include "vmcs.h"
 #include "../utils/log_utils.h"
 #include "vmm.h"
+#include "exception-routines.h"
 
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
@@ -46,7 +47,8 @@ void vmexit_ept_misconfiguration_handler(__vcpu* vcpu);
 void vmexit_vm_entry_failure_mce_handler(__vcpu* vcpu);
 void vmexit_invalid_guest_state_handler(__vcpu* vcpu);
 void vmexit_msr_loading_handler(__vcpu* vcpu);
-void handle_vmx_preemption(__vcpu* vcpu);
+void vmexit_vmx_preemption(__vcpu* vcpu);
+void vmexit_nmi_window(__vcpu* vcpu);
 void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 {
 	vmexit_exception_handler,						// 00 EXIT_REASON_EXCEPTION_NMI
@@ -57,7 +59,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_unimplemented,							// 05 EXIT_REASON_IO_SMI
 	vmexit_unimplemented,							// 06 EXIT_REASON_OTHER_SMI
 	vmexit_unimplemented,							// 07 EXIT_REASON_PENDING_INTERRUPT
-	vmexit_unimplemented,							// 08 EXIT_REASON_NMI_WINDOW
+	vmexit_nmi_window,							    // 08 EXIT_REASON_NMI_WINDOW
 	vmexit_unimplemented,							// 09 EXIT_REASON_TASK_SWITCH
 	vmexit_cpuid_handler,							// 10 EXIT_REASON_CPUID
 	vmexit_unimplemented,							// 11 EXIT_REASON_GETSEC
@@ -101,7 +103,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_ept_misconfiguration_handler,			// 49 EXIT_REASON_EPT_MISCONFIGURATION
 	vmexit_vm_instruction,							// 50 EXIT_REASON_INVEPT
 	vmexit_rdtscp_handler,							// 51 EXIT_REASON_RDTSCP
-	handle_vmx_preemption,							// 52 EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED
+	vmexit_vmx_preemption,							// 52 EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED
 	vmexit_vm_instruction,							// 53 EXIT_REASON_INVVPID
 	vmexit_invd_handler,							// 54 EXIT_REASON_WBINVD
 	vmexit_xsetbv_handler,							// 55 EXIT_REASON_XSETBV
@@ -319,80 +321,86 @@ void vmexit_ldtr_access_handler(__vcpu* vcpu)
 /// <param name="guest_regs"></param>
 void vmexit_msr_read_handler(__vcpu* vcpu)
 {
+
+ 
+
+
+
 	__msr msr;
 	unsigned __int64 msr_index = vcpu->vmexit_info.guest_registers->rcx;
 
 	switch (msr_index)
 	{
-		case IA32_INTERRUPT_SSP_TABLE_ADDR:
-			msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
-			break;
+	case IA32_INTERRUPT_SSP_TABLE_ADDR:
+		msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
+		break;
 
-		case IA32_SYSENTER_CS:
-			msr.all = hv::vmread(GUEST_SYSENTER_CS);
-			break;
+	case IA32_SYSENTER_CS:
+		msr.all = hv::vmread(GUEST_SYSENTER_CS);
+		break;
 
-		case IA32_SYSENTER_EIP:
-			msr.all = hv::vmread(GUEST_SYSENTER_EIP);
-			break;
+	case IA32_SYSENTER_EIP:
+		msr.all = hv::vmread(GUEST_SYSENTER_EIP);
+		break;
 
-		case IA32_SYSENTER_ESP:
-			msr.all = hv::vmread(GUEST_SYSENTER_ESP);
-			break;
+	case IA32_SYSENTER_ESP:
+		msr.all = hv::vmread(GUEST_SYSENTER_ESP);
+		break;
 
-		case IA32_S_CET:
-			msr.all = hv::vmread(GUEST_S_CET);
-			break;
+	case IA32_S_CET:
+		msr.all = hv::vmread(GUEST_S_CET);
+		break;
 
-		case IA32_PERF_GLOBAL_CTRL:
-			msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
-			break;
+	case IA32_PERF_GLOBAL_CTRL:
+		msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
+		break;
 
-		case IA32_PKRS:
-			msr.all = hv::vmread(GUEST_PKRS);
-			break;
+	case IA32_PKRS:
+		msr.all = hv::vmread(GUEST_PKRS);
+		break;
 
-		case IA32_RTIT_CTL:
-			msr.all = hv::vmread(GUEST_RTIT_CTL);
-			break;
+	case IA32_RTIT_CTL:
+		msr.all = hv::vmread(GUEST_RTIT_CTL);
+		break;
 
-		case IA32_BNDCFGS:
-			msr.all = hv::vmread(GUEST_BNDCFGS);
-			break;
+	case IA32_BNDCFGS:
+		msr.all = hv::vmread(GUEST_BNDCFGS);
+		break;
 
-		case IA32_PAT:
-			msr.all = hv::vmread(GUEST_PAT);
-			break;
+	case IA32_PAT:
+		msr.all = hv::vmread(GUEST_PAT);
+		break;
 
-		case IA32_EFER:
-			msr.all = hv::vmread(GUEST_EFER);
-			break;
+	case IA32_EFER:
+		msr.all = hv::vmread(GUEST_EFER);
+		break;
 
-		case IA32_GS_BASE:
-			msr.all = hv::vmread(GUEST_GS_BASE);
-			break;
+	case IA32_GS_BASE:
+		msr.all = hv::vmread(GUEST_GS_BASE);
+		break;
 
-		case IA32_FS_BASE:
-			msr.all = hv::vmread(GUEST_FS_BASE);
-			break;
+	case IA32_FS_BASE:
+		msr.all = hv::vmread(GUEST_FS_BASE);
+		break;
 
-		default:
-			__try
-			{
-				msr.all = __readmsr(msr_index);
-			}
-			__except (EXCEPTION_EXECUTE_HANDLER)
-			{
-				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-			}
-			
-			break;
+	default:
+		__try
+		{
+			msr.all = __readmsr(msr_index);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		}
+
+		break;
 	}
 
 	vcpu->vmexit_info.guest_registers->rdx = msr.high;
 	vcpu->vmexit_info.guest_registers->rax = msr.low;
 
 	adjust_rip(vcpu);
+	  
 }
 
 /// <summary>
@@ -594,7 +602,7 @@ void vmexit_cpuid_handler(__vcpu* vcpu)
 	ctx->rcx = regs[2];
 	ctx->rdx = regs[3];
 
- 
+	vcpu->hide_vm_exit_overhead = true;
 	
 	adjust_rip(vcpu);
 }
@@ -1640,7 +1648,7 @@ void adjust_rip(__vcpu* vcpu)
 	}
 }
 
-void handle_vmx_preemption(__vcpu* vcpu)
+void vmexit_vmx_preemption(__vcpu* vcpu)
 {
 
 }
@@ -1690,4 +1698,27 @@ void hide_vm_exit_overhead(__vcpu* vcpu)
 
 	// use TSC offsetting to hide from timing attacks that use the TSC
 	vcpu->tsc_offset -= vcpu->vm_exit_tsc_overhead;
+}
+
+void vmexit_nmi_window(__vcpu* vcpu)
+{
+	--vcpu->queued_nmis;
+
+	// inject the NMI into the guest
+	inject_nmi();
+
+	if (vcpu->queued_nmis == 0) {
+		// disable NMI-window exiting since we have no more NMIs to inject
+		auto ctrl = read_ctrl_proc_based();
+		ctrl.nmi_window_exiting = 0;
+		write_ctrl_proc_based(ctrl);
+	}
+
+	// there is the possibility that a host NMI occurred right before we
+	// disabled NMI-window exiting. make sure to re-enable it if this is the case.
+	if (vcpu->queued_nmis > 0) {
+		auto ctrl = read_ctrl_proc_based();
+		ctrl.nmi_window_exiting = 1;
+		write_ctrl_proc_based(ctrl);
+	}
 }
