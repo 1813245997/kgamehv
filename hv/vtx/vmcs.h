@@ -198,5 +198,6 @@ union __vmx_interruptibility_state
         unsigned __int64 reserved : 27;
     };
 };
-
+ 
 void fill_vmcs(__vcpu* vcpu, void* guest_rsp);
+void cache_cpu_data(vcpu_cached_data& cached);

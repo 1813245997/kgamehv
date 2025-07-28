@@ -95,31 +95,31 @@ namespace utils
 			}
 			LogDebug("Virtualization started successfully.");
  
-			utils::hidden_modules::initialize_hidden_module_list();
+			//utils::hidden_modules::initialize_hidden_module_list();
 
-			utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
+			//utils::hidden_modules::add_hidden_module(module_base, image_size, L"MyHiddenModule");
 
-			utils::hidden_user_memory::initialize_hidden_user_memory();
-
-
-			LogDebug("Initializing hooks...");
-			status = hook_manager::initialize_all_hooks();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize hooks (0x%X).", status);
-				return status;
-			}
-			LogDebug("Hooks initialized successfully.");
+			//utils::hidden_user_memory::initialize_hidden_user_memory();
 
 
-			LogDebug("Initializing DWM draw support...");
-			status = utils::dwm_draw::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize DWM draw (0x%X).", status);
-				return status;
-			}
-			LogDebug("DWM draw initialized successfully.");
+			//LogDebug("Initializing hooks...");
+			//status = hook_manager::initialize_all_hooks();
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("Failed to initialize hooks (0x%X).", status);
+			//	return status;
+			//}
+			//LogDebug("Hooks initialized successfully.");
+
+
+			//LogDebug("Initializing DWM draw support...");
+			//status = utils::dwm_draw::initialize();
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("Failed to initialize DWM draw (0x%X).", status);
+			//	return status;
+			//}
+			//LogDebug("DWM draw initialized successfully.");
 
 
 			LogDebug("Driver initialization complete.");

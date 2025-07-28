@@ -17,6 +17,7 @@
 #include "segment.h"
 #include "vmcs.h"
 #include "../utils/log_utils.h"
+#include "vmm.h"
 
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
@@ -45,6 +46,7 @@ void vmexit_ept_misconfiguration_handler(__vcpu* vcpu);
 void vmexit_vm_entry_failure_mce_handler(__vcpu* vcpu);
 void vmexit_invalid_guest_state_handler(__vcpu* vcpu);
 void vmexit_msr_loading_handler(__vcpu* vcpu);
+void handle_vmx_preemption(__vcpu* vcpu);
 void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 {
 	vmexit_exception_handler,						// 00 EXIT_REASON_EXCEPTION_NMI
@@ -99,7 +101,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_ept_misconfiguration_handler,			// 49 EXIT_REASON_EPT_MISCONFIGURATION
 	vmexit_vm_instruction,							// 50 EXIT_REASON_INVEPT
 	vmexit_rdtscp_handler,							// 51 EXIT_REASON_RDTSCP
-	vmexit_unimplemented,							// 52 EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED
+	handle_vmx_preemption,							// 52 EXIT_REASON_VMX_PREEMPTION_TIMER_EXPIRED
 	vmexit_vm_instruction,							// 53 EXIT_REASON_INVVPID
 	vmexit_invd_handler,							// 54 EXIT_REASON_WBINVD
 	vmexit_xsetbv_handler,							// 55 EXIT_REASON_XSETBV
@@ -1267,8 +1269,178 @@ unsigned __int64 return_rip_for_vmxoff()
 	return g_vmm_context->vcpu_table[KeGetCurrentProcessorNumberEx(NULL)]->vmx_off_state.guest_rip;
 }
 
-void vmexit_cr_handler(__vcpu* vcpu)
+void emulate_mov_to_cr0(__vcpu* const vcpu, unsigned  long long vlaue)
 {
+	cr0 new_cr0{ vlaue };
+
+	auto const curr_cr0 = read_effective_guest_cr0();
+	auto const curr_cr4 = read_effective_guest_cr4();
+
+	// CR0[15:6] is always 0
+	new_cr0.reserved1 = 0;
+
+	// CR0[17] is always 0
+	new_cr0.reserved2 = 0;
+
+	// CR0[28:19] is always 0
+	new_cr0.reserved3 = 0;
+
+	// CR0.ET is always 1
+	new_cr0.extension_type = 1;
+
+	if (new_cr0.reserved4) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	if (new_cr0.paging_enable && !new_cr0.protection_enable) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	if (!new_cr0.cache_disable && new_cr0.not_write_through) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if an attempt is made to clear CR0.PG
+	if (!new_cr0.paging_enable) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	if (!new_cr0.write_protect && curr_cr4.control_flow_enforcement_enable) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+	hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, new_cr0.flags);
+
+	new_cr0.flags |= vcpu->cached.vmx_cr0_fixed0;
+	new_cr0.flags &= vcpu->cached.vmx_cr0_fixed1;
+
+	hv::vmwrite<unsigned __int64>(GUEST_CR0, new_cr0.flags);
+	vcpu->hide_vm_exit_overhead = true;
+	adjust_rip(vcpu);
+}
+
+void emulate_mov_to_cr3(__vcpu* vcpu, unsigned  long long vlaue)
+{
+    constexpr uint16_t guest_vpid = 1;
+	cr3 new_cr3;
+	new_cr3.flags = vlaue;
+
+	auto const curr_cr4 = read_effective_guest_cr4();
+
+	bool invalidate_tlb = true;
+
+	// 3.4.10.4.1
+	if (curr_cr4.pcid_enable && (new_cr3.flags & (1ull << 63))) {
+		invalidate_tlb = false;
+		new_cr3.flags &= ~(1ull << 63);
+	}
+
+	// a mask where bits [63:MAXPHYSADDR] are set to 1
+	auto const reserved_mask = ~((1ull << vcpu->cached.max_phys_addr) - 1);
+
+	// 3.2.5
+	if (new_cr3.flags & reserved_mask) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// 3.28.4.3.3
+	if (invalidate_tlb) {
+	 
+		invvpid_single_context_except_global_translations(1);
+		 
+	}
+
+	// it is now safe to write the new guest cr3
+	hv::vmwrite(VMCS_GUEST_CR3, new_cr3.flags);
+
+	vcpu->hide_vm_exit_overhead = true;
+	adjust_rip(vcpu);
+}
+
+void emulate_mov_to_cr4(__vcpu* vcpu, unsigned  long long vlaue)
+{
+	constexpr uint16_t guest_vpid = 1;
+	// 2.4.3
+ // 2.6.2.1
+ // 3.2.5
+ // 3.4.10.1
+ // 3.4.10.4.1
+
+	cr4 new_cr4;
+	new_cr4.flags = vlaue;
+
+	cr3 curr_cr3;
+	curr_cr3.flags = hv::vmread(VMCS_GUEST_CR3);
+
+	auto const curr_cr0 = read_effective_guest_cr0();
+	auto const curr_cr4 = read_effective_guest_cr4();
+
+	// #GP(0) if an attempt is made to set CR4.SMXE when SMX is not supported
+	if (!vcpu->cached.cpuid_01.cpuid_feature_information_ecx.safer_mode_extensions
+		&& new_cr4.smx_enable) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if an attempt is made to write a 1 to any reserved bits
+	if (new_cr4.reserved1 || new_cr4.reserved2) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if an attempt is made to change CR4.PCIDE from 0 to 1 while CR3[11:0] != 000H
+	if ((new_cr4.pcid_enable && !curr_cr4.pcid_enable) && (curr_cr3.flags & 0xFFF)) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if CR4.PAE is cleared
+	if (!new_cr4.physical_address_extension) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if CR4.LA57 is enabled
+	if (new_cr4.linear_addresses_57_bit) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if CR4.CET == 1 and CR0.WP == 0
+	if (new_cr4.control_flow_enforcement_enable && !curr_cr0.write_protect) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// invalidate TLB entries if required
+	if (new_cr4.page_global_enable != curr_cr4.page_global_enable ||
+		!new_cr4.pcid_enable && curr_cr4.pcid_enable ||
+		new_cr4.smep_enable && !curr_cr4.smep_enable) {
+ 
+		invvpid_single_context_address(guest_vpid);
+	}
+
+	 
+
+	hv::vmwrite(VMCS_CTRL_CR4_READ_SHADOW, new_cr4.flags);
+
+	// make sure to account for VMX reserved bits when setting the real CR4
+	new_cr4.flags |= vcpu->cached.vmx_cr4_fixed0;
+	new_cr4.flags &= vcpu->cached.vmx_cr4_fixed1;
+
+	hv::vmwrite(VMCS_GUEST_CR4, new_cr4.flags);
+
+	vcpu->hide_vm_exit_overhead = true;
+	adjust_rip(vcpu);
+}
+void emulate_mov_from_cr3(__vcpu* vcpu, uint64_t const gpr)
+{
+
 	__cr0 guest_cr0;
 	__cr3 guest_cr3;
 	__cr_access_qualification operation;
@@ -1284,208 +1456,130 @@ void vmexit_cr_handler(__vcpu* vcpu)
 		unsigned __int64 all;
 	}cr_registers;
 
+		cr_registers.all = *register_pointer;
+ 
+		switch (operation.cr_number)
+		{
+		case 0:
+		{
+			*register_pointer = hv::vmread(GUEST_CR0);
+			break;
+		}
+
+		case 3:
+		{
+			*register_pointer = hv::vmread(GUEST_CR3);
+			break;
+		}
+
+		case 4:
+		{
+			*register_pointer = hv::vmread(GUEST_CR4);
+			break;
+		}
+
+
+	 
+		}
+
+		vcpu->hide_vm_exit_overhead = true;
+		adjust_rip(vcpu);
+
+}
+
+void emulate_clts(__vcpu* const vcpu)
+{
+	// clear CR0.TS in the read shadow
+	hv::vmwrite(VMCS_CTRL_CR0_READ_SHADOW, hv::vmread(VMCS_CTRL_CR0_READ_SHADOW) & ~CR0_TASK_SWITCHED_FLAG);
+
+	// clear CR0.TS in the real CR0 register
+	hv::vmwrite(VMCS_GUEST_CR0,
+		hv::vmread(VMCS_GUEST_CR0) & ~CR0_TASK_SWITCHED_FLAG);
+	vcpu->hide_vm_exit_overhead = true;
+ 
+	adjust_rip(vcpu);
+}
+void emulate_lmsw(__vcpu* const vcpu, uint16_t const value)
+{
+	cr0 new_cr0;
+	new_cr0.flags = value;
+
+	// update the guest CR0 read shadow
+	cr0 shadow_cr0;
+	shadow_cr0.flags = hv::vmread(VMCS_CTRL_CR0_READ_SHADOW);
+	shadow_cr0.protection_enable = new_cr0.protection_enable;
+	shadow_cr0.monitor_coprocessor = new_cr0.monitor_coprocessor;
+	shadow_cr0.emulate_fpu = new_cr0.emulate_fpu;
+	shadow_cr0.task_switched = new_cr0.task_switched;
+	hv::vmwrite(VMCS_CTRL_CR0_READ_SHADOW, shadow_cr0.flags);
+
+	// update the real guest CR0.
+	// we don't have to worry about VMX reserved bits since CR0.PE (the only
+	// reserved bit) can't be cleared to 0 by the LMSW instruction while in
+	// protected mode.
+	cr0 real_cr0;
+	real_cr0.flags = hv::vmread(VMCS_GUEST_CR0);
+	real_cr0.protection_enable = new_cr0.protection_enable;
+	real_cr0.monitor_coprocessor = new_cr0.monitor_coprocessor;
+	real_cr0.emulate_fpu = new_cr0.emulate_fpu;
+	real_cr0.task_switched = new_cr0.task_switched;
+	hv::vmwrite(VMCS_GUEST_CR0, real_cr0.flags);
+	vcpu->hide_vm_exit_overhead = true;
+	adjust_rip(vcpu);
+}
+void vmexit_cr_handler(__vcpu* vcpu)
+{
+	__cr0 guest_cr0;
+	__cr3 guest_cr3;
+	__cr_access_qualification operation;
+	operation.all = vcpu->vmexit_info.qualification;
+	vmx_exit_qualification_mov_cr qualification;
+	qualification.flags = vcpu->vmexit_info.qualification;
+	unsigned __int64* register_pointer = &vcpu->vmexit_info.guest_registers->rax - operation.register_type;
+
+	union
+	{
+		__cr0 cr0;
+		__cr3 cr3;
+		__cr4 cr4;
+		unsigned __int64 all;
+	}cr_registers;
+
 	cr_registers.all = *register_pointer;
 
-	//
-	// Moves the contents of a control register (CR0, CR2, CR3, CR4, or CR8) 
-	// to a general-purpose register or the contents of a general purpose register to a control register.
-	// The operand size for these instructions is always 32 bits in non-64-bit modes, regardless of the operand-size attribute.
-	// (See “Control Registers?in Chapter 2 of the Intel?64 and IA-32 Architectures Software Developer’s Manual,
-	// Volume 3A, for a detailed description of the flags and fields in the control registers.) 
-	// This instruction can be executed only when the current privilege level is 0. 
-	//
-	// (We don't have to check cpl because cpu prioritizes fault based on privilege level over vm exit)
-	//
-	switch (operation.access_type)
-	{
-		case CR_ACCESS_MOV_TO_CR:
-		{
-			switch (operation.cr_number)
-			{
-				case 0:
-				{
-					// Any attempt to clear cr0 PG bit cause #GP
-					if (cr_registers.cr0.paging_enable == 0)
-					{
-						hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-						return;
-					}
 
-					hv::vmwrite<unsigned __int64>(GUEST_CR0, *register_pointer);
-					hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, *register_pointer);
 
-					break;
-				}
-
-				case 3:
-				{
-					//
-					// Any attempt to write a 1 to any reserved bit cause #GP
-					//
-					if (cr_registers.cr3.reserved_1 != 0 || cr_registers.cr3.reserved_2 != 0) 
-					{
-						hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-						return;
-					}
-
-					hv::vmwrite<unsigned __int64>(GUEST_CR3, (*register_pointer & ~(1ULL << 63)));
-
-					invvpid_single_context_except_global_translations(1);
-					break;
-				}
-
-				case 4:
-				{
-					guest_cr3.all = hv::vmread(GUEST_CR3);
-
-					//
-					// Any attempt to write a 1 to any reserved bit cause #GP or 
-					// Trying to leave IA-32e mode by clearing cr pae bit cause #GP
-					// Trying to change cr4 pcide from 0 to 1 while cr3[11:0] != 0 cause #GP
-					//
-					if (cr_registers.cr4.reserved_1 != 0 || cr_registers.cr4.reserved_2 != 0 || 
-						cr_registers.cr4.reserved_3 != 0 || cr_registers.cr4.physical_address_extension == 0 ||
-						(cr_registers.cr4.pcid_enable == 1 && guest_cr3.pcid != 0))
-					{
-						hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-						return;
-					}
-
-					hv::vmwrite<unsigned __int64>(GUEST_CR4, *register_pointer);
-					hv::vmwrite<unsigned __int64>(CONTROL_CR4_READ_SHADOW, *register_pointer);
-					break;
-				}
-
-				default:
-				{
-					// We should never get here
-					ASSERT(FALSE);
-					break;
-				}
-			}
-
+	switch (qualification.access_type) {
+		// MOV CRn, XXX
+	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_TO_CR:
+		switch (qualification.control_register) {
+		case VMX_EXIT_QUALIFICATION_REGISTER_CR0:
+			emulate_mov_to_cr0(vcpu, cr_registers.all);
+			break;
+		case VMX_EXIT_QUALIFICATION_REGISTER_CR3:
+			emulate_mov_to_cr3(vcpu, cr_registers.all);
+			break;
+		case VMX_EXIT_QUALIFICATION_REGISTER_CR4:
+			emulate_mov_to_cr4(vcpu, cr_registers.all);
 			break;
 		}
-
-		case CR_ACCESS_MOV_FROM_CR:
-		{
-			switch (operation.cr_number)
-			{
-				case 0:
-				{
-					*register_pointer = hv::vmread(GUEST_CR0);
-					break;
-				}
-
-				case 3:
-				{
-					*register_pointer = hv::vmread(GUEST_CR3);
-					break;
-				}
-
-				case 4:
-				{
-					*register_pointer = hv::vmread(GUEST_CR4);
-					break;
-				}
-
-				default:
-				{
-					// We should never get here
-					ASSERT(FALSE);
-					break;
-				}
-			}
-
-			break;
-		}
-
-		//
-		// Clears the task-switched (TS) flag in the CR0 register. This instruction is intended for use in operating-system procedures. 
-		// It is a privileged instruction that can only be executed at a CPL of 0. 
-		// It is allowed to be executed in real-address mode to allow initialization for protected mode.
-		// The processor sets the TS flag every time a task switch occurs.
-		// The flag is used to synchronize the saving of FPU context in multitasking applications.
-		// See the description of the TS flag in the section titled “Control Registers?
-		// in Chapter 2 of the Intel?64 and IA - 32 Architectures Software Developer’s Manual, Volume 3A, for more information about this flag.
-		//
-		case CR_ACCESS_CLTS:
-		{
-			guest_cr0.all = hv::vmread(GUEST_CR0);
-
-			guest_cr0.task_switched = 0;
-
-			hv::vmwrite<unsigned __int64>(GUEST_CR0, guest_cr0.all);
-			hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, guest_cr0.all);
-
-			break;
-		}
-
-		//
-		// Loads the source operand into the machine status word, bits 0 through 15 of register CR0.
-		// The source operand can be a 16-bit general-purpose register or a memory location. 
-		// Only the low-order 4 bits of the source operand (which contains the PE, MP, EM, and TS flags) are loaded into CR0. 
-		// The PG, CD, NW, AM, WP, NE, and ET flags of CR0 are not affected. The operand-size attribute has no effect on this instruction.
-		// If the PE flag of the source operand(bit 0) is set to 1, the instruction causes the processor to switch to protected mode.
-		// While in protected mode, the LMSW instruction cannot be used to clear the PE flagand force a switch back to real - address mode.
-		// The LMSW instruction is provided for use in operating - system software; it should not be used in application programs.
-		// In protected or virtual - 8086 mode, it can only be executed at CPL 0.
-		// This instruction is provided for compatibility with the Intel 286 processor
-		// programs and procedures intended to run on IA - 32 and Intel 64 processors beginning with Intel386 processors should use
-		// the MOV(control registers) instruction to load the whole CR0 register.The MOV CR0 instruction can be used to set and clear the PE flag
-		// in CR0, allowing a procedure or program to switch between protectedand real - address modes.
-		//
-		case CR_ACCESS_LMSW:
-		{
-			// Register operand type
-			if (operation.operand_type == 0) 
-			{
-				guest_cr0.all = hv::vmread(GUEST_CR0);
-
-				guest_cr0.protection_enable = cr_registers.cr0.protection_enable;
-				guest_cr0.monitor_coprocessor = cr_registers.cr0.monitor_coprocessor;
-				guest_cr0.emulate_fpu = cr_registers.cr0.emulate_fpu;
-				guest_cr0.task_switched = cr_registers.cr0.task_switched;
-
-				hv::vmwrite<unsigned __int64>(GUEST_CR0, guest_cr0.all);
-				hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, guest_cr0.all);
-			}
-
-			// Memory operand type
-			else if (operation.operand_type == 1) 
-			{
-				guest_cr0.all = hv::vmread(GUEST_CR0);
-
-				cr_registers.all = operation.source_data;
-
-				guest_cr0.protection_enable = cr_registers.cr0.protection_enable;
-				guest_cr0.monitor_coprocessor = cr_registers.cr0.monitor_coprocessor;
-				guest_cr0.emulate_fpu = cr_registers.cr0.emulate_fpu;
-				guest_cr0.task_switched = cr_registers.cr0.task_switched;
-
-				hv::vmwrite<unsigned __int64>(GUEST_CR0, guest_cr0.all);
-				hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, guest_cr0.all);
-			}
-
-			else 
-			{
-				// We should never get here
-				ASSERT(FALSE);
-			}
-
-			break;
-		}
-
-		default: 
-		{
-			// We should never get here
-			ASSERT(FALSE);
-			break;
-		}
-
+		break;
+		// MOV XXX, CRn
+	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_FROM_CR:
+		// TODO: assert that we're accessing CR3 (and not CR8)
+		emulate_mov_from_cr3(vcpu, qualification.control_register);
+		break;
+		// CLTS
+	case VMX_EXIT_QUALIFICATION_ACCESS_CLTS:
+		emulate_clts(vcpu);
+		break;
+		// LMSW XXX
+	case VMX_EXIT_QUALIFICATION_ACCESS_LMSW:
+		emulate_lmsw(vcpu, qualification.lmsw_source_data);
+		break;
 	}
 
-	adjust_rip(vcpu);
+	
 }
 
 /// <summary>
@@ -1520,7 +1614,9 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-
+	hide_vm_exit_overhead(vcpu);
+	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
+	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
 	return true;
 }
 
@@ -1542,4 +1638,56 @@ void adjust_rip(__vcpu* vcpu)
 		interruptibility.blocking_by_mov_ss = false;
 		hv::vmwrite(GUEST_INTERRUPTIBILITY_STATE, interruptibility.all);
 	}
+}
+
+void handle_vmx_preemption(__vcpu* vcpu)
+{
+
+}
+
+
+void hide_vm_exit_overhead(__vcpu* vcpu)
+{
+	ia32_perf_global_ctrl_register perf_global_ctrl;
+	perf_global_ctrl.flags = vcpu->msr_exit_store.perf_global_ctrl.msr_data;
+
+	// make sure the CPU loads the previously stored guest state on vm-entry
+	vcpu->msr_entry_load.aperf.msr_data =vcpu->msr_exit_store.aperf.msr_data;
+	vcpu->msr_entry_load.mperf.msr_data =vcpu->msr_exit_store.mperf.msr_data;
+	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, perf_global_ctrl.flags);
+
+	// account for the constant overhead associated with loading/storing MSRs
+	vcpu->msr_entry_load.aperf.msr_data -= vcpu->vm_exit_mperf_overhead;
+	vcpu->msr_entry_load.mperf.msr_data -= vcpu->vm_exit_mperf_overhead;
+
+	// account for the constant overhead associated with loading/storing MSRs
+	if (perf_global_ctrl.en_fixed_ctrn & (1ull << 2)) {
+		auto const cpl = current_guest_cpl();
+
+		ia32_fixed_ctr_ctrl_register fixed_ctr_ctrl;
+		fixed_ctr_ctrl.flags = __readmsr(IA32_FIXED_CTR_CTRL);
+
+		// this also needs to be done for many other PMCs, but whatever
+		if ((cpl == 0 && fixed_ctr_ctrl.en2_os) || (cpl == 3 && fixed_ctr_ctrl.en2_usr))
+			__writemsr(IA32_FIXED_CTR2, __readmsr(IA32_FIXED_CTR2) - vcpu->vm_exit_ref_tsc_overhead);
+	}
+
+	// this usually occurs for vm-exits that are unlikely to be reliably timed,
+	// such as when an exception occurs or if the preemption timer fired
+	if (!vcpu->hide_vm_exit_overhead || vcpu->vm_exit_tsc_overhead > 10000) {
+		// this is our chance to resync the TSC
+		vcpu->tsc_offset = 0;
+
+		// soft disable the VMX preemption timer
+		vcpu->preemption_timer = ~0ull;
+
+		return;
+	}
+
+	// set the preemption timer to cause an exit after 10000 guest TSC ticks have passed
+	vcpu->preemption_timer = max(2,
+		10000 >> vcpu->cached.vmx_misc.preemption_timer_tsc_relationship);
+
+	// use TSC offsetting to hide from timing attacks that use the TSC
+	vcpu->tsc_offset -= vcpu->vm_exit_tsc_overhead;
 }

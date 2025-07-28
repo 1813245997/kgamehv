@@ -59,6 +59,35 @@ struct __vmcs
     char data[0x1000 - 2 * sizeof(unsigned)];
 };
 
+struct vcpu_cached_data {
+	// maximum number of bits in a physical address (MAXPHYSADDR)
+	uint64_t max_phys_addr;
+
+	// reserved bits in CR0/CR4
+	uint64_t vmx_cr0_fixed0;
+	uint64_t vmx_cr0_fixed1;
+	uint64_t vmx_cr4_fixed0;
+	uint64_t vmx_cr4_fixed1;
+
+	// mask of unsupported processor state components for XCR0
+	uint64_t xcr0_unsupported_mask;
+
+	// IA32_FEATURE_CONTROL
+	ia32_feature_control_register feature_control;
+	ia32_feature_control_register guest_feature_control;
+
+	// IA32_VMX_MISC
+	ia32_vmx_misc_register vmx_misc;
+
+	// CPUID 0x01
+	cpuid_eax_01 cpuid_01;
+};
+// TODO: move to ia32?
+struct vmx_msr_entry {
+	uint32_t msr_idx;
+	uint32_t _reserved;
+	uint64_t msr_data;
+};
 struct __vcpu
 {
     void* vmm_stack;
@@ -112,7 +141,39 @@ struct __vcpu
         unsigned __int64 io_bitmap_b_physical;
     }vcpu_bitmaps;
 
+	// vm-exit MSR store area
+	struct alignas(0x10) {
+		vmx_msr_entry tsc;
+		vmx_msr_entry perf_global_ctrl;
+		vmx_msr_entry aperf;
+		vmx_msr_entry mperf;
+	} msr_exit_store;
+
+	// vm-entry MSR load area
+	struct alignas(0x10) {
+		vmx_msr_entry aperf;
+		vmx_msr_entry mperf;
+	} msr_entry_load;
+
     __ept_state* ept_state;
+	// cached values that are assumed to NEVER change
+	vcpu_cached_data cached;
+	// the number of NMIs that need to be delivered
+	uint32_t volatile queued_nmis;
+
+	// current TSC offset
+	uint64_t tsc_offset;
+
+	// current preemption timer
+	uint64_t preemption_timer;
+
+	// the overhead caused by world-transitions
+	uint64_t vm_exit_tsc_overhead;
+	uint64_t vm_exit_mperf_overhead;
+	uint64_t vm_exit_ref_tsc_overhead;
+
+	// whether to use TSC offsetting for the current vm-exit--false by default
+	bool hide_vm_exit_overhead;
 };
 
 struct __mtrr_info

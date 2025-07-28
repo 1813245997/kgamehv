@@ -9,7 +9,7 @@
 #include "cr.h"
 #include "msr.h"
 #include "vmcs.h"
- 
+#include "hypervisor_routines.h"
  
 #include "vmcs_encodings.h"
 #include "allocators.h"
@@ -369,7 +369,8 @@ void init_logical_processor(void* guest_rsp)
 
 	vcpu->vcpu_status.vmx_on = true;
 	LogInfo("vcpu %d is now in VMX operation.\n", processor_number);
-
+	cache_cpu_data(vcpu->cached);
+	 
 	fill_vmcs(vcpu, guest_rsp);
 	vcpu->vcpu_status.vmm_launched = true;
 
@@ -412,3 +413,38 @@ bool vmm_init()
 	KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
 	return true;
 }
+
+
+// get the value of CR0 that the guest believes is active.
+// this is a mixture of the guest CR0 and the CR0 read shadow.
+  cr0 read_effective_guest_cr0() {
+	// TODO: cache this value
+	auto const mask = hv::vmread (VMCS_CTRL_CR0_GUEST_HOST_MASK);
+
+	// bits set to 1 in the mask are read from CR0, otherwise from the shadow
+	cr0 cr0;
+	cr0.flags = (hv::vmread(VMCS_CTRL_CR0_READ_SHADOW) & mask)
+		| (hv::vmread(VMCS_GUEST_CR0) & ~mask);
+
+	return cr0;
+}
+
+// get the value of CR4 that the guest believes is active.
+// this is a mixture of the guest CR4 and the CR4 read shadow.
+  cr4 read_effective_guest_cr4() {
+	// TODO: cache this value
+	auto const mask = hv::vmread(VMCS_CTRL_CR4_GUEST_HOST_MASK);
+
+	// bits set to 1 in the mask are read from CR4, otherwise from the shadow
+	cr4 cr4;
+	cr4.flags = (hv::vmread(VMCS_CTRL_CR4_READ_SHADOW) & mask)
+		| (hv::vmread(VMCS_GUEST_CR4) & ~mask);
+
+	return cr4;
+}
+
+  uint16_t current_guest_cpl() {
+	  vmx_segment_access_rights ss;
+	  ss.flags = static_cast<uint32_t>(hv::vmread(VMCS_GUEST_SS_ACCESS_RIGHTS));
+	  return ss.descriptor_privilege_level;
+  }

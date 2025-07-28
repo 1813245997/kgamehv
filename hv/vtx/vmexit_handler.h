@@ -293,5 +293,13 @@ bool vmexit_handler(__vmexit_guest_registers * guest_registers);
 
 void adjust_rip(__vcpu* vcpu);
 
+void emulate_mov_to_cr0(__vcpu* const cpu, unsigned  long long vlaue);
+void emulate_mov_to_cr3(__vcpu* cpu, unsigned  long long vlaue);
+void emulate_mov_to_cr4(__vcpu* cpu, unsigned  long long vlaue);
 
- 
+void emulate_mov_from_cr3(__vcpu* cpu, uint64_t const gpr);
+void emulate_clts(__vcpu* const cpu);
+
+void emulate_lmsw(__vcpu* const cpu, uint16_t const value);
+
+void hide_vm_exit_overhead(__vcpu* vcpu);

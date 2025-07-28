@@ -11,593 +11,44 @@
 #include "cr.h"
  
 #include "hypervisor_routines.h"
-/// <summary>
-/// Derived from Intel Manuals Voulme 3 Section 24.6.2 Table 24-6. Definitions of Primary Processor-Based VM-Execution Controls
-/// </summary>
-/// <param name="primary_controls"></param>
-void set_primary_controls(__vmx_primary_processor_based_control& primary_controls) 
-{
-	/**
-	* If this control is 1, a VM exit occurs at the beginning of any instruction if RFLAGS.IF = 1 and
-	* there are no other blocking of interrupts (see Section 24.4.2).
-	*/
-	primary_controls.interrupt_window_exiting = false;
 
-	/**
-	* This control determines whether executions of RDTSC, executions of RDTSCP, and executions
-	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by
-	* the TSC offset field (see Section 24.6.5 and Section 25.3).
-	*/
-	primary_controls.use_tsc_offsetting = false;
 
-	/**
-	* This control determines whether executions of HLT cause VM exits.
-	*/
-	primary_controls.hlt_exiting = false;
 
-	/**
-	* This determines whether executions of INVLPG cause VM exits.
-	*/
+  void cache_cpu_data(vcpu_cached_data& cached) {
+	__cpuid(reinterpret_cast<int*>(&cached.cpuid_01), 0x01);
 
-#ifdef _MINIMAL
-	primary_controls.invldpg_exiting = false;
-#else
-	primary_controls.invldpg_exiting = true;
-#endif
+	// VMX needs to be enabled to read from certain VMX_* MSRS
+	if (!cached.cpuid_01.cpuid_feature_information_ecx.virtual_machine_extensions)
+		return;
 
-	/**
-	* This control determines whether executions of MWAIT cause VM exits.
-	*/
-	primary_controls.mwait_exiting = false;
+	cpuid_eax_80000008 cpuid_80000008;
+	__cpuid(reinterpret_cast<int*>(&cpuid_80000008), 0x80000008);
 
-	/**
-	* This control determines whether executions of RDPMC cause VM exits.
-	*/
-	primary_controls.rdpmc_exiting = false;
+	cached.max_phys_addr = cpuid_80000008.eax.number_of_physical_address_bits;
 
-	/**
-	* This control determines whether executions of RDTSC and RDTSCP cause VM exits.
-	*/
-#ifdef _MINIMAL
-	primary_controls.rdtsc_exiting = false;
-#else
-	primary_controls.rdtsc_exiting = true;
-#endif
+	cached.vmx_cr0_fixed0 = __readmsr(IA32_VMX_CR0_FIXED0);
+	cached.vmx_cr0_fixed1 = __readmsr(IA32_VMX_CR0_FIXED1);
+	cached.vmx_cr4_fixed0 = __readmsr(IA32_VMX_CR4_FIXED0);
+	cached.vmx_cr4_fixed1 = __readmsr(IA32_VMX_CR4_FIXED1);
 
-	/**
-	* In conjunction with the CR3-target controls (see Section 24.6.7), this control determines
-	* whether executions of MOV to CR3 cause VM exits. See Section 25.1.3.
-	* The first processors to support the virtual-machine extensions supported only the 1-setting
-	* of this control.
-	*/
-#ifdef _MINIMAL
-	primary_controls.cr3_load_exiting = false;
-#else
-	primary_controls.cr3_load_exiting = true;
-#endif
+	cpuid_eax_0d_ecx_00 cpuid_0d;
+	__cpuidex(reinterpret_cast<int*>(&cpuid_0d), 0x0D, 0x00);
 
-	/**
-	* This control determines whether executions of MOV from CR3 cause VM exits.
-	* The first processors to support the virtual-machine extensions supported only the 1-setting
-	* of this control.
-	*/
-#ifdef _MINIMAL
-	primary_controls.cr3_store_exiting = false;
-#else
-	primary_controls.cr3_store_exiting = true;
-#endif
+	// features in XCR0 that are supported
+	cached.xcr0_unsupported_mask = ~((static_cast<uint64_t>(
+		cpuid_0d.edx.flags) << 32) | cpuid_0d.eax.flags);
 
-	/**
-	* This control determines whether executions of MOV to CR8 cause VM exits.
-	*/
-	primary_controls.cr8_load_exiting = false;
+	cached.feature_control.flags = __readmsr(IA32_FEATURE_CONTROL);
+	cached.vmx_misc.flags = __readmsr(IA32_VMX_MISC);
 
-	/**
-	* This control determines whether executions of MOV from CR8 cause VM exits.
-	*/
-	primary_controls.cr8_store_exiting = false;
-
-	/**
-	* Setting this control to 1 enables TPR virtualization and other APIC-virtualization features. See
-	* Chapter 29.
-	*/
-	primary_controls.use_tpr_shadow = false;
-
-	/**
-	* If this control is 1, a VM exit occurs at the beginning of any instruction if there is no virtual-
-	* NMI blocking (see Section 24.4.2).
-	*/
-	primary_controls.nmi_window_exiting = false;
-
-	/**
-	* This control determines whether executions of MOV DR cause VM exits.
-	*/
-#ifdef _MINIMAL
-	primary_controls.mov_dr_exiting = false;
-#else
-	primary_controls.mov_dr_exiting = true;
-#endif
-
-	/**
-	* This control determines whether executions of I/O instructions (IN, INS/INSB/INSW/INSD, OUT,
-	* and OUTS/OUTSB/OUTSW/OUTSD) cause VM exits.
-	*/
-	primary_controls.unconditional_io_exiting = false;
-
-	/**
-	* This control determines whether I/O bitmaps are used to restrict executions of I/O instructions
-	(see Section 24.6.4 and Section 25.1.3).
-	For this control, ??means “do not use I/O bitmaps?and ??means “use I/O bitmaps.?If the I/O
-	bitmaps are used, the setting of the “unconditional I/O exiting?control is ignored
-	*/
-#ifdef _MINIMAL
-	primary_controls.use_io_bitmaps = false;
-#else
-	primary_controls.use_io_bitmaps = true;
-#endif
-
-	/**
-	* If this control is 1, the monitor trap flag debugging feature is enabled. See Section 25.5.2.
-	*/
-	primary_controls.monitor_trap_flag = false;
-
-	/**
-	* This control determines whether MSR bitmaps are used to control execution of the RDMSR
-	* and WRMSR instructions (see Section 24.6.9 and Section 25.1.3).
-	* For this control, ??means “do not use MSR bitmaps?and ??means “use MSR bitmaps.?If the
-	* MSR bitmaps are not used, all executions of the RDMSR and WRMSR instructions cause
-	* VM exits.
-	*/
-	primary_controls.use_msr_bitmaps = true;
-
-	/**
-	* This control determines whether executions of MONITOR cause VM exits.
-	*/
-	primary_controls.monitor_exiting = false;
-
-	/**
-	* This control determines whether executions of PAUSE cause VM exits.
-	*/
-	primary_controls.pause_exiting = false;
-
-	/**
-	* This control determines whether the secondary processor-based VM-execution controls are
-	* used. If this control is 0, the logical processor operates as if all the secondary processor-based
-	* VM-execution controls were also 0.
-	*/
-	primary_controls.active_secondary_controls = true;
+	// create a fake guest FEATURE_CONTROL MSR that has VMX and SMX disabled
+	cached.guest_feature_control = cached.feature_control;
+	cached.guest_feature_control.lock_bit = 1;
+	cached.guest_feature_control.enable_vmx_inside_smx = 0;
+	cached.guest_feature_control.enable_vmx_outside_smx = 0;
+	cached.guest_feature_control.senter_local_function_enables = 0;
+	cached.guest_feature_control.senter_global_enable = 0;
 }
-
-/// <summary>
-/// Derived from Intel Manuals Voulme 3 Section 24.6.2 Table 24-7. Definitions of Secondary Processor-Based VM-Execution Controls
-/// </summary>
-/// <param name="secondary_controls"></param>
-void set_secondary_controls(__vmx_secondary_processor_based_control& secondary_controls) 
-{
-	/**
-	* If this control is 1, the logical processor treats specially accesses to the page with the APIC-
-	* access address. See Section 29.4.
-	*/
-	secondary_controls.virtualize_apic_accesses = false;
-
-	/**
-	* If this control is 1, extended page tables (EPT) are enabled. See Section 28.2.
-	*/
-	secondary_controls.enable_ept = true;
-
-	/**
-	* This control determines whether executions of LGDT, LIDT, LLDT, LTR, SGDT, SIDT, SLDT, and
-	* STR cause VM exits.
-	*/
-#ifdef _MINIMAL
-	secondary_controls.descriptor_table_exiting = false;
-#else
-	secondary_controls.descriptor_table_exiting = true;
-#endif
-
-	/**
-	* If this control is 0, any execution of RDTSCP causes an invalid-opcode exception (#UD).
-	*/
-	secondary_controls.enable_rdtscp = true;
-
-	/**
-	* If this control is 1, the logical processor treats specially RDMSR and WRMSR to APIC MSRs (in
-	* the range 800H?FFH). See Section 29.5.
-	*/
-	secondary_controls.virtualize_x2apic = false;
-
-	/**
-	* If this control is 1, cached translations of linear addresses are associated with a virtual-
-	* processor identifier (VPID). See Section 28.1.
-	*/
-	secondary_controls.enable_vpid = true;
-
-	/**
-	* This control determines whether executions of WBINVD cause VM exits.
-	*/
-#ifdef _MINIMAL
-	secondary_controls.wbinvd_exiting = false;
-#else
-	secondary_controls.wbinvd_exiting = true;
-#endif
-
-	/**
-	* This control determines whether guest software may run in unpaged protected mode or in real-
-	* address mode.
-	*/
-	secondary_controls.unrestricted_guest = false;
-
-	/**
-	* If this control is 1, the logical processor virtualizes certain APIC accesses. See Section 29.4 and
-	* Section 29.5.
-	*/
-	secondary_controls.apic_register_virtualization = false;
-
-	/**
-	* This controls enables the evaluation and delivery of pending virtual interrupts as well as the
-	* emulation of writes to the APIC registers that control interrupt prioritization.
-	*/
-	secondary_controls.virtual_interrupt_delivery = false;
-
-	/**
-	* This control determines whether a series of executions of PAUSE can cause a VM exit (see
-	* Section 24.6.13 and Section 25.1.3).
-	*/
-	secondary_controls.pause_loop_exiting = false;
-
-	/**
-	* This control determines whether executions of RDRAND cause VM exits.
-	*/
-#ifdef _MINIMAL
-	secondary_controls.rdrand_exiting = false;
-#else
-	secondary_controls.rdrand_exiting = true;
-#endif
-
-	/**
-	* If this control is 0, any execution of INVPCID causes a #UD.
-	*/
-	secondary_controls.enable_invpcid = true;
-
-	/**
-	* Setting this control to 1 enables use of the VMFUNC instruction in VMX non-root operation. See
-	* Section 25.5.6.
-	*/
-	secondary_controls.enable_vmfunc = false;
-
-	/**
-	* If this control is 1, executions of VMREAD and VMWRITE in VMX non-root operation may access
-	* a shadow VMCS (instead of causing VM exits). See Section 24.10 and Section 30.3.
-	*/
-	secondary_controls.vmcs_shadowing = false;
-
-	/**
-	* If this control is 1, executions of ENCLS consult the ENCLS-exiting bitmap to determine whether
-	* the instruction causes a VM exit. See Section 24.6.16 and Section 25.1.3.
-	*/
-	secondary_controls.enable_encls_exiting = false;
-
-	/**
-	* This control determines whether executions of RDSEED cause VM exits.
-	*/
-#ifdef _MINIMAL
-	secondary_controls.rdseed_exiting = false;
-#else
-	secondary_controls.rdseed_exiting = true;
-#endif
-
-	/**
-	* If this control is 1, an access to a guest-physical address that sets an EPT dirty bit first adds an
-	* entry to the page-modification log. See Section 28.2.6.
-	*/
-	secondary_controls.enable_pml = false;
-
-	/**
-	* If this control is 1, EPT violations may cause virtualization exceptions (#VE) instead of VM exits.
-	* See Section 25.5.7.
-	*/
-	secondary_controls.use_virtualization_exception = false;
-
-	/**
-	* If this control is 1, Intel Processor Trace suppresses from PIPs an indication that the processor
-	* was in VMX non-root operation and omits a VMCS packet from any PSB+ produced in VMX non-
-	* root operation (see Chapter 35).
-	*/
-	secondary_controls.conceal_vmx_from_pt = true;
-
-	/**
-	* If this control is 0, any execution of XSAVES or XRSTORS causes a #UD.
-	*/
-	secondary_controls.enable_xsave_xrstor = true;
-
-	/**
-	* If this control is 1, EPT execute permissions are based on whether the linear address being
-	* accessed is supervisor mode or user mode. See Chapter 28.
-	*/
-	secondary_controls.mode_based_execute_control_ept = false;
-
-	/**
-	* This control determines whether executions of RDTSC, executions of RDTSCP, and executions
-	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by the
-	* TSC multiplier field (see Section 24.6.5 and Section 25.3).
-	*/
-	secondary_controls.sub_page_write_permission_for_ept = false;
-
-	/**
-	* This control determines whether executions of RDTSC, executions of RDTSCP, and executions
-	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by the
-	* TSC multiplier field (see Section 24.6.5 and Section 25.3).
-	*/
-	secondary_controls.intel_pt_uses_guest_physical_address = false;
-
-	/**
-	* This control determines whether executions of RDTSC, executions of RDTSCP, and executions
-	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by the
-	* TSC multiplier field (see Section 24.6.5 and Section 25.3).
-	*/
-	secondary_controls.use_tsc_scaling = false;
-
-	/**
-	* If this control is 0, any execution of TPAUSE, UMONITOR, or UMWAIT causes a #UD.
-	*/
-	secondary_controls.enable_user_wait_and_pause = false;
-
-	/**
-	* If this control is 1, executions of ENCLV consult the ENCLV-exiting bitmap to determine whether
-	* the instruction causes a VM exit. See Section 24.6.17 and Section 25.1.3.
-	*/
-	secondary_controls.enable_enclv_exiting = false;
-}
-
-/// <summary>
-/// Derived from Intel Manuals Voulme 3 Section 24.8.1 Table 24-13. Definitions of VM-Entry Controls
-/// </summary>
-/// <param name="entry_control"></param>
-void set_entry_control(__vmx_entry_control& entry_control) 
-{
-	/**
-	* This control determines whether DR7 and the IA32_DEBUGCTL MSR are loaded on VM entry.
-	* The first processors to support the virtual-machine extensions supported only the 1-setting of
-	* this control.
-	*/
-	entry_control.load_dbg_controls = true;
-
-	/**
-	* On processors that support Intel 64 architecture, this control determines whether the logical
-	* processor is in IA-32e mode after VM entry. Its value is loaded into IA32_EFER.LMA as part of
-	* VM entry. 1
-	* This control must be 0 on processors that do not support Intel 64 architecture.
-	*/
-	entry_control.ia32e_mode_guest = true;
-
-	/**
-	* This control determines whether the logical processor is in system-management mode (SMM)
-	* after VM entry. This control must be 0 for any VM entry from outside SMM.
-	*/
-	entry_control.entry_to_smm = false;
-
-	/**
-	* If set to 1, the default treatment of SMIs and SMM is in effect after the VM entry (see Section
-	* 34.15.7). This control must be 0 for any VM entry from outside SMM.
-	*/
-	entry_control.deactivate_dual_monitor_treament = false;
-
-	/**
-	* This control determines whether the IA32_PERF_GLOBAL_CTRL MSR is loaded on VM entry.
-	*/
-	entry_control.load_ia32_perf_global_control = false;
-
-	/**
-	* This control determines whether the IA32_PAT MSR is loaded on VM entry.
-	*/
-	entry_control.load_ia32_pat = false;
-
-	/**
-	* This control determines whether the IA32_EFER MSR is loaded on VM entry.
-	*/
-	entry_control.load_ia32_efer = false;
-
-	/**
-	* This control determines whether the IA32_BNDCFGS MSR is loaded on VM entry.
-	*/
-	entry_control.load_ia32_bndcfgs = false;
-
-	/**
-	* If this control is 1, Intel Processor Trace does not produce a paging information packet (PIP) on
-	* a VM entry or a VMCS packet on a VM entry that returns from SMM (see Chapter 35).
-	*/
-	entry_control.conceal_vmx_from_pt = true;
-
-	/**
-	* This control determines whether the IA32_RTIT_CTL MSR is loaded on VM entry.
-	*/
-	entry_control.load_ia32_rtit_ctl = false;
-
-	/**
-	* This control determines whether CET-related MSRs and SPP are loaded on VM entry.
-	*/
-	entry_control.load_cet_state = false;
-
-	/**
-	* This control determines whether CET-related MSRs and SPP are loaded on VM entry.
-	*/
-	entry_control.load_pkrs = false;
-}
-
-/// <summary>
-/// Derived from Intel Manuals Voulme 3 Section 24.7.1 Table 24-11. Definitions of VM-Exit Controls
-/// </summary>
-/// <param name="exit_control"></param>
-void set_exit_control(__vmx_exit_control& exit_control) 
-{
-	/**
-	* This control determines whether DR7 and the IA32_DEBUGCTL MSR are saved on VM exit.
-	* The first processors to support the virtual-machine extensions supported only the 1-
-	* setting of this control.
-	*/
-	exit_control.save_dbg_controls = true;
-
-	/**
-	* On processors that support Intel 64 architecture, this control determines whether a logical
-	* processor is in 64-bit mode after the next VM exit. Its value is loaded into CS.L,
-	* IA32_EFER.LME, and IA32_EFER.LMA on every VM exit. 1
-	* This control must be 0 on processors that do not support Intel 64 architecture.
-	*/
-	exit_control.host_address_space_size = true;
-
-	/**
-	* This control determines whether the IA32_PERF_GLOBAL_CTRL MSR is loaded on VM exit.
-	*/
-	exit_control.load_ia32_perf_global_control = false;
-
-	/**
-	* This control affects VM exits due to external interrupts:
-	* ?If such a VM exit occurs and this control is 1, the logical processor acknowledges the
-	*   interrupt controller, acquiring the interrupt’s vector. The vector is stored in the VM-exit
-	*   interruption-information field, which is marked valid.
-	* ?If such a VM exit occurs and this control is 0, the interrupt is not acknowledged and the
-	*   VM-exit interruption-information field is marked invalid.
-	*/
-	exit_control.ack_interrupt_on_exit = true;
-
-	/**
-	* This control determines whether the IA32_PAT MSR is saved on VM exit.
-	*/
-	exit_control.save_ia32_pat = false;
-
-	/**
-	* This control determines whether the IA32_PAT MSR is loaded on VM exit.
-	*/
-	exit_control.load_ia32_pat = false;
-
-	/**
-	* This control determines whether the IA32_EFER MSR is saved on VM exit.
-	*/
-	exit_control.save_ia32_efer = false;	
-
-	/**
-	* This control determines whether the IA32_EFER MSR is loaded on VM exit.
-	*/
-	exit_control.load_ia32_efer = false;
-
-	/**
-	* This control determines whether the value of the VMX-preemption timer is saved on
-	* VM exit.
-	*/
-	exit_control.save_vmx_preemption_timer_value = false;
-
-	/**
-	* This control determines whether the IA32_BNDCFGS MSR is cleared on VM exit.
-	*/
-	exit_control.clear_ia32_bndcfgs = false;
-
-	/**
-	* If this control is 1, Intel Processor Trace does not produce a paging information packet (PIP)
-	* on a VM exit or a VMCS packet on an SMM VM exit (see Chapter 35).
-	*/
-	exit_control.conceal_vmx_from_pt = true;
-
-	/**
-	* This control determines whether the IA32_RTIT_CTL MSR is cleared on VM exit.
-	*/
-	exit_control.load_ia32_rtit_ctl = false;
-
-	/**
-	* This control determines whether CET-related MSRs and SPP are loaded on VM exit.
-	*/
-	exit_control.load_cet_state = false;
-
-	/**
-	* This control determines whether the IA32_PKRS MSR is loaded on VM exit.
-	*/
-	exit_control.load_pkrs = false;
-}
-
-/// <summary>
-/// Derived from Intel Manuals Voulme 3 Section 24.6.1 Table 24-5. Definitions of Pin-Based VM-Execution Controls
-/// </summary>
-/// <param name="pinbased_controls"></param>
-void set_pinbased_control_msr(__vmx_pinbased_control_msr& pinbased_controls) 
-{
-	/**
-	* If this control is 1, external interrupts cause VM exits. Otherwise, they are delivered normally
-	* through the guest interrupt-descriptor table (IDT). If this control is 1, the value of RFLAGS.IF
-	* does not affect interrupt blocking.
-	*/
-	pinbased_controls.external_interrupt_exiting = false;
-
-	/**
-	* If this control is 1, non-maskable interrupts (NMIs) cause VM exits. Otherwise, they are
-	* delivered normally using descriptor 2 of the IDT. This control also determines interactions
-	* between IRET and blocking by NMI (see Section 25.3).
-	*/
-	pinbased_controls.nmi_exiting = false;
-
-	/**
-	* If this control is 1, NMIs are never blocked and the “blocking by NMI?bit (bit 3) in the
-	* interruptibility-state field indicates “virtual-NMI blocking?(see Table 24-3). This control also
-	* interacts with the “NMI-window exiting?VM-execution control (see Section 24.6.2).
-	*/
-	pinbased_controls.virtual_nmis = false;
-
-	/**
-	* If this control is 1, the VMX-preemption timer counts down in VMX non-root operation; see
-	* Section 25.5.1. A VM exit occurs when the timer counts down to zero; see Section 25.2.
-	*/
-	pinbased_controls.vmx_preemption_timer = false;
-
-	/**
-	* If this control is 1, the processor treats interrupts with the posted-interrupt notification vector
-	* (see Section 24.6.8) specially, updating the virtual-APIC page with posted-interrupt requests
-	* (see Section 29.6).
-	*/
-	pinbased_controls.process_posted_interrupts = false;
-}
-
-/// <summary>
-/// Set which exception cause vmexit
-/// </summary>
-/// <param name="exception_bitmap"></param>
-void set_exception_bitmap(__exception_bitmap& exception_bitmap)
-{
-	exception_bitmap.divide_error = false;
-
-	exception_bitmap.debug = true;
-
-	exception_bitmap.nmi_interrupt = false;
-
-	exception_bitmap.breakpoint = false;
-
-	exception_bitmap.overflow = false;
-
-	exception_bitmap.bound = false;
-
-	exception_bitmap.invalid_opcode = false;
-
-	exception_bitmap.coprocessor_segment_overrun = false;
-
-	exception_bitmap.invalid_tss = false;
-
-	exception_bitmap.segment_not_present = false;
-
-	exception_bitmap.stack_segment_fault = false;
-
-	exception_bitmap.general_protection = false;
-
-	exception_bitmap.page_fault = false;
-
-	exception_bitmap.x87_floating_point_error = false;
-
-	exception_bitmap.alignment_check = false;
-
-	exception_bitmap.machine_check = false;
-
-	exception_bitmap.simd_floating_point_error = false;
-
-	exception_bitmap.virtualization_exception = false;
-}
-
-
 /// <summary>
 /// Get segment base
 /// </summary>
@@ -671,7 +122,7 @@ unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
 	ctl |= msr_value.low;
 	return ctl;
 }
-
+ 
 /// <summary>
 /// Set the vmcs structure
 /// </summary>
@@ -681,6 +132,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 {
 	__pseudo_descriptor64 gdtr = { 0 };
 	__pseudo_descriptor64 idtr = { 0 };
+
 	__exception_bitmap exception_bitmap = { 0 };
 	__vmx_basic_msr vmx_basic = { 0 };
 	__vmx_entry_control entry_controls = { 0 };
@@ -688,15 +140,21 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	__vmx_pinbased_control_msr pinbased_controls = { 0 };
 	__vmx_primary_processor_based_control primary_controls = { 0 };
 	__vmx_secondary_processor_based_control secondary_controls = { 0 };
-
+	
 	const unsigned __int8 selector_mask = 7;
 
 	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
 
+	 
+	pinbased_controls.virtual_nmis = true;
+	pinbased_controls.nmi_exiting = true;
+	pinbased_controls.vmx_preemption_timer = true;
 
+	//primary_controls.cr3_load_exiting = true;
 	primary_controls.use_msr_bitmaps = true;
 	primary_controls.active_secondary_controls = true;
 	primary_controls.mov_dr_exiting = true;
+	primary_controls.use_tsc_offsetting = true;
 
 	secondary_controls.descriptor_table_exiting = true;
 	secondary_controls.wbinvd_exiting = true;
@@ -722,10 +180,30 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	exception_bitmap.debug = true;                   // #DB - Debug Exception (set)
 	exception_bitmap.nmi_interrupt = true;           // NMI - Non-Maskable Interrupt (set)
 	exception_bitmap.breakpoint = true;              // #BP - Breakpoint Exception (set)
+ 
+	vcpu->queued_nmis = 0;
+	vcpu->tsc_offset = 0;
+	vcpu->preemption_timer = 0;
+	vcpu->vm_exit_tsc_overhead = 0;
+	vcpu->vm_exit_mperf_overhead = 0;
+	vcpu->vm_exit_ref_tsc_overhead = 0;
+	 
+
+ 
 
 	hv::vmwrite(CONTROL_TSC_OFFSET, 0);
 	hv::vmwrite(CONTROL_PAGE_FAULT_ERROR_CODE_MASK, 0);
 	hv::vmwrite(CONTROL_PAGE_FAULT_ERROR_CODE_MATCH, 0);
+
+	vcpu->msr_exit_store.tsc.msr_idx = IA32_TIME_STAMP_COUNTER;
+	vcpu->msr_exit_store.perf_global_ctrl.msr_idx = IA32_PERF_GLOBAL_CTRL;
+	vcpu->msr_exit_store.aperf.msr_idx = IA32_APERF;
+	vcpu->msr_exit_store.mperf.msr_idx = IA32_MPERF;
+	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT,
+		sizeof(vcpu->msr_exit_store) / 16);
+	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS,
+		utils::internal_functions::pfn_mm_get_physical_address(&vcpu->msr_exit_store).QuadPart);
+
 
 	hv::vmwrite(CONTROL_VM_EXIT_MSR_STORE_COUNT, 0);
 	hv::vmwrite(CONTROL_VM_EXIT_MSR_LOAD_COUNT, 0);
@@ -787,6 +265,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(HOST_GDTR_BASE, gdtr.base_address);
 	hv::vmwrite<unsigned __int64>(HOST_IDTR_BASE, idtr.base_address);
 
+
 	// Hypervisor features
 	hv::vmwrite<unsigned __int64>(CONTROL_PIN_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(pinbased_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
 	hv::vmwrite<unsigned __int64>(CONTROL_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(primary_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
@@ -817,18 +296,33 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(HOST_TR_BASE, get_segment_base(__read_tr(),(unsigned char*)gdtr.base_address));
 
 	// Cr registers
-	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
-	hv::vmwrite<unsigned __int64>(HOST_CR0, __readcr0());
-	hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, __readcr0());	
 
-	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
-	hv::vmwrite<unsigned __int64>(HOST_CR3, hv::get_system_directory_table_base());
 	hv::vmwrite<unsigned __int64>(CONTROL_CR3_TARGET_COUNT, 0);
+	hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, __readcr0());
+
+
+	hv::vmwrite<unsigned __int64>(HOST_CR0, __readcr0());
+	hv::vmwrite<unsigned __int64>(HOST_CR3, hv::get_system_directory_table_base());
+	hv::vmwrite<unsigned __int64>(HOST_CR4, __readcr4());
+
+
+
+	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
+	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
 
 	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
-	hv::vmwrite<unsigned __int64>(HOST_CR4, __readcr4());
-	hv::vmwrite<unsigned __int64>(CONTROL_CR4_READ_SHADOW, __readcr4() & ~0x2000);
-	hv::vmwrite<unsigned __int64>(CONTROL_CR4_GUEST_HOST_MASK, 0x2000); // Virtual Machine Extensions Enable	
+	
+	// only vm-exit when guest tries to change a reserved bit
+	hv::vmwrite(VMCS_CTRL_CR0_GUEST_HOST_MASK,
+		vcpu->cached.vmx_cr0_fixed0 | ~vcpu->cached.vmx_cr0_fixed1 |
+		CR0_CACHE_DISABLE_FLAG | CR0_WRITE_PROTECT_FLAG);
+	hv::vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK,
+		vcpu->cached.vmx_cr4_fixed0 | ~vcpu->cached.vmx_cr4_fixed1);
+
+
+
+	//hv::vmwrite<unsigned __int64>(CONTROL_CR4_READ_SHADOW, __readcr4() & ~0x2000);
+	//hv::vmwrite<unsigned __int64>(CONTROL_CR4_GUEST_HOST_MASK, 0x2000); // Virtual Machine Extensions Enable	
 
 	// Debug register
 	hv::vmwrite<unsigned __int64>(GUEST_DR7, __readdr(7));
@@ -855,6 +349,9 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
 	hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
 
+ 
+
+
 	// Features
 	hv::vmwrite<unsigned __int64>(GUEST_VMCS_LINK_POINTER, ~0ULL);
 
@@ -869,9 +366,11 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 		hv::vmwrite<unsigned __int64>(CONTROL_BITMAP_IO_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical);
 	}
 
-	if(secondary_controls.enable_vpid == true)
+	if (secondary_controls.enable_vpid == true)
 		hv::vmwrite<unsigned __int64>(CONTROL_VIRTUAL_PROCESSOR_IDENTIFIER, KeGetCurrentProcessorNumberEx(NULL) + 1);
 
-	if(secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
+	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
 		hv::vmwrite<unsigned __int64>(CONTROL_EPT_POINTER, vcpu->ept_state->ept_pointer->all);
+
+
 }
