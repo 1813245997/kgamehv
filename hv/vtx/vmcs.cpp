@@ -197,6 +197,8 @@ void prepare_external_structures(__vcpu* const vcpu)
 	hv::prepare_host_gdt(vcpu->host_gdt, &vcpu->host_tss);
 }
  
+ 
+
 /// <summary>
 /// Set the vmcs structure
 /// </summary>
@@ -219,12 +221,13 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
 
-	 
+
 	pinbased_controls.virtual_nmis = true;
 	pinbased_controls.nmi_exiting = true;
 	pinbased_controls.vmx_preemption_timer = true;
 
 	//primary_controls.cr3_load_exiting = true;
+	primary_controls.use_io_bitmaps = true;
 	primary_controls.use_msr_bitmaps = true;
 	primary_controls.active_secondary_controls = true;
 	primary_controls.mov_dr_exiting = true;
@@ -246,12 +249,23 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	secondary_controls.enable_user_wait_and_pause = true;//ÐÂ¼Ó
 
 
-
+	exit_controls.all = 0;
 	exit_controls.save_dbg_controls = true;
 	exit_controls.host_address_space_size = true;
+	exit_controls.save_ia32_pat = true;
+	exit_controls.load_ia32_pat = true;
+	exit_controls.load_ia32_perf_global_control = true;
+	exit_controls.conceal_vmx_from_pt = true;
+ 
 
-	entry_controls.ia32e_mode_guest = true;
+	entry_controls.all = 0;
 	entry_controls.load_dbg_controls = true;
+	entry_controls.ia32e_mode_guest = true;
+	entry_controls.load_ia32_pat = true;
+	entry_controls.load_ia32_perf_global_control= true;
+	entry_controls.conceal_vmx_from_pt = true;
+ 
+ 
 
 	exception_bitmap.debug = true;                   // #DB - Debug Exception (set)
 	exception_bitmap.nmi_interrupt = true;           // NMI - Non-Maskable Interrupt (set)
@@ -265,11 +279,18 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	vcpu->vm_exit_ref_tsc_overhead = 0;
 	 
 
- 
+	//
+   // ******* Time-stamp counter offset *******
+   //
 
-	hv::vmwrite(CONTROL_TSC_OFFSET, 0);
-	hv::vmwrite(CONTROL_PAGE_FAULT_ERROR_CODE_MASK, 0);
-	hv::vmwrite(CONTROL_PAGE_FAULT_ERROR_CODE_MATCH, 0);
+ 
+	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, 0);
+	hv::vmwrite(VMCS_CTRL_PAGEFAULT_ERROR_CODE_MASK, 0);
+	hv::vmwrite(VMCS_CTRL_PAGEFAULT_ERROR_CODE_MATCH, 0);
+	 
+ 
+ 
+	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
 
 	vcpu->msr_exit_store.tsc.msr_idx = IA32_TIME_STAMP_COUNTER;
 	vcpu->msr_exit_store.perf_global_ctrl.msr_idx = IA32_PERF_GLOBAL_CTRL;
@@ -280,13 +301,12 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS,
 		utils::internal_functions::pfn_mm_get_physical_address(&vcpu->msr_exit_store).QuadPart);
 
-
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT, 0);
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_ADDRESS, 0);
+ // 
+ // 
 
-  
-
-	// 3.24.8.2
+	//// 3.24.8.2
 	vcpu->msr_entry_load.aperf.msr_idx = IA32_APERF;
 	vcpu->msr_entry_load.mperf.msr_idx = IA32_MPERF;
 	vcpu->msr_entry_load.aperf.msr_data = __readmsr(IA32_APERF);
@@ -297,12 +317,12 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 		utils::internal_functions::pfn_mm_get_physical_address(&vcpu->msr_entry_load).QuadPart);
 
 
-	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
+	 
 	hv::vmwrite(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE, 0);
 	hv::vmwrite(VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH, 0);
 	 
 
-	hv::vmwrite <unsigned __int64>(CONTROL_TPR_THRESHOLD, 0);
+	//hv::vmwrite <unsigned __int64>(CONTROL_TPR_THRESHOLD, 0);
 	//
 	// We want to vmexit on every io and msr access
 	memset(vcpu->vcpu_bitmaps.io_bitmap_a, 0xff, PAGE_SIZE);
@@ -367,10 +387,31 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
 
 
+	// only vm-exit when guest tries to change a reserved bit
+	hv::vmwrite(VMCS_CTRL_CR0_GUEST_HOST_MASK,
+		vcpu->cached.vmx_cr0_fixed0 | ~vcpu->cached.vmx_cr0_fixed1 |
+		CR0_CACHE_DISABLE_FLAG | CR0_WRITE_PROTECT_FLAG);
 
 
+	hv::vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK,
+		vcpu->cached.vmx_cr4_fixed0 | ~vcpu->cached.vmx_cr4_fixed1);
+
+	hv::vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
+	hv::vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4() & ~CR4_VMX_ENABLE_FLAG);
 
 
+	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
+	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
+
+	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
+
+
+	hv::vmwrite<unsigned __int64>(CONTROL_CR3_TARGET_COUNT, 1);
+
+
+ 
+	// Cr registers
+	 
 	hv::vmwrite<unsigned __int64>(HOST_CS_SELECTOR, __read_cs() & ~selector_mask);
 	hv::vmwrite<unsigned __int64>(HOST_SS_SELECTOR, __read_ss() & ~selector_mask);
 	hv::vmwrite<unsigned __int64>(HOST_DS_SELECTOR, __read_ds() & ~selector_mask);
@@ -378,56 +419,25 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(HOST_FS_SELECTOR, __read_fs() & ~selector_mask);
 	hv::vmwrite<unsigned __int64>(HOST_GS_SELECTOR, __read_gs() & ~selector_mask);
 	hv::vmwrite<unsigned __int64>(HOST_TR_SELECTOR, __read_tr() & ~selector_mask);
-
-
-	//hv::vmwrite(VMCS_HOST_CS_SELECTOR, hv::host_cs_selector.flags);
-//hv::vmwrite(VMCS_HOST_SS_SELECTOR, 0x00);
-//hv::vmwrite(VMCS_HOST_DS_SELECTOR, 0x00);
-//hv::vmwrite(VMCS_HOST_ES_SELECTOR, 0x00);
-//hv::vmwrite(VMCS_HOST_FS_SELECTOR, 0x00);
-//hv::vmwrite(VMCS_HOST_GS_SELECTOR, 0x00);
-//hv::vmwrite(VMCS_HOST_TR_SELECTOR, hv::host_tr_selector.flags);
-	//hv::vmwrite(VMCS_HOST_FS_BASE, reinterpret_cast<size_t>(vcpu));
-	//hv::vmwrite(VMCS_HOST_GS_BASE, 0);
-	//hv::vmwrite(VMCS_HOST_TR_BASE, reinterpret_cast<size_t>(&vcpu->host_tss));
-	//hv::vmwrite(VMCS_HOST_GDTR_BASE, reinterpret_cast<size_t>(&vcpu->host_gdt));
-	//hv::vmwrite(VMCS_HOST_IDTR_BASE, reinterpret_cast<size_t>(&vcpu->host_idt));
-
+	 
+ 
 	hv::vmwrite<unsigned __int64>(HOST_FS_BASE, __readmsr(IA32_FS_BASE));
 	hv::vmwrite<unsigned __int64>(HOST_GS_BASE, __readmsr(IA32_GS_BASE));
 	hv::vmwrite<unsigned __int64>(HOST_TR_BASE, get_segment_base(__read_tr(),(unsigned char*)gdtr.base_address));
 	hv::vmwrite<unsigned __int64>(HOST_GDTR_BASE, gdtr.base_address);
 	hv::vmwrite<unsigned __int64>(HOST_IDTR_BASE, idtr.base_address);
-
-
-	// Cr registers
-
-	hv::vmwrite<unsigned __int64>(CONTROL_CR3_TARGET_COUNT, 1);
-	hv::vmwrite<unsigned __int64>(CONTROL_CR0_READ_SHADOW, __readcr0());
-
-
+	 
 	hv::vmwrite<unsigned __int64>(HOST_CR0, __readcr0());
 	hv::vmwrite<unsigned __int64>(HOST_CR3, hv::get_system_directory_table_base());
 	hv::vmwrite<unsigned __int64>(HOST_CR4, __readcr4());
 
 
 
-	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
-	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
 
-	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
-	
-	// only vm-exit when guest tries to change a reserved bit
-	hv::vmwrite(VMCS_CTRL_CR0_GUEST_HOST_MASK,
-		vcpu->cached.vmx_cr0_fixed0 | ~vcpu->cached.vmx_cr0_fixed1 |
-		CR0_CACHE_DISABLE_FLAG | CR0_WRITE_PROTECT_FLAG);
-	hv::vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK,
-		vcpu->cached.vmx_cr4_fixed0 | ~vcpu->cached.vmx_cr4_fixed1);
 
 
  
-	//hv::vmwrite<unsigned __int64>(CONTROL_CR4_READ_SHADOW, __readcr4() & ~0x2000);
-	//hv::vmwrite<unsigned __int64>(CONTROL_CR4_GUEST_HOST_MASK, 0x2000); // Virtual Machine Extensions Enable	
+
 
 	// Debug register
 	hv::vmwrite<unsigned __int64>(GUEST_DR7, __readdr(7));
@@ -446,21 +456,33 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-	hv::vmwrite<unsigned __int64>(GUEST_EFER, __readmsr(IA32_EFER));
+	hv::vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
+	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
+	//hv::vmwrite<unsigned __int64>(GUEST_EFER, __readmsr(IA32_EFER));
 
 	// MSRS Host
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-	hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
+	//hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
 
- 
+	ia32_pat_register host_pat;
+	host_pat.flags = 0;
+	host_pat.pa0 = MEMORY_TYPE_WRITE_BACK;
+	host_pat.pa1 = MEMORY_TYPE_WRITE_THROUGH;
+	host_pat.pa2 = MEMORY_TYPE_UNCACHEABLE_MINUS;
+	host_pat.pa3 = MEMORY_TYPE_UNCACHEABLE;
+	host_pat.pa4 = MEMORY_TYPE_WRITE_BACK;
+	host_pat.pa5 = MEMORY_TYPE_WRITE_THROUGH;
+	host_pat.pa6 = MEMORY_TYPE_UNCACHEABLE_MINUS;
+	host_pat.pa7 = MEMORY_TYPE_UNCACHEABLE;
+	hv::vmwrite(VMCS_HOST_PAT, host_pat.flags);
 
 
 	// Features
-	hv::vmwrite<unsigned __int64>(GUEST_VMCS_LINK_POINTER, ~0ULL);
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
 
-	hv::vmwrite<unsigned __int64>(CONTROL_EXCEPTION_BITMAP, exception_bitmap.all);
+	hv::vmwrite<unsigned __int64>(VMCS_CTRL_EXCEPTION_BITMAP, exception_bitmap.all);
 
 	if (primary_controls.use_msr_bitmaps == true)
 		hv::vmwrite<unsigned __int64>(CONTROL_MSR_BITMAPS_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
@@ -477,5 +499,6 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
 		hv::vmwrite<unsigned __int64>(CONTROL_EPT_POINTER, vcpu->ept_state->ept_pointer->all);
 
-
+	hv::vmwrite(VMCS_GUEST_ACTIVITY_STATE, vmx_active);
+	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, MAXULONG64);
 }

@@ -30,3 +30,13 @@
 #define MmiEntryFlag_ReadOnlyPage			(MmiEntryFlag_Present | MmiEntryFlag_Accessed | MmiEntryFlag_Dirty)
 
 #define MmiCheckFlag(e,f) (e&f)
+
+#define BITS_PER_LONG (sizeof(unsigned long) * 8)
+#define ORDER_LONG    (sizeof(unsigned long) == 4 ? 5 : 6)
+
+#define BITMAP_ENTRY(_nr, _bmap) ((_bmap))[(_nr) / BITS_PER_LONG]
+#define BITMAP_SHIFT(_nr)        ((_nr) % BITS_PER_LONG)
+
+#define NULL_ZERO   0
+#define NULL64_ZERO 0ull
+

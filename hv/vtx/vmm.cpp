@@ -15,7 +15,9 @@
 #include "allocators.h"
 #include "trap-frame.h"
 #include "exception-routines.h"
-
+#include "bit_wise.h"
+#include "CompatibilityChecks.h"
+#include "vt_global.h"
 LIST_ENTRY g_ept_breakpoint_hook_list{};
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
@@ -387,6 +389,62 @@ void init_logical_processor(void* guest_rsp)
 	__vmx_off();
 }
 
+unsigned long long* allocate_invalid_msr_bitmap()
+{
+	// 分配 4KB 大小的位图（共 0x1000 个 MSR，每位对应一个）
+	UINT64* invalid_msr_bitmap = (UINT64*)ExAllocatePoolWithTag(NonPagedPool, 0x1000 / 8, POOL_TAG);
+	if (invalid_msr_bitmap == nullptr)
+	{
+		return nullptr;
+	}
+
+	// 清零整个 bitmap
+	RtlSecureZeroMemory(invalid_msr_bitmap, 0x1000 / 8);
+
+	// 枚举所有 MSR，如果读失败（#GP），则标记为无效
+	for (UINT32 i = 0; i < 0x1000; ++i)
+	{
+		__try
+		{
+			__readmsr(i);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			SetBit(i, (unsigned long*)invalid_msr_bitmap);
+		}
+	}
+
+	return invalid_msr_bitmap;
+}
+
+unsigned long long* allocate_synthetic_msr_fault_bitmap()
+{
+	constexpr UINT32 msr_start = 0x40000000;
+	constexpr UINT32 msr_end = 0x400000FF;
+	constexpr UINT32 msr_count = msr_end - msr_start + 1;
+	constexpr SIZE_T bitmap_size_bytes = msr_count / 8; // 256 bits = 32 bytes
+
+	UINT64* fault_bitmap = (UINT64*)ExAllocatePoolWithTag(NonPagedPool, bitmap_size_bytes, POOL_TAG);
+	if (!fault_bitmap)
+		return nullptr;
+
+	RtlSecureZeroMemory(fault_bitmap, bitmap_size_bytes);
+
+	for (UINT32 msr = msr_start; msr <= msr_end; ++msr)
+	{
+		__try
+		{
+			__readmsr(msr);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			const UINT32 index = msr - msr_start;
+			SetBit(index, (unsigned long*)fault_bitmap);
+		}
+	}
+
+	return fault_bitmap;
+}
 /// <summary>
 /// Initialize and launch vmm
 /// </summary>
@@ -410,6 +468,20 @@ bool vmm_init()
 			return false;
 	}
 
+	compatibility_check_perform_checks();
+
+	 g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
+	if ( g_invalid_msr_bitmap == NULL)
+	{
+		return FALSE;
+	}
+
+	 g_invalid_synthetic_msr_bitmap = allocate_synthetic_msr_fault_bitmap();
+	if ( g_invalid_msr_bitmap == NULL)
+	{
+		return FALSE;
+	}
+	 
 	//
 	// Call derefered procedure call (DPC) to fill vmcs and launch vmm for every logical core
 	KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
@@ -525,3 +597,5 @@ bool vmm_init()
 	  }
 
   }
+
+ 

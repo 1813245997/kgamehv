@@ -24,6 +24,15 @@ extern "C" size_t __fastcall LDE(const void* lpData, unsigned int size);
 #define MASK_GET_LOWER_8BITS(_ARG_)(_ARG_ & 0xff)
 #define MASK_32BITS 0xffffffff
 
+/**
+ * @brief Hypervisor reserved range for RDMSR and WRMSR
+ *
+ */
+#define RESERVED_MSR_RANGE_LOW 0x40000000
+#define RESERVED_MSR_RANGE_HI  0x400000F0
+
+#define CPUID_ADDR_WIDTH 0x80000008
+
 struct __vmexit_guest_registers
 {
     __m128 xmm[6];

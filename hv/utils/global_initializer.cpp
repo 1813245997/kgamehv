@@ -1,10 +1,17 @@
 #include "global_defs.h"
 #include "global_initializer.h"
+#include "../vtx/CompatibilityChecks.h"
 
 namespace utils
 {
 	namespace  global
 	{
+		/**
+ * @brief Bitmap that marks MSRs which will cause #GP (General Protection Fault)
+ */
+		 
+
+
 		bool initialize_all_globals()
 		{
 			utils::os_info::dw_build_number = 0;

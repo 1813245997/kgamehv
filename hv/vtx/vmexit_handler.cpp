@@ -19,6 +19,11 @@
 #include "../utils/log_utils.h"
 #include "vmm.h"
 #include "exception-routines.h"
+#include "../utils/macros.h"
+#include "../utils/global_initializer.h"
+#include "bit_wise.h"
+#include "CompatibilityChecks.h"
+#include "vt_global.h"
 
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
@@ -322,84 +327,110 @@ void vmexit_ldtr_access_handler(__vcpu* vcpu)
 void vmexit_msr_read_handler(__vcpu* vcpu)
 {
 
- 
+  
 
-
-
-	__msr msr;
-	unsigned __int64 msr_index = vcpu->vmexit_info.guest_registers->rcx;
-
-	switch (msr_index)
+	__msr msr{};
+	
+	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
+	if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
+		(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
 	{
-	case IA32_INTERRUPT_SSP_TABLE_ADDR:
-		msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
-		break;
-
-	case IA32_SYSENTER_CS:
-		msr.all = hv::vmread(GUEST_SYSENTER_CS);
-		break;
-
-	case IA32_SYSENTER_EIP:
-		msr.all = hv::vmread(GUEST_SYSENTER_EIP);
-		break;
-
-	case IA32_SYSENTER_ESP:
-		msr.all = hv::vmread(GUEST_SYSENTER_ESP);
-		break;
-
-	case IA32_S_CET:
-		msr.all = hv::vmread(GUEST_S_CET);
-		break;
-
-	case IA32_PERF_GLOBAL_CTRL:
-		msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
-		break;
-
-	case IA32_PKRS:
-		msr.all = hv::vmread(GUEST_PKRS);
-		break;
-
-	case IA32_RTIT_CTL:
-		msr.all = hv::vmread(GUEST_RTIT_CTL);
-		break;
-
-	case IA32_BNDCFGS:
-		msr.all = hv::vmread(GUEST_BNDCFGS);
-		break;
-
-	case IA32_PAT:
-		msr.all = hv::vmread(GUEST_PAT);
-		break;
-
-	case IA32_EFER:
-		msr.all = hv::vmread(GUEST_EFER);
-		break;
-
-	case IA32_GS_BASE:
-		msr.all = hv::vmread(GUEST_GS_BASE);
-		break;
-
-	case IA32_FS_BASE:
-		msr.all = hv::vmread(GUEST_FS_BASE);
-		break;
-
-	default:
-		__try
+		switch (msr_index)
 		{
+		case IA32_SYSENTER_CS:
+			msr.all = hv::vmread(GUEST_SYSENTER_CS);
+			break;
+
+		case IA32_SYSENTER_ESP:
+			msr.all = hv::vmread(GUEST_SYSENTER_ESP);
+			break;
+
+		case IA32_SYSENTER_EIP:
+			msr.all = hv::vmread(GUEST_SYSENTER_EIP);
+			break;
+
+		case IA32_GS_BASE:
+			msr.all = hv::vmread(GUEST_GS_BASE);
+			break;
+
+		case IA32_FS_BASE:
+			msr.all = hv::vmread(GUEST_FS_BASE);
+			break;
+
+		case IA32_INTERRUPT_SSP_TABLE_ADDR:
+			msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
+			break;
+
+
+
+		case IA32_S_CET:
+			msr.all = hv::vmread(GUEST_S_CET);
+			break;
+
+		case IA32_PERF_GLOBAL_CTRL:
+			msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
+			break;
+
+		case IA32_PKRS:
+			msr.all = hv::vmread(GUEST_PKRS);
+			break;
+
+		case IA32_RTIT_CTL:
+			msr.all = hv::vmread(GUEST_RTIT_CTL);
+			break;
+
+		case IA32_BNDCFGS:
+			msr.all = hv::vmread(GUEST_BNDCFGS);
+			break;
+
+		case IA32_PAT:
+			msr.all = hv::vmread(GUEST_PAT);
+			break;
+
+		case IA32_EFER:
+			msr.all = hv::vmread(GUEST_EFER);
+			break;
+
+
+
+
+		default:
+
+		{
+
+			if (msr_index <= 0xfff && TestBit(msr_index, (unsigned long*) g_invalid_msr_bitmap) != NULL64_ZERO)
+			{
+				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+				return;
+			}
+
+			if ((msr_index >= 0x40000000 && msr_index <= 0x400000FF) &&
+				TestBit(msr_index - 0x40000000, (unsigned long*) g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
+			{
+				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+				return;
+			}
+
 			msr.all = __readmsr(msr_index);
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER)
-		{
-			hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-		}
 
+			 
+		}
 		break;
+		}
+
+		vcpu->vmexit_info.guest_registers->rdx = msr.high;
+		vcpu->vmexit_info.guest_registers->rax = msr.low;
+		vcpu->hide_vm_exit_overhead = true;
+		adjust_rip(vcpu);
+
 	}
-
-	vcpu->vmexit_info.guest_registers->rdx = msr.high;
-	vcpu->vmexit_info.guest_registers->rax = msr.low;
-
-	adjust_rip(vcpu);
+	else
+	{
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+	
+	
 	  
 }
 
@@ -409,14 +440,42 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 /// <param name="guest_regs"></param>
 void vmexit_msr_write_handler(__vcpu* vcpu)
 {
-	unsigned __int64 msr_index = vcpu->vmexit_info.guest_registers->rcx;
-
+	UINT32 msr_index = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
+	BOOLEAN     unused_kernel_flag{};
 	__msr msr;
 	msr.high = vcpu->vmexit_info.guest_registers->rdx;
 	msr.low = vcpu->vmexit_info.guest_registers->rax;
 
-	switch (msr_index)
+	if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
+		(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
 	{
+		switch (msr_index)
+		{
+		case IA32_DS_AREA:
+		case IA32_FS_BASE:
+		case IA32_GS_BASE:
+		case IA32_KERNEL_GS_BASE:
+		case IA32_LSTAR:
+		case IA32_SYSENTER_EIP:
+		case IA32_SYSENTER_ESP:
+
+			if (!check_address_canonicality(msr.all, &unused_kernel_flag))
+			{
+				//
+				// Address is not canonical, inject #GP
+				//
+				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+
+				return;
+			}
+
+			break;
+		}
+
+		switch (msr_index)
+		{
+
+
 		case IA32_INTERRUPT_SSP_TABLE_ADDR:
 			hv::vmwrite(GUEST_INTERRUPT_SSP_TABLE_ADDR, msr.all);
 			break;
@@ -470,19 +529,28 @@ void vmexit_msr_write_handler(__vcpu* vcpu)
 			break;
 
 		default:
-			__try
-			{
-				__writemsr(msr_index, msr.all);
-			}
-			__except (EXCEPTION_EXECUTE_HANDLER)
-			{
-				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-			}
-			
-			break;
-	}
+			 
+		{
+			__writemsr(msr_index, msr.all);
 
-	adjust_rip(vcpu);
+
+			break;
+		}
+				
+			  
+			
+		}
+
+
+		vcpu->hide_vm_exit_overhead = true;
+		adjust_rip(vcpu);
+	}
+	else
+	{
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+	}
+	
+	
 }
 
 /// <summary>
@@ -1110,43 +1178,66 @@ void vmexit_failed(__vcpu* vcpu)
 /// <param name="guest_registers"></param>
 void vmexit_xsetbv_handler(__vcpu* vcpu)
 {
+	
+	 
+
+	// CR4.OSXSAVE must be 1
+	if (!read_effective_guest_cr4().os_xsave) {
+		hv::inject_interruption(EXCEPTION_VECTOR_UNDEFINED_OPCODE, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+
 	__xcr0 new_xcr0;
-	__xcr0 current_xcr0;
-
-	unsigned __int64 xcr_number = vcpu->vmexit_info.guest_registers->rcx;
-
-	new_xcr0.all = vcpu->vmexit_info.guest_registers->rdx << 32 | MASK_GET_LOWER_32BITS(vcpu->vmexit_info.guest_registers->rax);
-
-	current_xcr0.all = _xgetbv(0);
-
-	//
-	// If xcr_number is higher than 0 then inject #GP
-	// If value in edx:eax sets bits that are reserved in the xcr specified by ecx then inject #GP
-	// If an attempt is made to clear bit 0 of xcr0 then inject #GP
-	// If an attempt is made to set new_xcr0[2:1] = 0 then inject #GP
-	//
-	if (xcr_number > 0 || new_xcr0.x87 == 0 || 
-		new_xcr0.reserved1 != current_xcr0.reserved1 || 
-		new_xcr0.reserved2 != current_xcr0.reserved2 || 
-		new_xcr0.reserved3 != current_xcr0.reserved3 || 
-		(new_xcr0.avx == 1 && new_xcr0.sse == 0))
-	{
+	new_xcr0.all =  vcpu->vmexit_info.guest_registers->rdx << 32 | MASK_GET_LOWER_32BITS(vcpu->vmexit_info.guest_registers->rax);
+	UINT32 xcr_numbe = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
+	// only XCR0 is supported
+	if (xcr_numbe!=0) {
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
 
-	//
-	// Writes the contents of registers EDX:EAX into the 64-bit extended control register (XCR) specified in the ECX register.
-	// (On processors that support the Intel 64 architecture, the high-order 32 bits of RCX are ignored.) 
-	// The contents of the EDX register are copied to high-order 32 bits of the selected XCR and the contents of the EAX register are copied
-	// to low-order 32 bits of the XCR. (On processors that support the Intel 64 architecture,
-	// the high-order 32 bits of each of RAX and RDX are ignored.) Undefined or reserved bits in an XCR should be set to values previously read.
-	// This instruction must be executed at privilege level 0 or in real - address mode; otherwise, a general protection exception #GP(0)
-	// is generated.Specifying a reserved or unimplemented XCR in ECX will also cause a general protection exception.
-	// The processor will also generate a general protection exception if software attempts to write to reserved bits in an XCR.
-	// Currently, only XCR0 is supported.Thus, all other values of ECX are reservedand will cause a #GP(0).
-	//
-	_xsetbv(xcr_number, new_xcr0.all);
+	// #GP(0) if trying to set an unsupported bit
+	if (new_xcr0.all & vcpu->cached.xcr0_unsupported_mask) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if clearing XCR0.X87
+	if (!new_xcr0.x87) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if XCR0.AVX is 1 while XCRO.SSE is cleared
+	if (new_xcr0.avx && !new_xcr0.sse) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if XCR0.AVX is clear and XCR0.opmask, XCR0.ZMM_Hi256, or XCR0.Hi16_ZMM is set
+	if (!new_xcr0.avx && (new_xcr0.opmask || new_xcr0.zmm_hi256 || new_xcr0.hi16_zmm)) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if setting XCR0.BNDREG or XCR0.BNDCSR while not setting the other
+	if (new_xcr0.bndreg != new_xcr0.bndcsr) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	// #GP(0) if setting XCR0.opmask, XCR0.ZMM_Hi256, or XCR0.Hi16_ZMM while not setting all of them
+	if (new_xcr0.opmask != new_xcr0.zmm_hi256 || new_xcr0.zmm_hi256 != new_xcr0.hi16_zmm) {
+		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+		return;
+	}
+
+	 
+
+	 
+	_xsetbv(xcr_numbe, new_xcr0.all);
+	vcpu->hide_vm_exit_overhead = true;
 	adjust_rip(vcpu);
 }
 
@@ -1573,9 +1664,12 @@ void vmexit_cr_handler(__vcpu* vcpu)
 		}
 		break;
 		// MOV XXX, CRn
+
+
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_FROM_CR:
 		// TODO: assert that we're accessing CR3 (and not CR8)
-		emulate_mov_from_cr3(vcpu, qualification.control_register);
+		 emulate_mov_from_cr3(vcpu, qualification.control_register);
+		 
 		break;
 		// CLTS
 	case VMX_EXIT_QUALIFICATION_ACCESS_CLTS:

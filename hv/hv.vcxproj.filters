@@ -289,6 +289,15 @@
     <ClInclude Include="vtx\trap-frame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vtx\bit_wise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\CompatibilityChecks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\vt_global.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -460,6 +469,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\gdt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\bit_wise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\CompatibilityChecks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\vt_global.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

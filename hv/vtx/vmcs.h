@@ -198,7 +198,9 @@ union __vmx_interruptibility_state
         unsigned __int64 reserved : 27;
     };
 };
+
  
+unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr);
 void fill_vmcs(__vcpu* vcpu, void* guest_rsp);
 void cache_cpu_data(vcpu_cached_data& cached);
 void prepare_external_structures(__vcpu* const vcpu);
