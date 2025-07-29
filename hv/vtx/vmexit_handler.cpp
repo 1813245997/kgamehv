@@ -339,10 +339,9 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
 	if (msr_index == IA32_FEATURE_CONTROL)
 	{
-		msr.high = vcpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
-		msr.low = vcpu->cached.guest_feature_control.flags >> 32;
-		vcpu->vmexit_info.guest_registers->rdx = msr.high;
-		vcpu->vmexit_info.guest_registers->rax = msr.low;
+		vcpu->vmexit_info.guest_registers->rax = vcpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
+		vcpu->vmexit_info.guest_registers->rdx = vcpu->cached.guest_feature_control.flags >> 32;
+		
 		vcpu->hide_vm_exit_overhead = true;
 		adjust_rip(vcpu);
 		return;
