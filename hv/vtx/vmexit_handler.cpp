@@ -54,6 +54,8 @@ void vmexit_invalid_guest_state_handler(__vcpu* vcpu);
 void vmexit_msr_loading_handler(__vcpu* vcpu);
 void vmexit_vmx_preemption(__vcpu* vcpu);
 void vmexit_nmi_window(__vcpu* vcpu);
+void vmexit_vmxon_handler(__vcpu* vcpu);
+void vmexit_getsec_handler(__vcpu* vcpu);
 void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 {
 	vmexit_exception_handler,						// 00 EXIT_REASON_EXCEPTION_NMI
@@ -67,7 +69,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_nmi_window,							    // 08 EXIT_REASON_NMI_WINDOW
 	vmexit_unimplemented,							// 09 EXIT_REASON_TASK_SWITCH
 	vmexit_cpuid_handler,							// 10 EXIT_REASON_CPUID
-	vmexit_unimplemented,							// 11 EXIT_REASON_GETSEC
+	vmexit_getsec_handler,							// 11 EXIT_REASON_GETSEC
 	vmexit_unimplemented,							// 12 EXIT_REASON_HLT
 	vmexit_invd_handler,							// 13 EXIT_REASON_INVD
 	vmexit_invlpg_handler,							// 14 EXIT_REASON_INVLPG
@@ -83,7 +85,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_vm_instruction,							// 24 EXIT_REASON_VMRESUME
 	vmexit_vm_instruction,							// 25 EXIT_REASON_VMWRITE
 	vmexit_vm_instruction,							// 26 EXIT_REASON_VMXOFF
-	vmexit_vm_instruction,							// 27 EXIT_REASON_VMXON
+	vmexit_vmxon_handler,							// 27 EXIT_REASON_VMXON
 	vmexit_cr_handler,								// 28 EXIT_REASON_CR_ACCESSES
 	vmexit_mov_dr_handler,							// 29 EXIT_REASON_MOV_DR
 	vmexit_io_handler,								// 30 EXIT_REASON_IO_INSTRUCTION
@@ -331,10 +333,33 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
 	__msr msr{};
 	
+
+
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
+
+	if (msr_index == IA32_FEATURE_CONTROL)
+	{
+		msr.high = vcpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
+		msr.low = vcpu->cached.guest_feature_control.flags >> 32;
+		vcpu->vmexit_info.guest_registers->rdx = msr.high;
+		vcpu->vmexit_info.guest_registers->rax = msr.low;
+		vcpu->hide_vm_exit_overhead = true;
+		adjust_rip(vcpu);
+		return;
+	}
+
+
 	if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
 		(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
 	{
+		 
+		 
+		
+
+			 
+		 
+	
+
 		switch (msr_index)
 		{
 		case IA32_SYSENTER_CS:
@@ -360,7 +385,6 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 		case IA32_INTERRUPT_SSP_TABLE_ADDR:
 			msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
 			break;
-
 
 
 		case IA32_S_CET:
@@ -390,10 +414,7 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 		case IA32_EFER:
 			msr.all = hv::vmread(GUEST_EFER);
 			break;
-
-
-
-
+	 
 		default:
 
 		{
@@ -658,7 +679,7 @@ void vmexit_exception_handler(__vcpu* vcpu)
 /// <param name="guest_regs"></param>
 void vmexit_cpuid_handler(__vcpu* vcpu)
 {
-	__cpuid_info cpuid_reg = { 0 };
+	 
 
 	auto const ctx = vcpu->vmexit_info.guest_registers ;
 
@@ -1702,7 +1723,7 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 	vcpu->vmexit_info.instruction_length = hv::vmread(VM_EXIT_INSTRUCTION_LENGTH);
 	vcpu->vmexit_info.instruction_information = hv::vmread(VM_EXIT_INSTRUCTION_INFORMATION);
 	vcpu->vmexit_info.guest_registers = guest_registers;
-
+	vcpu->hide_vm_exit_overhead = false;
 	//
 	//  Instructions That Cause VM Exits Unconditionally
 	//  The following instructions cause VM exits when they are executed in VMX non - root operation : CPUID, GETSEC,
@@ -1815,4 +1836,23 @@ void vmexit_nmi_window(__vcpu* vcpu)
 		ctrl.nmi_window_exiting = 1;
 		write_ctrl_proc_based(ctrl);
 	}
+}
+
+void vmexit_vmxon_handler(__vcpu* vcpu)
+{
+	// usually a #UD doesn't trigger a vm-exit, but in this case it is possible
+    // that CR4.VMXE is 1 while guest shadow CR4.VMXE is 0.
+	if (!read_effective_guest_cr4().vmx_enable) {
+		hv::inject_interruption(EXCEPTION_VECTOR_UNDEFINED_OPCODE, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, false);
+		return;
+	}
+
+
+	hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+	 
+}
+
+void vmexit_getsec_handler(__vcpu* vcpu)
+{
+	hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 }

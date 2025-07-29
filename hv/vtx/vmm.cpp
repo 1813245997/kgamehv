@@ -317,7 +317,41 @@ bool init_vmxon(__vcpu* vcpu)
 
 	return true;
 }
+bool enable_vmx_operation(__vcpu  *  vcpu)
+{
+	 
+	 
 
+	_disable();
+
+	auto cr0 = __readcr0();
+	auto cr4 = __readcr4();
+
+	// 3.23.7
+	cr4 |= CR4_VMX_ENABLE_FLAG;
+
+	// 3.23.8
+	cr0 |= vcpu->cached.vmx_cr0_fixed0;
+	cr0 &= vcpu->cached.vmx_cr0_fixed1;
+	cr4 |= vcpu->cached.vmx_cr4_fixed0;
+	cr4 &= vcpu->cached.vmx_cr4_fixed1;
+
+	__writecr0(cr0);
+	__writecr4(cr4);
+
+	_enable();
+
+	if (vcpu->cached.feature_control.lock_bit == 0)
+	{
+		//需要从vmexit 里面隐藏这个位
+		vcpu->cached.feature_control.enable_vmx_outside_smx = 1;
+		vcpu->cached.feature_control.lock_bit = 1;
+		
+		__writemsr(IA32_FEATURE_CONTROL, vcpu->cached.feature_control.flags);
+	}
+
+	return true;
+}
 /// <summary>
 /// Adjust cr4 and cr0 for turning on vmx
 /// </summary>
@@ -362,9 +396,16 @@ void init_logical_processor(void* guest_rsp)
 	unsigned __int64 processor_number = KeGetCurrentProcessorNumberEx(NULL);
 
 	__vcpu* vcpu = g_vmm_context->vcpu_table[processor_number];
+	cache_cpu_data(vcpu->cached);
 
-	adjust_control_registers();
+	////这个地方会被检测
+	//adjust_control_registers();
+	 
 
+	if (!enable_vmx_operation(vcpu)) {
+		LogDebug("Failed to enable VMX operation.\n");
+		return;
+	}
 	if (__vmx_on(&vcpu->vmxon_physical)) 
 	{
 		LogError("Failed to put vcpu %d into VMX operation.\n", processor_number);
@@ -373,7 +414,7 @@ void init_logical_processor(void* guest_rsp)
 
 	vcpu->vcpu_status.vmx_on = true;
 	LogInfo("vcpu %d is now in VMX operation.\n", processor_number);
-	cache_cpu_data(vcpu->cached);
+	
 	prepare_external_structures(vcpu);
 	fill_vmcs(vcpu, guest_rsp);
 	vcpu->vcpu_status.vmm_launched = true;

@@ -3,6 +3,7 @@
 #include "../ia32/ia32.hpp"
 #include "../vtx/vmm.h"
 #include "../vtx/hypervisor_routines.h"
+#include "../vtx/timing.h"
 __vmm_context* g_vmm_context = 0;
 namespace utils
 {
@@ -226,7 +227,16 @@ namespace utils
 				return STATUS_FAILED_DRIVER_ENTRY;
 			}
 
+			if (hvgt::test_vmcall())
+			{
+				LogInfo("Successfully pinged the hypervisor.\n");
+			}
+			 
 
+			for (unsigned int iter = 0; iter < g_vmm_context->processor_count; iter++)
+			{
+				hv::measure_vm_exit_overheads(g_vmm_context->vcpu_table[iter]);
+			}
 
 			// Additional initialization code for Intel VT-x can be added here
 			// Placeholder for additional initialization code

@@ -121,6 +121,8 @@ unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
 	return ctl;
 }
 
+ 
+
 void enable_exit_for_msr_read(vmx_msr_bitmap& bitmap, uint32_t msr, bool enable_exiting)
 {
 	auto const bit = 1 << (msr & 0b0111);
@@ -252,8 +254,11 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	exit_controls.all = 0;
 	exit_controls.save_dbg_controls = true;
 	exit_controls.host_address_space_size = true;
-	exit_controls.save_ia32_pat = true;
-	exit_controls.load_ia32_pat = true;
+
+
+	//个别机器会卡死
+	//exit_controls.save_ia32_pat = true;
+	//exit_controls.load_ia32_pat = true;
 	exit_controls.load_ia32_perf_global_control = true;
 	exit_controls.conceal_vmx_from_pt = true;
  
@@ -261,10 +266,13 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	entry_controls.all = 0;
 	entry_controls.load_dbg_controls = true;
 	entry_controls.ia32e_mode_guest = true;
-	entry_controls.load_ia32_pat = true;
-	entry_controls.load_ia32_perf_global_control= true;
+
+
+	//个别机器会卡死
+	//entry_controls.load_ia32_pat = true;
+	entry_controls.load_ia32_perf_global_control = true;
 	entry_controls.conceal_vmx_from_pt = true;
- 
+	 
  
 
 	exception_bitmap.debug = true;                   // #DB - Debug Exception (set)
@@ -406,7 +414,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
 
 
-	hv::vmwrite<unsigned __int64>(CONTROL_CR3_TARGET_COUNT, 1);
+	hv::vmwrite<unsigned __int64>(VMCS_CTRL_CR3_TARGET_COUNT, 1);
 
 
  
@@ -456,16 +464,18 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+	hv::vmwrite<unsigned __int64>(GUEST_EFER, __readmsr(IA32_EFER));
 	hv::vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
 	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
-	//hv::vmwrite<unsigned __int64>(GUEST_EFER, __readmsr(IA32_EFER));
+	
 
 	// MSRS Host
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-	//hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
+	hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
 
+	//个别机器会卡死
 	ia32_pat_register host_pat;
 	host_pat.flags = 0;
 	host_pat.pa0 = MEMORY_TYPE_WRITE_BACK;
@@ -477,6 +487,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	host_pat.pa6 = MEMORY_TYPE_UNCACHEABLE_MINUS;
 	host_pat.pa7 = MEMORY_TYPE_UNCACHEABLE;
 	hv::vmwrite(VMCS_HOST_PAT, host_pat.flags);
+	hv::vmwrite(VMCS_HOST_PERF_GLOBAL_CTRL, 0);
 
 
 	// Features
@@ -485,7 +496,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(VMCS_CTRL_EXCEPTION_BITMAP, exception_bitmap.all);
 
 	if (primary_controls.use_msr_bitmaps == true)
-		hv::vmwrite<unsigned __int64>(CONTROL_MSR_BITMAPS_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
+		hv::vmwrite<unsigned __int64>(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
 
 	if (primary_controls.use_io_bitmaps == true)
 	{

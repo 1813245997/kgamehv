@@ -212,6 +212,7 @@
     <ClInclude Include="vtx\mtrr.h" />
     <ClInclude Include="vtx\poolmanager.h" />
     <ClInclude Include="vtx\spinlock.h" />
+    <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\trap-frame.h" />
     <ClInclude Include="vtx\vmcall_handler.h" />
     <ClInclude Include="vtx\vmcall_reason.h" />
@@ -277,6 +278,7 @@
     <ClCompile Include="vtx\invalidators.cpp" />
     <ClCompile Include="vtx\poolmanager.cpp" />
     <ClCompile Include="vtx\spinlock.cpp" />
+    <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vmcall_handler.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />
     <ClCompile Include="vtx\vmexit_handler.cpp" />
