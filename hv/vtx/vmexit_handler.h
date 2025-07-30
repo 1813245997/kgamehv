@@ -303,3 +303,4 @@ void emulate_clts(__vcpu* const cpu);
 void emulate_lmsw(__vcpu* const cpu, uint16_t const value);
 
 void hide_vm_exit_overhead(__vcpu* vcpu);
+unsigned __int64* get_register_pointer(__vmexit_guest_registers* regs, UINT32 reg);

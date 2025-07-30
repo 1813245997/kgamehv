@@ -321,23 +321,25 @@ bool enable_vmx_operation(__vcpu  *  vcpu)
 {
 	 
 	 
-
+	 
 	_disable();
-
-	auto cr0 = __readcr0();
-	auto cr4 = __readcr4();
+	__cr0 cr0{};
+	__cr4 cr4{};
+	cr0.all = __readcr0();
+	cr4 .all = __readcr4();
 
 	// 3.23.7
-	cr4 |= CR4_VMX_ENABLE_FLAG;
+	cr4.all |= CR4_VMX_ENABLE_FLAG;
 
 	// 3.23.8
-	cr0 |= vcpu->cached.vmx_cr0_fixed0;
-	cr0 &= vcpu->cached.vmx_cr0_fixed1;
-	cr4 |= vcpu->cached.vmx_cr4_fixed0;
-	cr4 &= vcpu->cached.vmx_cr4_fixed1;
+	cr0.all |= vcpu->cached.vmx_cr0_fixed0;
+	cr0.all &= vcpu->cached.vmx_cr0_fixed1;
+	cr4.all |= vcpu->cached.vmx_cr4_fixed0;
+	cr4.all &= vcpu->cached.vmx_cr4_fixed1;
 
-	__writecr0(cr0);
-	__writecr4(cr4);
+	
+	__writecr0(cr0.all);
+	__writecr4(cr4.all);
 
 	_enable();
 

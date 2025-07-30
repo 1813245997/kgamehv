@@ -122,77 +122,10 @@ unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
 }
 
  
-
-void enable_exit_for_msr_read(vmx_msr_bitmap& bitmap, uint32_t msr, bool enable_exiting)
-{
-	auto const bit = 1 << (msr & 0b0111);
-
-	if (msr <= MSR_ID_LOW_MAX) {
-		// update the bit in the low bitmap
-		if (enable_exiting)
-			bitmap.rdmsr_low[msr / 8] |= bit;
-		else
-			bitmap.rdmsr_low[msr / 8] &= ~bit;
-	}
-
-	else if (msr >= MSR_ID_HIGH_MIN && msr <= MSR_ID_HIGH_MAX) {
-		// update the bit in the high bitmap
-		if (enable_exiting)
-			bitmap.rdmsr_high[(msr - MSR_ID_HIGH_MIN) / 8] |= bit;
-		else
-			bitmap.rdmsr_high[(msr - MSR_ID_HIGH_MIN) / 8] &= ~bit;
-	}
-}
-
-void enable_exit_for_msr_write(vmx_msr_bitmap& bitmap, uint32_t msr, bool enable_exiting)
-{
-	auto const bit = 1 << (msr & 0b0111);
-
-	if (msr <= MSR_ID_LOW_MAX) {
-		// update the bit in the low bitmap
-		if (enable_exiting)
-			bitmap.wrmsr_low[msr / 8] |= bit;
-		else
-			bitmap.wrmsr_low[msr / 8] &= ~bit;
-	}
-
-	else if (msr >= MSR_ID_HIGH_MIN && msr <= MSR_ID_HIGH_MAX) {
-		// update the bit in the high bitmap
-		if (enable_exiting)
-			bitmap.wrmsr_high[(msr - MSR_ID_HIGH_MIN) / 8] |= bit;
-		else
-			bitmap.wrmsr_high[(msr - MSR_ID_HIGH_MIN) / 8] &= ~bit;
-	}
-}
-
-void enable_mtrr_exiting(__vcpu* const vcpu)
-{
-	ia32_mtrr_capabilities_register mtrr_cap;
-	mtrr_cap.flags = __readmsr(IA32_MTRR_CAPABILITIES);
-
-	enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_DEF_TYPE, true);
-
-	// enable exiting for fixed-range MTRRs
-	if (mtrr_cap.fixed_range_supported) {
-		enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_FIX64K_00000, true);
-		enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_FIX16K_80000, true);
-		enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_FIX16K_A0000, true);
-
-		for (uint32_t i = 0; i < 8; ++i)
-			enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_FIX4K_C0000 + i, true);
-	}
-
-	// enable exiting for variable-range MTRRs
-	for (uint32_t i = 0; i < mtrr_cap.variable_range_count; ++i) {
-		enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_PHYSBASE0 + i * 2, true);
-		enable_exit_for_msr_write((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_MTRR_PHYSMASK0 + i * 2, true);
-	}
-}
+ 
 void prepare_external_structures(__vcpu* const vcpu)
 {
 	 
-	enable_exit_for_msr_read((vmx_msr_bitmap&)vcpu->vcpu_bitmaps.msr_bitmap, IA32_FEATURE_CONTROL, true);
-	enable_mtrr_exiting(vcpu);
 	memset(&vcpu->host_tss, 0, sizeof(vcpu->host_tss));
 
 	hv:: prepare_host_idt(vcpu->host_idt);
@@ -224,30 +157,36 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
 
 
-	pinbased_controls.virtual_nmis = true;
-	pinbased_controls.nmi_exiting = true;
-	pinbased_controls.vmx_preemption_timer = true;
+	//pinbased_controls.virtual_nmis = true;
+	//pinbased_controls.nmi_exiting = true;
+	//pinbased_controls.vmx_preemption_timer = true;
 
 	//primary_controls.cr3_load_exiting = true;
-	primary_controls.use_io_bitmaps = true;
+ 
 	primary_controls.use_msr_bitmaps = true;
 	primary_controls.active_secondary_controls = true;
 	primary_controls.mov_dr_exiting = true;
 	primary_controls.use_tsc_offsetting = true;
 	
 
-	secondary_controls.descriptor_table_exiting = true;
+	//secondary_controls.descriptor_table_exiting = true;
 	secondary_controls.wbinvd_exiting = true;
 	secondary_controls.enable_ept = true;
 	secondary_controls.enable_vpid = true;
 	secondary_controls.enable_rdtscp = true;
 	secondary_controls.enable_xsave_xrstor = true;
 	secondary_controls.enable_invpcid = true;
-	secondary_controls.wbinvd_exiting = true;
 	secondary_controls.conceal_vmx_from_pt = true;
-	secondary_controls.rdrand_exiting = true;
-	secondary_controls.rdseed_exiting = true;
-	secondary_controls.conceal_vmx_from_pt = true;
+	//secondary_controls.rdrand_exiting = true;
+	//secondary_controls.rdseed_exiting = true;
+
+	//开启的场景（true）：
+	//	对抗分析 / 反调试 / 虚拟化隐藏：
+
+	//	防止 guest 使用 PT 检测是否运行在虚拟化环境中。
+
+	//	常见于 VM 虚拟机 rootkit、反虚拟化工具、恶意代码隐藏 VMX 痕迹等
+	secondary_controls.conceal_vmx_from_pt = true;   
 	secondary_controls.enable_user_wait_and_pause = true;//新加
 
 
@@ -259,8 +198,8 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	//个别机器会卡死
 	//exit_controls.save_ia32_pat = true;
 	//exit_controls.load_ia32_pat = true;
-	exit_controls.load_ia32_perf_global_control = true;
-	exit_controls.conceal_vmx_from_pt = true;
+	//exit_controls.load_ia32_perf_global_control = true;
+	 exit_controls.conceal_vmx_from_pt = true;
  
 
 	entry_controls.all = 0;
@@ -270,7 +209,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	//个别机器会卡死
 	//entry_controls.load_ia32_pat = true;
-	entry_controls.load_ia32_perf_global_control = true;
+	//entry_controls.load_ia32_perf_global_control = true;
 	entry_controls.conceal_vmx_from_pt = true;
 	 
  
@@ -300,42 +239,22 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
  
 	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
 
-	vcpu->msr_exit_store.tsc.msr_idx = IA32_TIME_STAMP_COUNTER;
-	vcpu->msr_exit_store.perf_global_ctrl.msr_idx = IA32_PERF_GLOBAL_CTRL;
-	vcpu->msr_exit_store.aperf.msr_idx = IA32_APERF;
-	vcpu->msr_exit_store.mperf.msr_idx = IA32_MPERF;
-	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT,
-		sizeof(vcpu->msr_exit_store) / 16);
-	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS,
-		utils::internal_functions::pfn_mm_get_physical_address(&vcpu->msr_exit_store).QuadPart);
-
+	 
+	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT, 0);
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT, 0);
-	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_ADDRESS, 0);
- // 
- // 
+	 
 
-	//// 3.24.8.2
-	vcpu->msr_entry_load.aperf.msr_idx = IA32_APERF;
-	vcpu->msr_entry_load.mperf.msr_idx = IA32_MPERF;
-	vcpu->msr_entry_load.aperf.msr_data = __readmsr(IA32_APERF);
-	vcpu->msr_entry_load.mperf.msr_data = __readmsr(IA32_MPERF);
-	hv::vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT,
-		sizeof(vcpu->msr_entry_load) / 16);
-	hv::vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_ADDRESS,
-		utils::internal_functions::pfn_mm_get_physical_address(&vcpu->msr_entry_load).QuadPart);
-
-
+	hv::vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT, 0);
+  
+	 
 	 
 	hv::vmwrite(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE, 0);
 	hv::vmwrite(VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH, 0);
 	 
 
-	//hv::vmwrite <unsigned __int64>(CONTROL_TPR_THRESHOLD, 0);
-	//
-	// We want to vmexit on every io and msr access
-	memset(vcpu->vcpu_bitmaps.io_bitmap_a, 0xff, PAGE_SIZE);
-	memset(vcpu->vcpu_bitmaps.io_bitmap_b, 0xff, PAGE_SIZE);
-
+	hv::vmwrite <unsigned __int64>(VMCS_CTRL_TPR_THRESHOLD, 0);
+ 
+ 
 #ifndef _MINIMAL
 	//memset(vcpu->vcpu_bitmaps.msr_bitmap, 0xff, PAGE_SIZE);
 #endif
@@ -347,20 +266,20 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	//
 	// Set single msr
-	//hv::set_msr_bitmap(0xC0000000, vcpu, true, true, true);
+     hv::set_msr_bitmap(IA32_FEATURE_CONTROL, vcpu, true, false, true);
 
 	//
 	// Only if your upper hypervisor is vmware
 	// Because Vmware tools use ports 0x5655,0x5656,0x5657,0x5658,0x5659,0x565a,0x565b,0x1090,0x1094 as I/O backdoor
-	hv::set_io_bitmap(0x5655, vcpu, false);
-	hv::set_io_bitmap(0x5656, vcpu, false);
-	hv::set_io_bitmap(0x5657, vcpu, false);
-	hv::set_io_bitmap(0x5658, vcpu, false);
-	hv::set_io_bitmap(0x5659, vcpu, false);
-	hv::set_io_bitmap(0x565a, vcpu, false);
-	hv::set_io_bitmap(0x565b, vcpu, false);
-	hv::set_io_bitmap(0x1094, vcpu, false);
-	hv::set_io_bitmap(0x1090, vcpu, false);
+	//hv::set_io_bitmap(0x5655, vcpu, false);
+	//hv::set_io_bitmap(0x5656, vcpu, false);
+	//hv::set_io_bitmap(0x5657, vcpu, false);
+	//hv::set_io_bitmap(0x5658, vcpu, false);
+	//hv::set_io_bitmap(0x5659, vcpu, false);
+	//hv::set_io_bitmap(0x565a, vcpu, false);
+	//hv::set_io_bitmap(0x565b, vcpu, false);
+	//hv::set_io_bitmap(0x1094, vcpu, false);
+	//hv::set_io_bitmap(0x1090, vcpu, false);
 
 	__vmx_vmclear((unsigned __int64*)&vcpu->vmcs_physical);
 	__vmx_vmptrld((unsigned __int64*)&vcpu->vmcs_physical);
@@ -404,6 +323,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite(VMCS_CTRL_CR4_GUEST_HOST_MASK,
 		vcpu->cached.vmx_cr4_fixed0 | ~vcpu->cached.vmx_cr4_fixed1);
 
+ 
 	hv::vmwrite(VMCS_CTRL_CR0_READ_SHADOW, __readcr0());
 	hv::vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4() & ~CR4_VMX_ENABLE_FLAG);
 
@@ -441,13 +361,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(HOST_CR3, hv::get_system_directory_table_base());
 	hv::vmwrite<unsigned __int64>(HOST_CR4, __readcr4());
 
-
-
-
-
-
- 
-
+	  
 
 	// Debug register
 	hv::vmwrite<unsigned __int64>(GUEST_DR7, __readdr(7));
@@ -466,19 +380,18 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-	hv::vmwrite<unsigned __int64>(GUEST_EFER, __readmsr(IA32_EFER));
-	hv::vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
-	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
+	 
+	//hv::vmwrite(VMCS_GUEST_PAT, __readmsr(IA32_PAT));
+//	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, __readmsr(IA32_PERF_GLOBAL_CTRL));
 	
 
 	// MSRS Host
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
 	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
-	hv::vmwrite<unsigned __int64>(HOST_EFER, __readmsr(IA32_EFER));
-
+	  
 	//个别机器会卡死
-	ia32_pat_register host_pat;
+	/*ia32_pat_register host_pat;
 	host_pat.flags = 0;
 	host_pat.pa0 = MEMORY_TYPE_WRITE_BACK;
 	host_pat.pa1 = MEMORY_TYPE_WRITE_THROUGH;
@@ -488,8 +401,8 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	host_pat.pa5 = MEMORY_TYPE_WRITE_THROUGH;
 	host_pat.pa6 = MEMORY_TYPE_UNCACHEABLE_MINUS;
 	host_pat.pa7 = MEMORY_TYPE_UNCACHEABLE;
-	hv::vmwrite(VMCS_HOST_PAT, host_pat.flags);
-	hv::vmwrite(VMCS_HOST_PERF_GLOBAL_CTRL, 0);
+	hv::vmwrite(VMCS_HOST_PAT, host_pat.flags);*/
+	//hv::vmwrite(VMCS_HOST_PERF_GLOBAL_CTRL, 0);
 
 
 	// Features
@@ -512,6 +425,6 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
 		hv::vmwrite<unsigned __int64>(CONTROL_EPT_POINTER, vcpu->ept_state->ept_pointer->all);
 
-	hv::vmwrite(VMCS_GUEST_ACTIVITY_STATE, vmx_active);
+	//hv::vmwrite(VMCS_GUEST_ACTIVITY_STATE, vmx_active);
 	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, MAXULONG64);
 }

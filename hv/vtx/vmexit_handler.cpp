@@ -336,9 +336,10 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
 
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
-
+	//告诉主机电脑主板bios没开启VTX
 	if (msr_index == IA32_FEATURE_CONTROL)
 	{
+		 
 		vcpu->vmexit_info.guest_registers->rax = vcpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
 		vcpu->vmexit_info.guest_registers->rdx = vcpu->cached.guest_feature_control.flags >> 32;
 		
@@ -1390,8 +1391,8 @@ unsigned __int64 return_rip_for_vmxoff()
 
 void emulate_mov_to_cr0(__vcpu* const vcpu, unsigned  long long vlaue)
 {
-	cr0 new_cr0{ vlaue };
-
+	cr0 new_cr0{};
+	new_cr0.flags = vlaue;
 	auto const curr_cr0 = read_effective_guest_cr0();
 	auto const curr_cr4 = read_effective_guest_cr4();
 
@@ -1646,16 +1647,43 @@ void emulate_lmsw(__vcpu* const vcpu, uint16_t const value)
 	vcpu->hide_vm_exit_overhead = true;
 	adjust_rip(vcpu);
 }
+
+unsigned __int64* get_register_pointer(__vmexit_guest_registers* regs, UINT32 reg)
+{
+	switch (reg)
+	{
+	case 0: return &regs->rax;
+	case 1: return &regs->rcx;
+	case 2: return &regs->rdx;
+	case 3: return &regs->rbx;
+	case 4: return &regs->rsp;
+	case 5: return &regs->rbp;
+	case 6: return &regs->rsi;
+	case 7: return &regs->rdi;
+	case 8: return &regs->r8;
+	case 9: return &regs->r9;
+	case 10: return &regs->r10;
+	case 11: return &regs->r11;
+	case 12: return &regs->r12;
+	case 13: return &regs->r13;
+	case 14: return &regs->r14;
+	case 15: return &regs->r15;
+	default:
+		return nullptr;
+	}
+}
+ 
 void vmexit_cr_handler(__vcpu* vcpu)
 {
 	__cr0 guest_cr0;
 	__cr3 guest_cr3;
-	__cr_access_qualification operation;
-	operation.all = vcpu->vmexit_info.qualification;
+ 
 	vmx_exit_qualification_mov_cr qualification;
 	qualification.flags = vcpu->vmexit_info.qualification;
-	unsigned __int64* register_pointer = &vcpu->vmexit_info.guest_registers->rax - operation.register_type;
-
+ 
+	 
+	unsigned __int64* register_pointer = get_register_pointer( vcpu->vmexit_info.guest_registers, qualification.general_purpose_register);
+	 
 	union
 	{
 		__cr0 cr0;
@@ -1669,7 +1697,8 @@ void vmexit_cr_handler(__vcpu* vcpu)
 
 
 	switch (qualification.access_type) {
-		// MOV CRn, XXX
+		 
+	// MOV CRn, XXX → 把通用寄存器的值写入 CRn
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_TO_CR:
 		switch (qualification.control_register) {
 		case VMX_EXIT_QUALIFICATION_REGISTER_CR0:
@@ -1683,9 +1712,9 @@ void vmexit_cr_handler(__vcpu* vcpu)
 			break;
 		}
 		break;
-		// MOV XXX, CRn
+		 
 
-
+	//   MOV XXX, CRn → 从 CRn 读取值到通用寄存器
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_FROM_CR:
 		// TODO: assert that we're accessing CR3 (and not CR8)
 		 emulate_mov_from_cr3(vcpu, qualification.control_register);
@@ -1736,9 +1765,9 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-	hide_vm_exit_overhead(vcpu);
+	/*hide_vm_exit_overhead(vcpu);
 	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
-	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);*/
 	return true;
 }
 

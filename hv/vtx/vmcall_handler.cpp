@@ -53,12 +53,12 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 	unsigned __int64 vmcall_parameter6 = vcpu->vmexit_info.guest_registers->r12;
 	unsigned __int64 vmcall_parameter7 = vcpu->vmexit_info.guest_registers->r13;
 	unsigned __int64 vmcall_parameter8 = vcpu->vmexit_info.guest_registers->r14;
-	unsigned __int64 vmcall_parameter9 = vcpu->vmexit_info.guest_registers->r15;
+	 
 
 	  
-	if (vcpu->vmexit_info.guest_registers->rax != VMCALL_IDENTIFIER && hv::get_guest_cpl() != 0)
+	if (vcpu->vmexit_info.guest_registers->rax != VMCALL_IDENTIFIER  )
 	{
-		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, 1);
+		hv::inject_interruption(EXCEPTION_VECTOR_UNDEFINED_OPCODE, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, false);
 		return;
 	}
 
