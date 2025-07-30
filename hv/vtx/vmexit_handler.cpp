@@ -1765,9 +1765,8 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-	/*hide_vm_exit_overhead(vcpu);
-	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
-	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);*/
+//	hide_vm_exit_overhead(vcpu);
+
 	return true;
 }
 
@@ -1841,6 +1840,8 @@ void hide_vm_exit_overhead(__vcpu* vcpu)
 
 	// use TSC offsetting to hide from timing attacks that use the TSC
 	vcpu->tsc_offset -= vcpu->vm_exit_tsc_overhead;
+	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
+	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
 }
 
 void vmexit_nmi_window(__vcpu* vcpu)
