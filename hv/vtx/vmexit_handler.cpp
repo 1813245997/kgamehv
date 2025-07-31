@@ -638,6 +638,7 @@ void vmexit_exception_handler(__vcpu* vcpu)
 	}
 	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP && vcpu->vmexit_info.guest_rflags.trap_flag == false)
 	{
+		 
 		PLIST_ENTRY current_hooked_page = &vcpu->ept_state->hooked_page_list;
 		while (&vcpu->ept_state->hooked_page_list != current_hooked_page->Flink)
 		{
@@ -669,6 +670,26 @@ void vmexit_exception_handler(__vcpu* vcpu)
 			}
 		}
 	}
+	else if(interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP &&interrupt_info.interruption_type== privileged_software_exception && vcpu->vmexit_info.guest_rflags.trap_flag == true)
+	{
+		//asm_pg_KiErrata361Present proc
+		//	mov ax, ss
+		//	pushfq
+		//	or qword ptr[rsp], 100h
+		//	popfq
+		//	mov ss, ax
+		//	db 0f1h; icebp
+		//	pushfq
+		//	and qword ptr[rsp], 0FFFFFEFFh
+		//	popfq
+		//	ret
+		//	asm_pg_KiErrata361Present endp
+		__dr6 dr6;
+		dr6.all = __readdr(6);
+		dr6.single_instruction = 1;
+		__writedr(6, dr6.all);
+	}
+ 
 
 	hv::inject_interruption(interrupt_info.vector, interrupt_info.interruption_type, error_code, interrupt_info.error_code_valid);
 }
