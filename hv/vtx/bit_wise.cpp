@@ -11,6 +11,10 @@
 int
 TestBit(int BitNumber, unsigned long* addr)
 {
+	if (!addr)
+	{
+		return 0;
+	}
     return (BITMAP_ENTRY(BitNumber, addr) >> BITMAP_SHIFT(BitNumber)) & 1;
 }
 
