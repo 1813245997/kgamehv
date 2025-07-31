@@ -7,6 +7,7 @@
 #include "../asm\vm_intrin.h"
 #include "vmcall_reason.h"
 #include "hv_dpc_vm_call.h"
+#include "CompatibilityChecks.h"
 #include "vt_global.h"
  
 
