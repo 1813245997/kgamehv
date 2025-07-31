@@ -66,6 +66,7 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 	{
 		case VMCALL_TEST:
 		{
+			vcpu->vm_exit_last_tsc = __rdtsc();
 			adjust_rip(vcpu);
 			break;
 		}

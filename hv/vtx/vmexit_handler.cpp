@@ -681,19 +681,23 @@ void vmexit_cpuid_handler(__vcpu* vcpu)
 {
 	 
 
-	auto const ctx = vcpu->vmexit_info.guest_registers ;
-
 	int regs[4];
+	auto const ctx = vcpu->vmexit_info.guest_registers;
 	__cpuidex(regs, ctx->rax, ctx->rcx);
+	//if (ctx->rax == 6) {
+	//	cpuid_eax_06 cpuid_06{};
+	//	cpuid_06.ecx.flags = regs[2];
+	//	cpuid_06 .ecx.hardware_coordination_feedback_capability = 0; // 清除 HCF 支持位（即禁用 MPERF/APERF 支持）
+	//	regs[2] = cpuid_06.ecx.flags;
+	//}
 
 	ctx->rax = regs[0];
 	ctx->rbx = regs[1];
 	ctx->rcx = regs[2];
 	ctx->rdx = regs[3];
-
+ 
 	vcpu->hide_vm_exit_overhead = true;
-	
-	adjust_rip(vcpu);
+ 	adjust_rip(vcpu);
 }
 
 /// <summary>
@@ -1765,7 +1769,7 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-//	hide_vm_exit_overhead(vcpu);
+	 hide_vm_exit_overhead(vcpu);
 
 	return true;
 }
@@ -1798,29 +1802,29 @@ void vmexit_vmx_preemption(__vcpu* vcpu)
 
 void hide_vm_exit_overhead(__vcpu* vcpu)
 {
-	ia32_perf_global_ctrl_register perf_global_ctrl;
-	perf_global_ctrl.flags = vcpu->msr_exit_store.perf_global_ctrl.msr_data;
+	//ia32_perf_global_ctrl_register perf_global_ctrl;
+	//perf_global_ctrl.flags = vcpu->msr_exit_store.perf_global_ctrl.msr_data;
 
-	// make sure the CPU loads the previously stored guest state on vm-entry
-	vcpu->msr_entry_load.aperf.msr_data =vcpu->msr_exit_store.aperf.msr_data;
-	vcpu->msr_entry_load.mperf.msr_data =vcpu->msr_exit_store.mperf.msr_data;
-	hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, perf_global_ctrl.flags);
+	//// make sure the CPU loads the previously stored guest state on vm-entry
+	//vcpu->msr_entry_load.aperf.msr_data =vcpu->msr_exit_store.aperf.msr_data;
+	//vcpu->msr_entry_load.mperf.msr_data =vcpu->msr_exit_store.mperf.msr_data;
+	//hv::vmwrite(VMCS_GUEST_PERF_GLOBAL_CTRL, perf_global_ctrl.flags);
 
-	// account for the constant overhead associated with loading/storing MSRs
-	vcpu->msr_entry_load.aperf.msr_data -= vcpu->vm_exit_mperf_overhead;
-	vcpu->msr_entry_load.mperf.msr_data -= vcpu->vm_exit_mperf_overhead;
+	//// account for the constant overhead associated with loading/storing MSRs
+	//vcpu->msr_entry_load.aperf.msr_data -= vcpu->vm_exit_mperf_overhead;
+	//vcpu->msr_entry_load.mperf.msr_data -= vcpu->vm_exit_mperf_overhead;
 
-	// account for the constant overhead associated with loading/storing MSRs
-	if (perf_global_ctrl.en_fixed_ctrn & (1ull << 2)) {
-		auto const cpl = current_guest_cpl();
+	//// account for the constant overhead associated with loading/storing MSRs
+	//if (perf_global_ctrl.en_fixed_ctrn & (1ull << 2)) {
+	//	auto const cpl = current_guest_cpl();
 
-		ia32_fixed_ctr_ctrl_register fixed_ctr_ctrl;
-		fixed_ctr_ctrl.flags = __readmsr(IA32_FIXED_CTR_CTRL);
+	//	ia32_fixed_ctr_ctrl_register fixed_ctr_ctrl;
+	//	fixed_ctr_ctrl.flags = __readmsr(IA32_FIXED_CTR_CTRL);
 
-		// this also needs to be done for many other PMCs, but whatever
-		if ((cpl == 0 && fixed_ctr_ctrl.en2_os) || (cpl == 3 && fixed_ctr_ctrl.en2_usr))
-			__writemsr(IA32_FIXED_CTR2, __readmsr(IA32_FIXED_CTR2) - vcpu->vm_exit_ref_tsc_overhead);
-	}
+	//	// this also needs to be done for many other PMCs, but whatever
+	//	if ((cpl == 0 && fixed_ctr_ctrl.en2_os) || (cpl == 3 && fixed_ctr_ctrl.en2_usr))
+	//		__writemsr(IA32_FIXED_CTR2, __readmsr(IA32_FIXED_CTR2) - vcpu->vm_exit_ref_tsc_overhead);
+	//}
 
 	// this usually occurs for vm-exits that are unlikely to be reliably timed,
 	// such as when an exception occurs or if the preemption timer fired
@@ -1829,19 +1833,19 @@ void hide_vm_exit_overhead(__vcpu* vcpu)
 		vcpu->tsc_offset = 0;
 
 		// soft disable the VMX preemption timer
-		vcpu->preemption_timer = ~0ull;
+	//	vcpu->preemption_timer = ~0ull;
 
 		return;
 	}
 
 	// set the preemption timer to cause an exit after 10000 guest TSC ticks have passed
-	vcpu->preemption_timer = max(2,
-		10000 >> vcpu->cached.vmx_misc.preemption_timer_tsc_relationship);
+	/*vcpu->preemption_timer = max(2,
+		10000 >> vcpu->cached.vmx_misc.preemption_timer_tsc_relationship);*/
 
 	// use TSC offsetting to hide from timing attacks that use the TSC
 	vcpu->tsc_offset -= vcpu->vm_exit_tsc_overhead;
 	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
-	hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+	//hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
 }
 
 void vmexit_nmi_window(__vcpu* vcpu)

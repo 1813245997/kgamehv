@@ -15,6 +15,8 @@ namespace hv
 		LogDebug("[hv] Measured VM-exit overhead (CPU_CLK_UNHALTED.REF_TSC = %zi).\n",
 			cpu->vm_exit_ref_tsc_overhead);
 	}
+
+ 
 	// measure the overhead of a vm-exit (RDTSC)
 	uint64_t measure_vm_exit_tsc_overhead() {
 		_disable();
@@ -60,6 +62,7 @@ namespace hv
 		_enable();
 		return lowest_vm_exit_overhead - lowest_timing_overhead;
 	}
+
 
 	// measure the overhead of a vm-exit (CPU_CLK_UNHALTED.REF_TSC)
 	uint64_t measure_vm_exit_ref_tsc_overhead() {

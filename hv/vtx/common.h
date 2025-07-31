@@ -179,8 +179,10 @@ struct __vcpu
 
 	// the overhead caused by world-transitions
 	uint64_t vm_exit_tsc_overhead;
+    uint64_t vm_exit_last_tsc;
 	uint64_t vm_exit_mperf_overhead;
 	uint64_t vm_exit_ref_tsc_overhead;
+
 
 	// host interrupt descriptor table
 	alignas(0x1000) segment_descriptor_interrupt_gate_64 host_idt[hv::host_idt_descriptor_count];
