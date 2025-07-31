@@ -13,6 +13,8 @@
 #include "hypervisor_routines.h"
 #include "interrupt.h"
 #include "../asm\vm_context.h"
+#include "CompatibilityChecks.h"
+
 #include "vt_global.h"
 #include "hypervisor_gateway.h"
 
