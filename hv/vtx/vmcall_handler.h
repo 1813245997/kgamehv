@@ -30,3 +30,4 @@ void restore_segment_registers();
 void call_vmxoff(__vcpu* vcpu);
 //void vmcall_operations(__vmexit_guest_registers_t* guest_regs);
 void vmexit_vmcall_handler(__vcpu* vcpu);
+void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap);

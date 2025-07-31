@@ -24,4 +24,9 @@ namespace hvgt
 	void hypervisor_visible(bool value);
 
 	void vmoff();
+
+
+	void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap);
+	 
+
 }

@@ -513,7 +513,7 @@ bool vmm_init()
 
 	compatibility_check_perform_checks();
 
-	 g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
+	/* g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
 	if ( g_invalid_msr_bitmap == NULL)
 	{
 		return FALSE;
@@ -523,7 +523,7 @@ bool vmm_init()
 	if ( g_invalid_msr_bitmap == NULL)
 	{
 		return FALSE;
-	}
+	}*/
 	 
 	//
 	// Call derefered procedure call (DPC) to fill vmcs and launch vmm for every logical core

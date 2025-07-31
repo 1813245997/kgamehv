@@ -13,6 +13,8 @@
 #include "hypervisor_routines.h"
 #include "interrupt.h"
 #include "../asm\vm_context.h"
+#include "vt_global.h"
+#include "hypervisor_gateway.h"
 
 void restore_segment_registers()
 {
@@ -210,6 +212,13 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			break;
 		}
 
+		case  VMCALL_SET_MSR_FAULT_BITMAPS:
+		{
+		 	set_invalid_msr_bitmaps(vmcall_parameter1, vmcall_parameter2);
+			adjust_rip(vcpu);
+			break;
+		}
+
 		 
 		 
 
@@ -221,4 +230,12 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 	}
 
 	vcpu->vmexit_info.guest_registers->rax = status;
+}
+
+
+
+void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap)
+{
+	g_invalid_msr_bitmap = reinterpret_cast<unsigned  long long*>(msr_bitmap);
+	g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(synthetic_msr_bitmap);
 }
