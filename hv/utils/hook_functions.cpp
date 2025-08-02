@@ -278,6 +278,12 @@ namespace hook_functions
 			     
 		   }
 		  // hyper::unhook_all_ept_hooks_for_pid(proces_id);
+			
+		   if (process)
+		   {
+			   utils::hook_utils::unhook_user_all_exception_int3(process);
+		   }
+		  
 		   utils::hidden_user_memory:: remove_hidden_addresses_for_pid(proces_id);
 
 		   return original_psp_exit_process(trim_address_space, process);

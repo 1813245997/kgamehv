@@ -17,6 +17,6 @@ namespace hvgt
 	
 	void broadcast_remove_user_exception_int3(KDPC*, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2);
 	 
- 
+   
 	
 }

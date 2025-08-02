@@ -1674,183 +1674,7 @@ namespace ept
 		}
 		return false;
 	}
-	//bool InstallUserHook_function(__ept_state& ept_state, void* original_function, void* hooked_function, void** origin_function  )
-	//{
-	// 
-	//	//DbgBreakPoint();
-	//	unsigned __int64 physical_address = MmGetPhysicalAddress(original_function).QuadPart;
-
-	//	//
-	//	// Check if function exist in physical memory
-	//	//
-	//	if (physical_address == NULL)
-	//	{
-	//		LogError("Requested virtual memory doesn't exist in physical one");
-	//		return false;
-	//	}
-
-	//	//
-	//	// Check if page isn't already hooked
-	//	//
-	//	PLIST_ENTRY current = &ept_state.hooked_page_list;
-	//	while (&ept_state.hooked_page_list != current->Flink)
-	//	{
-	//		current = current->Flink;
-	//		__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current, __ept_hooked_page_info, hooked_page_list);
-
-	//		if (hooked_page_info->pfn_of_hooked_page == GET_PFN(physical_address))
-	//		{
-	//			LogInfo("Page already hooked");
-
-	//			__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(__ept_hooked_function_info));
-	//			if (hooked_function_info == nullptr)
-	//			{
-	//				LogError("There is no pre-allocated pool for hooked function struct");
-	//				return false;
-	//			}
-
-	//			//hooked_function_info->trampoline_address =(unsigned __int8*) trampoline_address;
-	//			//if (hooked_function_info->trampoline_address == nullptr)
-	//			//{
-	//			//	pool_manager::release_pool(hooked_function_info);
-	//			//	LogError("There is no pre-allocated pool for trampoline");
-	//			//	return false;
-	//			//}
-
-	//			hooked_function_info->original_va = original_function;
-
-	//			hooked_function_info->fake_va = hooked_function;
-
-	//			hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
-
-	//			if (hook_instruction_memory(hooked_function_info, original_function, origin_function) == false)
-	//			{
-	//				/*if (hooked_function_info->trampoline_address != nullptr)
-	//					pool_manager::release_pool(hooked_function_info->trampoline_address);*/
-	//				pool_manager::release_pool(hooked_function_info);
-	//				LogError("Hook failed");
-	//				return false;
-	//			}
-
-	//			// Track all hooked functions within page
-	//			InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
-
-	//			return true;
-	//		}
-	//	}
-
-	//	if (is_page_splitted(ept_state, physical_address) == false)
-	//	{
-	//		void* split_buffer = pool_manager::request_pool<void*>(pool_manager::INTENTION_SPLIT_PML2, true, sizeof(__ept_dynamic_split));
-	//		if (split_buffer == nullptr)
-	//		{
-	//			LogError("There is no preallocated pool for split");
-	//			return false;
-	//		}
-
-	//		if (split_pml2(ept_state, split_buffer, physical_address) == false)
-	//		{
-	//			pool_manager::release_pool(split_buffer);
-	//			LogError("Split failed");
-	//			return false;
-	//		}
-	//	}
-
-	//	__ept_pte* target_page = get_pml1_entry(ept_state, physical_address);
-	//	if (target_page == nullptr)
-	//	{
-	//		LogError("Failed to get PML1 entry of the target address");
-	//		return false;
-	//	}
-
-	//	__ept_hooked_page_info* hooked_page_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
-	//	if (hooked_page_info == nullptr)
-	//	{
-	//		LogError("There is no preallocated pool for hooked page info");
-	//		return false;
-	//	}
-
-	//	hooked_page_info->fake_page_contents = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, true, PAGE_SIZE);
-	//	if (hooked_page_info->fake_page_contents == nullptr)
-	//	{
-	//		pool_manager::release_pool(hooked_page_info);
-	//		LogError("There is no preallocated pool for fake page contents");
-	//		return false;
-	//	}
-
-	//	InitializeListHead(&hooked_page_info->hooked_functions_list);
-
-	//	__ept_hooked_function_info* hooked_function_info = pool_manager::request_pool<__ept_hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, true, sizeof(__ept_hooked_function_info));
-	//	if (hooked_function_info == nullptr)
-	//	{
-	//		pool_manager::release_pool(hooked_page_info->fake_page_contents);
-	//		pool_manager::release_pool(hooked_page_info);
-	//		LogError("There is no preallocated pool for hooked function info");
-	//		return false;
-	//	}
-
-	//	//hooked_function_info->trampoline_address = (unsigned __int8*)trampoline_address;
-	//	//if (hooked_function_info->trampoline_address == nullptr)
-	//	//{
-	//	//	pool_manager::release_pool(hooked_page_info->fake_page_contents);
-	//	//	pool_manager::release_pool(hooked_page_info);
-	//	//	pool_manager::release_pool(hooked_function_info);
-	//	//	LogError("There is no pre-allocated pool for trampoline");
-	//	//	return false;
-	//	//}
-
-	//	hooked_page_info->pfn_of_hooked_page = GET_PFN(physical_address);
-	//	hooked_page_info->pfn_of_fake_page_contents = GET_PFN(MmGetPhysicalAddress(hooked_page_info->fake_page_contents).QuadPart);
-	//	hooked_page_info->entry_address = target_page;
-
-	//	hooked_page_info->entry_address->execute = 0;
-	//	hooked_page_info->entry_address->read = 1;
-	//	hooked_page_info->entry_address->write = 1;
-
-	//	hooked_page_info->original_entry = *target_page;
-	//	hooked_page_info->changed_entry = *target_page;
-
-	//	hooked_page_info->changed_entry.read = 0;
-	//	hooked_page_info->changed_entry.write = 0;
-	//	hooked_page_info->changed_entry.execute = 1;
-
-	//	hooked_page_info->changed_entry.physical_address = hooked_page_info->pfn_of_fake_page_contents;
-
-	//	hooked_page_info->process_id = PsGetCurrentProcessId();
-	//	_setac();
-	//	 
-	//	RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(original_function), PAGE_SIZE);
-	//	_clearac();
-	//	
-
-	//	hooked_function_info->original_va = original_function;
-
-	//	hooked_function_info->fake_va = hooked_function;
-
-	//	hooked_function_info->fake_page_contents = hooked_page_info->fake_page_contents;
-
-	//	if (hook_instruction_memory(hooked_function_info, original_function, origin_function) == false)
-	//	{
-	//		/*if (hooked_function_info->trampoline_address != nullptr)
-	//			pool_manager::release_pool(hooked_function_info->trampoline_address);*/
-	//		pool_manager::release_pool(hooked_function_info);
-	//		pool_manager::release_pool(hooked_page_info->fake_page_contents);
-	//		pool_manager::release_pool(hooked_page_info);
-	//		LogError("Hook failed");
-	//		return false;
-	//	}
-	//
-	//	// Track all hooked functions
-	//	InsertHeadList(&hooked_page_info->hooked_functions_list, &hooked_function_info->hooked_function_list);
-
-	//	// Track all hooked pages
-	//	InsertHeadList(&ept_state.hooked_page_list, &hooked_page_info->hooked_page_list);
-
-	//	invept_single_context(ept_state.ept_pointer->all);
-
-	//	  
-	//	return true;
-	//}
+	 
 
 	/// <summary>
 	/// Unhook single function
@@ -2012,5 +1836,125 @@ namespace ept
 			pool_manager::release_pool(hooked_entry->fake_page_contents);
 			pool_manager::release_pool(hooked_entry);
 		}
+	}
+
+
+	bool unhook_process_all_user_exception(
+		__ept_state& ept_state,                      
+		HANDLE process_id                                                
+	                  
+	)
+	{
+		bool unhooked_any = false;
+		PLIST_ENTRY current_hooked_page = &ept_state.hooked_page_list;
+		while (&ept_state.hooked_page_list != current_hooked_page->Flink)
+		{
+			current_hooked_page = current_hooked_page->Flink;
+			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current_hooked_page, __ept_hooked_page_info, hooked_page_list);
+
+			// Check if the current hooked page belongs to the specified process ID
+			if (hooked_page_info->process_id != process_id)
+			{
+				continue;
+			}
+
+			 
+			unhooked_any = true;
+			// Unhook all functions related to this page
+			PLIST_ENTRY current_hooked_function = &hooked_page_info->hooked_functions_list;
+
+			while (&hooked_page_info->hooked_functions_list != current_hooked_function->Flink)
+			{
+				current_hooked_function = current_hooked_function->Flink;
+				__ept_hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_hooked_function, __ept_hooked_function_info, hooked_function_list);
+
+				// Restore overwritten data for each function
+
+				unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
+				RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
+				RemoveEntryList(current_hooked_function);
+
+	  
+				if (hooked_function_info->original_instructions_backup != nullptr)
+				{
+					pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+				}
+
+
+				pool_manager::release_pool(hooked_function_info);
+			}
+
+			// After unhooking all functions, restore the original page entry and remove the page
+			hooked_page_info->original_entry.execute = 1;
+			swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, invept_type::invept_single_context);
+
+			RemoveEntryList(current_hooked_page);
+			pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			pool_manager::release_pool(hooked_page_info);
+			 
+		}
+		if (unhooked_any)
+		{
+			invept_all_contexts();  // Invalidate EPT for all contexts
+		}
+
+		return true;
+	}
+
+
+	bool remove_breakpoints_by_type_for_process(
+		_In_ HANDLE process_id,
+		_In_ hook_type type )
+	{
+		bool removed = false;
+		LIST_ENTRY* hook_page_list = &g_ept_breakpoint_hook_list;
+
+		for (PLIST_ENTRY page_entry = hook_page_list->Flink;
+			page_entry != hook_page_list;
+			)
+		{
+			auto* hooked_page = CONTAINING_RECORD(page_entry, ept_debugged_page_info, debugged_page_list_entry);
+			PLIST_ENTRY next_page_entry = page_entry->Flink;
+
+			if (hooked_page->process_id != process_id)
+			{
+				page_entry = next_page_entry;
+				continue;
+			}
+
+			for (PLIST_ENTRY func_entry = hooked_page->breakpoints_list_head.Flink;
+				func_entry != &hooked_page->breakpoints_list_head;
+				)
+			{
+				auto* hook_info = CONTAINING_RECORD(func_entry, ept_breakpoint_info, breakpoint_list_entry);
+				PLIST_ENTRY next_func_entry = func_entry->Flink;
+
+				if (hook_info->type == type)
+				{
+					  
+					// 从链表中移除并释放
+					RemoveEntryList(func_entry);
+
+					if (hook_info->trampoline_va)
+					{
+						utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
+					}
+					pool_manager::release_pool(hook_info );
+					removed = true;
+				}
+
+				func_entry = next_func_entry;
+			}
+			 
+			if (IsListEmpty(&hooked_page->breakpoints_list_head))
+			{
+				RemoveEntryList(page_entry);
+				pool_manager::release_pool(hooked_page);
+			}
+
+			page_entry = next_page_entry;
+		}
+
+		return removed;
 	}
 }

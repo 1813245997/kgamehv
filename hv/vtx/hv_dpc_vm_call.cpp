@@ -159,11 +159,17 @@ namespace hvgt
 		const auto args = reinterpret_cast<RemoveExceptionBreakpointArgs*>(DeferredContext);
 
 		// 调用 VMCALL 卸载 INT3 断点
-		if (__vm_call(
+		if (__vm_call_ex(
 			VMCALL_EPT_REMOVE_BREAK_POINT_EXCEPTION,      // 虚拟机调用号（假设这是用于卸载断点）
+		   reinterpret_cast<unsigned long long>	(args->process_id),
 			args->current_cr3,                           // 目标页表
-			static_cast<unsigned __int64>(args->remove_all_breakpoints), // true/false 标志
-			reinterpret_cast<unsigned __int64>(args->breakpoint_address) // 断点地址（或忽略）
+			reinterpret_cast<unsigned __int64>(args->breakpoint_address), // 断点地址（或忽略）
+			static_cast<unsigned __int64>(args->remove_all_breakpoints), // true/false 标志,
+			0,
+			0,
+			0,
+			0,
+			0
 		))
 		{
 			InterlockedIncrement16(&args->statuses);     // 设置成功

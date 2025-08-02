@@ -82,6 +82,16 @@ namespace hvgt
 	 
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
+	bool unhook_user_all_exception_int3(
+		_In_ HANDLE  process_id,
+		unsigned long long target_cr3)
+	{
+		RemoveExceptionBreakpointArgs args{ process_id ,target_cr3,nullptr, true };
+
+		KeGenericCallDpc(broadcast_remove_user_exception_int3, &args);
+
+		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+	}
 	//bool 
 
 	/// <summary>

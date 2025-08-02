@@ -11,12 +11,16 @@ namespace hvgt
  
 	bool unhook_all_functions();
 	   
-
 	bool unhook_break_point_int3(
 		unsigned long long target_cr3,
 		void* breakpoint_address,
 		bool remove_all
 	);
+
+	bool unhook_user_all_exception_int3(
+		_In_ HANDLE  process_id,
+		unsigned long long target_cr3);
+
 	bool test_vmcall();
 	 
 	void dump_pool_manager();

@@ -176,10 +176,13 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 		}
 		case VMCALL_EPT_REMOVE_BREAK_POINT_EXCEPTION:
 		{
-			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
+		 
+			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter2);
 
-
-
+			if (vmcall_parameter4)
+			{
+				status = ept::unhook_process_all_user_exception(*vcpu->ept_state, reinterpret_cast<HANDLE>  (vmcall_parameter1));
+			}  
 			hv::restore_context(old_cr3);
 			adjust_rip(vcpu);
 			break;

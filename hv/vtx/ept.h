@@ -452,6 +452,13 @@ namespace ept
 	/// <returns></returns>
 	bool unhook_by_pid(__ept_state& ept_state, HANDLE processId);
 
+
+	bool unhook_process_all_user_exception(
+		__ept_state& ept_state,
+		HANDLE process_id
+	 
+	);
+
 	/// <summary>
 	/// Split pml2 into 512 pml1 entries (From one 2MB page to 512 4KB pages)
 	/// </summary>
@@ -469,6 +476,11 @@ namespace ept
 	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
 
 	void  hook_write_absolute_jump_int3(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
+
+	bool remove_breakpoints_by_type_for_process(
+		_In_ HANDLE process_id,
+		_In_ hook_type type);
 	
 
 }

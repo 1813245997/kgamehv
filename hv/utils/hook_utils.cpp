@@ -239,5 +239,33 @@ namespace utils
 			return result;
 		}
 
+
+		bool unhook_user_all_exception_int3(_In_ PEPROCESS process)
+		{
+
+			if (!process)
+			{
+				return false;
+			}
+
+			// 获取 PID 和 CR3
+			const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+			const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
+
+			if (target_cr3 == 0 || process_id == nullptr)
+			{
+				return false; // 获取 CR3 或 PID 失败
+			}
+
+			// 执行 Unhook 操作
+			bool success = hvgt::unhook_user_all_exception_int3(process_id, target_cr3);
+			if (success)
+			{
+				// 清理 INT3 断点记录
+				ept::remove_breakpoints_by_type_for_process(process_id, hook_type::hook_user_exception_break_point_int3);
+			}
+
+			return success;
+		}
 	 }
 }
