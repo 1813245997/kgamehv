@@ -10,9 +10,9 @@ namespace hv
 		cpu->vm_exit_mperf_overhead = measure_vm_exit_mperf_overhead();
 		cpu->vm_exit_ref_tsc_overhead = measure_vm_exit_ref_tsc_overhead();
 
-		LogDebug("[hv] Measured VM-exit overhead (TSC = %zi).\n", cpu->vm_exit_tsc_overhead);
-		LogDebug("[hv] Measured VM-exit overhead (MPERF = %zi).\n", cpu->vm_exit_mperf_overhead);
-		LogDebug("[hv] Measured VM-exit overhead (CPU_CLK_UNHALTED.REF_TSC = %zi).\n",
+		LogDebug("Measured VM-exit overhead (TSC = %zi).\n", cpu->vm_exit_tsc_overhead);
+		LogDebug("Measured VM-exit overhead (MPERF = %zi).\n", cpu->vm_exit_mperf_overhead);
+		LogDebug("Measured VM-exit overhead (CPU_CLK_UNHALTED.REF_TSC = %zi).\n",
 			cpu->vm_exit_ref_tsc_overhead);
 	}
 

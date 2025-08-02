@@ -49,30 +49,7 @@ namespace game
 			unsigned long long client_size = 0;
 			unsigned long long engine2_base = 0;
 			unsigned long long engine2_size = 0;
-
-			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
-			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
-
-
-			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
-
-				return false;
-			}
-
-			if (client_base == 0 || client_size == 0)
-			{
-				return false;
-			}
-
-			if (engine2_base == 0 || engine2_size == 0)
-			{
-				return false;
-			}
-
-
-
-
-		 
+			 
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
 			utils:: hook_utils::hook_user_exception_handler(
 				process,
@@ -102,13 +79,16 @@ namespace game
 		bool initialize_game_process2( )
 		{
 
+			static LARGE_INTEGER first_seen_time = { 0 };
+
 			PEPROCESS process = nullptr;
 
 			if (g_is_initialized)
 			{
+				
 				return true;
 			}
-			 
+
 			if (!utils::process_utils::get_process_by_name(L"cs2.exe", &process))
 			{
 				return false;
@@ -116,11 +96,30 @@ namespace game
 
 			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
 			{
-				utils:: internal_functions::pfn_ob_dereference_object(process);
+				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
 			}
 
-			utils::internal_functions::pfn_ob_dereference_object(process);
+			// 获取当前系统时间
+			LARGE_INTEGER current_time;
+			KeQuerySystemTime(&current_time);
+
+			// 第一次发现进程，记录时间
+			if (first_seen_time.QuadPart == 0)
+			{
+				first_seen_time = current_time;
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				return false;
+			}
+
+			// 计算时间差（单位：100ns，10秒 = 10 * 1000 * 1000 * 10 = 100000000）
+			if ((current_time.QuadPart - first_seen_time.QuadPart) < 100000000)
+			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				return false;
+			}
+
+			// 超过 10 秒，正式初始化模块
 			unsigned long long client_base = 0;
 			unsigned long long client_size = 0;
 			unsigned long long engine2_base = 0;
@@ -129,32 +128,33 @@ namespace game
 			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
 			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
 
-
-			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
-
-				return false;
-			}
-
-			if (client_base == 0 || client_size == 0)
+			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2))
 			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
 			}
 
-			if (engine2_base == 0 || engine2_size == 0)
+			if (client_base == 0 || client_size == 0 || engine2_base == 0 || engine2_size == 0)
 			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
 			}
-			 
-			KeQuerySystemTime(&g_process_time);
+
+
+
+			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
+			utils::hook_utils::hook_user_exception_handler(
+				process,
+				reinterpret_cast<PVOID>(get_hp_fun),
+				hook_functions::new_get_csgo_hp
+
+
+			);
+
+
 			g_game_process = process;
-
-			g_client_base = client_base;
-			g_client_size = client_size;
-			g_engine2_base = engine2_base;
-			g_engine2_size = engine2_size;
 			g_is_initialized = true;
-
-
+			utils::internal_functions::pfn_ob_dereference_object(process);
 			return true;
 
 
@@ -185,17 +185,32 @@ namespace game
 		NTSTATUS cleanup_game_process( )
 		{ 
 			 
+			// 清理进程相关
 			g_game_process = nullptr;
-			g_is_initialized = false;
+			g_game_handle = 0;
 
-			clear_all_player_info();
-
+			// 清理模块基址和大小
 			g_client_base = 0;
 			g_client_size = 0;
 			g_engine2_base = 0;
 			g_engine2_size = 0;
-			g_game_handle = 0;
+
+			// 清理用户缓冲区
+			g_user_buffer = nullptr;
+
+			// 清理窗口大小
+			g_game_size = { 0 };
+
+			// 清空玩家信息
+			ExAcquireFastMutex(&g_player_data_lock);
+			RtlZeroMemory(g_player_array, sizeof(g_player_array));
+			g_player_count = 0;
+			ExReleaseFastMutex(&g_player_data_lock);
+
+			// 清理初始化状态与时间戳
+			g_is_initialized = false;
 			g_process_time.QuadPart = 0;
+
 			return STATUS_SUCCESS;
 		}
 
@@ -281,7 +296,7 @@ namespace game
 			 
 			LARGE_INTEGER current_time;
 			KeQuerySystemTime(&current_time);
-			if ((current_time.QuadPart - g_process_time.QuadPart) < 10 * 10000000LL) {
+			if ((current_time.QuadPart - g_process_time.QuadPart) < 10* 10000000LL) {
 				return false; // 未超过10秒，跳过
 			}
 
@@ -440,12 +455,48 @@ namespace game
 				g_game_handle = find_cs2_window();
 
 				if (!g_game_handle)
+				{
 					return false;
+				}
 
 				if (!get_cs2_window_info(g_game_handle, &g_game_size))
-					return false;
+					if (!g_game_handle)
+					{
+						return false;
+					}
 			}
-			
+
+			unsigned long long client_base = 0;
+			unsigned long long client_size = 0;
+			unsigned long long engine2_base = 0;
+			unsigned long long engine2_size = 0;
+
+			PEPROCESS process = utils::internal_functions::pfn_ps_get_current_process();
+			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
+			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
+
+
+			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
+
+				return false;
+			}
+
+			if (client_base == 0 || client_size == 0)
+			{
+				return false;
+			}
+
+			if (engine2_base == 0 || engine2_size == 0)
+			{
+				return false;
+			}
+
+
+			g_client_base = client_base;
+			g_client_size = client_size;
+			g_engine2_base = engine2_base;
+			g_engine2_size = engine2_size;
+
 			uintptr_t local_pawn_addr = g_client_base + cs2SDK::offsets::dwLocalPlayerPawn;
 			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
 			{
@@ -487,7 +538,7 @@ namespace game
 			// 获取本地玩家血量与队伍
 			if (health > 0 && health <= 100)
 			{
-				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_offsettema);
+				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iTeamNum);
 				if (utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
 				{
 					memcpy(&kcsgo2data::g_local_team, team_addr, sizeof(int));
@@ -525,7 +576,7 @@ namespace game
 				}
 
 				int team = 0;
-				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offsettema);
+				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iTeamNum);
 				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
 				{
 					continue;
@@ -536,12 +587,12 @@ namespace game
 					continue;
 				}
 
-				void* health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(health_addr))
+				void* target_health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(target_health_addr))
 				{
 					continue;
 				}
-				memcpy(&health, health_addr, sizeof(int));
+				memcpy(&health, target_health_addr, sizeof(int));
 				if (health <= 0 || health > 100)
 				{
 					continue;
@@ -610,72 +661,84 @@ namespace game
 
 		bool initialize_game_data2()
 		{
-			NTSTATUS status{};
-
+			 
+			  
+		  
 			if (!g_game_handle) 
 			{
 				g_game_handle = find_cs2_window();
 
 				if (!g_game_handle)
-					return false;
-
-				if (!get_cs2_window_info(g_game_handle, &g_game_size))
-					return false;
-			}
-
-			if (!g_game_process)
-			{
-				return false;
-			}
-
-			unsigned  long long directory_table_base =  utils::process_utils::get_process_cr3(g_game_process);
-			if (!directory_table_base)
-			{
-				return false;
-			}
-			DbgBreakPoint();
-			   
-			uintptr_t local_pawn_addr = g_client_base + cs2SDK::offsets::dwLocalPlayerPawn;
-			 
-			status = utils::memory::read_virtual_object<uintptr_t>(directory_table_base, reinterpret_cast<void*>(local_pawn_addr), kcsgo2data::g_local_pcsplayer_pawn);
-			if (!NT_SUCCESS(status))
-			{
-				return false;
-			}
-			  
-			kcsgo2data::g_entity_list = g_client_base + cs2SDK::offsets::m_offestPlayerArray;
-		  
-		 
-			int health{};
-			void* health_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth);
-			status = utils::memory::read_virtual_object<int>(directory_table_base, health_addr, health);
-			if (!NT_SUCCESS(status))
-			{
-				return false;
-			}
-				  
-			// 获取本地玩家血量与队伍
-			if (health > 0 && health <= 100)
-			{
-				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_offsettema);
-
-				status = utils::memory::read_virtual_object<int>(directory_table_base, team_addr, kcsgo2data::g_local_team);
-				if (!NT_SUCCESS(status))
 				{
 					return false;
 				}
-				 
+
+				if (!get_cs2_window_info(g_game_handle, &g_game_size))
+				{
+					return false;
+				}
+			}
+
+		
+
+			KAPC_STATE apc_state{};
+		    
+			utils::internal_functions::pfn_ke_stack_attach_process(g_game_process, &apc_state);
+
+			uintptr_t local_pawn_addr = g_client_base + cs2SDK::offsets::dwLocalPlayerPawn;
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+
+			memcpy(&kcsgo2data::g_local_pcsplayer_pawn, reinterpret_cast<void*>(local_pawn_addr), sizeof(kcsgo2data::g_local_pcsplayer_pawn));
+			if (!kcsgo2data::g_local_pcsplayer_pawn)
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn)))
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+
+
+			kcsgo2data::g_entity_list = g_client_base + cs2SDK::offsets::m_offestPlayerArray;
+			if (!kcsgo2data::g_entity_list)
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_entity_list)))
+			{
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return false;
+			}
+			int health = 0;
+			if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth)))
+			{
+				memcpy(&health, reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth), sizeof(int));
+			}
+			// 获取本地玩家血量与队伍
+			if (health > 0 && health <= 100)
+			{
+				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iTeamNum);
+				if (utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
+				{
+					memcpy(&kcsgo2data::g_local_team, team_addr, sizeof(int));
+				}
 			}
 
 			// 更新 local 原点坐标
 			void* origin_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
-			 
-			status = utils::memory::read_virtual_object<Vector3>(directory_table_base, origin_addr, kcsgo2data::g_local_origin);
-			if (!NT_SUCCESS(status))
+			if (utils::internal_functions::pfn_mm_is_address_valid_ex(origin_addr))
 			{
-				return false;
+				memcpy(&kcsgo2data::g_local_origin, origin_addr, sizeof(Vector3));
 			}
-			 
 
 			// 采集玩家数据临时数组
 			kcsgo2struct::CPlayer temp_array[60]{};
@@ -685,47 +748,40 @@ namespace game
 			{
 				uintptr_t player_pawn = 0;
 				void* pawn_ptr = reinterpret_cast<void*>(kcsgo2data::g_entity_list + i * sizeof(uintptr_t));
-				 
-				status = utils::memory::read_virtual_object<uintptr_t>(directory_table_base, pawn_ptr, player_pawn);
-				if (!NT_SUCCESS(status))
+				if (utils::internal_functions::pfn_mm_is_address_valid_ex(pawn_ptr))
 				{
-					continue;
+					memcpy(&player_pawn, pawn_ptr, sizeof(uintptr_t));
 				}
-				 
-				  
+
 				if (!player_pawn || player_pawn == kcsgo2data::g_local_pcsplayer_pawn)
 				{
 					continue;
 				}
 
 				int team = 0;
-				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_offsettema);
-
-				status = utils::memory::read_virtual_object<int>(directory_table_base, team_addr, team);
-				if (!NT_SUCCESS(status))
+				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iTeamNum);
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
 				{
 					continue;
 				}
-			 
+				memcpy(&team, team_addr, sizeof(int));
 				if (team == kcsgo2data::g_local_team || team < 2)
 				{
 					continue;
 				}
 
-				void* health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
-			 
-				status = utils::memory::read_virtual_object<int>(directory_table_base, health_addr, health);
-				if (!NT_SUCCESS(status))
+				void* target_health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(target_health_addr))
 				{
 					continue;
 				}
-			 
+				memcpy(&health, target_health_addr, sizeof(int));
 				if (health <= 0 || health > 100)
 				{
 					continue;
 				}
 
-			 
+
 
 
 
@@ -733,42 +789,36 @@ namespace game
 				player.pCSPlayerPawn = player_pawn;
 				player.team = team;
 				player.health = health;
-				 
+
 				player.is_local_player = false;
 
 				// 读取 origin
 				void* tagorigin_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
-			 
-				status = utils::memory::read_virtual_object<Vector3>(directory_table_base, tagorigin_addr, player.origin);
-				if (!NT_SUCCESS(status))
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(tagorigin_addr))
 				{
 					continue;
 				}
-			 
+				memcpy(&player.origin, tagorigin_addr, sizeof(Vector3));
 				player.head = { player.origin.x, player.origin.y, player.origin.z + 70.f };
 
 				// 读取 scene node
 				void* scene_node_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_pGameSceneNode);
-
-				status = utils::memory::read_virtual_object<uintptr_t>(directory_table_base, scene_node_addr, player.gameSceneNode);
-				if (!NT_SUCCESS(status))
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(scene_node_addr))
 				{
 					continue;
 				}
-				 
+				memcpy(&player.gameSceneNode, scene_node_addr, sizeof(uintptr_t));
 
 
 				// 显示玩家骨骼
 				if (KMenuConfig::ShowBone.enabled)
 				{
 					void* bone_array_addr_ptr = reinterpret_cast<void*>(player.gameSceneNode + cs2SDK::offsets::m_OoffsetBone);
-
-					status = utils::memory::read_virtual_object<uintptr_t>(directory_table_base, bone_array_addr_ptr, player.boneArray);
-					if (NT_SUCCESS(status))
+					if (utils::internal_functions::pfn_mm_is_address_valid_ex(bone_array_addr_ptr))
 					{
-						player.ReadBones(directory_table_base,&game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size);
+						memcpy(&player.boneArray, bone_array_addr_ptr, sizeof(uint64_t));
+						player.ReadBones(&game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size);
 					}
-					 
 
 
 				}
@@ -776,20 +826,20 @@ namespace game
 
 				// 读取 view matrix（每次都读，不太必要）
 				void* view_matrix_addr = reinterpret_cast<void*>(g_client_base + cs2SDK::offsets::dwViewMatrix);
-
-			    utils::memory::read_virtual_object<matrix4x4_t>(directory_table_base, view_matrix_addr, kcsgo2data::g_view_matrix);
-			  
+				if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
+				{
+					memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
+				}
 
 
 
 				temp_count++;
 			}
-		 
+			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			// 提交玩家数据
 			set_player_data(temp_array, temp_count);
 
 			return true;
-
 		}
 	 
 

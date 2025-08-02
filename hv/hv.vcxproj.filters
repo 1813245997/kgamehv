@@ -301,6 +301,9 @@
     <ClInclude Include="vtx\timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\VMProtectDDK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">

@@ -270,7 +270,7 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
-			   if (game::kcsgo2::is_game_process(process))
+			   if (utils::process_utils::is_process_name_match_wstr(process,L"cs2.exe",TRUE))
 			   {
 				   game::kcsgo2::cleanup_game_process();
 				  
@@ -1229,12 +1229,12 @@ namespace hook_functions
 		 
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   uint64_t rsi = ContextRecord->Rsi;
-		   uint64_t rdi = ContextRecord->Rdi;
+		   uint64_t R14 = ContextRecord->R14;
 
-		   uint64_t target_value = *reinterpret_cast<uint64_t*>(rsi + 0x180);
+		   uint64_t target_value = *reinterpret_cast<uint64_t*>(rsi + 0xD0);
 		    
 		   // 设置或清除 ZF（第 6 位）
-		   if (target_value == rdi) {
+		   if (target_value == R14) {
 			   ContextRecord->EFlags |= (1 << 6);
 			  
 		   }

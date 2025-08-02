@@ -11,7 +11,7 @@
 template <typename T>
 inline T allocate_pool(unsigned __int64 size)
 {
-    return (T)ExAllocatePoolWithTag(NonPagedPool, size, POOL_TAG);
+    return (T)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, size, POOL_TAG);
 }
 
 /// <summary>
@@ -23,7 +23,7 @@ inline T allocate_pool(unsigned __int64 size)
 template <typename T>
 inline T* allocate_pool()
 {
-    return (T*)ExAllocatePoolWithTag(NonPagedPool, sizeof(T), POOL_TAG);
+    return (T*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(T), POOL_TAG);
 }
 
 /// <summary>

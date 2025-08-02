@@ -108,7 +108,7 @@
     </ClCompile>
     <Link>
       <EntryPointSymbol>DriverEntry</EntryPointSymbol>
-      <AdditionalDependencies>LDE64x64.lib;libcntpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>LDE64x64.lib;libcntpr.lib;VMProtectDDK64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Inf>
       <SpecifyArchitecture>false</SpecifyArchitecture>
@@ -187,6 +187,7 @@
     <ClInclude Include="utils\user_comm\user_comm_struct.h" />
     <ClInclude Include="utils\vfun_utils.h" />
     <ClInclude Include="utils\vmcall_comm_args.h" />
+    <ClInclude Include="utils\VMProtectDDK.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />

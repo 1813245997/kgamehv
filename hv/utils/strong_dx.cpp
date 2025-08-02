@@ -263,10 +263,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			/*if (utils::auth::is_license_expired())
+			if (utils::auth::is_license_expired())
 			{
 				return;
-			}*/
+			}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -283,14 +283,14 @@ namespace utils
 
 #if ENABLE_GAME_DRAW_TYPE3 == 1
 			// 第一套绘制逻辑：通过 DLL 初始化
-			initialized = game::kcsgo2::is_initialize_game() && game::kcsgo2::is_create_time();
+			initialized = game::kcsgo2::is_initialize_game();
 
 #elif ENABLE_GAME_DRAW_TYPE3 == 2
 			// 第二套绘制逻辑：自己遍历进程
-			 
-		  
-			initialized = game::kcsgo2::initialize_game_process2()&&game::kcsgo2::initialize_game_data2();
+			  
+		 
 
+			initialized = game::kcsgo2::initialize_game_process2();
 #elif ENABLE_GAME_DRAW_TYPE3 == 3
 			// 第三套绘制逻辑：自己初始化数据
 			initialized = game::kcsgo2::is_initialize_game() &&
@@ -320,8 +320,10 @@ namespace utils
 			game::kcsgo2struct::CPlayer players_copy[MAX_PLAYER_NUM] = {};
 			int player_count = 0;
 
-			if (!game::kcsgo2::get_player_data(players_copy,  &player_count))
+			if (!game::kcsgo2::get_player_data(players_copy, &player_count))
+			{
 				return;
+			}
 
 			if (player_count==0)
 			{
