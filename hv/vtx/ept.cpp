@@ -1898,7 +1898,7 @@ namespace ept
 			invept_all_contexts();  // Invalidate EPT for all contexts
 		}
 
-		return true;
+		return unhooked_any;
 	}
 
 

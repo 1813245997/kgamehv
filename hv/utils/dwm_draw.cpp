@@ -106,12 +106,12 @@ namespace utils
 			}
 
 
-			status = find_context_offset(g_dwm_process,g_ntdll_base,&g_context_offset);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("find_context_offset failed with status: 0x%X", status);
-				return status;
-			}
+			/*	status = find_context_offset(g_dwm_process,g_ntdll_base,&g_context_offset);
+				if (!NT_SUCCESS(status))
+				{
+					LogError("find_context_offset failed with status: 0x%X", status);
+					return status;
+				}*/
 
 			status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
 			if (!NT_SUCCESS(status))

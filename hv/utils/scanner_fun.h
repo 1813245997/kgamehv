@@ -47,6 +47,8 @@ namespace utils
 		unsigned long long find_ps_suspend_process(unsigned  long long addr);
 
 		unsigned long long find_ps_resume_process(unsigned  long long addr);
+
+		unsigned long long find_nt_context_offset(unsigned  long long addr);
 		
 	}
 }
