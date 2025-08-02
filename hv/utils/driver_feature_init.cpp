@@ -16,6 +16,7 @@ namespace utils
 
 		NTSTATUS initialize_all_features(IN PVOID context)
 		{
+		 //  VMProtectBegin("utils::driver_features::initialize_all_features");
 			PVOID module_base = nullptr;
 			SIZE_T image_size = {};
 
@@ -25,6 +26,7 @@ namespace utils
 			if (!utils::module_info::init_ntoskrnl_info())
 			{
 				LogError("Failed to initialize ntoskrnl info.");
+			   // VMProtectEnd();
 				return STATUS_UNSUCCESSFUL;
 			}
 			LogDebug("ntoskrnl info initialized successfully.");
@@ -34,6 +36,7 @@ namespace utils
 			if (!get_module_info_from_context(context, module_base, image_size))
 			{
 				LogError("Failed to get module info from context.");
+			 //	 VMProtectEnd();
 				return STATUS_INVALID_IMAGE_FORMAT;
 			}
 		 
@@ -51,6 +54,7 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize internal functions (0x%X).", status);
+			 	 // VMProtectEnd();
 				return status;
 			}
 			LogDebug("Internal functions initialized successfully.");
@@ -60,24 +64,27 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize paging base addresses (0x%X).", status);
+			 //  VMProtectEnd();
 				return status;
 			}
 			LogDebug("Paging base addresses initialized successfully.");
 
-			LogDebug("Initializing feature globals...");
+			/*LogDebug("Initializing feature globals...");
 			status = feature_data::initialize();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize feature globals (0x%X).", status);
+				   VMProtectEnd();
 				return status;
 			}
-			LogDebug("Feature globals initialized successfully.");
+			LogDebug("Feature globals initialized successfully.");*/
 
 			LogDebug("Initializing feature offsets...");
 			status = feature_offset::initialize();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize feature offsets (0x%X).", status);
+				//  VMProtectEnd();
 				return status;
 			}
 			LogDebug("Feature offsets initialized successfully.");
@@ -91,6 +98,7 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize hooks (0x%X).", status);
+				 //  VMProtectEnd();
 				return status;
 			}
 			LogDebug("Virtualization started successfully.");
@@ -107,6 +115,7 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize hooks (0x%X).", status);
+				 //  VMProtectEnd();
 				return status;
 			}
 			LogDebug("Hooks initialized successfully.");
@@ -117,14 +126,15 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize DWM draw (0x%X).", status);
+				//  VMProtectEnd();
 				return status;
 			}
 			LogDebug("DWM draw initialized successfully.");
-
+			
 
 			LogDebug("Driver initialization complete.");
-				 
-		 
+			 	 
+		//  VMProtectEnd();
 			return STATUS_SUCCESS;
 		}
 

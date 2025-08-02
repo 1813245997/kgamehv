@@ -1,6 +1,6 @@
 #pragma once
 
-#define ENABLE_HV_DEBUG_LOG 0 // Set to 0 to disable debug logging
+#define ENABLE_HV_DEBUG_LOG 1 // Set to 0 to disable debug logging
 
 #define USE_MANUAL_MAP_MODE 1 // Enable manual mapping for driver loading
 

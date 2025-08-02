@@ -218,13 +218,11 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
-					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x8C\x03\x00\x00", "x????xxxxxxxx"
+					"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x48\x89\x78\x20\x41\x56\x48\x81\xEC\xA0\x00\x00\x00\x48\x8B\xD9", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",".text"
 				);
 
 
-				ki_preprocess_fault_addr =
-					signature_scanner::resolve_relative_address(
-						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				ki_preprocess_fault_addr = temp_addr;
 				 
 
 			}
@@ -233,14 +231,12 @@ namespace utils
 			{
 
 				temp_addr = signature_scanner::find_pattern_image(
-					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
-					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x87\x03\x00\x00", "x????xxxxxxxx"
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x48\x89\x78\x20\x41\x56\x48\x81\xEC\xA0\x00\x00\x00\x48\x8B\xD9", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ".text"
 				);
 
 
-				ki_preprocess_fault_addr =
-					signature_scanner::resolve_relative_address(
-						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+				ki_preprocess_fault_addr = temp_addr;
 				 
 
 			}
@@ -910,13 +906,14 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_1709:
 			{
-
+				/*IDA: "41 8A CC E8 ?? ?? ?? ?? 49 8B CE"
+					"\x41\x8A\xCC\xE8\xCC\xCC\xCC\xCC\x49\x8B\xCE", "xxxx????xxx"*/
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),  
-					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x33\xD2\x48\x8D\x4C\x24\x30", "xxx????xxxxxxx"
+					"\x41\x8A\xCC\xE8\xCC\xCC\xCC\xCC\x49\x8B\xCE", "xxxx????xxx","PAGE"
 				);
-
-				temp_addr += 2;
+				
+				temp_addr += 3;
 				psp_exit_process_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1590,7 +1587,7 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xE8\x48\x85\xC0\x0F\x85\xBE\x00\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xE0\x48\x85\xC0\x74\xD9", "x????xxxxxxxx", "PAGE"
 				);
 
 			 
@@ -1605,10 +1602,10 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF0\x48\x85\xC0\x0F\x85\xD0\x00\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xF0\x48\x89\x44\x24\x40", "xxx????xxxxxxxx", "PAGE"
 				);
 
-				 
+				temp_addr += 2;
 				mm_create_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1617,13 +1614,14 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_1709:
 			{
+				//IDA: "33 C9 E8 ?? ?? ?? ?? 4C 8B F0 48 89 44 24 40"
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x8B\xF0\x48\x85\xC0\x0F\x84\x04\x01\x00\x00", "x????xxxxxxxxxxxx", ".text"
+					"\x33\xC9\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xF0\x48\x89\x44\x24\x40", "xxx????xxxxxxxx", "PAGE"
 				);
 
-				 
+				temp_addr += 2;
 				mm_create_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
 						reinterpret_cast<PVOID>(temp_addr), 1, 5);
@@ -1632,10 +1630,10 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_1803:
 			{
-
+				//IDA: "E8 ?? ?? ?? ?? 4C 8B E0 48 85 C0 74 D9"
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xF0\x48\x85\xC0\x0F\x84\xA8\x99\x17\x00", "x????xxxxxxxxxxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xE0\x48\x85\xC0\x74\xD9", "x????xxxxxxxx", "PAGE"
 				);
 				 
 				mm_create_kernel_stack_addr =
@@ -1649,8 +1647,9 @@ namespace utils
 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x41\x83\xCF\x04", "x????xxxx", ".text"
+					"\xE8\xCC\xCC\xCC\xCC\x4C\x8B\xE0\x48\x85\xC0\x74\xD9", "x????xxxxxxxx", "PAGE"
 				);
+				 
 			 
 
 				mm_create_kernel_stack_addr =
@@ -3755,7 +3754,7 @@ namespace utils
 
 		unsigned long long find_cdxgi_swapchain_dwm_legacy_present_dwm(unsigned long long image_base)
 		{
-			unsigned long long cdxgi_swapchain_dwm_legacy_present_dwm_addr = 0;
+			unsigned long long cdxgi_swapchain_dwm_legacy_present_dwm_addr{};
 
 			unsigned long long temp_addr{};
 			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
@@ -3995,6 +3994,10 @@ namespace utils
 					"xxxxxxxxxx"
 					".text"
 				);
+				if (!temp_addr)
+				{
+					temp_addr = image_base + 0X5CD0;
+				}
 
 
 				cdxgi_swapchain_dwm_legacy_present_dwm_addr = temp_addr;

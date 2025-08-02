@@ -65,23 +65,27 @@ namespace utils
 			status = get_stack_offset();
 			if (!NT_SUCCESS(status))
 			{
+				LogError("get_stack_offset failed with status: 0x%X", status);
 				return status;
 			}
 			status = initialize_ki_call_user_mode2(&g_ki_call_user_mode2);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("initialize_ki_call_user_mode2 failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = get_dwm_process(&g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("get_dwm_process failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = initialize_dwm_utils_modules(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("initialize_dwm_utils_modules failed with status: 0x%X", status);
 				return status;
 			}
 			
@@ -90,12 +94,14 @@ namespace utils
 			status = find_precall_address(g_dwm_process,g_ntdll_base,&g_precall_addr);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_precall_address failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_postcall_address(g_dwm_process, g_user32_base, &g_postcall_addr);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_postcall_address failed with status: 0x%X", status);
 				return status;
 			}
 
@@ -103,97 +109,113 @@ namespace utils
 			status = find_context_offset(g_dwm_process,g_ntdll_base,&g_context_offset);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_context_offset failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_ccomposition_present failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_cocclusion_context_pre_sub_graph(g_dwm_process, g_dwmcore_base, &g_cocclusion_context_pre_sub_graph);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_cocclusion_context_post_sub_graph(g_dwm_process, g_dwmcore_base, &g_cocclusion_context_post_sub_graph);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_cocclusion_context_post_sub_graph failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_cdxgi_swapchain_present_dwm(g_dwm_process, g_dxgi_base, &g_cdxgi_swapchain_present_dwm);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_cdxgi_swapchain_present_dwm failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_cdxgi_swapchain_present_multiplane_overlay(g_dwm_process, g_dxgi_base, &g_cdxgi_swapchain_present_multiplane_overlay);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_cdxgi_swapchain_present_multiplane_overlay failed with status: 0x%X", status);
 				return status;
 			}
 			
 			status = find_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process, g_dxgi_base, &g_cdxgi_swap_chain_dwm_legacy_present_dwm);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_cdxgi_swapchain_dwm_legacy_present_dwm failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_find_windoww(g_dwm_process, g_user32_base, &g_find_windoww_fun);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_find_windoww failed with status: 0x%X", status);
 				return status;
 			}
 			
 			status = find_client_to_screen(g_dwm_process, g_user32_base, &g_client_to_screen_fun);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_client_to_screen failed with status: 0x%X", status);
 				return status;
 			}
 			
 			status = find_get_client_rect(g_dwm_process, g_user32_base, &g_get_client_rect_fun);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_get_client_rect failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_get_foreground_window(g_dwm_process, g_user32_base, &g_get_foreground_window_fun);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_get_foreground_window failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_get_window_rect(g_dwm_process, g_user32_base, &g_get_window_rect_fun);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_get_window_rect failed with status: 0x%X", status);
 				return status;
 			}
 			 
 
-			status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
+	/*		status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_dxgk_get_device_state failed with status: 0x%X", status);
 				return status;
 			}
 
 			status = find_open_resource(g_dwm_process, g_dxgkrnl_base, &g_dxgk_open_resource);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("find_open_resource failed with status: 0x%X", status);
 				return status;
-			}
+			}*/
 
 			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("hook_swapchain_present_dwm failed with status: 0x%X", status);
 				return status;
 			}
 			//物理机走这个
 			status = hook_present_multiplane_overlay(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("hook_present_multiplane_overlay failed with status: 0x%X", status);
 				return status;
 			}
 
@@ -201,6 +223,7 @@ namespace utils
 			status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("hook_cdxgi_swapchain_dwm_legacy_present_dwm failed with status: 0x%X", status);
 				return status;
 			}
 
@@ -208,12 +231,15 @@ namespace utils
 			status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("hook_cocclusion_context_post_sub_graph failed with status: 0x%X", status);
 				return status;
+			 
 			}
 
 			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
+				LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
 				return status;
 			}
 

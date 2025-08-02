@@ -1247,11 +1247,10 @@ namespace hook_functions
 		    
 		   ContextRecord->Rip = new_rip;
 
-		   if ( game::kcsgo2::is_create_time())
-		   {
+		   
 			   // 初始化游戏数据
-			   game::kcsgo2::initialize_game_data();
-		   }
+			  game::kcsgo2::initialize_game_data();
+		  
 		
 
 			 

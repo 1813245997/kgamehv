@@ -263,10 +263,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
+	/*		if (utils::auth::is_license_expired())
 			{
 				return;
-			}
+			}*/
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -384,7 +384,7 @@ namespace utils
 							head_bone.y - (width / 12.0f),
 							radius,
 							color,
-							2.0f
+							1.0f
 						);
 					}
 

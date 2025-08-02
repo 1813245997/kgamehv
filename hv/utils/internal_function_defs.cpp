@@ -706,7 +706,7 @@ namespace utils
 
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			LogDebug("psp_exit_process_addr     = %p", reinterpret_cast<PVOID>(psp_exit_process_addr));
-
+			//win10老系统以及一下的是没有这个函数的
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
 			LogDebug("mm_is_address_valid_ex_addr     = %p", reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
 
