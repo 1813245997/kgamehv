@@ -54,23 +54,26 @@ namespace utils
 		
 
 			 //不可以dprinftf 输出 因为是触发异常输出的
-			ept_breakpoint_info* matched_hook_info = nullptr;
+		
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
  
 			if (PreviousMode != MODE::UserMode) 
 			{
 				return FALSE;
 			}
-
- 
-
-			if (!ept::find_break_point_info(process_id,  hook_type::hook_user_exception_break_point_int3, ExceptionRecord->ExceptionAddress ,&matched_hook_info))
+			 
+			hooked_function_info* matched_hook_info = nullptr;
+			 
+			if (!utils::hook_utils::find_user_exception_info_by_rip(
+				process_id, ExceptionRecord->ExceptionAddress, &matched_hook_info))
 			{
+				 
 				return FALSE;
 			}
+ 
 			 
-			using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, ept_breakpoint_info*);
-			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->breakpoint_handler_va);
+			using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, hooked_function_info*);
+			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->new_handler_va);
 
 			if (handler(ExceptionRecord, ContextRecord, matched_hook_info))
 			{

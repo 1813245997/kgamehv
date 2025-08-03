@@ -180,7 +180,7 @@ namespace pool_manager
 			return false;
 		}
 
-        if (request_allocation(sizeof(__ept_hooked_function_info), g_vmm_context->processor_count * 50, INTENTION_TRACK_HOOKED_FUNCTIONS) == false)
+        if (request_allocation(sizeof(hooked_function_info), g_vmm_context->processor_count * 50, INTENTION_TRACK_HOOKED_FUNCTIONS) == false)
         {
             LogError("Pool mangaer request allocation Failed");
             return false;

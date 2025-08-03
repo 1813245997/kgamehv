@@ -3,9 +3,8 @@
 struct HookFunctionArgs
 {
 	unsigned __int64 current_cr3;   // 当前进程的 CR3（页表基址），用于在正确的地址空间中访问目标函数
-	void* target_address;           // 要 Hook 的目标函数地址
-	void* hook_function;            // 自定义 Hook 函数地址（将跳转到此处执行）
-	void** origin_function;         // 原始函数的备份指针（用于在 Hook 中调用原始功能）
+	unsigned __int64 pfn_of_hooked_page; 
+	unsigned __int64 pfn_of_fake_page_contents;
 	volatile SHORT statuses;        // 状态同步标志位，用于指示操作结果或状态（例如：处理中、完成、失败等）
 };
 

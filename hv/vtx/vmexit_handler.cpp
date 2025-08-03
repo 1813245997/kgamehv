@@ -24,6 +24,7 @@
 #include "bit_wise.h"
 #include "CompatibilityChecks.h"
 #include "vt_global.h"
+#include "../utils/hook_utils.h"
 
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
@@ -630,7 +631,7 @@ void vmexit_exception_handler(__vcpu* vcpu)
 	interrupt_info.all = hv::vmread(VM_EXIT_INTERRUPTION_INFORMATION);
 	
 	unsigned __int32 error_code = hv::vmread(VM_EXIT_INTERRUPTION_ERROR_CODE);
-
+	//find_hook_info_by_rip
 	// Exit Qualification contain the linear address which caused page fault
 	if (interrupt_info.vector == EXCEPTION_VECTOR_PAGE_FAULT)
 	{
@@ -638,37 +639,13 @@ void vmexit_exception_handler(__vcpu* vcpu)
 	}
 	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP && vcpu->vmexit_info.guest_rflags.trap_flag == false)
 	{
-		 
-		PLIST_ENTRY current_hooked_page = &vcpu->ept_state->hooked_page_list;
-		while (&vcpu->ept_state->hooked_page_list != current_hooked_page->Flink)
+		hooked_function_info* matched_hook_info = nullptr;
+		if (utils::hook_utils:: find_hook_info_by_rip(   reinterpret_cast<void*>(vcpu->vmexit_info.guest_rip), &matched_hook_info))
 		{
-			current_hooked_page = current_hooked_page->Flink;
-			__ept_hooked_page_info* hooked_page_entry = CONTAINING_RECORD(current_hooked_page, __ept_hooked_page_info, hooked_page_list);
-
-			PLIST_ENTRY current_hooked_function = &hooked_page_entry->hooked_functions_list;
-			while (&hooked_page_entry->hooked_functions_list != current_hooked_function->Flink)
-			{
-				current_hooked_function = current_hooked_function->Flink;
-				__ept_hooked_function_info* hooked_function_entry =
-					CONTAINING_RECORD(current_hooked_function, __ept_hooked_function_info, hooked_function_list);
-
-
-				if (hooked_function_entry->original_va != (void*)vcpu->vmexit_info.guest_rip)
-				{
-					continue;
-				
-				}
-
-				if (hooked_function_entry->type != hook_type::hook_kernel_function_redirect)
-				{
-					continue;
-				}
-
-				hv::vmwrite(GUEST_RIP, hooked_function_entry->new_handler_va);
-				return;
-				  
-			}
+			hv::vmwrite(VMCS_GUEST_RIP, matched_hook_info->new_handler_va);
+			return;
 		}
+		 
 	}
 	else if(interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP &&interrupt_info.interruption_type== privileged_software_exception && vcpu->vmexit_info.guest_rflags.trap_flag == true)
 	{

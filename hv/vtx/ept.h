@@ -140,138 +140,150 @@ struct __vmm_ept_page_table
 	DECLSPEC_ALIGN(PAGE_SIZE) __ept_pde pml2[512][512];
 };
 
-typedef enum _hook_type
-{
-	hook_type_unknown = 0,                 // 未知类型
-	hook_kernel_function_redirect,               //内核 函数跳转重定向 Hook
-	hook_user_exception_break_point_int3,           // 用户层异常断点 Hook（如 INT3）
-	hook_dbg_break_point_int1,             // IN1  断点 Hook
-	hook_dbg_break_point_int3,             // INT3 断点 Hook
- 
-} hook_type;
+
  
 
 
 
 
 
-typedef struct __ept_hooked_function_info 
-{
-	 
-	LIST_ENTRY hooked_function_list;
-	   
-	unsigned __int64 hook_size;
-
-	void* original_va;
-
-	void* fake_va;
-
-	void* new_handler_va;
-
-	unsigned long long original_pa;
-
-	unsigned long long fake_pa;
-
-	unsigned long long new_handler_pa;
-	 
-
-	unsigned __int8* trampoline_va;
-
-	unsigned __int8* fake_page_contents;
-
-	unsigned __int8* original_instructions_backup;
-
-	hook_type type;
-
-}ept_hooked_function_info;
-
-typedef struct __ept_hooked_page_info
-{ 
-
-	//
-	// Linked list entires for each page hook.
-	//
-	LIST_ENTRY hooked_page_list;
-
-	//
-	// Linked list entries for each function hook
-	//
-	LIST_ENTRY hooked_functions_list;
-
-
-	//
-// Page frame number of the hooked page. Used to find this structure in the list of page hooks
+//typedef struct __ept_hooked_function_info 
+//{
+//	 
+//	LIST_ENTRY hooked_function_list;
+//	   
+//	unsigned __int64 hook_size;
 //
-	unsigned __int64 pfn_of_hooked_page;
-
-	//
-	// Page frame number of the page with fake contents. Used to swap page with fake contents
-	//
-	unsigned __int64 pfn_of_fake_page_contents;
-
-	//
-// Page with our hooked functions
+//	void* original_va;
 //
-	unsigned __int8* fake_page_contents;
-	//
-	// The page entry in the page tables that this page is targetting.
-	//
-	__ept_pte* entry_address;
+//	void* fake_va;
+//
+//	void* new_handler_va;
+//
+//	unsigned long long original_pa;
+//
+//	unsigned long long fake_pa;
+//
+//	unsigned long long new_handler_pa;
+//	 
+//
+//	unsigned __int8* trampoline_va;
+//
+//	unsigned __int8* fake_page_contents;
+//
+//	unsigned __int8* original_instructions_backup;
+//
+//	hook_type type;
+//
+//}ept_hooked_function_info;
+//
+//typedef struct __ept_hooked_page_info
+//{ 
+//
+//	//
+//	// Linked list entires for each page hook.
+//	//
+//	LIST_ENTRY hooked_page_list;
+//
+//	//
+//	// Linked list entries for each function hook
+//	//
+//	LIST_ENTRY hooked_functions_list;
+//
+//
+//	//
+//// Page frame number of the hooked page. Used to find this structure in the list of page hooks
+////
+//	unsigned __int64 pfn_of_hooked_page;
+//
+//	//
+//	// Page frame number of the page with fake contents. Used to swap page with fake contents
+//	//
+//	unsigned __int64 pfn_of_fake_page_contents;
+//
+//	//
+//// Page with our hooked functions
+////
+//	unsigned __int8* fake_page_contents;
+//	//
+//	// The page entry in the page tables that this page is targetting.
+//	//
+//	__ept_pte* entry_address;
+//
+//	//
+//	// The original page entry
+//	// 
+//	__ept_pte original_entry;
+//
+//	//
+//	// The changed page entry
+//	//
+//	__ept_pte changed_entry;
+//
+//	HANDLE  process_id;
+//
+//	unsigned int  ref_count;
+//
+//	bool is_user_mode;
+//
+//
+//} ept_hooked_page_info ;
 
-	//
-	// The original page entry
-	// 
-	__ept_pte original_entry;
-
-	//
-	// The changed page entry
-	//
-	__ept_pte changed_entry;
-
-	HANDLE  process_id;
-
-	unsigned int  ref_count;
-
-	bool is_user_mode;
-
-
-} ept_hooked_page_info ;
-
-
+//typedef struct __ept_hooked_page_info
+//{
+//	// 链表结构，用于维护多个被 Hook 页
+//	LIST_ENTRY hooked_page_list;
+//
+//	// 被 Hook 的真实物理页帧号（PFN）
+//	unsigned __int64 pfn_of_hooked_page;
+//
+//	// 替代页的 PFN（即我们伪造的页面所映射的物理页）
+//	unsigned __int64 pfn_of_fake_page;
+//
+//	// EPT 页表中该页对应的 PTE 地址
+//	__ept_pte* entry_address;
+//
+//	// 原始的 PTE 内容（用于后续恢复）
+//	__ept_pte original_entry;
+//
+//	// 替换后的 PTE 内容（伪造访问映射）
+//	__ept_pte changed_entry;
+//
+//} ept_hooked_page_info;
  
-
-typedef struct _ept_breakpoint_info
-{
-	LIST_ENTRY breakpoint_list_entry;        // 用于挂入断点列表
-
-	unsigned __int64 instruction_size;       // 被覆盖的指令长度（跳板长度）
-
-	void* original_va;                       // 原始地址
-	void* fake_va;                           // 伪造页地址
-	void* breakpoint_handler_va;             // 中断处理器地址
-
-	unsigned __int8* trampoline_va;          // 跳板地址（跳回原始逻辑）
-	unsigned __int8* fake_page_contents;     // 模拟页内容
-	unsigned __int8* original_instruction_backup; // 原始指令备份（用于还原）
-
-	hook_type type;                          // 类型：INT3 / EPT HOOK / ShadowPage等
-
-} ept_breakpoint_info;
-
-typedef struct _ept_debugged_page_info
-{
-	LIST_ENTRY debugged_page_list_entry;     // 页级别断点列表
-	LIST_ENTRY breakpoints_list_head;        // 当前页上所有断点（ept_breakpoint_info）
-
-	HANDLE process_id;                       // 所属进程 ID
-
-	unsigned __int64 pfn_of_hooked_page;
-
-	unsigned __int8* fake_page_contents;     // 伪造页内容
-
-	unsigned int ref_count;                  // 引用计数
-
-} ept_debugged_page_info;
+//
+//typedef struct _ept_breakpoint_info
+//{
+//	LIST_ENTRY breakpoint_list_entry;        // 用于挂入断点列表
+//
+//	unsigned __int64 instruction_size;       // 被覆盖的指令长度（跳板长度）
+//
+//	void* original_va;                       // 原始地址
+//	void* fake_va;                           // 伪造页地址
+//	void* breakpoint_handler_va;             // 中断处理器地址
+//
+//	unsigned __int8* trampoline_va;          // 跳板地址（跳回原始逻辑）
+//	unsigned __int8* fake_page_contents;     // 模拟页内容
+//	unsigned __int8* original_instruction_backup; // 原始指令备份（用于还原）
+//
+//	hook_type type;                          // 类型：INT3 / EPT HOOK / ShadowPage等
+//
+//} ept_breakpoint_info;
+//
+//typedef struct _ept_debugged_page_info
+//{
+//	LIST_ENTRY debugged_page_list_entry;     // 页级别断点列表
+//	LIST_ENTRY breakpoints_list_head;        // 当前页上所有断点（ept_breakpoint_info）
+//
+//	HANDLE process_id;                       // 所属进程 ID
+//
+//	unsigned __int64 pfn_of_hooked_page;
+//
+//	unsigned __int8* fake_page_contents;     // 伪造页内容
+//
+//	unsigned int ref_count;                  // 引用计数
+//
+//} ept_debugged_page_info;
 
 
 union __ept_violation
@@ -374,6 +386,30 @@ union __ept_violation
 	};
 };
 
+
+typedef struct __ept_hooked_page_info
+{
+	// 链表结构，用于维护多个被 Hook 页
+	LIST_ENTRY hooked_page_list;
+
+	// 被 Hook 的真实物理页帧号（PFN）
+	unsigned __int64 pfn_of_hooked_page;
+
+	// 替代页的 PFN（即我们伪造的页面所映射的物理页）
+	unsigned __int64 pfn_of_fake_page;
+
+	// EPT 页表中该页对应的 PTE 地址
+	__ept_pte* entry_address;
+
+	// 原始的 PTE 内容（用于后续恢复）
+	__ept_pte original_entry;
+
+	// 替换后的 PTE 内容（伪造访问映射）
+	__ept_pte changed_entry;
+
+} ept_hooked_page_info;
+ 
+
 struct __ept_state
 {
 	LIST_ENTRY hooked_page_list;
@@ -404,60 +440,14 @@ namespace ept
 	/// <param name="invalidation_type"> Specifiy if we want to invalidate single context or all contexts  </param>
 	void swap_pml1_and_invalidate_tlb(__ept_state& ept_state, __ept_pte* entry_address, __ept_pte entry_value, invept_type invalidation_type);
 
-	/// <summary>
-	/// Unhook all functions and invalidate tlb
-	/// </summary>
-	void unhook_all_functions(__ept_state& ept_state);
 
-	/// <summary>
-	/// Perfrom a hook
-	/// </summary>
-	/// <param name="target_address" > Address of function which we want to hook </param>
-	/// <param name="hook_function"> Address of hooked version of function which we are hooking </param>
-	/// <param name="(Optional) trampoline"> Address of codecave which is located in 2gb range of target function (Use only if you need smaller trampoline)</param>
-	/// <param name="origin_function"> Address used to call original function </param>
-	/// <returns></returns>
-	bool hook_kernel_function(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* new_function, _Out_   void** origin_function);
-
-	bool hook_user_exception_int3(_In_  __ept_state& ept_state, _In_ HANDLE process_id,  _In_  void* target_function, _In_  void* breakpoint_handler, _In_ uint8_t* trampoline_va);
-
-	bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler , _Out_ unsigned char* original_byte);
-
-
-	bool hook_kernel_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
-
-	bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
-
-	bool find_break_point_info(
-	 
-		_In_ HANDLE process_id,
-		_In_ hook_type type,
-		_In_ void* target_function,
-		_Out_ ept_breakpoint_info** out_hook_info);
-
-
-
-	/// <summary>
-	/// Unhook single function
-	/// </summary>
-	/// <param name="virtual_address"></param>
-	/// <returns></returns>
-	bool unhook_function(__ept_state& ept_state, unsigned __int64 virtual_address);
-
-	/// <summary>
-	/// Unhook all functions for a given process ID
-	/// </summary>
-	/// <param name="ept_state"></param>
-	/// <param name="process_id"></param>
-	/// <returns></returns>
-	bool unhook_by_pid(__ept_state& ept_state, HANDLE processId);
-
-
-	bool unhook_process_all_user_exception(
+	bool hook_page_pfn_ept(
 		__ept_state& ept_state,
-		HANDLE process_id
-	 
+		unsigned __int64 pfn_of_target_page,
+		unsigned __int64 pfn_of_fake_page
 	);
+
+
 
 	/// <summary>
 	/// Split pml2 into 512 pml1 entries (From one 2MB page to 512 4KB pages)
@@ -468,8 +458,65 @@ namespace ept
 	bool split_pml2(__ept_state& ept_state, void* pre_allocated_buffer, unsigned __int64 physical_address);
 
 
+
+	/// <summary>
+/// Unhook all functions and invalidate tlb
+/// </summary>
+	//void unhook_all_functions(__ept_state& ept_state);
+
+
+
+	/// <summary>
+	/// Perfrom a hook
+	/// </summary>
+	/// <param name="target_address" > Address of function which we want to hook </param>
+	/// <param name="hook_function"> Address of hooked version of function which we are hooking </param>
+	/// <param name="(Optional) trampoline"> Address of codecave which is located in 2gb range of target function (Use only if you need smaller trampoline)</param>
+	/// <param name="origin_function"> Address used to call original function </param>
+	/// <returns></returns>
+	//bool hook_kernel_function(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* new_function, _Out_   void** origin_function);
+
+	//bool hook_user_exception_int3(_In_  __ept_state& ept_state, _In_ HANDLE process_id, _In_  void* target_function, _In_  void* breakpoint_handler, _In_ uint8_t* trampoline_va);
+
+	//bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
+
+
+	//bool hook_kernel_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
+
+	//bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
+
+	//bool find_break_point_info(
+
+	//	_In_ HANDLE process_id,
+	//	_In_ hook_type type,
+	//	_In_ void* target_function,
+	//	_Out_ ept_breakpoint_info** out_hook_info);
+
+
+
+	///// <summary>
+	///// Unhook single function
+	///// </summary>
+	///// <param name="virtual_address"></param>
+	///// <returns></returns>
+	//bool unhook_function(__ept_state& ept_state, unsigned __int64 virtual_address);
+
+	///// <summary>
+	///// Unhook all functions for a given process ID
+	///// </summary>
+	///// <param name="ept_state"></param>
+	///// <param name="process_id"></param>
+	///// <returns></returns>
+	//bool unhook_by_pid(__ept_state& ept_state, HANDLE processId);
+
+
+	//bool unhook_process_all_user_exception(
+	//	__ept_state& ept_state,
+	//	HANDLE process_id
+
+	//);
    
-	bool hook_instruction_memory_int1(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
+	/*bool hook_instruction_memory_int1(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
 	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function,  unsigned __int64 page_offset);
 
@@ -480,7 +527,7 @@ namespace ept
 
 	bool remove_breakpoints_by_type_for_process(
 		_In_ HANDLE process_id,
-		_In_ hook_type type);
+		_In_ hook_type type);*/
 	
 
 }

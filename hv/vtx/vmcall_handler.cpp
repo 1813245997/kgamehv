@@ -84,13 +84,9 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 		case VMCALL_EPT_HOOK_FUNCTION:
 		{
 			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
-
-			status = ept::hook_kernel_function (
-				*vcpu->ept_state, 
-				reinterpret_cast<void *>  (vmcall_parameter2),
-				reinterpret_cast<void*>  (vmcall_parameter3), 
-				reinterpret_cast<void**>  (vmcall_parameter4));
-
+			 
+			status = ept::hook_page_pfn_ept(*vcpu->ept_state, vmcall_parameter2,vmcall_parameter3);
+		
 			hv::restore_context(old_cr3);
 
 			adjust_rip(vcpu);
@@ -103,26 +99,26 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 
 			EptUnhookType unhook_type = static_cast<EptUnhookType>(vmcall_parameter2); // 使用枚举类型
 
-			switch (unhook_type)
-			{
-			case UNHOOK_ALL:
-				ept::unhook_all_functions(*vcpu->ept_state);
-				break;
+			//switch (unhook_type)
+			//{
+			//case UNHOOK_ALL:
+			//	ept::unhook_all_functions(*vcpu->ept_state);
+			//	break;
 
-			case UNHOOK_SINGLE:
-				 
-				status = ept::unhook_function(*vcpu->ept_state, vmcall_parameter3);
-				break;
+			//case UNHOOK_SINGLE:
+			//	 
+			//	status = ept::unhook_function(*vcpu->ept_state, vmcall_parameter3);
+			//	break;
 
-			case UNHOOK_BY_PID:
-				 
-				status = ept::unhook_by_pid(*vcpu->ept_state, reinterpret_cast<HANDLE>(vmcall_parameter4));
-				break;
+			//case UNHOOK_BY_PID:
+			//	 
+			//	status = ept::unhook_by_pid(*vcpu->ept_state, reinterpret_cast<HANDLE>(vmcall_parameter4));
+			//	break;
 
-			default:
-				status = false; // 无效的操作类型
-				break;
-			}
+			//default:
+			//	status = false; // 无效的操作类型
+			//	break;
+			//}
 
 			hv::restore_context(old_cr3);
 
@@ -130,7 +126,7 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			break;
 		}
 
-		case VMCALL_EPT_SET_BREAK_POINT:
+		/*case VMCALL_EPT_SET_BREAK_POINT:
 		{
 			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
@@ -186,7 +182,7 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			hv::restore_context(old_cr3);
 			adjust_rip(vcpu);
 			break;
-		}
+		}*/
 
 
 		case VMCALL_DUMP_POOL_MANAGER:

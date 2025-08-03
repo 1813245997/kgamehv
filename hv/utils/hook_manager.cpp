@@ -7,7 +7,7 @@ namespace hook_manager
 		using namespace utils::internal_functions;
 
 		 
-
+		utils::hook_utils:: initialize_hook_page_lists();
 		if (pfn_ki_preprocess_fault)
 		{
 			utils::hook_utils::hook_kernel_function(

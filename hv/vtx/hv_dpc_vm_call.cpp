@@ -22,9 +22,9 @@ namespace hvgt
 
 		if (__vm_call_ex(VMCALL_EPT_HOOK_FUNCTION,
 			args->current_cr3,
-			reinterpret_cast<unsigned long long> (args->target_address),
-			reinterpret_cast<unsigned long long> (args->hook_function),
-			reinterpret_cast<unsigned long long> (args->origin_function),
+			 args->pfn_of_hooked_page ,
+			 args->pfn_of_fake_page_contents ,
+			0,
 			0,
 			0,
 			0,

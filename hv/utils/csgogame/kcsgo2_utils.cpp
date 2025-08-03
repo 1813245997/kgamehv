@@ -51,13 +51,13 @@ namespace game
 			unsigned long long engine2_size = 0;
 			 
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
-			utils:: hook_utils::hook_user_exception_handler(
+			utils::hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(get_hp_fun),
-				hook_functions::new_get_csgo_hp ,
+				hook_functions::new_get_csgo_hp,
 				false
-				 
-				 
+
+
 			);
 
 
