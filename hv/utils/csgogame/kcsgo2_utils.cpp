@@ -54,7 +54,8 @@ namespace game
 			utils:: hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(get_hp_fun),
-				hook_functions::new_get_csgo_hp 
+				hook_functions::new_get_csgo_hp ,
+				false
 				 
 				 
 			);
@@ -94,12 +95,7 @@ namespace game
 				return false;
 			}
 
-			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
-			{
-				utils::internal_functions::pfn_ob_dereference_object(process);
-				return false;
-			}
-
+			 
 			// 获取当前系统时间
 			LARGE_INTEGER current_time;
 			KeQuerySystemTime(&current_time);
@@ -140,18 +136,20 @@ namespace game
 				return false;
 			}
 
+			 
 
-
+		 
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
 			utils::hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(get_hp_fun),
-				hook_functions::new_get_csgo_hp
+				hook_functions::new_get_csgo_hp,
+				false
 
 
 			);
 
-
+			 
 			g_game_process = process;
 			g_is_initialized = true;
 			utils::internal_functions::pfn_ob_dereference_object(process);

@@ -115,39 +115,21 @@ namespace utils
 			
 
 		}
-
-
 		bool hook_user_exception_handler(
 			_In_ PEPROCESS process,
 			_In_ void* target_api,
-			_In_ void* exception_handler
+			_In_ void* exception_handler,
+			_In_ bool allocate_trampoline_page
 		)
 		{
-			if (process == nullptr)
-			{
-				return false; // 无效的进程指针
-			}
-
-			if (target_api == nullptr)
-			{
-				return false; // 目标函数地址无效
-			}
-
-			if (exception_handler == nullptr)
-			{
-				return false; // 异常处理函数地址无效
-			}
+			if (!process || !target_api || !exception_handler)
+				return false;
 
 			const bool is_intel = utils::khyper_vt::is_intel_cpu();
-		 
-
 			const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 			const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
-
 			if (target_cr3 == 0)
-			{
-				return false; // 获取 CR3 失败
-			}
+				return false;
 
 			unsigned char* trampoline_va = nullptr;
 			PMDL mdl = nullptr;
@@ -155,35 +137,34 @@ namespace utils
 			bool apc_attached = false;
 			bool result = false;
 			bool suspend_success = false;
-			NTSTATUS lock_status = STATUS_SUCCESS;
 
-		 		// Attach 到目标进程
+			// Attach 到目标进程
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 			apc_attached = true;
 
 			const ULONGLONG page_base = reinterpret_cast<ULONGLONG>(PAGE_ALIGN(target_api));
 
 			// 先锁页，确保页面存在
-			lock_status = utils::memory::lock_memory(page_base, 0x1000, &mdl);
-			if (!NT_SUCCESS(lock_status))
-			{
+			NTSTATUS lock_status = utils::memory::lock_memory(page_base, 0x1000, &mdl);
+			if (!NT_SUCCESS(lock_status)) {
 				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-				return false; // 锁页失败
+				return false;
 			}
 
-			// 分配隐藏 trampoline 页面（执行异常重定向逻辑）
-			if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*>(&trampoline_va), 0x1000)))
-			{
-				utils::memory::unlock_memory(mdl);
-				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-				return false; // 分配 trampoline 页失败
-
+			// 条件性分配 trampoline 页
+			if (allocate_trampoline_page) {
+				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*>(&trampoline_va), 0x1000))) {
+					utils::memory::unlock_memory(mdl);
+					utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+					return false;
+				}
 			}
 
-			// 分配和锁页都成功后再 detach
+			// detach 当前进程
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			apc_attached = false;
-		 
+
+			// 挂起进程，保证 patch 安全
 			NTSTATUS suspend_status = utils::internal_functions::pfn_ps_suspend_process(process);
 			if (!NT_SUCCESS(suspend_status)) {
 				LogError("hook_user_exception_handler: suspend failed: 0x%X", suspend_status);
@@ -192,52 +173,52 @@ namespace utils
 					utils::memory::free_user_memory(process_id, trampoline_va, 0x1000);
 				return false;
 			}
-
 			suspend_success = true;
 
-			if (is_intel)
-			{
+			// 调用实际 hook 实现（Intel）
+			if (is_intel) {
 				result = hvgt::hook_user_exception_int3(
 					process_id,
 					target_cr3,
 					target_api,
 					exception_handler,
-					trampoline_va
+					trampoline_va  // 如果不分配，就是 nullptr
 				);
-				if (result)
-				{
+
+				if (result) {
 					LogInfo("hook_user_exception_handler: [Intel] Successfully hooked. target_api: %p, handler: %p, trampoline: %p",
 						target_api, exception_handler, trampoline_va);
 				}
-				else
-				{
+				else {
 					LogInfo("hook_user_exception_handler: [Intel] Failed to hook. target_api: %p, handler: %p", target_api, exception_handler);
 				}
 			}
 
-			// 释放已锁内存
-			if (mdl)
-			{
+			// 解锁页面
+			if (mdl) {
 				utils::memory::unlock_memory(mdl);
 			}
 
-			// hook 失败时释放 trampoline
-			if (!result  && trampoline_va)
-			{
+			// 如果 hook 失败，需要释放 trampoline 页
+			if (!result && trampoline_va) {
 				utils::memory::free_user_memory(process_id, trampoline_va, 0x1000);
 			}
 
-			if (suspend_success)
+			// 恢复进程执行
+			if (suspend_success) {
 				utils::internal_functions::pfn_ps_resume_process(process);
-			// 保底释放 attach 状态
-			if (apc_attached)
-			{
+			}
+
+			// 保底 detach
+			if (apc_attached) {
 				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			}
-			 
 
 			return result;
 		}
+
+
+		 
 
 
 		bool unhook_user_all_exception_int3(_In_ PEPROCESS process)
@@ -262,7 +243,7 @@ namespace utils
 			if (success)
 			{
 				// 清理 INT3 断点记录
-				ept::remove_breakpoints_by_type_for_process(process_id, hook_type::hook_user_exception_break_point_int3);
+			   ept::remove_breakpoints_by_type_for_process(process_id, hook_type::hook_user_exception_break_point_int3);
 			}
 
 			return success;

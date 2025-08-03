@@ -17,7 +17,7 @@ namespace hook_manager
 			);
 		}
 
-		if (pfn_mm_copy_memory)
+	/*	if (pfn_mm_copy_memory)
 		{
 			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_mm_copy_memory),
@@ -97,6 +97,9 @@ namespace hook_manager
 			);
 		}
 
+	*/
+
+		
 		if (pfn_psp_exit_process)
 		{
 			utils::hook_utils::hook_kernel_function(
@@ -105,9 +108,6 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
 			);
 		}
-		
-		
-		 
 
 
 		return STATUS_SUCCESS;

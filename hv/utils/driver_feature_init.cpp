@@ -1,7 +1,8 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
  
-
+ 
+#include <ntstrsafe.h>
 
 namespace utils
 {
@@ -142,7 +143,71 @@ namespace utils
 
 
 
+		// 写入模块信息到文件
+		void write_module_info_log(PVOID base, SIZE_T size)
+		{
+			UNICODE_STRING log_dir = RTL_CONSTANT_STRING(L"\\??\\C:\\Log");
+			UNICODE_STRING log_path = RTL_CONSTANT_STRING(L"\\??\\C:\\Log\\hv_module_info.log");
+			OBJECT_ATTRIBUTES obj_attr;
+			IO_STATUS_BLOCK io_status;
 
+			// 确保目录存在
+			HANDLE dir_handle = nullptr;
+			InitializeObjectAttributes(&obj_attr, &log_dir, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, nullptr, nullptr);
+			ZwCreateFile(
+				&dir_handle,
+				FILE_LIST_DIRECTORY | SYNCHRONIZE,
+				&obj_attr,
+				&io_status,
+				nullptr,
+				FILE_ATTRIBUTE_DIRECTORY,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				FILE_OPEN_IF,
+				FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+				nullptr,
+				0
+			);
+			if (dir_handle) ZwClose(dir_handle);
+
+			// 打开并覆盖日志文件
+			HANDLE file_handle = nullptr;
+			InitializeObjectAttributes(&obj_attr, &log_path, OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE, nullptr, nullptr);
+			NTSTATUS status = ZwCreateFile(
+				&file_handle,
+				GENERIC_WRITE | SYNCHRONIZE,
+				&obj_attr,
+				&io_status,
+				nullptr,
+				FILE_ATTRIBUTE_NORMAL,
+				FILE_SHARE_READ | FILE_SHARE_WRITE,
+				FILE_OVERWRITE_IF,  // 每次写入都清空原文件
+				FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT,
+				nullptr,
+				0
+			);
+
+			if (!NT_SUCCESS(status))
+				return;
+
+			// 写入内容
+			CHAR buffer[128]{};
+			SIZE_T len = sprintf_s(buffer, sizeof(buffer),
+				"ModuleBase: 0x%p, ImageSize: 0x%llX\r\n", base, static_cast<ULONGLONG>(size));
+
+			ZwWriteFile(
+				file_handle,
+				nullptr,
+				nullptr,
+				nullptr,
+				&io_status,
+				buffer,
+				static_cast<ULONG>(len),
+				nullptr,
+				nullptr
+			);
+
+			ZwClose(file_handle);
+		}
 
 		bool get_module_info_from_context(PVOID context, PVOID& module_base, SIZE_T& image_size)
 		{
@@ -167,6 +232,8 @@ namespace utils
 			module_base = driver_object->DriverStart;
 			image_size = driver_object->DriverSize;
 #endif
+
+			write_module_info_log(module_base, image_size);
 			return true;
 		}
 

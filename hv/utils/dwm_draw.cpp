@@ -106,13 +106,6 @@ namespace utils
 			}
 
 
-			/*	status = find_context_offset(g_dwm_process,g_ntdll_base,&g_context_offset);
-				if (!NT_SUCCESS(status))
-				{
-					LogError("find_context_offset failed with status: 0x%X", status);
-					return status;
-				}*/
-
 			status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
 			if (!NT_SUCCESS(status))
 			{
@@ -191,20 +184,6 @@ namespace utils
 			}
 			 
 
-	/*		status = find_dxgk_get_device_state(g_dwm_process, g_dxgkrnl_base, &g_dxgk_get_device_state);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("find_dxgk_get_device_state failed with status: 0x%X", status);
-				return status;
-			}
-
-			status = find_open_resource(g_dwm_process, g_dxgkrnl_base, &g_dxgk_open_resource);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("find_open_resource failed with status: 0x%X", status);
-				return status;
-			}*/
-
 			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -245,23 +224,7 @@ namespace utils
 
 
 			//ƒ⁄∫ÀHOOK√≤À∆∂‡”‡¡À 
-
-
-			/*status = hook_dxgk_get_device_state(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				return status;
-			}*/
-
-			/*	status = hook_d3d_kmt_open_resource(g_dwm_process);
-				if (!NT_SUCCESS(status))
-				{
-					return status;
-				}*/
-
 			 
-
-
 
 			return STATUS_SUCCESS;
 		}
@@ -1104,7 +1067,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_dwm),
-				hook_functions::new_present_dwm
+				hook_functions::new_present_dwm,
+				true
 				 
 			);
 
@@ -1125,7 +1089,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_multiplane_overlay),
-				hook_functions:: new_present_multiplane_overlay 
+				hook_functions::new_present_multiplane_overlay,
+				true
 			 
 			);
 			 
@@ -1147,7 +1112,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_pre_sub_graph),
-				hook_functions::new_cocclusion_context_pre_sub_graph
+				hook_functions::new_cocclusion_context_pre_sub_graph,
+				true
 				 
 			);
 
@@ -1164,7 +1130,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_post_sub_graph),
-				hook_functions::new_cocclusion_context_post_sub_graph 
+				hook_functions::new_cocclusion_context_post_sub_graph ,
+				true
 			    
 			);
 
@@ -1184,7 +1151,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swap_chain_dwm_legacy_present_dwm),
-				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm 
+				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm ,
+				true
 				 
 			);
 
@@ -1230,7 +1198,8 @@ namespace utils
 			bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(get_buffer_fun),
-				hook_functions::new_get_buffer
+				hook_functions::new_get_buffer,
+				true
 			 
 			);
 

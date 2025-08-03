@@ -1840,67 +1840,69 @@ namespace ept
 
 
 	bool unhook_process_all_user_exception(
-		__ept_state& ept_state,                      
-		HANDLE process_id                                                
-	                  
+		__ept_state& ept_state,
+		HANDLE process_id
 	)
 	{
 		bool unhooked_any = false;
-		PLIST_ENTRY current_hooked_page = &ept_state.hooked_page_list;
-		while (&ept_state.hooked_page_list != current_hooked_page->Flink)
-		{
-			current_hooked_page = current_hooked_page->Flink;
-			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current_hooked_page, __ept_hooked_page_info, hooked_page_list);
+		PLIST_ENTRY current_page = ept_state.hooked_page_list.Flink;
 
-			// Check if the current hooked page belongs to the specified process ID
+		while (current_page != &ept_state.hooked_page_list)
+		{
+			PLIST_ENTRY next_page = current_page->Flink;
+			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current_page, __ept_hooked_page_info, hooked_page_list);
+
 			if (hooked_page_info->process_id != process_id)
 			{
+				current_page = next_page;
 				continue;
 			}
 
-			 
 			unhooked_any = true;
-			// Unhook all functions related to this page
-			PLIST_ENTRY current_hooked_function = &hooked_page_info->hooked_functions_list;
 
-			while (&hooked_page_info->hooked_functions_list != current_hooked_function->Flink)
+	
+
+			// 遍历并清理该页内 hook 的函数
+			PLIST_ENTRY current_func = hooked_page_info->hooked_functions_list.Flink;
+			while (current_func != &hooked_page_info->hooked_functions_list)
 			{
-				current_hooked_function = current_hooked_function->Flink;
-				__ept_hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_hooked_function, __ept_hooked_function_info, hooked_function_list);
+				PLIST_ENTRY next_func = current_func->Flink;
+				__ept_hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, __ept_hooked_function_info, hooked_function_list);
 
-				// Restore overwritten data for each function
+				RemoveEntryList(current_func);
 
-				unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
-				RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
-				RemoveEntryList(current_hooked_function);
-
-	  
-				if (hooked_function_info->original_instructions_backup != nullptr)
+				RtlCopyMemory(hooked_function_info->fake_page_contents, hooked_function_info->original_instructions_backup, hooked_function_info->hook_size);
+				if (hooked_function_info->original_instructions_backup)
 				{
 					pool_manager::release_pool(hooked_function_info->original_instructions_backup);
 				}
 
-
 				pool_manager::release_pool(hooked_function_info);
+				current_func = next_func;
 			}
 
-			// After unhooking all functions, restore the original page entry and remove the page
+
+			// 恢复页表权限
 			hooked_page_info->original_entry.execute = 1;
 			swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, invept_type::invept_single_context);
-
-			RemoveEntryList(current_hooked_page);
+			// 再释放 fake page 和页结构体
 			pool_manager::release_pool(hooked_page_info->fake_page_contents);
 			pool_manager::release_pool(hooked_page_info);
+
+		
+	
+			//invept_all_contexts();
+			// 先移除 page 节点（防止在函数内提前释放 current_page 后续访问非法）
+			RemoveEntryList(current_page);
+
+			current_page = next_page;
 			 
 		}
-		if (unhooked_any)
-		{
-			invept_all_contexts();  // Invalidate EPT for all contexts
-		}
+
+		 
 
 		return unhooked_any;
 	}
-
 
 	bool remove_breakpoints_by_type_for_process(
 		_In_ HANDLE process_id,

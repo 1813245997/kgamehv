@@ -169,7 +169,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	primary_controls.use_tsc_offsetting = true;
 	
 
-	//secondary_controls.descriptor_table_exiting = true;
+	secondary_controls.descriptor_table_exiting = true;
 	secondary_controls.wbinvd_exiting = true;
 	secondary_controls.enable_ept = true;
 	secondary_controls.enable_vpid = true;
@@ -237,7 +237,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	 
  
  
-	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
+
 
 	 
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT, 0);
@@ -246,7 +246,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	hv::vmwrite(VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT, 0);
   
-	 
+	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
 	 
 	hv::vmwrite(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE, 0);
 	hv::vmwrite(VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH, 0);
@@ -332,7 +332,6 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
 	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
-
 	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
 
 

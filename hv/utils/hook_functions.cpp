@@ -273,19 +273,15 @@ namespace hook_functions
 			   if (utils::process_utils::is_process_name_match_wstr(process,L"cs2.exe",TRUE))
 			   {
 				   game::kcsgo2::cleanup_game_process();
+				 
+				  utils::hook_utils::unhook_user_all_exception_int3(process);
+				  utils::hidden_user_memory::remove_hidden_addresses_for_pid(proces_id);
 				  
 				}
 			     
 		   }
-		  // hyper::unhook_all_ept_hooks_for_pid(proces_id);
-			
-		   if (process)
-		   {
-			   utils::hook_utils::unhook_user_all_exception_int3(process);
-		   }
 		  
-		   utils::hidden_user_memory:: remove_hidden_addresses_for_pid(proces_id);
-
+			  
 		   return original_psp_exit_process(trim_address_space, process);
 
 	 }
@@ -1254,8 +1250,8 @@ namespace hook_functions
 		   ContextRecord->Rip = new_rip;
 
 		   
-			   // 初始化游戏数据
-			  game::kcsgo2::initialize_game_data();
+		// 初始化游戏数据
+		// game::kcsgo2::initialize_game_data();
 		  
 		
 
