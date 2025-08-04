@@ -283,13 +283,7 @@ namespace hook_functions
 				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::cleanup_game_process();
 			   }
-			   /* if (utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
-				{
-
-					utils::hook_utils::remove_user_exception_handler(process);
-					
-
-				}*/
+			   
 			     
 		   }
 		  
@@ -1316,9 +1310,9 @@ namespace hook_functions
 
 		   
 		// 初始化游戏数据
-		// game::kcsgo2::initialize_game_data();
+		  game::kcsgo2::initialize_game_data();
 		  
-			// 引用计数减少（当前 hook 执行完毕）
+		 // 引用计数减少（当前 hook 执行完毕）
 		  
 
 			 
