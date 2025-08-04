@@ -693,18 +693,19 @@ void write_int3(uint8_t* address)
 				 _hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, _hooked_function_info, hooked_function_list);
 
 				 // 等待调用计数归零，确保无正在调用的hook
-				
-				 safe_wait_for_zero_call_count(&hooked_function_info->call_count);
+				 
+				 //进程退出的情况 他引用计数可能没减完
+				 // safe_wait_for_zero_call_count(&hooked_function_info->call_count);
 				 // 卸载该函数hook
-				 unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
-				 RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
+				  unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
+				  RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
 
 
 
-				 if (hooked_function_info->trampoline_va != nullptr)
-				 {
-					 utils::memory::free_user_memory(process_id, hooked_function_info->trampoline_va, PAGE_SIZE);
-				 }
+				  if (hooked_function_info->trampoline_va != nullptr)
+				  {
+					  utils::memory::free_user_memory(process_id, hooked_function_info->trampoline_va, PAGE_SIZE);
+				  }
 
 				 if (hooked_function_info->original_instructions_backup != nullptr)
 				 {

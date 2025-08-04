@@ -272,9 +272,9 @@ namespace hook_functions
 			   
 			   if (process == utils::dwm_draw::g_dwm_process)
 			   {
-				   ////DbgBreakPoint();
-				   //utils::dwm_draw::finalize();
-				   //utils::hook_utils::remove_user_exception_handler(process);
+				    
+				    utils::dwm_draw::finalize();
+				    utils::hook_utils::remove_user_exception_handler(process);
 			   }
 				
 			   else if(process ==game::kcsgo2::g_game_process)
@@ -292,7 +292,7 @@ namespace hook_functions
 				}*/
 			     
 		   }
-		  // DbgBreakPoint();
+		  
 		  
 			  
 		   return original_psp_exit_process(trim_address_space, process);
