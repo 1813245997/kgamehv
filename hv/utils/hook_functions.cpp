@@ -270,15 +270,16 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
-			   if (utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
-			   {
-				 
-				   utils::hook_utils::remove_user_exception_handler(process);
-				   game::kcsgo2::cleanup_game_process();
+			   /* if (utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
+				{
 
-			   }
+					utils::hook_utils::remove_user_exception_handler(process);
+					game::kcsgo2::cleanup_game_process();
+
+				}*/
 			     
 		   }
+		   DbgBreakPoint();
 		  
 			  
 		   return original_psp_exit_process(trim_address_space, process);

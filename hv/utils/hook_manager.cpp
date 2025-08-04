@@ -8,24 +8,24 @@ namespace hook_manager
 
 		 
 		utils::hook_utils:: initialize_hook_page_lists();
-		if (pfn_ki_preprocess_fault)
+	/*	if (pfn_ki_preprocess_fault)
 		{
 			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_ki_preprocess_fault),
 				hook_functions::hook_ki_preprocess_fault,
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
 			);
+		}*/
+
+
+		if (pfn_psp_exit_process)
+		{
+			utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(pfn_psp_exit_process),
+				hook_functions::hook_psp_exit_process,
+				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
+			);
 		}
-
-
-		//if (pfn_psp_exit_process)
-		//{
-		//	utils::hook_utils::hook_kernel_function(
-		//		reinterpret_cast<void*>(pfn_psp_exit_process),
-		//		hook_functions::hook_psp_exit_process,
-		//		reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
-		//	);
-		//}
 
 		//if (pfn_create_process_notify_routine_t)
 		//{
