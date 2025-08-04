@@ -544,8 +544,8 @@ namespace ept
 		
 		// 插入到 hook 链表中
 		InsertHeadList(&ept_state.hooked_page_list, &hook_info->hooked_page_list);
-	   // swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->changed_entry, invept_type::invept_single_context);
-		 // invept_single_context_address(ept_state.ept_pointer->all);
+	    // swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->changed_entry, invept_type::invept_single_context);
+		 invept_single_context_address(ept_state.ept_pointer->all);
 
 		invept_all_contexts();
 		return true;
@@ -570,11 +570,13 @@ namespace ept
 
 			}
 
-			*hook_info->entry_address = hook_info->original_entry;
-		
-			//hook_info->original_entry.execute = 1;
+			 
+			 hook_info->original_entry.read = 1;
+			 hook_info->original_entry.write = 1;
+			 hook_info->original_entry.execute = 1;
 		 
-			invept_all_contexts();
+			 swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->original_entry, invept_type::invept_all_context);
+			 
 			RemoveEntryList(entry);
 			pool_manager::release_pool(hook_info);
 			return true;
