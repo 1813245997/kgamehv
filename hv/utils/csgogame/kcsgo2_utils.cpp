@@ -85,14 +85,7 @@ namespace game
 			PEPROCESS process = nullptr;
 
 			if (g_is_initialized)
-			{
-				NTSTATUS exit_status = utils::internal_functions::pfn_ps_get_process_exit_status (g_game_process);
-				if ( exit_status  != STATUS_PENDING)
-				{
-					// 否则，说明进程已经退出了，需要清理并重新初始化
-					cleanup_game_process();
-					return false;
-				}
+			{ 
 
 				
 				

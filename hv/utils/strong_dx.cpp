@@ -322,8 +322,7 @@ namespace utils
 			ByteRender rend;
 			rend.Setup(width, height, data);
 			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
-			// 按方案类型执行初始化流程
-			bool initialized = false;
+			 
 #if defined(ENABLE_GAME_DRAW_TYPE3)
 
 			
@@ -337,7 +336,7 @@ namespace utils
 			  
 		 
 
-		    initialized = game::kcsgo2::initialize_game_process2();
+		   // initialized = game::kcsgo2::initialize_game_process2();
 #elif ENABLE_GAME_DRAW_TYPE3 == 3
 			// 第三套绘制逻辑：自己初始化数据
 			initialized = game::kcsgo2::is_initialize_game() &&
@@ -349,10 +348,7 @@ namespace utils
 
 #endif // defined(ENABLE_GAME_DRAW_TYPE3)
 
-			if (!initialized)
-			{
-				return;
-			}
+			 
 			// === 绘制 ESP 相关 ===
 			draw_players_esp(rend);
 			 
