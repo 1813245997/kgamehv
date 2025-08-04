@@ -60,7 +60,7 @@ namespace utils
 				{
 					LogInfo("Page already hooked");
 
-
+					 
 					hooked_function_info* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
 					if (hook_info == nullptr)
 					{
