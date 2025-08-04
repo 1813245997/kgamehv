@@ -310,10 +310,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			/*if (utils::auth::is_license_expired())
+			if (utils::auth::is_license_expired())
 			{
 				return;
-			}*/
+			}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -337,7 +337,7 @@ namespace utils
 			  
 		 
 
-		//	 initialized = game::kcsgo2::initialize_game_process2();
+		    initialized = game::kcsgo2::initialize_game_process2();
 #elif ENABLE_GAME_DRAW_TYPE3 == 3
 			// 第三套绘制逻辑：自己初始化数据
 			initialized = game::kcsgo2::is_initialize_game() &&
