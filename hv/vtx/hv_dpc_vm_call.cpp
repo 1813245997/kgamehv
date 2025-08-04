@@ -46,8 +46,9 @@ namespace hvgt
 
 		if (__vm_call(VMCALL_EPT_UNHOOK_FUNCTION,
 			args->current_cr3,
-			args->unhook_all_functions,
-			(unsigned __int64)args->function_to_unhook
+			args->pfn_of_hooked_page,
+			0
+			
 		))
 		{
 			InterlockedIncrement16(&args->statuses);

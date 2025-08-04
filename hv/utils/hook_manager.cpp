@@ -17,6 +17,25 @@ namespace hook_manager
 			);
 		}
 
+
+		//if (pfn_psp_exit_process)
+		//{
+		//	utils::hook_utils::hook_kernel_function(
+		//		reinterpret_cast<void*>(pfn_psp_exit_process),
+		//		hook_functions::hook_psp_exit_process,
+		//		reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
+		//	);
+		//}
+
+		//if (pfn_create_process_notify_routine_t)
+		//{
+		//	utils::hook_utils::hook_kernel_function(
+		//		reinterpret_cast<void*>(pfn_create_process_notify_routine_t),
+		//		hook_functions::new_create_process_notify_routine_t,
+		//		reinterpret_cast<void**>(&hook_functions::original_create_process_notify_routine_t)
+		//	);
+		//}
+
 	/*	if (pfn_mm_copy_memory)
 		{
 			utils::hook_utils::hook_kernel_function(
@@ -99,15 +118,7 @@ namespace hook_manager
 
 	*/
 
-		
-		if (pfn_psp_exit_process)
-		{
-			utils::hook_utils::hook_kernel_function(
-				reinterpret_cast<void*>(pfn_psp_exit_process),
-				hook_functions::hook_psp_exit_process,
-				reinterpret_cast<void**>(&hook_functions::original_psp_exit_process)
-			);
-		}
+
 
 
 		return STATUS_SUCCESS;

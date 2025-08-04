@@ -88,6 +88,18 @@ namespace hook_functions
 		IN PEPROCESS process
 		);
 
+	  void __fastcall  new_create_process_notify_routine_t (
+		_In_ HANDLE ParentId,
+		_In_ HANDLE ProcessId,
+		_In_ BOOLEAN Create
+		);
+
+	extern void(__fastcall* original_create_process_notify_routine_t)(
+		_In_ HANDLE ParentId,
+		_In_ HANDLE ProcessId,
+		_In_ BOOLEAN Create
+		);
+
 	NTSTATUS NTAPI hook_nt_create_section(
 		_Out_ PHANDLE section_handle,
 		_In_ ACCESS_MASK desired_access,
@@ -113,33 +125,7 @@ namespace hook_functions
 	extern __int64(__fastcall* original_dxgk_get_device_state)(_Inout_ PVOID unnamedParam1);
 
 
-
-
-
-
-
-	//new_cocclusion_context_pre_sub_graph
-	extern  INT64(__fastcall* original_present_multiplane_overlay)(
-		void* thisptr,
-		PVOID dxgi_swap_chain,
-		unsigned int a3,
-		unsigned int a4,
-		int a5,
-		const void* a6,
-		PVOID64 a7,
-		unsigned int a8
-		);
-
-
-
-	extern  INT64(__fastcall* original_cdxgi_swap_chain_dwm_legacy_present_dwm)(
-		void* pthis,
-		PVOID pDxgiSwapChain,
-		unsigned int a3,
-		unsigned int a4,
-		const PVOID a5, unsigned int a6, PVOID64 a7, unsigned int a8,
-		PVOID a9, unsigned int a10);
-
+	 
 
 
 
@@ -279,6 +265,9 @@ namespace hook_functions
 		  SIZE_T NumberOfBytesToWrite,
 		  PSIZE_T NumberOfBytesWritten
 		  );
+
+
+
 
 	  BOOLEAN __fastcall new_present_dwm(
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,

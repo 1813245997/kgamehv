@@ -109,7 +109,7 @@ namespace game
 			}
 
 			// 计算时间差（单位：100ns，10秒 = 10 * 1000 * 1000 * 10 = 100000000）
-			if ((current_time.QuadPart - first_seen_time.QuadPart) < 100000000)
+			if ((current_time.QuadPart - first_seen_time.QuadPart) < 200000000)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;

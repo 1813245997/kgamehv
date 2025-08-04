@@ -130,6 +130,7 @@
     <ClInclude Include="asm\vm_context.h" />
     <ClInclude Include="asm\vm_intrin.h" />
     <ClInclude Include="utils\auth\auth.h" />
+    <ClInclude Include="utils\call_back_utils.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
     <ClInclude Include="utils\csgogame\Kcsgo2_data.h" />
@@ -226,6 +227,7 @@
   <ItemGroup>
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth\auth.cpp" />
+    <ClCompile Include="utils\call_back_utils.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp" />
     <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp" />

@@ -633,36 +633,106 @@ void write_int3(uint8_t* address)
 		  
 	 }
 
+	 void safe_wait_for_zero_call_count(volatile LONG* call_count_ptr)
+	 {
+		 
 
-		// 
+		 while (InterlockedCompareExchange(call_count_ptr, 0, 0) > 0)
+		 {
+			 // 等待调用计数为0，防止卸载时函数正在执行
+			LogDebug("[HOOK] Waiting for call count to reach zero, current: %ld\n", call_count_ptr);
+			 utils::thread_utils::sleep_ms(100);
+			 // 或者用 Sleep(100); 需要适合内核模式的等待函数
+		 }
+	 }
+	 bool remove_user_exception_handler(_In_ PEPROCESS process)
+	 {
+		 if (!process)
+		 {
+			 return false;
+		 }
 
+		 const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
 
-		//bool unhook_user_all_exception_int3(_In_ PEPROCESS process)
-		//{
+		 if (target_cr3 == 0 || process_id == nullptr)
+		 {
+			 return false;
+		 }
 
-		//	if (!process)
-		//	{
-		//		return false;
-		//	}
+		 bool unhooked_any = false;
+		 PLIST_ENTRY current_page = g_user_hook_page_list_head.Flink;
 
-		//	// 获取 PID 和 CR3
-		//	const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-		//	const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
+		 while (current_page != &g_user_hook_page_list_head)
+		 {
+			 PLIST_ENTRY next_page = current_page->Flink;
+			 kernel_hook_info* hooked_page_info = CONTAINING_RECORD(current_page, kernel_hook_info, hooked_page_list);
 
-		//	if (target_cr3 == 0 || process_id == nullptr)
-		//	{
-		//		return false; // 获取 CR3 或 PID 失败
-		//	}
+			 if (hooked_page_info->process_id != process_id)
+			 {
+				 current_page = next_page;
+				 continue;
+			 }
+			
+			 unhooked_any = true;
 
-		//	// 执行 Unhook 操作
-		//	bool success = hvgt::unhook_user_all_exception_int3(process_id, target_cr3);
-		//	if (success)
-		//	{
-		//		// 清理 INT3 断点记录
-		//	   ept::remove_breakpoints_by_type_for_process(process_id, hook_type::hook_user_exception_break_point_int3);
-		//	}
+			 // 遍历该页所有hook的函数
+			 PLIST_ENTRY current_func = hooked_page_info->hooked_functions_list.Flink;
+			 bool page_changed = false;
 
-		//	return success;
-		//}
+			 while (current_func != &hooked_page_info->hooked_functions_list)
+			 {
+				 PLIST_ENTRY next_func = current_func->Flink;
+				 _hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, _hooked_function_info, hooked_function_list);
+
+				 // 等待调用计数归零，确保无正在调用的hook
+				// safe_wait_for_zero_call_count(&hooked_function_info->call_count);
+
+				 // 卸载该函数hook
+				 unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
+				 RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
+
+				 if (hooked_function_info->trampoline_va != nullptr)
+				 {
+					 utils::memory::free_user_memory(process_id, hooked_function_info->trampoline_va, PAGE_SIZE);
+				 }
+
+				 if (hooked_function_info->original_instructions_backup != nullptr)
+				 {
+					 ExFreePool(hooked_function_info->original_instructions_backup);
+				 }
+
+				 ExFreePool(hooked_function_info);
+
+				 // 页面hook计数减1
+				/* if (hooked_page_info->ref_count > 0)
+				 {
+					 InterlockedDecrement((volatile LONG*)&hooked_page_info->ref_count);
+				 }*/
+				 RemoveEntryList(current_func);
+				 page_changed = true;
+				 current_func = next_func;
+			 }
+
+			 // 页面hook计数为0时，调用hvgt::remove_hook恢复原始页面映射
+			/* if (page_changed && hooked_page_info->ref_count == 0)
+			 {*/
+				 hvgt::remove_hook(target_cr3, hooked_page_info->pfn_of_hooked_page);
+
+				 ExFreePool(hooked_page_info->fake_page_contents);
+				 RemoveEntryList(current_page);
+				 ExFreePool(hooked_page_info);
+				 LogInfo("Successfully unhooked and restored page for process (pid: %Iu).", (ULONG_PTR)process_id);
+		//	 }
+
+			 current_page = next_page;
+		 }
+		 
+		 return unhooked_any;
+
+		 
+		  
+	 }
+		 
 	 }
 }

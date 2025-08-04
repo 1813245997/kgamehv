@@ -290,7 +290,7 @@ namespace utils
 			  
 		 
 
-			 initialized = game::kcsgo2::initialize_game_process2();
+		//	 initialized = game::kcsgo2::initialize_game_process2();
 #elif ENABLE_GAME_DRAW_TYPE3 == 3
 			// 第三套绘制逻辑：自己初始化数据
 			initialized = game::kcsgo2::is_initialize_game() &&

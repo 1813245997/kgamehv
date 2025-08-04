@@ -17,31 +17,7 @@ namespace hvgt
 {
 
 
-	/// <summary>
-	/// Unhook all functions and invalidate tlb
-	/// </summary>
-	/// <returns> status </returns>
-	//bool unhook_all_functions()
-	//{
-	//	UnHookFunctionArgs args{ __readcr3(),EptUnhookType::UNHOOK_ALL, nullptr, 0 };
-	//	KeGenericCallDpc(broadcast_unhook_function, &args);
-
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-
-	///// <summary>
-	///// Unhook single function and invalidate tlb
-	///// </summary>
-	///// <param name="function_address"></param>
-	///// <returns> status </returns>
-	//bool unhook_function(void* function_address)
-	//{
-	//	UnHookFunctionArgs args{ __readcr3(),EptUnhookType::UNHOOK_SINGLE, function_address, 0 };
-	//	KeGenericCallDpc(broadcast_unhook_function, &args);
-
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-
+ 
 
 	bool hook_function(_In_ unsigned __int64 current_cr3 , _In_ unsigned __int64 pfn_of_hooked_page, _In_ unsigned __int64 pfn_of_fake_page_contents)
 	{
@@ -51,48 +27,15 @@ namespace hvgt
 		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
 	}
 
-	//bool hook_break_point_int3(_In_ unsigned long long target_cr3, _In_  void* target_function, _In_  void* breakpoint_handler, _Inout_  unsigned char* original_byte)
-	//{
-	//	SetBreakpointArgs args{ target_cr3, target_function, breakpoint_handler,original_byte, 0 };
-	//	KeGenericCallDpc(broadcast_break_point_int3, &args);
+	bool remove_hook(_In_ unsigned __int64 current_cr3, _In_ unsigned __int64 pfn_of_hooked_page)
+	{
+		UnHookFunctionArgs args{ current_cr3, pfn_of_hooked_page ,0 };
+		KeGenericCallDpc(broadcast_unhook_function, &args);
 
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-	// 
-	//bool hook_user_exception_int3(_In_ HANDLE  process_id,  _In_ unsigned long long target_cr3,  _In_  void* target_function, _In_  void* breakpoint_handler, _Inout_ unsigned char* trampoline_va)
-	//{
-	//	SetExceptionBreakpointArgs args{ process_id, target_cr3, target_function, breakpoint_handler,trampoline_va, 0 };
-	//	KeGenericCallDpc(broadcast_user_exception_int3, &args);
+		return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+	}
 
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-
-	//bool unhook_break_point_int3(
-	//	unsigned long long target_cr3,        
-	//	void* breakpoint_address,             
-	//	bool remove_all                       
-	//)
-	//{
-	//	RemoveBreakpointArgs args{	target_cr3,breakpoint_address,remove_all,	0
-	//	};
-
-	// 
-	//	KeGenericCallDpc(broadcast_remove_break_point_int3, &args);
-
-	// 
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-	//bool unhook_user_all_exception_int3(
-	//	_In_ HANDLE  process_id,
-	//	unsigned long long target_cr3)
-	//{
-	//	RemoveExceptionBreakpointArgs args{ process_id ,target_cr3,nullptr, true };
-
-	//	KeGenericCallDpc(broadcast_remove_user_exception_int3, &args);
-
-	//	return static_cast<ULONG>(args.statuses) == KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
-	//}
-	//bool 
+	 
 
 	/// <summary>
 	/// Dump info about allocated pools (Use Dbgview to see information)
@@ -125,7 +68,7 @@ namespace hvgt
 	void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap)
 	{
 		 g_invalid_msr_bitmap = reinterpret_cast<unsigned  long long*>( msr_bitmap);
-		g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(synthetic_msr_bitmap);
+		 g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(synthetic_msr_bitmap);
 	}
 
  

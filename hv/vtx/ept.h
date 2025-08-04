@@ -448,6 +448,9 @@ namespace ept
 	);
 
 
+	bool unhook_page_pfn_ept(__ept_state& ept_state,
+		unsigned __int64 pfn_of_target_page);
+
 
 	/// <summary>
 	/// Split pml2 into 512 pml1 entries (From one 2MB page to 512 4KB pages)
@@ -459,75 +462,7 @@ namespace ept
 
 
 
-	/// <summary>
-/// Unhook all functions and invalidate tlb
-/// </summary>
-	//void unhook_all_functions(__ept_state& ept_state);
-
-
-
-	/// <summary>
-	/// Perfrom a hook
-	/// </summary>
-	/// <param name="target_address" > Address of function which we want to hook </param>
-	/// <param name="hook_function"> Address of hooked version of function which we are hooking </param>
-	/// <param name="(Optional) trampoline"> Address of codecave which is located in 2gb range of target function (Use only if you need smaller trampoline)</param>
-	/// <param name="origin_function"> Address used to call original function </param>
-	/// <returns></returns>
-	//bool hook_kernel_function(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* new_function, _Out_   void** origin_function);
-
-	//bool hook_user_exception_int3(_In_  __ept_state& ept_state, _In_ HANDLE process_id, _In_  void* target_function, _In_  void* breakpoint_handler, _In_ uint8_t* trampoline_va);
-
-	//bool hook_break_ponint_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
-
-
-	//bool hook_kernel_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
-
-	//bool hook_user_break_point_int3(_In_  __ept_state& ept_state, _In_  void* target_function, _In_  void* breakpoint_handler, _Out_ unsigned char* original_byte);
-
-	//bool find_break_point_info(
-
-	//	_In_ HANDLE process_id,
-	//	_In_ hook_type type,
-	//	_In_ void* target_function,
-	//	_Out_ ept_breakpoint_info** out_hook_info);
-
-
-
-	///// <summary>
-	///// Unhook single function
-	///// </summary>
-	///// <param name="virtual_address"></param>
-	///// <returns></returns>
-	//bool unhook_function(__ept_state& ept_state, unsigned __int64 virtual_address);
-
-	///// <summary>
-	///// Unhook all functions for a given process ID
-	///// </summary>
-	///// <param name="ept_state"></param>
-	///// <param name="process_id"></param>
-	///// <returns></returns>
-	//bool unhook_by_pid(__ept_state& ept_state, HANDLE processId);
-
-
-	//bool unhook_process_all_user_exception(
-	//	__ept_state& ept_state,
-	//	HANDLE process_id
-
-	//);
-   
-	/*bool hook_instruction_memory_int1(__ept_hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
-
-	bool hook_instruction_memory_int3(__ept_hooked_function_info* hooked_function_info, void* target_function,  unsigned __int64 page_offset);
-
-	void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
-
-	void  hook_write_absolute_jump_int3(unsigned __int8* target_buffer, unsigned __int64 destination_address);
-
-
-	bool remove_breakpoints_by_type_for_process(
-		_In_ HANDLE process_id,
-		_In_ hook_type type);*/
+ 
 	
 
 }

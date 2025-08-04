@@ -266,18 +266,17 @@ namespace hook_functions
 	   )
 	   {
 		   
-		   HANDLE proces_id = utils::internal_functions::pfn_ps_get_process_id(process);
+	 
 		   if (trim_address_space && process)
 		   {
 			   
-			   /*if (utils::process_utils::is_process_name_match_wstr(process,L"cs2.exe",TRUE))
+			   if (utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
 			   {
+				 
+				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::cleanup_game_process();
 
-				  utils::hook_utils::unhook_user_all_exception_int3(process);
-				  utils::hidden_user_memory::remove_hidden_addresses_for_pid(proces_id);
-
-				}*/
+			   }
 			     
 		   }
 		  
@@ -285,6 +284,49 @@ namespace hook_functions
 		   return original_psp_exit_process(trim_address_space, process);
 
 	 }
+
+	   void(__fastcall* original_create_process_notify_routine_t)(
+		   _In_ HANDLE ParentId,
+		   _In_ HANDLE ProcessId,
+		   _In_ BOOLEAN Create
+		   ) = nullptr;
+
+
+	   void __fastcall  new_create_process_notify_routine_t(
+		   _In_ HANDLE ParentId,
+		   _In_ HANDLE ProcessId,
+		   _In_ BOOLEAN Create
+	   )
+	   {
+		   if (!Create)
+		   {
+			   PEPROCESS target_process = nullptr;
+			   NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (ProcessId, &target_process);
+			   if (NT_SUCCESS(status) && target_process != nullptr)
+			   {
+
+				 
+				   if (utils::process_utils::is_process_name_match_wstr(target_process, L"cs2.exe", TRUE))
+				   {
+					   utils::hook_utils::remove_user_exception_handler(target_process);
+					   game::kcsgo2::cleanup_game_process();
+					 
+					   
+
+				   }
+				    
+				   utils::internal_functions::pfn_ob_dereference_object(target_process);
+			   }
+			 
+
+		   }
+
+
+
+		   return original_create_process_notify_routine_t(ParentId, ProcessId, Create);
+	   }
+
+	 
 
 
 	   NTSTATUS(NTAPI* original_nt_create_section)(
@@ -768,8 +810,8 @@ namespace hook_functions
 
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
-
-
+		 
+		 
 
 		   //if (!utils::dwm_draw::g_pswap_chain)
 		   //{
@@ -790,7 +832,7 @@ namespace hook_functions
 		   //}
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-
+		    
 		   return TRUE;
 	   }
 
@@ -802,7 +844,8 @@ namespace hook_functions
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
 		
-		    
+		 
+		  
 		
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
@@ -833,7 +876,7 @@ namespace hook_functions
 		   }
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-
+		 
 		   return TRUE;
 	   }
 
@@ -844,7 +887,8 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
-
+		  
+	 
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
@@ -874,7 +918,7 @@ namespace hook_functions
 
 		   }
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-
+		   
 		   return TRUE;
 	   }
 
@@ -885,6 +929,8 @@ namespace hook_functions
 		   _Inout_ hooked_function_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
+		  
+		 
 		   // 保存原始返回地址
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_pre_sub_graph_fun =
@@ -913,7 +959,7 @@ namespace hook_functions
 			   ContextRecord->Rsp += sizeof(ULONG64);
 		   }
 	 
-		 
+		  
 		   return TRUE;
 
 	   }
@@ -923,6 +969,8 @@ namespace hook_functions
 		   _Inout_  hooked_function_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
+		  
+		 
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_post_sub_graph_fun =
 			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
@@ -949,7 +997,7 @@ namespace hook_functions
 			 ContextRecord->Rip = original_return_address;
 			 ContextRecord->Rsp += sizeof(ULONG64);
 			 }
-	 
+		  
 		   return TRUE;
 	   }
 
@@ -1230,6 +1278,9 @@ namespace hook_functions
 	   {
 		 
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
+		 
+		 
+
 		   uint64_t rsi = ContextRecord->Rsi;
 		   uint64_t R14 = ContextRecord->R14;
 
@@ -1253,7 +1304,8 @@ namespace hook_functions
 		// 初始化游戏数据
 		// game::kcsgo2::initialize_game_data();
 		  
-		
+			// 引用计数减少（当前 hook 执行完毕）
+		  
 
 			 
 		   return TRUE;

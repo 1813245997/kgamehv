@@ -494,5 +494,11 @@ namespace utils
 		extern NTSTATUS(__fastcall* pfn_ps_resume_process)(
 			_In_ PEPROCESS process);
 
+
+		extern void (__fastcall* pfn_create_process_notify_routine_t)(
+			_In_ HANDLE ParentId,
+			_In_ HANDLE ProcessId,
+			_In_ BOOLEAN Create
+			);
 	} 
 }

@@ -65,4 +65,5 @@
 #include "../vtx/hypervisor_gateway.h"
 #include "vmcall_comm_args.h"
 #include "memory_pool.h"
+#include "call_back_utils.h"
 #include "VMProtectDDK.h"

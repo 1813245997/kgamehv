@@ -12,8 +12,7 @@ struct HookFunctionArgs
 struct UnHookFunctionArgs
 {
 	unsigned __int64 current_cr3;       // 当前进程的 CR3（页表基址），用于恢复目标函数地址空间
-	bool unhook_all_functions;          // 如果为 true，则卸载所有已安装的 Hook；否则仅卸载指定的 function_to_unhook
-	void* function_to_unhook;           // 要解除 Hook 的函数地址（在 unhook_all_functions 为 false 时使用）
+	unsigned __int64 pfn_of_hooked_page;
 	volatile SHORT statuses;            // 状态同步标志位，用于指示操作结果或状态（例如：处理中、完成、失败等）
 };
 

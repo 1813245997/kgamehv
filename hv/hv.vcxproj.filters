@@ -304,6 +304,9 @@
     <ClInclude Include="utils\VMProtectDDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\call_back_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -487,6 +490,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\timing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\call_back_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

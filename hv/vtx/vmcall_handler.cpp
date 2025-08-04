@@ -97,29 +97,8 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 		{
 			unsigned __int64 old_cr3 = hv::swap_context(vmcall_parameter1);
 
-			EptUnhookType unhook_type = static_cast<EptUnhookType>(vmcall_parameter2); // 使用枚举类型
-
-			//switch (unhook_type)
-			//{
-			//case UNHOOK_ALL:
-			//	ept::unhook_all_functions(*vcpu->ept_state);
-			//	break;
-
-			//case UNHOOK_SINGLE:
-			//	 
-			//	status = ept::unhook_function(*vcpu->ept_state, vmcall_parameter3);
-			//	break;
-
-			//case UNHOOK_BY_PID:
-			//	 
-			//	status = ept::unhook_by_pid(*vcpu->ept_state, reinterpret_cast<HANDLE>(vmcall_parameter4));
-			//	break;
-
-			//default:
-			//	status = false; // 无效的操作类型
-			//	break;
-			//}
-
+			ept::unhook_page_pfn_ept(*vcpu->ept_state, vmcall_parameter2);
+		  
 			hv::restore_context(old_cr3);
 
 			adjust_rip(vcpu);

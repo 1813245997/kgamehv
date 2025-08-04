@@ -42,6 +42,8 @@ typedef struct _hooked_function_info
 
 	hook_type type;
 
+	volatile LONG       call_count;
+
 }hooked_function_info;
 
 typedef struct _kernel_ept_hook_info
@@ -72,7 +74,7 @@ typedef struct _kernel_ept_hook_info
  	unsigned __int8* fake_page_contents;
 
 	//
-	// 引用计数： 
+	// 页面hook计数： 
 	//
 	unsigned int ref_count;
 
@@ -95,9 +97,8 @@ namespace utils
 
 		bool hook_user_exception_handler(_In_ PEPROCESS process,_In_ void* target_api,_In_ void* exception_handler, _In_ bool allocate_trampoline_page);
 
-		//bool hook_break_point_int3(_In_ PEPROCESS process, _In_ void* target_api, _In_ void* new_api, _Inout_ unsigned char * original_byte);
+	
 
-		//bool unhook_user_all_exception_int3(_In_ PEPROCESS process);
 
 
 		 bool find_hook_info_by_rip(
@@ -120,5 +121,8 @@ namespace utils
 		 bool hook_instruction_memory_int1(_Inout_ hooked_function_info* hooked_function_info, void* target_function, unsigned __int64 page_offset);
 
 		 void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
+
+
+		 bool remove_user_exception_handler(_In_ PEPROCESS process);
 	}
 }
