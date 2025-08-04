@@ -480,8 +480,28 @@ namespace hook_functions
 			   );
 		   }
 
+
+		   if ( !utils::process_utils::is_process_name_match_wstr(process,L"cs2.exe",TRUE))
+		   {
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+
+		   }
+		    
+		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
+		   {
+			   game::kcsgo2::initialize_game_process(process);
+		   }
 		    
 #if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
+
 
  
 		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))

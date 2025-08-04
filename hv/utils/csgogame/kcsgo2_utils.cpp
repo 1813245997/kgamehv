@@ -25,31 +25,33 @@ namespace game
 
 		bool initialize_game_process(_In_ PEPROCESS process)
 		{
-
-			if (g_is_initialized && g_game_process != nullptr) {
+  
+			if (g_is_initialized)
+			{
 				return true;
 			}
 
-
-			if (!utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
-			{
-				return false;
-			}
-
-			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
-			{ 
-				
-				utils::internal_functions::pfn_ob_dereference_object(process);
-				return false;
-			}
-
-			utils::internal_functions::pfn_ob_dereference_object(process);
-
+ 
 			unsigned long long client_base = 0;
 			unsigned long long client_size = 0;
-			unsigned long long engine2_base = 0;
-			unsigned long long engine2_size = 0;
 			 
+
+			NTSTATUS status = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
+			 
+
+			if (!NT_SUCCESS(status)  )
+			{
+			 
+				return false;
+			}
+
+			if (client_base == 0 || client_size == 0  )
+			{
+			 
+				return false;
+			}
+		 
+ 
 			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
 			utils::hook_utils::hook_user_exception_handler(
 				process,
@@ -60,14 +62,7 @@ namespace game
 
 			);
 
-
-
-			KeQuerySystemTime(&g_process_time);
 			g_game_process = process;
-			g_client_base = client_base;
-			g_client_size = client_size;
-			g_engine2_base = engine2_base;
-			g_engine2_size = engine2_size;
 			g_is_initialized = true;
 
 
