@@ -11,11 +11,15 @@ namespace utils
 		  LIST_ENTRY g_kernel_hook_page_list_head;
 		  LIST_ENTRY g_user_hook_page_list_head;
 
-
+		  FAST_MUTEX g_user_hook_page_list_lock;
+		  
 		  void initialize_hook_page_lists()
 		  {
 			  InitializeListHead(&g_kernel_hook_page_list_head);
 			  InitializeListHead(&g_user_hook_page_list_head);
+
+			  ExInitializeFastMutex(&g_user_hook_page_list_lock);
+			 
 			  // 如果后续还有其他链表，也可以在此统一添加初始化逻辑
 			  // InitializeListHead(&g_another_list_head);
 		  }
@@ -287,12 +291,8 @@ namespace utils
 				}
 			}
 
-			// 挂起进程
-			if (!NT_SUCCESS(utils::internal_functions::pfn_ps_suspend_process(process))) {
-				LogError("hook_user_exception_handler: suspend failed");
-				goto CLEANUP;
-			}
-			suspend_success = true;
+		 
+		 
 
 			// 获取 target API 物理页信息
 			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api_page_base).QuadPart;
@@ -304,12 +304,14 @@ namespace utils
 			uint64_t page_offset = MASK_EPT_PML1_OFFSET((uintptr_t)target_api);
 			uint64_t target_page_pfn = GET_PFN(target_pa);
 
+			ExAcquireFastMutex(&g_user_hook_page_list_lock);
 			// 搜索是否已 hook 页面
 			PLIST_ENTRY current = g_user_hook_page_list_head.Flink;
 			while (current != &g_user_hook_page_list_head) {
 				kernel_hook_info* hooked_page_info = CONTAINING_RECORD(current, kernel_hook_info, hooked_page_list);
 				if (hooked_page_info->pfn_of_hooked_page == target_page_pfn) {
 
+					LogInfo("Page already hooked");
 					hooked_function_info* hook_info = reinterpret_cast<hooked_function_info*>(
 						utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
 					if (!hook_info) {
@@ -349,6 +351,8 @@ namespace utils
 
 					++hooked_page_info->ref_count;
 					InsertHeadList(&hooked_page_info->hooked_functions_list, &hook_info->hooked_function_list);
+
+					ExReleaseFastMutex(&g_user_hook_page_list_lock);
 					result = true;
 					goto CLEANUP;
 				}
@@ -431,7 +435,7 @@ namespace utils
 			InitializeListHead(&hooked_page_info->hooked_functions_list);
 			InsertHeadList(&hooked_page_info->hooked_functions_list, &hook_info->hooked_function_list);
 			InsertHeadList(&g_user_hook_page_list_head, &hooked_page_info->hooked_page_list);
-
+			
 			result = hvgt::hook_function(target_cr3, target_page_pfn, hooked_page_info->pfn_of_fake_page_contents);
 			if (!result) {
 				LogError("hook: Failed to hook target_api: %p", target_api);
@@ -441,6 +445,7 @@ namespace utils
 			}
 
 		CLEANUP:
+			ExReleaseFastMutex(&g_user_hook_page_list_lock);
 			if (mdl) {
 				utils::memory::unlock_memory(mdl);
 			}
@@ -449,9 +454,7 @@ namespace utils
 				utils::memory::free_user_memory(process_id, trampoline_va, PAGE_SIZE);
 			}
 
-			if (suspend_success) {
-				utils::internal_functions::pfn_ps_resume_process(process);
-			}
+		 
 
 			if (apc_attached) {
 				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
@@ -606,15 +609,17 @@ void write_int3(uint8_t* address)
 	 bool find_user_exception_info_by_rip(
 		 HANDLE process_id,
 		 void* rip,
-		 hooked_function_info** out_hook_info)
+		 hooked_function_info * out_hook_info)
 	 {
 
-
+		 ExAcquireFastMutex(&g_user_hook_page_list_lock);
 		 LIST_ENTRY* hook_page_list = &g_user_hook_page_list_head;
 		 for (PLIST_ENTRY page_entry = hook_page_list->Flink;
 			 page_entry != hook_page_list;
 			 page_entry = page_entry->Flink)
 		 {
+
+
 			 auto* hooked_page = CONTAINING_RECORD(page_entry, kernel_hook_info, hooked_page_list);
 
 			 if (hooked_page->process_id != process_id)
@@ -630,12 +635,13 @@ void write_int3(uint8_t* address)
 
 				 if (reinterpret_cast<void*>(rip) == hook_info->original_va)
 				 {
-					 *out_hook_info = hook_info;
+					 *out_hook_info = *hook_info;
+					 ExReleaseFastMutex(&g_user_hook_page_list_lock);
 					 return true;
 				 }
 			 }
 		 }
-
+		 ExReleaseFastMutex(&g_user_hook_page_list_lock);
 		 return false;
 		  
 	 }
@@ -668,6 +674,8 @@ void write_int3(uint8_t* address)
 		 }
 
 		 bool unhooked_any = false;
+
+		 ExAcquireFastMutex(&g_user_hook_page_list_lock);
 		 PLIST_ENTRY current_page = g_user_hook_page_list_head.Flink;
 
 		 while (current_page != &g_user_hook_page_list_head)
@@ -737,7 +745,7 @@ void write_int3(uint8_t* address)
 
 			 current_page = next_page;
 		 }
-		 
+		 ExReleaseFastMutex(&g_user_hook_page_list_lock);
 		 return unhooked_any;
 
 		 

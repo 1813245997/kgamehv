@@ -321,32 +321,13 @@ namespace utils
 
 			ByteRender rend;
 			rend.Setup(width, height, data);
-			rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
+			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
 			 
-#if defined(ENABLE_GAME_DRAW_TYPE3)
-
-			
-
-#if ENABLE_GAME_DRAW_TYPE3 == 1
-			// 第一套绘制逻辑：通过 DLL 初始化
-			initialized = game::kcsgo2::is_initialize_game();
-
-#elif ENABLE_GAME_DRAW_TYPE3 == 2
-			// 第二套绘制逻辑：自己遍历进程
-			  
-		 
-
-		   // initialized = game::kcsgo2::initialize_game_process2();
-#elif ENABLE_GAME_DRAW_TYPE3 == 3
-			// 第三套绘制逻辑：自己初始化数据
-			initialized = game::kcsgo2::is_initialize_game() &&
-				game::kcsgo2::is_create_time() &&
-				game::kcsgo2::initialize_game_data3();
-
-#endif // ENABLE_GAME_DRAW_TYPE3
- 
-
-#endif // defined(ENABLE_GAME_DRAW_TYPE3)
+			int margin = 10;
+			Vector2 circle_center = { static_cast<float>(width - margin), static_cast<float>(margin) };
+			int radius = 5;
+			FColor color = FColor(__rdtsc());
+			rend.FillCircle(circle_center, color, radius);
 
 			 
 			// === 绘制 ESP 相关 ===

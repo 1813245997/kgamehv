@@ -62,7 +62,7 @@ namespace utils
 				return FALSE;
 			}
 			 
-			hooked_function_info* matched_hook_info = nullptr;
+			hooked_function_info matched_hook_info{};
 			 
 			if (!utils::hook_utils::find_user_exception_info_by_rip(
 				process_id, ExceptionRecord->ExceptionAddress, &matched_hook_info))
@@ -73,9 +73,9 @@ namespace utils
  
 			 
 			using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, hooked_function_info*);
-			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info->new_handler_va);
+			auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info.new_handler_va);
 
-			if (handler(ExceptionRecord, ContextRecord, matched_hook_info))
+			if (handler(ExceptionRecord, ContextRecord, &matched_hook_info))
 			{
 				return TRUE;  // “—¥¶¿Ì
 			}

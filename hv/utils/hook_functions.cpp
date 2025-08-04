@@ -270,20 +270,22 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
-			   if (process == utils::dwm_draw::g_dwm_process)
+			   if (game::kcsgo2::g_game_process!=0&& game::kcsgo2::g_game_process == process)
+
 			   {
 				    
-				    utils::dwm_draw::finalize();
-				    utils::hook_utils::remove_user_exception_handler(process);
-			   }
-				
-			   else if(process ==game::kcsgo2::g_game_process)
-			   {
-				 
-				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::cleanup_game_process();
+				   utils::hook_utils::remove_user_exception_handler(process);
 			   }
-			   
+			   //if (process == utils::dwm_draw::g_dwm_process)
+			   //{
+				  //  
+				  // // utils::dwm_draw::finalize();
+				  // // utils::hook_utils::remove_user_exception_handler(process);
+			   //}
+
+
+			 
 			     
 		   }
 		  
@@ -308,23 +310,17 @@ namespace hook_functions
 	   {
 		   if (!Create)
 		   {
-			   PEPROCESS target_process = nullptr;
-			   NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (ProcessId, &target_process);
-			   if (NT_SUCCESS(status) && target_process != nullptr)
+			 
+			   if ( game::kcsgo2::g_game_process!=nullptr)
 			   {
+				   if (ProcessId == utils::internal_functions::pfn_ps_get_process_id(game::kcsgo2::g_game_process))
 
-				 
-				   if (utils::process_utils::is_process_name_match_wstr(target_process, L"cs2.exe", TRUE))
 				   {
-					   utils::hook_utils::remove_user_exception_handler(target_process);
+					   utils::hook_utils::remove_user_exception_handler(game::kcsgo2::g_game_process);
 					   game::kcsgo2::cleanup_game_process();
-					 
-					   
-
 				   }
-				    
-				   utils::internal_functions::pfn_ob_dereference_object(target_process);
 			   }
+			   
 			 
 
 		   }
@@ -495,9 +491,18 @@ namespace hook_functions
 
 		   }
 		    
-		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
+		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
 		   {
-			   game::kcsgo2::initialize_game_process(process);
+			   return original_nt_create_section(
+				   section_handle,
+				   desired_access,
+				   object_attributes,
+				   maximum_size,
+				   section_page_protection,
+				   allocation_attributes,
+				   file_handle
+			   );
+			  
 		   }
 		    
 #if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
@@ -521,7 +526,7 @@ namespace hook_functions
 #endif  
 		 
 
-		  
+	     game::kcsgo2::initialize_game_process(process);
 
 		  return original_nt_create_section(
 			  section_handle,

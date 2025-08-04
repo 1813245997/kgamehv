@@ -90,6 +90,7 @@ namespace utils
 
 		extern  LIST_ENTRY g_user_hook_page_list_head;
 
+		extern     FAST_MUTEX g_user_hook_page_list_lock;
 
 		void initialize_hook_page_lists();
 
@@ -108,7 +109,7 @@ namespace utils
 		 bool find_user_exception_info_by_rip(
 			 HANDLE process_id,
 			 void* rip,
-			 hooked_function_info** out_hook_info);
+			 hooked_function_info*  out_hook_info);
 
 		 void write_int3(uint8_t* address);
 

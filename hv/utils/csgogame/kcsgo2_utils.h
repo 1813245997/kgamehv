@@ -11,50 +11,38 @@ namespace game
 
 
 
+		// 最大玩家数量
+
+
+	// 全局游戏状态变量
 		extern PEPROCESS g_game_process;
-		extern unsigned long long g_client_base;
-		extern unsigned long long g_client_size;
-		extern unsigned long long g_engine2_base;
-		extern unsigned long long g_engine2_size;
+		extern  HANDLE  g_game_pid;
+		extern HANDLE g_game_handle;
 		extern bool g_is_initialized;
-		extern HANDLE  g_game_handle;
-		extern  POINT  g_game_size;
-		extern kcsgo2struct::CPlayer g_player_array[60] ;
-		extern int g_player_count  ;
-		
-		extern   LARGE_INTEGER g_process_time;
+		extern POINT g_game_size;
+
+		// 玩家数据
+		extern kcsgo2struct::CPlayer g_player_array[MAX_PLAYER_NUM];
+		extern int g_player_count;
+
+		// 初始化与清理
 		bool initialize_game_process(_In_ PEPROCESS process);
-		bool initialize_game_process2();
-	    bool initialize_game_process3( HANDLE process_id);
-
 		bool initialize_game_data();
-		bool initialize_game_data2();
-		bool initialize_game_data3();
-		 
-		bool is_game_process(_In_ PEPROCESS process);
-
-
-		bool is_create_time();
-
-		bool is_initialize_game();
-
-
-
-		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
-
-		
-
 		NTSTATUS cleanup_game_process();
 
-		 
+		// 状态判断
+		bool is_game_process(_In_ PEPROCESS process);
+		bool is_initialize_game();
 
+		// 窗口相关
 		HANDLE find_cs2_window();
+		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
 
-		bool get_player_data(kcsgo2struct::CPlayer* out_array,   int* out_actual_count);
-
-		void initialize_player_data_lock();
-		void clear_all_player_info();
+		// 玩家数据访问
+		bool get_player_data(kcsgo2struct::CPlayer* out_array, int* out_actual_count);
 		void set_player_data(const kcsgo2struct::CPlayer* player_array, int count);
+		void reset_player_data();
+		void initialize_player_data_lock();
 
    }
 }

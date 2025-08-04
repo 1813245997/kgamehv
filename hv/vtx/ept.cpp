@@ -570,7 +570,7 @@ namespace ept
 		
 			hook_info->original_entry.execute = 1;
 		    swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->original_entry, invept_type::invept_single_context);
-			//invept_single_context_address(ept_state.ept_pointer->all);
+			invept_all_contexts();
 			RemoveEntryList(entry);
 			pool_manager::release_pool(hook_info);
 			return true;

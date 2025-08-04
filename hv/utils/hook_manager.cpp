@@ -16,14 +16,14 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
 			);
 		}
-		/*	if (pfn_create_process_notify_routine_t)
-	{
-		utils::hook_utils::hook_kernel_function(
-			reinterpret_cast<void*>(pfn_create_process_notify_routine_t),
-			hook_functions::new_create_process_notify_routine_t,
-			reinterpret_cast<void**>(&hook_functions::original_create_process_notify_routine_t)
-		);*/
-		//}
+	/*	if (pfn_create_process_notify_routine_t)
+		{
+			utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(pfn_create_process_notify_routine_t),
+				hook_functions::new_create_process_notify_routine_t,
+				reinterpret_cast<void**>(&hook_functions::original_create_process_notify_routine_t)
+			);
+		 }*/
 
 		if (pfn_psp_exit_process)
 		{
@@ -108,14 +108,14 @@ namespace hook_manager
 			);
 		}
 
-		if (pfn_nt_create_user_process)
-		{
-			utils::hook_utils::hook_kernel_function(
-				reinterpret_cast<void*>(pfn_nt_create_user_process),
-				hook_functions::new_nt_create_user_process,
-				reinterpret_cast<void**>(&hook_functions::original_nt_create_user_process)
-			);
-		}
+	/*	if (pfn_nt_create_user_process)
+			{
+				utils::hook_utils::hook_kernel_function(
+					reinterpret_cast<void*>(pfn_nt_create_user_process),
+					hook_functions::new_nt_create_user_process,
+					reinterpret_cast<void**>(&hook_functions::original_nt_create_user_process)
+				);
+			}*/
 
 
 

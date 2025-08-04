@@ -577,7 +577,7 @@ namespace utils
 			unsigned long long nt_create_file_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateFile");
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
-			unsigned long long ps_get_process_exit_status_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "utils::internal_functions::pfn_ps_get_process_exit_status");
+			unsigned long long ps_get_process_exit_status_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitStatus");
 
 
 

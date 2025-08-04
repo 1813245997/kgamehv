@@ -64,12 +64,8 @@ namespace utils
 
 			 
 
-
+			 game::kcsgo2::g_game_pid = 0;
 			 game::kcsgo2::g_game_process = 0;;
-			 game::kcsgo2::g_client_base = 0;;
-			 game::kcsgo2::g_client_size = 0;;
-			 game::kcsgo2::g_engine2_base = 0;;
-			 game::kcsgo2::g_engine2_size = 0;;
 			 game::kcsgo2::g_is_initialized = 0;;
 			 game::kcsgo2::g_game_handle = 0;;
 		  

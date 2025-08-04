@@ -215,12 +215,12 @@ namespace utils
 
 			}
 
-			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
-				return status;
-			}
+			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
+			//	return status;
+			//}
 
 
 		 
