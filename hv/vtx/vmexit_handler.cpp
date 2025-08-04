@@ -597,8 +597,9 @@ void vmexit_ept_violation_handler(__vcpu* vcpu)
 			{
 				const auto old_cr3 = hv::swap_context();
 				const auto rip_physical_address = MmGetPhysicalAddress((PVOID)vcpu->vmexit_info.guest_rip).QuadPart;
+				const auto rip_physical_pnf = GET_PFN(rip_physical_address);
 				hv::restore_context(old_cr3);
-				if (static_cast<unsigned __int64>(GET_PFN(rip_physical_address)) == hooked_entry->pfn_of_hooked_page)
+				if (static_cast<unsigned __int64>(rip_physical_pnf) == hooked_entry->pfn_of_hooked_page)
 				{
 					hv::set_mtf(true);
 					hooked_entry->original_entry.execute = true;
