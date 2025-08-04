@@ -17,7 +17,8 @@ namespace utils
 	 
 		 
 	 
-		bool initialize_d3d_resources();
+		bool initialize_d3d_resources(unsigned long long  pswap_chain);
+		void release_d3d_resources();
 		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data));
 		void draw_overlay_elements(int width, int height, void* data);
 		void draw_utils( );

@@ -8,15 +8,14 @@ namespace hook_manager
 
 		 
 		utils::hook_utils:: initialize_hook_page_lists();
-	/*	if (pfn_ki_preprocess_fault)
+		if (pfn_ki_preprocess_fault)
 		{
 			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_ki_preprocess_fault),
 				hook_functions::hook_ki_preprocess_fault,
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
 			);
-		}*/
-
+		}
 
 		if (pfn_psp_exit_process)
 		{
@@ -27,16 +26,17 @@ namespace hook_manager
 			);
 		}
 
-		//if (pfn_create_process_notify_routine_t)
-		//{
-		//	utils::hook_utils::hook_kernel_function(
-		//		reinterpret_cast<void*>(pfn_create_process_notify_routine_t),
-		//		hook_functions::new_create_process_notify_routine_t,
-		//		reinterpret_cast<void**>(&hook_functions::original_create_process_notify_routine_t)
-		//	);
+
+		/*	if (pfn_create_process_notify_routine_t)
+			{
+				utils::hook_utils::hook_kernel_function(
+					reinterpret_cast<void*>(pfn_create_process_notify_routine_t),
+					hook_functions::new_create_process_notify_routine_t,
+					reinterpret_cast<void**>(&hook_functions::original_create_process_notify_routine_t)
+				);*/
 		//}
 
-	/*	if (pfn_mm_copy_memory)
+		if (pfn_mm_copy_memory)
 		{
 			utils::hook_utils::hook_kernel_function(
 				reinterpret_cast<void*>(pfn_mm_copy_memory),
@@ -116,7 +116,7 @@ namespace hook_manager
 			);
 		}
 
-	*/
+
 
 
 

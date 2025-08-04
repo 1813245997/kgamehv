@@ -18,18 +18,15 @@ namespace utils
 			unsigned long long g_user_buffer{};
 			unsigned long long  g_texture_buffer{};
 			PVOID g_swap_chain{};
-			PVOID  g_pdevice{};
+			PVOID g_pdevice{};
 			PVOID g_pContext{};
 			PVOID g_Surface{};
 			
 			bool g_should_hide_overlay = false;
 		   volatile LONG g_dwm_render_lock = 0;
-
-		   static ULONG_PTR g_slient_start_time = 0;
-		   static ULONG_PTR g_PreviousRenderTime = 0;
-
+		    
 		 
-		   bool initialize_d3d_resources()
+		   bool initialize_d3d_resources(unsigned long long  pswap_chain)
 		   {
 			  
 			   if (g_initialized)
@@ -38,10 +35,12 @@ namespace utils
 			   const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
 			   const GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
 
-			   if (!utils::dwm_draw::g_pswap_chain)
+			   if (!pswap_chain)
+			   {
 				   return false;
+			   }
 
-			   g_swap_chain = reinterpret_cast<PVOID>(utils::dwm_draw::g_pswap_chain);
+			   g_swap_chain = reinterpret_cast<PVOID>(pswap_chain);
 
 			   if (!g_user_buffer)
 			   {
@@ -258,6 +257,54 @@ namespace utils
 			vfun_utils::release(pTexture);
 			//vfun_utils::release(g_Surface);
 			//g_Surface = nullptr;
+		}
+
+		void release_d3d_resources()
+		{
+			if (!g_initialized)
+			{
+				return;
+			}
+
+			// 释放 Surface
+			if (g_Surface)
+			{
+				utils::vfun_utils::release(g_Surface);
+				g_Surface = nullptr;
+			}
+
+			// 释放 Context
+			if (g_pContext)
+			{
+				utils::vfun_utils::release(g_pContext);
+				g_pContext = nullptr;
+			}
+
+			// 释放 Device
+			if (g_pdevice)
+			{
+				utils::vfun_utils::release(g_pdevice);
+				g_pdevice = nullptr;
+			}
+
+			// 释放 SwapChain (通常不释放窗口的 SwapChain，除非你自己创建的)
+			  g_swap_chain = nullptr; // 仅清空指针，非自己创建的 swapchain 不释放
+
+			// 释放用户缓冲区
+			if (g_user_buffer)
+			{
+				memory::free_user_memory(reinterpret_cast<PVOID>(g_user_buffer),0x1000,false);
+				g_user_buffer = 0;
+			}
+
+			// 释放纹理缓冲区
+			if (g_texture_buffer)
+			{
+				memory::free_user_memory(reinterpret_cast<PVOID>(g_texture_buffer),0x4000, false);
+				g_texture_buffer = 0;
+			}
+
+			g_initialized = false;
 		}
 
 		void draw_overlay_elements(int width, int height, void* data)

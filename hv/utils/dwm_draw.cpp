@@ -212,7 +212,7 @@ namespace utils
 			{
 				LogError("hook_cocclusion_context_post_sub_graph failed with status: 0x%X", status);
 				return status;
-			 
+
 			}
 
 			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
@@ -227,6 +227,12 @@ namespace utils
 			 
 
 			return STATUS_SUCCESS;
+		}
+
+		void finalize()
+		{
+			utils::strong_dx::release_d3d_resources();
+			g_pswap_chain = 0;
 		}
 
 		NTSTATUS get_dwm_process(_Out_ PEPROCESS * out_process)

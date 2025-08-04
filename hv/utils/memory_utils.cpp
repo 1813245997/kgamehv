@@ -435,7 +435,15 @@ namespace utils
 			   return status;
 
 		   }
+		   NTSTATUS  free_user_memory(
+			   _In_ PVOID base_address,
+			   _In_ SIZE_T size,
+			   bool hide)
+		   {
+			   const HANDLE current_pid = PsGetCurrentProcessId();
 
+			   return free_user_memory(current_pid, base_address, size, hide);
+		   }
 		   NTSTATUS free_user_memory(
 			   _In_ HANDLE process_id,
 			   _In_ PVOID base_address,

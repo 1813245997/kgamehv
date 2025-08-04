@@ -46,6 +46,8 @@ namespace utils
 		
 		NTSTATUS initialize();
 
+		void finalize();
+
 		NTSTATUS  initialize_dwm_utils_modules(_In_ PEPROCESS process);
 
 		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long * ki_call_user_mode2);

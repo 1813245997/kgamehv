@@ -85,6 +85,10 @@ namespace utils
 
 		NTSTATUS free_user_memory(_In_ HANDLE process_id, _In_  PVOID base_address, _In_ SIZE_T size, bool hide = true);
 
+		NTSTATUS  free_user_memory(
+			_In_ PVOID base_address,
+			_In_ SIZE_T size,
+			bool hide = true);
 		NTSTATUS lock_memory(unsigned long long  address, ULONG size, OUT PMDL* out_mdl);
 
 		void unlock_memory(PMDL mdl);

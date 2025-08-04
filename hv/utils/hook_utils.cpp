@@ -41,9 +41,9 @@ namespace utils
 
 
 			 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
+			 void* target_api_page_base = PAGE_ALIGN(target_api);
 
-
-			target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+			target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api_page_base).QuadPart;
 			if (target_pa == 0)
 			{
 				return false;
@@ -68,6 +68,7 @@ namespace utils
 						return false;
 					}
 					 
+					RtlZeroMemory(hook_info, sizeof(hooked_function_info));
 					hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 
 					if (!hook_info->trampoline_va)
@@ -129,6 +130,7 @@ namespace utils
 				return false;
 			}
 			
+			RtlZeroMemory(hooked_page_info, sizeof(kernel_hook_info));
 		
 			hooked_page_info->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
 			if (hooked_page_info->fake_page_contents == nullptr)
@@ -159,6 +161,7 @@ namespace utils
 				LogError("There is no pre-allocated pool for hooked function struct");
 				return false;
 			}
+			RtlZeroMemory(hook_info, sizeof(hooked_function_info));
 
 			hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
 
@@ -268,11 +271,11 @@ namespace utils
 			// Attach 到目标进程
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 			apc_attached = true;
-
-			const ULONGLONG page_base = reinterpret_cast<ULONGLONG>(PAGE_ALIGN(target_api));
+			void* target_api_page_base = PAGE_ALIGN(target_api);
+		 
 
 			// 锁页确保页面存在
-			if (!NT_SUCCESS(utils::memory::lock_memory(page_base, PAGE_SIZE, &mdl))) {
+			if (!NT_SUCCESS(utils::memory::lock_memory( reinterpret_cast<unsigned  long long> (target_api_page_base), PAGE_SIZE, &mdl))) {
 				goto CLEANUP;
 			}
 
@@ -292,7 +295,7 @@ namespace utils
 			suspend_success = true;
 
 			// 获取 target API 物理页信息
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api_page_base).QuadPart;
 			if (!target_pa)
 			{
 				goto CLEANUP;
@@ -306,12 +309,14 @@ namespace utils
 			while (current != &g_user_hook_page_list_head) {
 				kernel_hook_info* hooked_page_info = CONTAINING_RECORD(current, kernel_hook_info, hooked_page_list);
 				if (hooked_page_info->pfn_of_hooked_page == target_page_pfn) {
+
 					hooked_function_info* hook_info = reinterpret_cast<hooked_function_info*>(
 						utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
 					if (!hook_info) {
 						LogError("No memory for hooked_function_info");
 						goto CLEANUP;
 					}
+					RtlZeroMemory(hook_info, sizeof(hooked_function_info));
 
 					hook_info->trampoline_va = trampoline_va;
 					if (trampoline_va)
@@ -350,7 +355,7 @@ namespace utils
 				current = current->Flink;
 			}
 
-			// 创建新的 fake page
+			
 			kernel_hook_info* hooked_page_info = reinterpret_cast<kernel_hook_info*>(
 				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(kernel_hook_info), POOL_TAG));
 			if (!hooked_page_info)
@@ -358,6 +363,7 @@ namespace utils
 				goto CLEANUP;
 
 			}
+			RtlZeroMemory(hooked_page_info, sizeof(kernel_hook_info));
 
 			hooked_page_info->fake_page_contents = reinterpret_cast<uint8_t*>(
 				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
@@ -380,6 +386,7 @@ namespace utils
 				ExFreePool(hooked_page_info);
 				goto CLEANUP;
 			}
+			RtlZeroMemory(hook_info, sizeof(hooked_function_info));
 
 			hook_info->trampoline_va = trampoline_va;
 			if (trampoline_va) 
@@ -640,8 +647,8 @@ void write_int3(uint8_t* address)
 		 while (InterlockedCompareExchange(call_count_ptr, 0, 0) > 0)
 		 {
 			 // 等待调用计数为0，防止卸载时函数正在执行
-			LogDebug("[HOOK] Waiting for call count to reach zero, current: %ld\n", call_count_ptr);
-			 utils::thread_utils::sleep_ms(100);
+			 LogDebug("[HOOK] Waiting for call count to reach zero, current: %ld\n", *call_count_ptr);
+			 utils::thread_utils::sleep_ms(10);
 			 // 或者用 Sleep(100); 需要适合内核模式的等待函数
 		 }
 	 }
@@ -686,11 +693,13 @@ void write_int3(uint8_t* address)
 				 _hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, _hooked_function_info, hooked_function_list);
 
 				 // 等待调用计数归零，确保无正在调用的hook
-				// safe_wait_for_zero_call_count(&hooked_function_info->call_count);
-
+				
+				 safe_wait_for_zero_call_count(&hooked_function_info->call_count);
 				 // 卸载该函数hook
 				 unsigned __int64 function_page_offset = MASK_EPT_PML1_OFFSET(hooked_function_info->original_va);
 				 RtlCopyMemory(&hooked_function_info->fake_page_contents[function_page_offset], hooked_function_info->original_va, hooked_function_info->hook_size);
+
+
 
 				 if (hooked_function_info->trampoline_va != nullptr)
 				 {
@@ -705,25 +714,25 @@ void write_int3(uint8_t* address)
 				 ExFreePool(hooked_function_info);
 
 				 // 页面hook计数减1
-				/* if (hooked_page_info->ref_count > 0)
+				 if (hooked_page_info->ref_count > 0)
 				 {
 					 InterlockedDecrement((volatile LONG*)&hooked_page_info->ref_count);
-				 }*/
+				 }
 				 RemoveEntryList(current_func);
 				 page_changed = true;
 				 current_func = next_func;
 			 }
 
 			 // 页面hook计数为0时，调用hvgt::remove_hook恢复原始页面映射
-			/* if (page_changed && hooked_page_info->ref_count == 0)
-			 {*/
+			 if (page_changed && hooked_page_info->ref_count == 0)
+			 {
 				 hvgt::remove_hook(target_cr3, hooked_page_info->pfn_of_hooked_page);
 
 				 ExFreePool(hooked_page_info->fake_page_contents);
 				 RemoveEntryList(current_page);
 				 ExFreePool(hooked_page_info);
 				 LogInfo("Successfully unhooked and restored page for process (pid: %Iu).", (ULONG_PTR)process_id);
-		//	 }
+		  }
 
 			 current_page = next_page;
 		 }

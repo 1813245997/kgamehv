@@ -270,16 +270,29 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
+			   if (process == utils::dwm_draw::g_dwm_process)
+			   {
+				   ////DbgBreakPoint();
+				   //utils::dwm_draw::finalize();
+				   //utils::hook_utils::remove_user_exception_handler(process);
+			   }
+				
+			   else if(process ==game::kcsgo2::g_game_process)
+			   {
+				 
+				   utils::hook_utils::remove_user_exception_handler(process);
+				   game::kcsgo2::cleanup_game_process();
+			   }
 			   /* if (utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe", TRUE))
 				{
 
 					utils::hook_utils::remove_user_exception_handler(process);
-					game::kcsgo2::cleanup_game_process();
+					
 
 				}*/
 			     
 		   }
-		   DbgBreakPoint();
+		  // DbgBreakPoint();
 		  
 			  
 		   return original_psp_exit_process(trim_address_space, process);
@@ -865,7 +878,7 @@ namespace hook_functions
 				   // 防止并发调用
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
-					   if (utils::strong_dx::initialize_d3d_resources())
+					   if (utils::strong_dx::initialize_d3d_resources(utils::dwm_draw::g_pswap_chain))
 					   {
 						  
 						   utils::strong_dx::draw_utils();
@@ -888,8 +901,8 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
-		  
-	 
+		   InterlockedIncrement(&matched_hook_info->call_count);
+		
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
@@ -907,7 +920,7 @@ namespace hook_functions
 				   // 防止并发调用
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
-					   if (utils::strong_dx::initialize_d3d_resources())
+					   if (utils::strong_dx::initialize_d3d_resources(utils::dwm_draw::g_pswap_chain))
 					   {
 						   utils::strong_dx::draw_utils();
 					   }
@@ -919,7 +932,7 @@ namespace hook_functions
 
 		   }
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   
+		   InterlockedDecrement(&matched_hook_info->call_count);
 		   return TRUE;
 	   }
 
