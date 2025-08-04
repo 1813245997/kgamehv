@@ -500,5 +500,9 @@ namespace utils
 			_In_ HANDLE ProcessId,
 			_In_ BOOLEAN Create
 			);
+
+		extern NTSTATUS(__fastcall* pfn_ps_get_process_exit_status)(
+			_In_ PEPROCESS Process
+			);
 	} 
 }

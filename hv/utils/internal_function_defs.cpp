@@ -499,6 +499,11 @@ namespace utils
 						   _In_ HANDLE ProcessId,
 						   _In_ BOOLEAN Create
 						   ) = nullptr;
+
+						   NTSTATUS(__fastcall*  pfn_ps_get_process_exit_status)(
+							 _In_ PEPROCESS Process
+							 ) = nullptr;
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -572,7 +577,7 @@ namespace utils
 			unsigned long long nt_create_file_addr =  scanner_fun::find_module_export_by_name(ntoskrnl_base, "NtCreateFile");
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
-			 
+			unsigned long long ps_get_process_exit_status_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "utils::internal_functions::pfn_ps_get_process_exit_status");
 
 
 
@@ -632,6 +637,7 @@ namespace utils
 			LogDebug("ps_get_current_process_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_process_addr));
 			LogDebug("ps_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
 			LogDebug("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
+			LogDebug("ps_get_process_exit_status_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_status_addr));
 			 
 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
@@ -700,6 +706,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_create_file, nt_create_file_addr);
 			INIT_FUNC_PTR(pfn_ob_reference_object_by_handle, ob_reference_object_by_handle_addr);
 			INIT_FUNC_PTR(pfn_io_query_file_dos_device_name, io_query_file_dos_device_name_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_exit_status, ps_get_process_exit_status_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -931,6 +938,8 @@ namespace utils
 				LogError("ps_get_current_thread_addr is null.");
 			if (!ke_get_current_thread_addr)
 				LogError("ke_get_current_thread_addr is null.");
+			if(!ps_get_process_exit_status_addr)
+				LogError("ps_get_process_exit_status_addr is null.");
 
 			if (!zw_open_file_addr)
 				LogError("zw_open_file_addr is null.");
@@ -995,6 +1004,7 @@ namespace utils
 
 			if (!create_process_notify_routine_t_addr)
 				LogError("create_process_notify_routine_t_addr is null.");
+
 
  
 				  
@@ -1087,7 +1097,8 @@ namespace utils
 				!nt_create_user_process_addr||
 				!ps_suspend_process_addr||
 				!ps_resume_process_addr||
-				!create_process_notify_routine_t_addr
+				!create_process_notify_routine_t_addr||
+				!ps_get_process_exit_status_addr
 				)             
 			{
 				return STATUS_UNSUCCESSFUL;

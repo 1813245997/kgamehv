@@ -36,7 +36,7 @@ namespace game
 				return false;
 			}
 
-			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
 			{ 
 				
 				utils::internal_functions::pfn_ob_dereference_object(process);
@@ -80,12 +80,21 @@ namespace game
 		bool initialize_game_process2( )
 		{
 
-			static LARGE_INTEGER first_seen_time = { 0 };
+			 
 
 			PEPROCESS process = nullptr;
 
 			if (g_is_initialized)
 			{
+				NTSTATUS exit_status = utils::internal_functions::pfn_ps_get_process_exit_status (g_game_process);
+				if ( exit_status  != STATUS_PENDING)
+				{
+					// 否则，说明进程已经退出了，需要清理并重新初始化
+					cleanup_game_process();
+					return false;
+				}
+
+				
 				
 				return true;
 			}
@@ -101,15 +110,15 @@ namespace game
 			KeQuerySystemTime(&current_time);
 
 			// 第一次发现进程，记录时间
-			if (first_seen_time.QuadPart == 0)
+			if (g_process_time.QuadPart == 0)
 			{
-				first_seen_time = current_time;
+				g_process_time = current_time;
 				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
 			}
 
 			// 计算时间差（单位：100ns，10秒 = 10 * 1000 * 1000 * 10 = 100000000）
-			if ((current_time.QuadPart - first_seen_time.QuadPart) < 200000000)
+			if ((current_time.QuadPart - g_process_time.QuadPart) < 100000000)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
@@ -166,7 +175,7 @@ namespace game
 				return false;
 			}
 
-			if (PsGetProcessExitStatus(process) != STATUS_PENDING)
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
 				return false;
