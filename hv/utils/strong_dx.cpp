@@ -363,12 +363,17 @@ namespace utils
 
 				Vector3 foot_screen{}, head_screen{};
 				if (!world_to_screen(&player.origin, &foot_screen, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+				{
 					continue;
+				}
 
 				Vector3 head_pos = player.origin;
 				head_pos.z += 70.0f;
 				if (!world_to_screen(&head_pos, &head_screen, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+				{
 					continue;
+				}
+
 
 				// ==== Box ESP ====
 				if (KMenuConfig::ShowBoxEsp2d.enabled)

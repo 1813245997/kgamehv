@@ -349,7 +349,7 @@ namespace game
 				return false;
 			}
 
-
+			int local_team = 0;
 
 			uintptr_t local_pawn_addr = client_base + cs2SDK::offsets::dwLocalPlayerPawn;
 			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
@@ -362,6 +362,12 @@ namespace game
 			{
 				 
 				return false;
+			}
+			 
+			void* view_matrix_addr = reinterpret_cast<void*>(client_base + cs2SDK::offsets::dwViewMatrix);
+			if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
+			{
+				memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
 			}
 
 			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_local_pcsplayer_pawn)))
@@ -396,7 +402,7 @@ namespace game
 				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iTeamNum);
 				if (utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
 				{
-					memcpy(&kcsgo2data::g_local_team, team_addr, sizeof(int));
+					memcpy(&local_team, team_addr, sizeof(int));
 				}
 			}
 
@@ -406,6 +412,7 @@ namespace game
 			{
 				memcpy(&kcsgo2data::g_local_origin, origin_addr, sizeof(Vector3));
 			}
+
 
 			// 采集玩家数据临时数组
 			kcsgo2struct::CPlayer temp_array[60]{};
@@ -437,7 +444,7 @@ namespace game
 					continue;
 				}
 				memcpy(&team, team_addr, sizeof(int));
-				if (team == kcsgo2data::g_local_team || team < 2)
+				if (team == local_team)
 				{
 					continue;
 				}
@@ -492,17 +499,7 @@ namespace game
 
 
 				}
-
-
-				// 读取 view matrix（每次都读，不太必要）
-				void* view_matrix_addr = reinterpret_cast<void*>(client_base + cs2SDK::offsets::dwViewMatrix);
-				if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
-				{
-					memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
-				}
-
-
-
+				 
 				temp_count++;
 			}
 

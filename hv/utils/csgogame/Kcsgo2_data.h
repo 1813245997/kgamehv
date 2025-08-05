@@ -13,8 +13,7 @@ namespace game
 		// 实体列表基址
 		extern uintptr_t g_entity_list;
 
-		// 本地玩家队伍
-		extern int g_local_team;
+		 
 		
 		//本地玩家坐标
 		extern  Vector3  g_local_origin;
