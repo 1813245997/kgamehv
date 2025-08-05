@@ -39,7 +39,7 @@ namespace game
 		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
 
 		// 玩家数据访问
-		bool get_player_data(kcsgo2struct::CPlayer* out_array, int* out_actual_count);
+		bool get_player_data(kcsgo2struct::CPlayer* out_array);
 		void set_player_data(const kcsgo2struct::CPlayer* player_array, int count);
 		void reset_player_data();
 		void initialize_player_data_lock();

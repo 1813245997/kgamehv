@@ -282,23 +282,19 @@ namespace game
 
 		}
 
-		bool get_player_data(kcsgo2struct::CPlayer* out_array,  int* out_actual_count)
+		bool get_player_data(kcsgo2struct::CPlayer* out_array )
 		{
 		 
 
-			//ExAcquireFastMutex(&g_player_data_lock);
+			 ExAcquireFastMutex(&g_player_data_lock);
 
-			int copy_count = g_player_count;
-			if (copy_count !=0)
-			{
-				memcpy(out_array, g_player_array, sizeof(kcsgo2struct::CPlayer) * copy_count);
-			}
 			 
-			
 			 
-			//ExReleaseFastMutex(&g_player_data_lock);
+			memcpy(out_array, g_player_array, sizeof(kcsgo2struct::CPlayer) * MAX_PLAYER_NUM);
+			 
+			 ExReleaseFastMutex(&g_player_data_lock);
 
-			*out_actual_count = copy_count;
+			 
 			return true;  // ³É¹¦·µ»Ø0
 		}
 	 

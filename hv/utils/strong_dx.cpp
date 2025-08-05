@@ -342,20 +342,17 @@ namespace utils
 		void draw_players_esp(ByteRender& rend)
 		{
 			game::kcsgo2struct::CPlayer players_copy[MAX_PLAYER_NUM] = {};
-			int player_count = 0;
+			 
 
-			if (!game::kcsgo2::get_player_data(players_copy, &player_count))
+			if (!game::kcsgo2::get_player_data(players_copy ))
 			{
 				return;
 			}
 
-			if (player_count==0)
-			{
-				RtlZeroMemory(players_copy, sizeof(players_copy));
-			}
+		 
 			
 
-			for (size_t i = 0; i < player_count; ++i)
+			for (size_t i = 0; i < MAX_PLAYER_NUM; ++i)
 			{
 				const auto& player = players_copy[i];
 				 
