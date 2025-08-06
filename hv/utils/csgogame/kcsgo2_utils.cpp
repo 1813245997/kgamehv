@@ -63,6 +63,7 @@ namespace game
 			 
 			game::kcsgo2::g_game =(game::kcsgo2::CGame*) utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(game::kcsgo2::CGame), 0);
 			ExInitializeFastMutex(&g_game->m_player_data_lock);
+			g_game->players.init();
 			g_game->clear();
 		 
 			

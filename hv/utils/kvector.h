@@ -6,12 +6,21 @@ namespace utils {
 	class kvector
 	{
 	public:
-		kvector() : m_data(nullptr), m_size(0), m_capacity(0) {}
+
+
+		kvector() : m_data(nullptr), m_size(0), m_capacity(0), m_valid(false) {}
 
 		~kvector() {
 			clear();
 		}
 
+
+		void init() {
+			m_data = nullptr;
+			m_size = 0;
+			m_capacity = 0;
+			m_valid = false;
+		}
 		bool push_back(const T& value) {
 			if (m_size >= m_capacity) {
 				if (!grow()) return false;
@@ -37,11 +46,12 @@ namespace utils {
 		}
 
 		void clear() {
-			if (m_data) {
+			if (m_data&& m_valid) {
 				ExFreePool(m_data);
 				m_data = nullptr;
 				m_size = 0;
 				m_capacity = 0;
+				 
 			}
 		}
 
@@ -74,6 +84,7 @@ namespace utils {
 			RtlCopyMemory(m_data, first, count * sizeof(T));
 			m_size = count;
 			m_capacity = count;
+			m_valid = true;
 			return true;
 		}
 
@@ -90,13 +101,15 @@ namespace utils {
 
 			m_data = new_data;
 			m_capacity = new_capacity;
+			m_valid = true;
 			return true;
 		}
 
 	private:
 		T* m_data;
-		size_t m_size;
-		size_t m_capacity;
+		size_t m_size{};
+		size_t m_capacity{};
+		bool m_valid{};
 	};
 
 }
