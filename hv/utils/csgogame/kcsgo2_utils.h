@@ -46,6 +46,7 @@ namespace game
 			HANDLE  m_game_handle{};
 			POINT  m_game_size{};
 			RECT   m_game_bounds{};
+			PVOID m_user_buffer{};
 			ProcessModule m_base_client{};
 			ProcessModule m_base_engine{};
 			uintptr_t m_buildNumber{};
@@ -58,6 +59,7 @@ namespace game
 			utils::kvector< kcsgo2struct::CPlayer> players = {};
 			FAST_MUTEX m_player_data_lock;
 			bool m_cheat_update{};
+
 		private:
 			uintptr_t entity_list;
 			uintptr_t localPlayer;

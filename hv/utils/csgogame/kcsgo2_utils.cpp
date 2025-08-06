@@ -10,7 +10,7 @@ namespace game
 	 
 		 
 	
-		PVOID g_user_buffer{};
+		 
 	
 
 		bool CGame::init(_In_ PEPROCESS process)
@@ -80,6 +80,7 @@ namespace game
 			m_game_process = nullptr;
 			m_game_pid = nullptr;
 			m_game_handle = nullptr;
+			m_user_buffer = nullptr;
 
 			// 清空基础结构体
 			m_game_size = { 0, 0 };
@@ -110,9 +111,9 @@ namespace game
 			BOOL is_success = FALSE;
 			unsigned long long get_window_rect_fun = utils::dwm_draw::g_get_window_rect_fun;
 
-			if (!g_user_buffer)
+			if (!m_user_buffer)
 			{
-				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
+				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&m_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
 				{
 					return false;
 				}
@@ -124,7 +125,7 @@ namespace game
 			}
 			
 			// 假设 RECT 在用户空间的偏移地址
-			unsigned long long rect_ptr = reinterpret_cast<unsigned long long>(g_user_buffer) + 0x500;
+			unsigned long long rect_ptr = reinterpret_cast<unsigned long long>(m_user_buffer) + 0x500;
 
 			unsigned long long result_ptr = utils::user_call::call(
 				get_window_rect_fun,
@@ -167,17 +168,17 @@ namespace game
 		{
 			 
 			HANDLE handle{};
-			if (!g_user_buffer)
+			if (!m_user_buffer)
 			{
-				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&g_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
+				if (!NT_SUCCESS(utils::memory::allocate_user_memory(&m_user_buffer, 0x1000, PAGE_READWRITE, true, false)))
 				{
 					return nullptr;
 				}
 			}
 
 			// 固定偏移，确保不重叠
-			PVOID class_name_ptr = reinterpret_cast<PBYTE>(g_user_buffer) + 0x100;
-			PVOID window_name_ptr = reinterpret_cast<PBYTE>(g_user_buffer) + 0x300;
+			PVOID class_name_ptr = reinterpret_cast<PBYTE>(m_user_buffer) + 0x100;
+			PVOID window_name_ptr = reinterpret_cast<PBYTE>(m_user_buffer) + 0x300;
 
 			// 第一次尝试："Counter-Strike 2"
 			const wchar_t* k_class_name = L"SDL_app";
@@ -204,7 +205,7 @@ namespace game
 				 handle =   reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				 if (handle)
 				 {
-					 RtlZeroMemory(g_user_buffer, 0X1000);
+					 RtlZeroMemory(m_user_buffer, 0X1000);
 					 // utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
 					  //g_user_buffer = nullptr;
 					 return handle;
@@ -230,7 +231,7 @@ namespace game
 				handle = reinterpret_cast<HANDLE>(*reinterpret_cast<PULONG64>(result_ptr));
 				if (handle)
 				{
-					RtlZeroMemory(g_user_buffer, 0X1000);
+					RtlZeroMemory(m_user_buffer, 0X1000);
 					//utils::memory::free_user_memory(utils::internal_functions::pfn_ps_get_current_process_id(), g_user_buffer, 0x1000, false);
 					//g_user_buffer = nullptr;
 					return handle;
