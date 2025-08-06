@@ -273,8 +273,9 @@ namespace hook_functions
 			   if (game::kcsgo2::g_game->m_game_process!=0&& game::kcsgo2::g_game->m_game_process == process)
 
 			   {
-				   game::kcsgo2::g_game->clear();
+				 
 				   utils::hook_utils::remove_user_exception_handler(process);
+				   game::kcsgo2::g_game->clear();
 			   }
 			   //if (process == utils::dwm_draw::g_dwm_process)
 			   //{
@@ -507,7 +508,7 @@ namespace hook_functions
 #if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
 
 
- 
+
 		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
 		   {
 			   game::kcsgo2::initialize_game_process(process);
@@ -521,7 +522,7 @@ namespace hook_functions
 			   game::kcsgo2::initialize_game_process3(process_id);
 		   }
 
-		 
+
 #endif  
 		 
 

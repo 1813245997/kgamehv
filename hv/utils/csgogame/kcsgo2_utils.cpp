@@ -16,7 +16,7 @@ namespace game
 		bool CGame::init(_In_ PEPROCESS process)
 		{
 
-
+			 
 
 			if (m_is_initialized)
 			{
@@ -24,7 +24,7 @@ namespace game
 			}
 
 
-
+		 
 			m_base_client = utils::module_info::get_module(process, L"client.dll");
 			m_base_engine = utils::module_info::get_module(process, L"engine2.dll");
 
@@ -39,7 +39,7 @@ namespace game
 
 			if (g_game->m_buildNumber != updater::offsets::build_number)
 			{
-
+				m_cheat_update = true;
 				return false;
 			}
 
@@ -62,9 +62,10 @@ namespace game
 		{
 			 
 			game::kcsgo2::g_game =(game::kcsgo2::CGame*) utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(game::kcsgo2::CGame), 0);
-			
-			RtlZeroMemory(g_game, sizeof(game::kcsgo2::CGame));
 			ExInitializeFastMutex(&g_game->m_player_data_lock);
+			g_game->clear();
+		 
+			
 
 
 		}
@@ -73,13 +74,32 @@ namespace game
 		void CGame::clear()
 		{
 			m_is_initialized = false;
+
+			// 清空指针和句柄
 			m_game_process = nullptr;
 			m_game_pid = nullptr;
 			m_game_handle = nullptr;
-			//m_game_size = { 0, 0 };
+
+			// 清空基础结构体
+			m_game_size = { 0, 0 };
+			m_game_bounds = { 0, 0, 0, 0 };
 			m_base_client = {};
 			m_base_engine = {};
 			m_buildNumber = 0;
+
+			// 清空状态标志和临时数据
+			isC4Planted = false;
+			localTeam = 0;
+			localOrigin = {};
+			c4Origin={};
+			// 清空地址和矩阵数据
+			entity_list = 0;
+			localPlayer = 0;
+			localPlayerPawn = 0;
+			localpCSPlayerPawn = 0;
+			localList_entry2 = 0;
+			view_matrix = {};
+			m_cheat_update = false;
 			reset_player_data();
 
 		}
@@ -101,7 +121,7 @@ namespace game
 			{
 				return false;
 			}
-
+			
 			// 假设 RECT 在用户空间的偏移地址
 			unsigned long long rect_ptr = reinterpret_cast<unsigned long long>(g_user_buffer) + 0x500;
 
@@ -238,52 +258,91 @@ namespace game
 
 		bool CGame::get_player_data(utils::kvector<kcsgo2struct::CPlayer>* out_list)
 		{
-			if (!out_list) return false;
+			if (!out_list)
+				return false;
 
 			ExAcquireFastMutex(&m_player_data_lock);
+
+			if (players.empty())
+			{
+				ExReleaseFastMutex(&m_player_data_lock);
+				return false;
+			}
 
 			out_list->assign(players.begin(), players.end());
 
 			ExReleaseFastMutex(&m_player_data_lock);
-
 			return true;
 		}
 
-		bool CGame::world_to_screen(const Vector3* v, Vector3* out)
+		//bool CGame::world_to_screen(const Vector3* v, Vector3* out)
+		//{
+		//	matrix4x4_t  Pview = view_matrix;
+		//	Vector3  pos{};
+		//	pos.x = v->x;
+		//	pos.y = v->y;
+		//	pos.z = v->z;
+		//	Vector4 clipCoords;
+
+		//	// 计算裁剪坐标
+		//	clipCoords.x = pos.x * Pview[0] + pos.y * Pview[1] + pos.z * Pview[2] + Pview[3];
+		//	clipCoords.y = pos.x * Pview[4] + pos.y * Pview[5] + pos.z * Pview[6] + Pview[7];
+		//	clipCoords.z = pos.x * Pview[8] + pos.y * Pview[9] + pos.z * Pview[10] + Pview[11];
+		//	clipCoords.w = pos.x * Pview[12] + pos.y * Pview[13] + pos.z * Pview[14] + Pview[15];
+
+		//	// 如果 w 小于一个很小的值，返回 false
+		//	if (clipCoords.w < 0.01f)
+		//		return false;
+
+		//	// 计算 NDC（规范化设备坐标）
+		//	Vector3  NDC;
+		//	NDC.x = clipCoords.x / clipCoords.w;
+		//	NDC.y = clipCoords.y / clipCoords.w;
+		//	NDC.z = clipCoords.z / clipCoords.w;
+
+		//	// 计算最终屏幕坐标
+		//	out->x = (m_game_size.x / 2 * NDC.x) + (NDC.x + m_game_size.x / 2);
+		//	out->y = -(m_game_size.y / 2 * NDC.y) + (NDC.y + m_game_size.y / 2);
+		//	out->z = v->z;  // 保持原 z 坐标
+
+		//	if (out->x < 0 || out->x > m_game_size.x || out->y < 0 || out->y > m_game_size.y)
+		//		return false;
+
+		//	return true;
+		// 
+		//}
+
+		uintptr_t CC4::get_planted() {
+			return  utils::memory::read<uintptr_t>(utils::memory::read<uintptr_t>(game::kcsgo2::g_game->m_base_client.base + updater::offsets::dwPlantedC4));
+		}
+
+		uintptr_t CC4::get_node() {
+			return utils::memory::read<uintptr_t>(get_planted() + updater::offsets::m_pGameSceneNode);
+		}
+
+		Vector3 CC4::get_origin() {
+			return utils::memory::read<Vector3>(get_node() + updater::offsets::m_vecAbsOrigin);
+		}
+
+
+		Vector3 CGame::world_to_screen(Vector3* v)
 		{
-			matrix4x4_t  Pview = view_matrix;
-			Vector3  pos{};
-			pos.x = v->x;
-			pos.y = v->y;
-			pos.z = v->z;
-			Vector4 clipCoords;
+			float _x = view_matrix[0][0] * v->x + view_matrix[0][1] * v->y + view_matrix[0][2] * v->z + view_matrix[0][3];
+			float _y = view_matrix[1][0] * v->x + view_matrix[1][1] * v->y + view_matrix[1][2] * v->z + view_matrix[1][3];
 
-			// 计算裁剪坐标
-			clipCoords.x = pos.x * Pview[0] + pos.y * Pview[1] + pos.z * Pview[2] + Pview[3];
-			clipCoords.y = pos.x * Pview[4] + pos.y * Pview[5] + pos.z * Pview[6] + Pview[7];
-			clipCoords.z = pos.x * Pview[8] + pos.y * Pview[9] + pos.z * Pview[10] + Pview[11];
-			clipCoords.w = pos.x * Pview[12] + pos.y * Pview[13] + pos.z * Pview[14] + Pview[15];
+			float w = view_matrix[3][0] * v->x + view_matrix[3][1] * v->y + view_matrix[3][2] * v->z + view_matrix[3][3];
 
-			// 如果 w 小于一个很小的值，返回 false
-			if (clipCoords.w < 0.01f)
-				return false;
+			float inv_w = 1.f / w;
+			_x *= inv_w;
+			_y *= inv_w;
 
-			// 计算 NDC（规范化设备坐标）
-			Vector3  NDC;
-			NDC.x = clipCoords.x / clipCoords.w;
-			NDC.y = clipCoords.y / clipCoords.w;
-			NDC.z = clipCoords.z / clipCoords.w;
+			float x = m_game_bounds.right * .5f;
+			float y = m_game_bounds.bottom * .5f;
 
-			// 计算最终屏幕坐标
-			out->x = (m_game_size.x / 2 * NDC.x) + (NDC.x + m_game_size.x / 2);
-			out->y = -(m_game_size.y / 2 * NDC.y) + (NDC.y + m_game_size.y / 2);
-			out->z = v->z;  // 保持原 z 坐标
+			x += 0.5f * _x * m_game_bounds.right + 0.5f;
+			y -= 0.5f * _y * m_game_bounds.bottom + 0.5f;
 
-			if (out->x < 0 || out->x > m_game_size.x || out->y < 0 || out->y > m_game_size.y)
-				return false;
-
-			return true;
-		 
+			return { x, y, w };
 		}
 
 		bool CGame::is_in_bounds(const Vector3& pos)
@@ -300,6 +359,8 @@ namespace game
 
 		void CGame::loop()
 		{
+
+			 
 			if (!m_game_handle)
 			{
 				m_game_handle = find_cs2_window();
@@ -316,11 +377,8 @@ namespace game
 				}
 			}
 
-			if constexpr (updater::offsets::dwLocalPlayerController == 0x0)
-			{
-				return;
-			}
-
+		 
+			isC4Planted = false;
 
 			localPlayer =  utils::memory:: read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
 			if (!localPlayer)
@@ -347,7 +405,7 @@ namespace game
 			{
 				return;
 			}
-			view_matrix = utils::memory::read<matrix4x4_t>(m_base_client.base + updater::offsets::dwViewMatrix);
+			view_matrix = utils::memory::read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
 
 
 			localTeam = utils::memory::read<int>(localPlayer + updater::offsets::m_iTeamNum);
@@ -361,6 +419,13 @@ namespace game
 			kcsgo2struct::CPlayer player{};
 			uintptr_t list_entry,list_entry2, playerPawn, playerMoneyServices, clippingWeapon, weaponData ;
 
+			 
+			if (isC4Planted)
+			{
+				c4Origin = game::kcsgo2::g_game->c4.get_origin();
+
+			}
+		 
 
 			while (true)
 			{
@@ -440,7 +505,7 @@ namespace game
 				{
 					player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
 					player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
-					player.ReadBones(& view_matrix, m_game_size);
+					player.ReadBones((matrix4x4_t*) & view_matrix, m_game_size);
 				}
 			
 				//if (config::show_head_tracker && !config::show_skeleton_esp) {

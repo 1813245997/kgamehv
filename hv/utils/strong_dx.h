@@ -26,6 +26,7 @@ namespace utils
 		bool is_user_stack_in_dxgi_range();
 		bool is_user_rsp_ptr();
 		bool is_user_stack_in_dxgi_range();
+		void draw_update_required_notice(ByteRender& rend);
 		void draw_players_esp(ByteRender& rend);
 	}
  

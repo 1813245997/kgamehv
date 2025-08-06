@@ -29,7 +29,7 @@ namespace config
 	inline ColorToggle show_skeleton_esp;      // 显示玩家骨骼
 	inline ColorToggle show_team_esp;          // 显示自己团队的透视
 	inline ColorToggle ShowDistance;           // 显示玩家与本地玩家的距离
-	inline ColorToggle ShowName;               // 显示玩家名称
+	inline ColorToggle show_name;               // 显示玩家名称
 	inline ColorToggle ShowXianshiWuQi;        // 显示武器的配置
 	inline ColorToggle ShowC4ESP;              // 显示C4相关的信息（新添加的功能）
 	inline ColorToggle show_head_tracker;		   // 显示头部跟踪器

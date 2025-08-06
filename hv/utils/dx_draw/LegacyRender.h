@@ -28,6 +28,8 @@ private:
 	bool align;
 	uint32_t* Arr;
 
+
+
 	int OddNumber(int val);
 
 	int EvenNumber(int val);
@@ -50,6 +52,8 @@ public:
 		Arr = (uint32_t*)pixelsArr;
 		align = true;
 	}
+	int GetScreenWidth() const { return w; }
+	int GetScreenHeight() const { return h; }
 
 	int DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const FColor& Color);
 	

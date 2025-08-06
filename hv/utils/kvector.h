@@ -32,6 +32,10 @@ namespace utils {
 			return m_size;
 		}
 
+		bool empty() const {
+			return m_size == 0;
+		}
+
 		void clear() {
 			if (m_data) {
 				ExFreePool(m_data);

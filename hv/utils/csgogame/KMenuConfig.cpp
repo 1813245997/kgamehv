@@ -13,7 +13,7 @@ void config::initialize_visual_config_once()
 	config::show_skeleton_esp.enabled = true;
 	config::show_team_esp.enabled = false;
 	config::ShowDistance.enabled = true;
-	config::ShowName.enabled = true;
+	config::show_name.enabled = true;
 	config::ShowXianshiWuQi.enabled = true;
 	config::ShowC4ESP.enabled = true;
 	config::show_head_tracker.enabled = true;
@@ -38,9 +38,9 @@ void config::initialize_visual_config_once()
 	
 
 	// 名字颜色 (白色)
-	config::ShowName.color[0] = 255.0f;
-	config::ShowName.color[1] = 255.0f;
-	config::ShowName.color[2] = 255.0f;
+	config::show_name.color[0] = 255.0f;
+	config::show_name.color[1] = 255.0f;
+	config::show_name.color[2] = 255.0f;
 
 	// C4颜色 (深红)
 	config::ShowC4ESP.color[0] = 175.0f;

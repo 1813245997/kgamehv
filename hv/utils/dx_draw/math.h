@@ -377,8 +377,14 @@ struct Vector2
 //};
 //
 
- 
 
+struct view_matrix_t {
+	float* operator[ ](int index) {
+		return matrix[index];
+	}
+
+	float matrix[4][4];
+};
 // 4x4 ¾ØÕó
 struct matrix4x4_t {
 	float view[16];

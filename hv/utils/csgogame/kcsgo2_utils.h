@@ -14,7 +14,14 @@ namespace game
 		 
 		void initialize_player_data_lock();
 
-
+		class CC4 {
+		public:
+			uintptr_t get_planted();
+			uintptr_t get_node();
+			Vector3 get_origin();
+		public:
+			
+		};
 		class  CGame
 		{
 		public:
@@ -23,7 +30,8 @@ namespace game
 			void loop();
 
 			bool CGame::get_player_data(utils::kvector<kcsgo2struct::CPlayer>* out_list);
-			bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3* out);
+		//	bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3* out);
+			Vector3 world_to_screen(Vector3* v);//ÐÂµÄ
 			bool is_in_bounds(const Vector3& pos );
 		private:
 			HANDLE find_cs2_window();
@@ -44,9 +52,12 @@ namespace game
 			bool m_is_initialized{};
 			bool isC4Planted;
 			int localTeam;
+			CC4 c4;
+			Vector3 c4Origin;
 			Vector3 localOrigin;
 			utils::kvector< kcsgo2struct::CPlayer> players = {};
 			FAST_MUTEX m_player_data_lock;
+			bool m_cheat_update{};
 		private:
 			uintptr_t entity_list;
 			uintptr_t localPlayer;
@@ -54,7 +65,8 @@ namespace game
 			uintptr_t localpCSPlayerPawn;
 			uintptr_t localList_entry2;
 
-			matrix4x4_t  view_matrix;
+			view_matrix_t  view_matrix;
+			//matrix4x4_t  view_matrix;
 		};
 		inline CGame *g_game;
 

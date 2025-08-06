@@ -5,7 +5,7 @@ namespace updater {
 	namespace offsets
 	{
 		// Global offsets
-		inline constexpr int build_number = 14092;
+		inline constexpr int build_number = 14094;
 		inline constexpr int dwBuildNumber = 6001860;
 		inline constexpr int dwEntityList = 30139936;
 		inline constexpr int dwLocalPlayer = 28265344;
