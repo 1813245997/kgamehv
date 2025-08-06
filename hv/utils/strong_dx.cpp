@@ -336,10 +336,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-		/*	if (utils::auth::is_license_expired())
+			if (utils::auth::is_license_expired())
 			{
 				return;
-			}*/
+			}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -354,7 +354,7 @@ namespace utils
 			int radius = 5;
 			FColor color = FColor(__rdtsc());
 			rend.FillCircle(circle_center, color, radius);
-			rend.StringA(g_Font, { 100, 200 }, "https://github.com/cs1ime", PM_XRGB(255, 0, 0));
+			 
 
 			 
 			// === ªÊ÷∆ ESP œ‡πÿ ===
