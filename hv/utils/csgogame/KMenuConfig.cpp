@@ -32,9 +32,10 @@ void config::initialize_visual_config_once()
 	config::show_box_esp.color[2] = 0.0f;
 
 	// 骨骼颜色 (黄色)
-	config::show_skeleton_esp.color[0] = 0.0f;
+	config::show_skeleton_esp.color[0] = 255.0f;
 	config::show_skeleton_esp.color[1] = 255.0f;
-	config::show_skeleton_esp.color[2] = 255.0f;
+	config::show_skeleton_esp.color[2] = 0.0f;
+	
 
 	// 名字颜色 (白色)
 	config::ShowName.color[0] = 255.0f;
@@ -52,9 +53,9 @@ void config::initialize_visual_config_once()
 	config::ShowXianshiWuQi.color[2] = 0.0f;
 
 	// 头部颜色 (红)
-	config::show_head_tracker.color[0] = 51.0f;   // 蓝色
+	config::show_head_tracker.color[0] = 255.0f;  // 红色
 	config::show_head_tracker.color[1] = 51.0f;   // 绿色
-	config::show_head_tracker.color[2] = 255.0f;  // 红色
+	config::show_head_tracker.color[2] = 51.0f;   // 蓝色
 
 	// 血量颜色 (红)
 	config::show_health_bar.color[0] = 255.0f;

@@ -25,9 +25,9 @@ float floorf(float a) {
 
 __forceinline FColor::FColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A)
 {
-	RGBA[0] = R;
+	RGBA[0] = B;
 	RGBA[1] = G;
-	RGBA[2] = B;
+	RGBA[2] = R;
 	RGBA[3] = A;
 }
 

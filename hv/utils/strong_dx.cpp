@@ -336,10 +336,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
-			{
-				return;
-			}
+				if (utils::auth::is_license_expired())
+				{
+					return;
+				}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -347,12 +347,11 @@ namespace utils
 			
 			ByteRender rend;
 			rend.Setup(width, height, data);
-			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
-			 
+
 			int margin = 10;
 			Vector2 circle_center = { static_cast<float>(width - margin), static_cast<float>(margin) };
 			int radius = 5;
-			FColor color = FColor(__rdtsc());
+			FColor color = FColor(255, 0, 0);
 			rend.FillCircle(circle_center, color, radius);
 			 
 
@@ -532,9 +531,9 @@ namespace utils
 
 					// 血量填充条（颜色渐变，红->绿）
 					FColor health_color(
-						0,
+						static_cast<uint8_t>(255 * (1.0f - player.health / 100.0f)) ,  // 红色随血量降低增加
 						static_cast<uint8_t>(255 * (player.health / 100.0f)),         // 绿色随血量升高增加
-						static_cast<uint8_t>(255 * (1.0f - player.health / 100.0f))   // 红色随血量降低增加
+						0
 					);
 
 					rend.Rectangle(
@@ -561,9 +560,9 @@ namespace utils
 						screenHead.y + 10,
 						utils::string_utils::concat_strings_no_alloc(health_str, "hp", sizeof(health_str)),
 						FColor(
-							75,
+							(255 - player.health),
 							(55 + player.health * 2),
-							(255 - player.health))
+							75)
 					);
 
 				  
@@ -581,9 +580,9 @@ namespace utils
 						screenHead.y + 20,
 						utils::string_utils::concat_strings_no_alloc(armor_str, "armor", sizeof(armor_str)),
 						FColor(
-							(255 - player.armor),
+							75,
 							(55 + player.armor * 2),
-							75
+							(255 - player.armor)
 						)
 					);
 					 
