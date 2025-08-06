@@ -742,6 +742,11 @@ extern "C"
 		 ULONGLONG DirectoryTableBase;
 	 };
 
+	 struct ProcessModule
+	 {
+		 uintptr_t base, size;
+	 };
+
 }
 
 extern "C"

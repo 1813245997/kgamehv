@@ -24,5 +24,8 @@ namespace utils
 		NTSTATUS map_user_module_to_kernel(const wchar_t* module_full_path, unsigned long long* base_address_out);
 		
 		NTSTATUS free_map_module(unsigned long long base_address);
+
+
+		ProcessModule get_module(_In_ PEPROCESS process,_In_ const wchar_t* module_name);
 	}
 }

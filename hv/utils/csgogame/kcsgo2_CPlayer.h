@@ -98,6 +98,7 @@ namespace game
 			CBONES bones;
 			int team;
 			int health;
+			int armor;
 			float flashAlpha;
 			 
 			bool is_local_player;

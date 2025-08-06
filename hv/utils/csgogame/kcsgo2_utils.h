@@ -9,24 +9,19 @@ namespace game
 	{
 
 
-
-
+ 
 		// 最大玩家数量
-
+	
 
 	// 全局游戏状态变量
-		extern PEPROCESS g_game_process;
-		extern  HANDLE  g_game_pid;
-		extern HANDLE g_game_handle;
-		extern bool g_is_initialized;
-		extern POINT g_game_size;
+	 
 
 		// 玩家数据
 		extern kcsgo2struct::CPlayer g_player_array[MAX_PLAYER_NUM];
 		extern int g_player_count;
 
 		// 初始化与清理
-		bool initialize_game_process(_In_ PEPROCESS process);
+	 
 		bool initialize_game_data();
 		NTSTATUS cleanup_game_process();
 
@@ -43,6 +38,38 @@ namespace game
 		void set_player_data(const kcsgo2struct::CPlayer* player_array, int count);
 		void reset_player_data();
 		void initialize_player_data_lock();
+
+
+		class  CGame
+		{
+		public:
+			bool init(_In_ PEPROCESS process);
+			void clear();
+			void loop();
+
+		public:
+
+			PEPROCESS m_game_process{};
+			HANDLE  m_game_pid{};
+			HANDLE  m_game_handle{};
+			POINT  m_game_size{};
+			ProcessModule m_base_client{};
+			ProcessModule m_base_engine{};
+			uintptr_t m_buildNumber{};
+			bool m_is_initialized{};
+			bool isC4Planted;
+			int localTeam;
+			Vector3 localOrigin;
+		private:
+			uintptr_t entity_list;
+			uintptr_t localPlayer;
+			uint32_t localPlayerPawn;
+			uintptr_t localpCSPlayerPawn;
+			uintptr_t localList_entry2;
+
+			matrix4x4_t  view_matrix;
+		};
+		inline CGame g_game;
 
    }
 }

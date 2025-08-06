@@ -526,7 +526,9 @@ namespace hook_functions
 #endif  
 		 
 
-	     game::kcsgo2::initialize_game_process(process);
+		   game ::kcsgo2:: g_game.init(process);
+		  
+	     
 
 		  return original_nt_create_section(
 			  section_handle,
@@ -1337,7 +1339,7 @@ namespace hook_functions
 		// 初始化游戏数据
 		  game::kcsgo2::initialize_game_data();
 		  
-		 // 引用计数减少（当前 hook 执行完毕）
+	
 		  
 
 			 

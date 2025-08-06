@@ -7,105 +7,20 @@ namespace game
 {
 	namespace kcsgo2
 	{
-		PEPROCESS g_game_process{};
-		HANDLE  g_game_pid{};
-		bool g_is_initialized{};
+	 
+		 
+	
 		PVOID g_user_buffer{};
-		HANDLE  g_game_handle{};
-		POINT  g_game_size{};
+	
 		FAST_MUTEX g_player_data_lock;
 		int g_player_count = 0;
 		kcsgo2struct::CPlayer g_player_array[MAX_PLAYER_NUM] = {};
 
-		bool initialize_game_process(_In_ PEPROCESS process)
-		{
-  
-			if (g_is_initialized)
-			{
-				return true;
-			}
 
  
-			unsigned long long client_base = 0;
-			unsigned long long client_size = 0;
-			 
-
-			NTSTATUS status = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
-			 
-
-			if (!NT_SUCCESS(status)  )
-			{
-			 
-				return false;
-			}
-
-			if (client_base == 0 || client_size == 0  )
-			{
-			 
-				return false;
-			}
 		 
+	 
  
-			unsigned  long long get_hp_fun = client_base + cs2SDK::offsets::m_hook_offset;
-			utils::hook_utils::hook_user_exception_handler(
-				process,
-				reinterpret_cast<PVOID>(get_hp_fun),
-				hook_functions::new_get_csgo_hp,
-				false
-
-
-			);
-			g_game_pid = utils::internal_functions::pfn_ps_get_process_id(process);
-			g_game_process = process;
-			g_is_initialized = true;
-
-
-			return true;
-
-
-		}
-
- 
-	 
-
-		NTSTATUS cleanup_game_process( )
-		{ 
-			 
-			// 清理进程相关
-			g_game_process = nullptr;
-			g_game_handle = 0;
-
-			 
-			// 清理用户缓冲区
-			g_user_buffer = nullptr;
-			  
-			// 清空玩家信息
-			reset_player_data();
-
-			// 清理初始化状态与时间戳
-			g_is_initialized = false;
-	 
-
-			return STATUS_SUCCESS;
-		}
-
-	 
-
-		bool is_game_process(_In_ PEPROCESS process)
-		{
-			 if (!process)
-			 {
-				 return false;
-			 }
-
-			 if (process != g_game_process)
-			 {
-				 return false;
-			 }
-
-			 return true;
-
-		}
 		 
 
 		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size)
@@ -161,10 +76,7 @@ namespace game
 			return is_success ? true : false;
 
 		}
-		bool is_initialize_game()
-		{
-			return g_is_initialized;
-		}
+		 
 
 	  
 
@@ -308,203 +220,170 @@ namespace game
 		}
 		bool initialize_game_data()
 		{
-			if (!g_game_handle)
-			{
-				g_game_handle = find_cs2_window();
-
-				if (!g_game_handle)
-				{
-					return false;
-				}
-
-				if (!get_cs2_window_info(g_game_handle, &g_game_size))
-				if (!g_game_handle)
-				{
-						return false;
-				}
-			}
-
-			unsigned long long client_base = 0;
-			unsigned long long client_size = 0;
-			unsigned long long engine2_base = 0;
-			unsigned long long engine2_size = 0;
-
-			PEPROCESS process = utils::internal_functions::pfn_ps_get_current_process();
-			NTSTATUS status1 = utils::module_info::get_process_module_info(process, L"client.dll", &client_base, &client_size);
-			NTSTATUS status2 = utils::module_info::get_process_module_info(process, L"engine2.dll", &engine2_base, &engine2_size);
+		
 
 
-			if (!NT_SUCCESS(status1) || !NT_SUCCESS(status2)) {
-
-				return false;
-			}
-
-			if (client_base == 0 || client_size == 0)
-			{
-				return false;
-			}
-
-			if (engine2_base == 0 || engine2_size == 0)
-			{
-				return false;
-			}
-
-			int local_team = 0;
-
-			uintptr_t local_pawn_addr = client_base + cs2SDK::offsets::dwLocalPlayerPawn;
-			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
-			{
-				return false;
-			}
-
-			memcpy(&kcsgo2data::g_local_pcsplayer_pawn, reinterpret_cast<void*>(local_pawn_addr), sizeof(kcsgo2data::g_local_pcsplayer_pawn));
-			if (!kcsgo2data::g_local_pcsplayer_pawn)
-			{
-				 
-				return false;
-			}
-			 
-			void* view_matrix_addr = reinterpret_cast<void*>(client_base + cs2SDK::offsets::dwViewMatrix);
-			if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
-			{
-				memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
-			}
-
-			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_local_pcsplayer_pawn)))
-			{
-				return false;
-			}
-			kcsgo2data::g_entity_list = client_base + cs2SDK::offsets::m_offestPlayerArray;
-			if (!kcsgo2data::g_entity_list)
-			{
-				return false;
-
-
-			}
-
-			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_entity_list)))
-			{
-				return false;
-			}
-
-
-			int health = 0;
-			if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth)))
-			{
-
-				memcpy(&health, reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth), sizeof(int));
-			}
-
-
-			// 获取本地玩家血量与队伍
-			if (health > 0 && health <= 100)
-			{
-				void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iTeamNum);
-				if (utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
-				{
-					memcpy(&local_team, team_addr, sizeof(int));
-				}
-			}
-
-			// 更新 local 原点坐标
-			void* origin_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
-			if (utils::internal_functions::pfn_mm_is_address_valid_ex(origin_addr))
-			{
-				memcpy(&kcsgo2data::g_local_origin, origin_addr, sizeof(Vector3));
-			}
-
-
-			// 采集玩家数据临时数组
-			kcsgo2struct::CPlayer temp_array[60]{};
-			int temp_count = 0;
-
-			for (size_t i = 0; i < 60; ++i)
-			{
-				uintptr_t player_pawn = 0;
-				void* pawn_ptr = reinterpret_cast<void*>(kcsgo2data::g_entity_list + i * sizeof(uintptr_t));
+		
 
 
 
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(pawn_ptr))
-				{
-					continue;
-				}
 
-				memcpy(&player_pawn, pawn_ptr, sizeof(uintptr_t));
+			//int local_team = 0;
 
-				if (!player_pawn || player_pawn == kcsgo2data::g_local_pcsplayer_pawn)
-				{
-					continue;
-				}
+			//uintptr_t local_pawn_addr = client_base + cs2SDK::offsets::dwLocalPlayerPawn;
+			//if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(local_pawn_addr)))
+			//{
+			//	return false;
+			//}
 
-				int team = 0;
-				void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iTeamNum);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
-				{
-					continue;
-				}
-				memcpy(&team, team_addr, sizeof(int));
-				if (team == local_team)
-				{
-					continue;
-				}
+			//memcpy(&kcsgo2data::g_local_pcsplayer_pawn, reinterpret_cast<void*>(local_pawn_addr), sizeof(kcsgo2data::g_local_pcsplayer_pawn));
+			//if (!kcsgo2data::g_local_pcsplayer_pawn)
+			//{
+			//	 
+			//	return false;
+			//}
+			// 
+			//void* view_matrix_addr = reinterpret_cast<void*>(client_base + cs2SDK::offsets::dwViewMatrix);
+			//if (utils::internal_functions::pfn_mm_is_address_valid_ex(view_matrix_addr))
+			//{
+			//	memcpy(&kcsgo2data::g_view_matrix, view_matrix_addr, sizeof(matrix4x4_t));
+			//}
 
-				void* target_health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(target_health_addr))
-				{
-					continue;
-				}
-				memcpy(&health, target_health_addr, sizeof(int));
-				if (health <= 0 || health > 100)
-				{
-					continue;
-				}
+			//if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_local_pcsplayer_pawn)))
+			//{
+			//	return false;
+			//}
+			//kcsgo2data::g_entity_list = client_base + cs2SDK::offsets::m_offestPlayerArray;
+			//if (!kcsgo2data::g_entity_list)
+			//{
+			//	return false;
 
 
+			//}
 
-				kcsgo2struct::CPlayer& player = temp_array[temp_count];
-				player.pCSPlayerPawn = player_pawn;
-				player.team = team;
-				player.health = health;
-
-				player.is_local_player = false;
-
-				// 读取 origin
-				void* tagorigin_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(tagorigin_addr))
-				{
-					continue;
-				}
-				memcpy(&player.origin, tagorigin_addr, sizeof(Vector3));
-				player.head = { player.origin.x, player.origin.y, player.origin.z + 70.f };
-
-				// 读取 scene node
-				void* scene_node_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_pGameSceneNode);
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(scene_node_addr))
-				{
-					continue;
-				}
-				memcpy(&player.gameSceneNode, scene_node_addr, sizeof(uintptr_t));
+			//if (!utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<PVOID> (kcsgo2data::g_entity_list)))
+			//{
+			//	return false;
+			//}
 
 
-				// 显示玩家骨骼
-				if (KMenuConfig::ShowBone.enabled)
-				{
-					void* bone_array_addr_ptr = reinterpret_cast<void*>(player.gameSceneNode + cs2SDK::offsets::m_OoffsetBone);
-					if (utils::internal_functions::pfn_mm_is_address_valid_ex(bone_array_addr_ptr))
-					{
-						memcpy(&player.boneArray, bone_array_addr_ptr, sizeof(uint64_t));
-						player.ReadBones(&game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size);
-					}
+			//int health = 0;
+			//if (utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth)))
+			//{
+
+			//	memcpy(&health, reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iHealth), sizeof(int));
+			//}
 
 
-				}
-				 
-				temp_count++;
-			}
+			//// 获取本地玩家血量与队伍
+			//if (health > 0 && health <= 100)
+			//{
+			//	void* team_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_iTeamNum);
+			//	if (utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
+			//	{
+			//		memcpy(&local_team, team_addr, sizeof(int));
+			//	}
+			//}
+
+			//// 更新 local 原点坐标
+			//void* origin_addr = reinterpret_cast<void*>(kcsgo2data::g_local_pcsplayer_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
+			//if (utils::internal_functions::pfn_mm_is_address_valid_ex(origin_addr))
+			//{
+			//	memcpy(&kcsgo2data::g_local_origin, origin_addr, sizeof(Vector3));
+			//}
+
+
+			//// 采集玩家数据临时数组
+			//kcsgo2struct::CPlayer temp_array[60]{};
+			//int temp_count = 0;
+
+			//for (size_t i = 0; i < 60; ++i)
+			//{
+			//	uintptr_t player_pawn = 0;
+			//	void* pawn_ptr = reinterpret_cast<void*>(kcsgo2data::g_entity_list + i * sizeof(uintptr_t));
+
+
+
+			//	if (!utils::internal_functions::pfn_mm_is_address_valid_ex(pawn_ptr))
+			//	{
+			//		continue;
+			//	}
+
+			//	memcpy(&player_pawn, pawn_ptr, sizeof(uintptr_t));
+
+			//	if (!player_pawn || player_pawn == kcsgo2data::g_local_pcsplayer_pawn)
+			//	{
+			//		continue;
+			//	}
+
+			//	int team = 0;
+			//	void* team_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iTeamNum);
+			//	if (!utils::internal_functions::pfn_mm_is_address_valid_ex(team_addr))
+			//	{
+			//		continue;
+			//	}
+			//	memcpy(&team, team_addr, sizeof(int));
+			//	if (team == local_team)
+			//	{
+			//		continue;
+			//	}
+
+			//	void* target_health_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_iHealth);
+			//	if (!utils::internal_functions::pfn_mm_is_address_valid_ex(target_health_addr))
+			//	{
+			//		continue;
+			//	}
+			//	memcpy(&health, target_health_addr, sizeof(int));
+			//	if (health <= 0 || health > 100)
+			//	{
+			//		continue;
+			//	}
+
+
+
+			//	kcsgo2struct::CPlayer& player = temp_array[temp_count];
+			//	player.pCSPlayerPawn = player_pawn;
+			//	player.team = team;
+			//	player.health = health;
+
+			//	player.is_local_player = false;
+
+			//	// 读取 origin
+			//	void* tagorigin_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_vLastSlopeCheckPos);
+			//	if (!utils::internal_functions::pfn_mm_is_address_valid_ex(tagorigin_addr))
+			//	{
+			//		continue;
+			//	}
+			//	memcpy(&player.origin, tagorigin_addr, sizeof(Vector3));
+			//	player.head = { player.origin.x, player.origin.y, player.origin.z + 70.f };
+
+			//	// 读取 scene node
+			//	void* scene_node_addr = reinterpret_cast<void*>(player_pawn + cs2SDK::offsets::m_pGameSceneNode);
+			//	if (!utils::internal_functions::pfn_mm_is_address_valid_ex(scene_node_addr))
+			//	{
+			//		continue;
+			//	}
+			//	memcpy(&player.gameSceneNode, scene_node_addr, sizeof(uintptr_t));
+
+
+			//	// 显示玩家骨骼
+			//	if (KMenuConfig::ShowBone.enabled)
+			//	{
+			//		void* bone_array_addr_ptr = reinterpret_cast<void*>(player.gameSceneNode + cs2SDK::offsets::m_OoffsetBone);
+			//		if (utils::internal_functions::pfn_mm_is_address_valid_ex(bone_array_addr_ptr))
+			//		{
+			//			memcpy(&player.boneArray, bone_array_addr_ptr, sizeof(uint64_t));
+			//			player.ReadBones(&game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size);
+			//		}
+
+
+			//	}
+			//	 
+			//	temp_count++;
+			//}
 
 			// 提交玩家数据
-			set_player_data(temp_array, temp_count);
+			//set_player_data(temp_array, temp_count);
 
 			return true;
 
@@ -513,7 +392,224 @@ namespace game
  
  
 
-	}
+
+		bool CGame::init(_In_ PEPROCESS process)
+		{
+
+
+		
+			if (m_is_initialized)
+			{
+				return true;
+			}
+
+		 
+
+			m_base_client = utils::module_info::get_module(process, L"client.dll");
+			m_base_engine = utils::module_info::get_module(process, L"engine2.dll");
+			 
+			if (m_base_client.base == 0 || m_base_engine.base == 0)
+			{
+				return false;
+			}
+			  
+		
+
+		
+			if (!m_game_handle)
+			{
+				m_game_handle = find_cs2_window();
+
+				if (!m_game_handle)
+				{
+					return false;
+				}
+
+				if (!get_cs2_window_info(m_game_handle, &m_game_size))
+				 
+				{
+						return false;
+				}
+			}
+
+			m_buildNumber =  utils::memory:: read<uintptr_t>(m_base_engine.base + updater::offsets::dwBuildNumber);
+			 
+			if (g_game.m_buildNumber != updater::offsets::build_number)
+			{
+
+				return false;
+			}
+
+			m_game_pid = utils::internal_functions::pfn_ps_get_process_id(process);
+			m_game_process = process;
+			unsigned  long long get_hp_fun = m_base_client.base + updater::offsets::m_hook_offset;
+			utils::hook_utils::hook_user_exception_handler(
+				process,
+				reinterpret_cast<PVOID>(get_hp_fun),
+				hook_functions::new_get_csgo_hp,
+				false
+
+
+			);
+			m_is_initialized = true;
+		
+			return true;
+		}
+
+
+		void CGame::clear()
+		{
+			m_is_initialized = false;
+			m_game_process = nullptr;
+			m_game_pid = nullptr;
+			m_game_handle = nullptr;
+			//m_game_size = { 0, 0 };
+			m_base_client = {};
+			m_base_engine = {};
+			m_buildNumber = 0;
+			
+		}
+		void CGame::loop()
+		{
+			if (updater::offsets::dwLocalPlayerController == 0x0)
+			{
+				return;
+			}
+
+
+			localPlayer =  utils::memory:: read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
+			if (!localPlayer)
+			{
+				return;
+			}
+
+			localPlayerPawn = utils::memory::read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
+			if (!localPlayerPawn)
+			{
+				return;
+			}
+
+			entity_list = utils::memory::read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
+			if (!entity_list)
+			{
+				return;
+			}
+			
+
+			localList_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
+			localpCSPlayerPawn = utils::memory::read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
+			if (!localpCSPlayerPawn)
+			{
+				return;
+			}
+			view_matrix = utils::memory::read<matrix4x4_t>(m_base_client.base + updater::offsets::dwViewMatrix);
+
+
+			localTeam = utils::memory::read<int>(localPlayer + updater::offsets::m_iTeamNum);
+			localOrigin = utils::memory::read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
+			isC4Planted = utils::memory::read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
+
+
+			int playerIndex = 0;
+
+
+			kcsgo2struct::CPlayer player{};
+			uintptr_t list_entry,list_entry2, playerPawn, playerMoneyServices, clippingWeapon, weaponData, playerNameData;
+
+
+			while (true)
+			{
+				playerIndex++;
+				list_entry = utils::memory::read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
+				if (!list_entry) break;
+
+				player.entity = utils::memory::read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
+				if (!player.entity) continue;
+
+				/**
+				* Skip rendering your own character and teammates
+				*
+				* If you really want you can exclude your own character from the check but
+				* since you are in the same team as yourself it will be excluded anyway
+				**/
+
+				player.team = utils::memory::read<int>(player.entity + updater::offsets::m_iTeamNum);
+				//if (config::team_esp && (player.team == localTeam)) continue;
+				if ( player.team == localTeam ) continue;
+
+				playerPawn = utils::memory::read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
+
+				list_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
+				if (!list_entry2) continue;
+
+
+				player.pCSPlayerPawn = utils::memory::read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
+				if (!player.pCSPlayerPawn) continue;
+
+
+				player.health = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
+				player.armor = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
+				if (player.health <= 0 || player.health > 100) continue;
+
+
+				//if (config::team_esp && (player.pCSPlayerPawn == localPlayer)) continue;
+				if (player.pCSPlayerPawn == localPlayer) continue;
+
+
+				/*
+				* Unused for now, but for a vis check
+				*
+				* player.spottedState = process->read<uintptr_t>(player.pCSPlayerPawn + 0x1630);
+				* player.is_spotted = process->read<DWORD_PTR>(player.spottedState + 0xC); // bSpottedByMask
+				* player.is_spotted = process->read<bool>(player.spottedState + 0x8); // bSpotted
+				*/
+
+				// Read entity controller from the player pawn
+				uintptr_t handle = utils::memory::read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
+				int index = handle & 0x7FFF;
+				int segment = index >> 9;
+				int entry = index & 0x1FF;
+
+				uintptr_t controllerListSegment = utils::memory::read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
+				uintptr_t controller = utils::memory::read<uintptr_t>(controllerListSegment + 120 * entry);
+
+				if (!controller)
+					continue;
+
+				char buffer[256] = {};
+				process->read_raw(controller + updater::offsets::m_iszPlayerName, buffer, sizeof(buffer) - 1);
+				buffer[sizeof(buffer) - 1] = '\0';
+				player.name = buffer;
+
+
+				player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+				player.origin = utils::memory::read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
+				player.head = { player.origin.x, player.origin.y, player.origin.z + 75.f };
+
+				if (player.origin.x == localOrigin.x && player.origin.y == localOrigin.y && player.origin.z == localOrigin.z)
+					continue;
+
+			//	if (config::render_distance != -1 && (localOrigin - player.origin).length2d() > config::render_distance) continue;
+				if (player.origin.x == 0 && player.origin.y == 0) continue;
+
+
+				if (KMenuConfig::ShowBone.enabled)
+				{
+					player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+					player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
+					player.ReadBones(&game::kcsgo2data::g_view_matrix, m_game_size);
+				}
+			
+
+
+			 
+
+			}
+
+
+
+		}
+}
 }
 
 

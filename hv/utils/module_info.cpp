@@ -270,6 +270,13 @@ namespace utils
 
 
 
+		ProcessModule get_module(_In_ PEPROCESS process, _In_ const wchar_t* module_name)
+		{
+			ProcessModule result{};
+			get_process_module_info(process, module_name , &result.base, &result.size);
+			return result;
+		}
+
 
 
 	 

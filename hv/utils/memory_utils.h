@@ -137,5 +137,17 @@ namespace utils
 			ULONG size = sizeof(T);
 			return read_virtual_memory(cr3, address, &out_value, &size);
 		}
+
+
+		template<typename T>
+		T read(uintptr_t address, bool safe_check = true) {
+			if (safe_check && !utils::internal_functions::pfn_mm_is_address_valid_ex(reinterpret_cast<void*>(address))) {
+				return T{};
+			}
+
+			T buffer{};
+			 memcpy(&buffer, reinterpret_cast<void*>(address), sizeof(T));
+			return buffer;
+		}
 	}
 }
