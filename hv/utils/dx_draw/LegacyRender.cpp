@@ -261,7 +261,7 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 
 	CFontInfo* chfont = f->GetChar(ch);
 	if (chfont) {
-		/*int w = chfont->Width;
+	/*	int w = chfont->Width;
 		int h = chfont->Height;*/
 		int top = chfont->Top;
 		int sz = (float)chfont->Size / 1.3f;
@@ -318,11 +318,29 @@ void ByteRender::String(class Font* f, const Vector2& Start, LPCWSTR str, const 
 }
 
 void ByteRender::StringA(class Font* f, const Vector2& Start, LPCSTR str, const FColor& Color  ) {
-	WCHAR wstr[50]{};
-	utils::string_utils::utf8_to_unicode(str, wstr, 49);
+	if (!str) return;
+
+	// 计算长度（最好 utf-8 实际转码后再判断）
+	size_t len = strlen(str);
+	if (len == 0) return;
+
+	// UTF-8 到 Unicode，最大一个 utf-8 字符可能转成一个 WCHAR（保守估计）
+	WCHAR* wstr = (WCHAR*)utils::internal_functions::pfn_ex_allocate_pool_with_tag (NonPagedPool, (len + 1) * sizeof(WCHAR), 'rtsW');   
+	if (!wstr) return;
+
+	RtlZeroMemory(wstr, (len + 1) * sizeof(WCHAR));
+
+	utils::string_utils::utf8_to_unicode(str, wstr, len);   
 	String(f, Start, wstr, Color);
+
+	utils::internal_functions::pfn_ex_free_pool_with_tag (wstr, 'rtsW');
 }
 
+void ByteRender::StringA(class Font* f, float x, float y, LPCSTR str, const FColor& Color)
+{
+	Vector2 start = { x, y };
+	StringA(f, start, str, Color);
+}
 int ByteRender::StringWidth(class Font* f, const wchar_t* str)
 {
 	size_t len = utils::string_utils::get_wide_string_length(str);

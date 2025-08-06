@@ -154,9 +154,6 @@
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\csgogame\Kcsgo2_data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\window_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -307,6 +304,15 @@
     <ClInclude Include="utils\call_back_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\kvector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\dx_draw\fontdata.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\math_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -397,9 +403,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\window_utils.cpp">
@@ -493,6 +496,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\call_back_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\kvector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\math_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

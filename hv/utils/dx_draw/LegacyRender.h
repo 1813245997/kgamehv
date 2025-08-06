@@ -56,6 +56,7 @@ public:
 	void String(class Font* f, const Vector2& Start, LPCWSTR str, const FColor& Color = FColor(255, 255, 255));
 
 	void StringA(class Font* f, const Vector2& Start, LPCSTR str, const FColor& Color = FColor(255, 255, 255));
+	void StringA(class Font* f, float x, float y, LPCSTR str, const FColor& Color);
 
 	int StringWidth(class Font* f, const wchar_t* str);
 

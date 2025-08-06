@@ -270,11 +270,10 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
-			   if (game::kcsgo2::g_game_process!=0&& game::kcsgo2::g_game_process == process)
+			   if (game::kcsgo2::g_game->m_game_process!=0&& game::kcsgo2::g_game->m_game_process == process)
 
 			   {
-				    
-				   game::kcsgo2::cleanup_game_process();
+				   game::kcsgo2::g_game->clear();
 				   utils::hook_utils::remove_user_exception_handler(process);
 			   }
 			   //if (process == utils::dwm_draw::g_dwm_process)
@@ -308,22 +307,22 @@ namespace hook_functions
 		   _In_ BOOLEAN Create
 	   )
 	   {
-		   if (!Create)
-		   {
-			 
-			   if ( game::kcsgo2::g_game_process!=nullptr)
-			   {
-				   if (ProcessId == utils::internal_functions::pfn_ps_get_process_id(game::kcsgo2::g_game_process))
+		   /* if (!Create)
+			{
 
-				   {
-					   utils::hook_utils::remove_user_exception_handler(game::kcsgo2::g_game_process);
-					   game::kcsgo2::cleanup_game_process();
-				   }
-			   }
-			   
-			 
+				if ( game::kcsgo2::g_game_process!=nullptr)
+				{
+					if (ProcessId == utils::internal_functions::pfn_ps_get_process_id(game::kcsgo2::g_game_process))
 
-		   }
+					{
+						utils::hook_utils::remove_user_exception_handler(game::kcsgo2::g_game_process);
+						game::kcsgo2::cleanup_game_process();
+					}
+				}
+
+
+
+			}*/
 
 
 
@@ -526,7 +525,7 @@ namespace hook_functions
 #endif  
 		 
 
-		   game ::kcsgo2:: g_game.init(process);
+		   game ::kcsgo2:: g_game->init(process);
 		  
 	     
 
@@ -1337,11 +1336,9 @@ namespace hook_functions
 
 		   
 		// 初始化游戏数据
-		  game::kcsgo2::initialize_game_data();
-		  
-	
-		  
-
+		   game::kcsgo2::g_game->loop();
+	 
+		   
 			 
 		   return TRUE;
 	   }

@@ -87,22 +87,35 @@ namespace game
 		public:
 			void ReadBones(_In_ unsigned long long directory_table_base,_In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size);
 			void ReadBones(_In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size);
+			void CalcScreenPositions(matrix4x4_t* view_matrix, const POINT& screen_size);
 		public:
-			LIST_ENTRY list_entry;  
+		 
 			uintptr_t entity;
 			uintptr_t pCSPlayerPawn;
 			uintptr_t gameSceneNode;
 			uintptr_t boneArray;
+
+			
+			int health;
+			int armor;
+			int team;
 			Vector3 origin;
 			Vector3 head;
 			CBONES bones;
-			int team;
-			int health;
-			int armor;
+			bool is_defusing;
+			bool is_spotted;
+			int money;
 			float flashAlpha;
-			 
+			char name[256];
+			char weapon[256];
 			bool is_local_player;
 		 
+
+		public:
+			//ªÊ÷∆”√
+			Vector3 screen_foot;
+			Vector3 screen_head;
+			bool screen_pos_valid = false;
 		
 
 		};

@@ -91,7 +91,7 @@ namespace utils
 			LogDebug("Feature offsets initialized successfully.");
 
 			game::kcsgo2::initialize_player_data_lock();
-			KMenuConfig::  initialize_visual_config_once();
+			config::  initialize_visual_config_once();
 
 
 			LogDebug("Starting virtualization...");

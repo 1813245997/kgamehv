@@ -88,6 +88,16 @@ namespace utils
 				LogError("initialize_dwm_utils_modules failed with status: 0x%X", status);
 				return status;
 			}
+
+			if (!utils::strong_dx:: initialize_font())
+			{
+				LogError("initialize_font failed.");
+				return STATUS_UNSUCCESSFUL;
+			}
+			else
+			{
+				LogInfo("initialize_font succeeded.");
+			}
 			
 		
 
@@ -183,6 +193,7 @@ namespace utils
 				return status;
 			}
 			 
+
 
 			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))

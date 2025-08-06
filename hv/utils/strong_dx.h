@@ -16,7 +16,7 @@ namespace utils
 		extern bool g_should_hide_overlay;
 	 
 		 
-	 
+		bool initialize_font();
 		bool initialize_d3d_resources(unsigned long long  pswap_chain);
 		void release_d3d_resources();
 		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data));

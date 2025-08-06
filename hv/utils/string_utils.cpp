@@ -174,6 +174,158 @@ namespace utils
 			return;
 		}
 
+		size_t strlen(const char* str)
+		{
+			size_t len = 0;
+			while (str && str[len] != '\0') ++len;
+			return len;
+		}
+
+		char* int_to_string_no_alloc(int value, char* buffer, size_t buffer_size)
+		{
+			if (!buffer || buffer_size == 0)
+				return nullptr;
+
+			// 临时指针指向缓冲区末尾，留一个字节给 '\0'
+			char* p = buffer + buffer_size - 1;
+			*p = '\0';
+
+			bool is_negative = value < 0;
+			unsigned int abs_value = is_negative ? -value : value;
+
+			// 从后往前写数字
+			do {
+				if (p == buffer)  // 防止缓冲区溢出
+					return nullptr;
+				*--p = '0' + (abs_value % 10);
+				abs_value /= 10;
+			} while (abs_value);
+
+			if (is_negative)
+			{
+				if (p == buffer)
+					return nullptr;
+				*--p = '-';
+			}
+
+			// p 指向数字字符串起始位置，buffer是缓冲区起点
+			// 返回 p，使用者从这里开始就是有效数字字符串
+			return p;
+		}
+
+		bool int_to_string(int value, char* buffer, size_t buffer_size)
+		{
+			if (!buffer || buffer_size == 0)
+				return false;
+
+			// 先清空缓冲区
+			RtlZeroMemory(buffer, buffer_size);
+
+			// 临时缓冲区，足够存下 int 最大长度
+			// int 最多10位，带符号+1，留足32字节
+			char temp[32] = { 0 };
+			char* p = temp + sizeof(temp) - 1;
+			*p = '\0';
+
+			bool is_negative = (value < 0);
+			unsigned int abs_value = is_negative ? (unsigned int)(-value) : (unsigned int)value;
+
+			do {
+				*--p = '0' + (abs_value % 10);
+				abs_value /= 10;
+			} while (abs_value);
+
+			if (is_negative)
+				*--p = '-';
+
+			size_t len = strlen(p);
+			if (len + 1 > buffer_size) // +1是结尾'\0'
+				return false;
+
+			// 复制结果到用户缓冲区
+			RtlCopyMemory(buffer, p, len + 1);
+
+			return true;
+		}
+		char* int_to_string_alloc(int value)
+		{
+			// 最多存放 32 字节足够 int 转字符串了
+			const size_t buf_size = 32;
+			char* buffer = reinterpret_cast<char*> (utils::internal_functions::pfn_ex_allocate_pool_with_tag (NonPagedPool, buf_size, 0));
+			if (!buffer)
+				return nullptr;
+
+			char* p = buffer + buf_size - 1;
+			*p = '\0';
+
+			bool is_negative = value < 0;
+			unsigned int abs_value = is_negative ? -value : value;
+
+			do {
+				*--p = '0' + (abs_value % 10);
+				abs_value /= 10;
+			} while (abs_value);
+
+			if (is_negative)
+				*--p = '-';
+
+			// 把字符串移到 buffer 起始位置
+			size_t len = buffer + buf_size - p - 1;
+			RtlMoveMemory(buffer, p, len + 1);  // +1 拷贝 '\0'
+
+			return buffer;  
+		}
+
+		char* concat_strings_no_alloc(char* str1, const char* str2, size_t buffer_size)
+		{
+			if (!str1 || !str2 || buffer_size == 0)
+				return nullptr;
+
+			size_t len1 = strlen(str1);
+			size_t len2 = strlen(str2);
+
+			// 判断目标缓冲区是否有足够空间存放拼接后的字符串（包括终止符）
+			if (len1 + len2 + 1 > buffer_size)
+				return nullptr;
+
+			// 拷贝 str2 到 str1 尾部
+			RtlCopyMemory(str1 + len1, str2, len2);
+
+			// 添加字符串结束符
+			str1[len1 + len2] = '\0';
+
+			return str1;
+		}
+		char* concat_strings_alloc(const char* str1, const char* str2)
+		{
+			if (!str1 && !str2)
+				return nullptr;
+
+			size_t len1 = strlen(str1);
+			size_t len2 = strlen(str2);
+
+			// 分配内存，注意多一个字节存终止符
+			char* result = (char*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(
+				NonPagedPool,
+				(len1 + len2 + 1) * sizeof(char),
+				0);  
+
+			if (!result)
+				return nullptr;
+
+			// 拷贝第一个字符串
+			if (str1)
+				RtlCopyMemory(result, str1, len1);
+
+			// 拷贝第二个字符串
+			if (str2)
+				RtlCopyMemory(result + len1, str2, len2);
+
+			// 添加结尾0
+			result[len1 + len2] = '\0';
+
+			return result;
+		}
 
 	}
 }

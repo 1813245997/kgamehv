@@ -63,11 +63,8 @@ namespace utils
 			 utils::strong_dx::g_should_hide_overlay = 0;
 
 			 
-
-			 game::kcsgo2::g_game_pid = 0;
-			 game::kcsgo2::g_game_process = 0;;
-			 game::kcsgo2::g_is_initialized = 0;;
-			 game::kcsgo2::g_game_handle = 0;;
+		
+		 
 		  
 			 utils::auth::g_license_expire_timestamp = 0;
 

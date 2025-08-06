@@ -13,6 +13,8 @@
 #include "ntos_struct_def.h"
 #include "native_api.h"
 #include "internal_function_defs.h"
+#include "kvector.h"
+#include "math_utils.h"
 #include "string_utils.h"
 #include "module_info.h"
 #include "os_info.h"
@@ -49,7 +51,6 @@
 #include "window_utils.h"
 #include "csgogame\offsets.h"
 #include "csgogame\kcsgo2_utils.h"
-#include "csgogame\Kcsgo2_data.h"
 #include "csgogame\kcsgo2_CPlayer.h"
 #include "csgogame\KMenuConfig.h"
 #include "user_comm\user_comm_struct.h"
@@ -66,4 +67,5 @@
 #include "vmcall_comm_args.h"
 #include "memory_pool.h"
 #include "call_back_utils.h"
+
 #include "VMProtectDDK.h"

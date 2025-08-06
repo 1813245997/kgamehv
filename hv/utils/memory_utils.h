@@ -149,5 +149,9 @@ namespace utils
 			 memcpy(&buffer, reinterpret_cast<void*>(address), sizeof(T));
 			return buffer;
 		}
+
+	     bool read_raw(uintptr_t address, void* buffer, size_t size, bool safe_check = true);
+		
+		 
 	}
 }

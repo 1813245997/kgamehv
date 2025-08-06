@@ -2,6 +2,8 @@
  
 namespace updater {
 	 
+	namespace offsets
+	{
 		// Global offsets
 		inline constexpr int build_number = 14092;
 		inline constexpr int dwBuildNumber = 6001860;
@@ -33,6 +35,8 @@ namespace updater {
 		inline constexpr int m_iszPlayerName = 1768;
 
 		constexpr   unsigned long long m_hook_offset = 0X84BE42; //client.dll+7D7CCD;
+	}
+	
  
 	 
 }

@@ -269,7 +269,6 @@ namespace utils
 			PMDL mdl = nullptr;
 			KAPC_STATE apc_state{};
 			bool apc_attached = false;
-			bool suspend_success = false;
 			bool result = false;
 
 			// Attach 到目标进程

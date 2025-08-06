@@ -1104,5 +1104,28 @@ namespace utils
 			   }
 		   }
 
+		   bool read_raw(uintptr_t address, void* buffer, size_t size, bool safe_check)
+		   {
+			   if (buffer == nullptr || size == 0)
+			   {
+				   return false;
+			   }
+
+			   if (safe_check)
+			   {
+				   for (size_t i = 0; i < size; ++i)
+				   {
+					   void* ptr = reinterpret_cast<void*>(address + i);
+					   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(ptr))
+					   {
+						   return false;
+					   }
+				   }
+			   }
+
+			   memcpy(buffer, reinterpret_cast<void*>(address), size);
+			   return true;
+		   }
+
 	}
 }

@@ -41,11 +41,25 @@ struct Vector4
 
 //vector 3d
 
-struct Vector3
+class Vector3
 {
+public:
+
 	float x;
 	float y;
 	float z;
+
+
+public:
+	float calculate_distance(const Vector3& point) const 
+	{
+		float dx = point.x - x;
+		float dy = point.y - y;
+		float dz = point.z - z;
+		return (float)sqrtf(dx * dx + dy * dy + dz * dz);
+	}
+
+
 };
 
 
@@ -404,7 +418,7 @@ struct matrix4x4_t {
 //};
 
 
-inline bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3 * out, _In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size)
+inline bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3 * out, _In_  matrix4x4_t* view_matrix, const  _In_ POINT& screen_size)
 {
 
 	matrix4x4_t  Pview = *view_matrix;

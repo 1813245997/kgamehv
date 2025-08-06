@@ -133,7 +133,6 @@
     <ClInclude Include="utils\call_back_utils.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h" />
-    <ClInclude Include="utils\csgogame\Kcsgo2_data.h" />
     <ClInclude Include="utils\csgogame\kcsgo2_utils.h" />
     <ClInclude Include="utils\csgogame\KMenuConfig.h" />
     <ClInclude Include="utils\csgogame\offsets.h" />
@@ -141,6 +140,7 @@
     <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\ark_utils.h" />
     <ClInclude Include="utils\dx_draw\font.h" />
+    <ClInclude Include="utils\dx_draw\fontdata.h" />
     <ClInclude Include="utils\dx_draw\imgui_utils.h" />
     <ClInclude Include="utils\dx_draw\LegacyRender.h" />
     <ClInclude Include="utils\dx_draw\math.h" />
@@ -161,10 +161,12 @@
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
     <ClInclude Include="utils\khyper_vt.h" />
+    <ClInclude Include="utils\kvector.h" />
     <ClInclude Include="utils\LegacyRender.h" />
     <ClInclude Include="utils\log_utils.h" />
     <ClInclude Include="utils\macros.h" />
     <ClInclude Include="utils\Math.h" />
+    <ClInclude Include="utils\math_utils.h" />
     <ClInclude Include="utils\memory_pool.h" />
     <ClInclude Include="utils\memory_utils.h" />
     <ClInclude Include="utils\module_info.h" />
@@ -229,7 +231,6 @@
     <ClCompile Include="utils\auth\auth.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp" />
-    <ClCompile Include="utils\csgogame\Kcsgo2_data.cpp" />
     <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp" />
     <ClCompile Include="utils\csgogame\KMenuConfig.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
@@ -251,7 +252,9 @@
     <ClCompile Include="utils\internal_function_defs.cpp" />
     <ClCompile Include="utils\kernel_hide_utils.cpp" />
     <ClCompile Include="utils\khyper_vt.cpp" />
+    <ClCompile Include="utils\kvector.cpp" />
     <ClCompile Include="utils\log_utils.cpp" />
+    <ClCompile Include="utils\math_utils.cpp" />
     <ClCompile Include="utils\memory_pool.cpp" />
     <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />

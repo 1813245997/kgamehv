@@ -23,6 +23,22 @@ void game::kcsgo2struct::CPlayer::ReadBones(_In_  matrix4x4_t* view_matrix, _In_
 	}
 }
 
+void game::kcsgo2struct::CPlayer::CalcScreenPositions(matrix4x4_t* view_matrix, const POINT& screen_size)
+{
+	screen_pos_valid = false;
+
+	if (!world_to_screen(&origin, &screen_foot, view_matrix, screen_size))
+		return;
+
+	Vector3 head_pos = origin;
+	head_pos.z += 70.0f;
+
+	if (!world_to_screen(&head_pos, &screen_head, view_matrix, screen_size))
+		return;
+
+	screen_pos_valid = true;
+}
+
 void game::kcsgo2struct::CPlayer::ReadBones(_In_ unsigned long long directory_table_base,  _In_  matrix4x4_t* view_matrix, _In_ POINT& screen_size)
 {
 	for (int i = 0; i < BONE_COUNT; ++i)
@@ -45,3 +61,4 @@ void game::kcsgo2struct::CPlayer::ReadBones(_In_ unsigned long long directory_ta
 		}
 	}
 }
+

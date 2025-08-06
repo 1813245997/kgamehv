@@ -3,7 +3,7 @@
 #include "../vtx/msr.h"
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
- 
+#include "dx_draw/fontdata.h"
  
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
@@ -12,7 +12,6 @@ namespace utils
 {
 	namespace  strong_dx
 	{    
-
 			
 			bool g_initialized{};
 			unsigned long long g_user_buffer{};
@@ -21,11 +20,36 @@ namespace utils
 			PVOID g_pdevice{};
 			PVOID g_pContext{};
 			PVOID g_Surface{};
-			
+			Font* g_Font = nullptr;
 			bool g_should_hide_overlay = false;
+
+			
 		   volatile LONG g_dwm_render_lock = 0;
-		    
-		 
+		   
+		   bool initialize_font()
+		   {
+			    
+			   g_Font = (Font*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(Font), 'FONT');
+			   if (!g_Font)
+			   {
+				   LogError("Font allocation failed.");
+				   return false;
+			   }
+
+			   RtlZeroMemory(g_Font, sizeof(Font));
+
+			   if (!g_Font->InitFont(fontdata::data, sizeof(fontdata::data)))
+			   {
+				   LogError("Failed to initialize font.");
+				   return false;
+			   }
+
+			   LogDebug("Font initialized successfully.");
+			   return true;
+
+			    
+		   }
+		   
 		   bool initialize_d3d_resources(unsigned long long  pswap_chain)
 		   {
 			  
@@ -39,6 +63,8 @@ namespace utils
 			   {
 				   return false;
 			   }
+
+			 
 
 			   g_swap_chain = reinterpret_cast<PVOID>(pswap_chain);
 
@@ -310,15 +336,15 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
+		/*	if (utils::auth::is_license_expired())
 			{
 				return;
-			}
+			}*/
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
 
-
+			
 			ByteRender rend;
 			rend.Setup(width, height, data);
 			//rend.Line({ 100, 200 }, { 500, 200 }, FColor(__rdtsc()), 1);
@@ -328,6 +354,7 @@ namespace utils
 			int radius = 5;
 			FColor color = FColor(__rdtsc());
 			rend.FillCircle(circle_center, color, radius);
+			rend.StringA(g_Font, { 100, 200 }, "https://github.com/cs1ime", PM_XRGB(255, 0, 0));
 
 			 
 			// === 绘制 ESP 相关 ===
@@ -339,71 +366,68 @@ namespace utils
 
 		 
 		}
+
+		bool  is_in_bounds(const Vector3& pos, int width, int height) {
+			return pos.x >= 0 && pos.x <= width && pos.y >= 0 && pos.y <= height;
+		}
 		void draw_players_esp(ByteRender& rend)
 		{
-			game::kcsgo2struct::CPlayer players_copy[MAX_PLAYER_NUM] = {};
 			 
 
-			if (!game::kcsgo2::get_player_data(players_copy ))
+			utils::kvector< game::kcsgo2struct::CPlayer>list{};
+			 
+
+			if (!game::kcsgo2:: g_game->get_player_data (&list))
 			{
 				return;
 			}
+			 
 
-		 
-			
-
-			for (size_t i = 0; i < MAX_PLAYER_NUM; ++i)
+			for (auto it = list.begin(); it != list.end(); ++it)
 			{
-				const auto& player = players_copy[i];
+				const auto& player = *it;
+			 
+				Vector3 screenPos{};
+				Vector3 screenHead{};
+		 
 				 
-				if (player.health <= 0 || player.health > 100)
+				if (!game::kcsgo2::g_game->world_to_screen(&player.origin, &screenPos))
+				{
+					continue;
+				}
+				 
+				 
+				if (!game::kcsgo2::g_game->world_to_screen(&player.head, &screenHead))
 				{
 					continue;
 				}
 
-				Vector3 foot_screen{}, head_screen{};
-				if (!world_to_screen(&player.origin, &foot_screen, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
+				if (screenPos.z < 0.01f ||!game::kcsgo2::g_game->is_in_bounds(screenPos))
 				{
 					continue;
-				}
 
-				Vector3 head_pos = player.origin;
-				head_pos.z += 70.0f;
-				if (!world_to_screen(&head_pos, &head_screen, &game::kcsgo2data::g_view_matrix, game::kcsgo2::g_game_size))
-				{
-					continue;
 				}
 
 
-				// ==== Box ESP ====
-				if (KMenuConfig::ShowBoxEsp2d.enabled)
-				{
-					int box_height = static_cast<int>(foot_screen.y - head_screen.y);
-					int box_width = box_height / 2;
-					int box_x = static_cast<int>(head_screen.x - box_width / 2);
-					int box_y = static_cast<int>(head_screen.y);
+				const float height = screenPos.y - screenHead.y;
+				const float width = height / 2.4f;
+				float distance = game::kcsgo2::g_game->localOrigin.calculate_distance(player.origin);
+				int roundedDistance = utils::math::round (distance / 10.f);
 
-					FColor color(KMenuConfig::ShowBoxEsp2d.color[0], KMenuConfig::ShowBoxEsp2d.color[1], KMenuConfig::ShowBoxEsp2d.color[2]);
-					rend.Rectangle(box_x, box_y, static_cast<float>(box_width), static_cast<float>(box_height), color, 1);
-				}
+				int box_height = static_cast<int>(screenPos.y - screenHead.y);
+				int box_width = box_height / 2;
+				int box_x = static_cast<int>(screenHead.x - box_width / 2);
+				int box_y = static_cast<int>(screenHead.y);
 
 				// ==== Head Tracker (Circle) ====
-				if (KMenuConfig::Showheadtracker.enabled)
+				if (config::show_head_tracker.enabled)
 				{
 					const auto& head_bone = player.bones.bone_positions[game::kcsgo2struct::BONE_HEAD];
-
-					// 确保骨骼位置有效
-
-					if (head_bone.x != 0.0f && head_bone.y!= 0.0f)
-					{
-						const float height = foot_screen.y - head_screen.y;
-						const float width = height / 2.4f;
+					
+						 
 						const float radius = width / 5.0f;
 
-						FColor color(KMenuConfig::Showheadtracker.color[0], KMenuConfig::Showheadtracker.color[1], KMenuConfig::Showheadtracker.color[2]);
-
-
-
+						FColor color(config::show_head_tracker.color[0], config::show_head_tracker.color[1], config::show_head_tracker.color[2]);
 
 						rend.DrawCircle(
 							head_bone.x,
@@ -412,16 +436,16 @@ namespace utils
 							color,
 							1.0f
 						);
-					}
+				
 
 				 
 			
 				}
 
 				// ==== Bone ESP ====
-				if (KMenuConfig::ShowBone.enabled)
+				if (config::show_skeleton_esp.enabled)
 				{
-					FColor color(KMenuConfig::ShowBone.color[0], KMenuConfig::ShowBone.color[1], KMenuConfig::ShowBone.color[2]);
+					FColor color(config::show_skeleton_esp.color[0], config::show_skeleton_esp.color[1], config::show_skeleton_esp.color[2]);
 
 					for (size_t j = 0; j < BONE_CONNECTION_COUNT; ++j)
 					{
@@ -443,6 +467,228 @@ namespace utils
 						 
 					}
 				}
+
+
+				// ==== Box ESP ====
+				if (config::show_box_esp.enabled)
+				{
+				
+
+					FColor color(config::show_box_esp.color[0], config::show_box_esp.color[1], config::show_box_esp.color[2]);
+					rend.Rectangle(box_x, box_y, static_cast<float>(box_width), static_cast<float>(box_height), color, 1);
+				}
+
+				rend.Rectangle(screenHead.x - (width / 2 + 10),
+					screenHead.y + (height * (100 - player.armor) / 100),
+					2,
+					height - (height * (100 - player.armor) / 100),
+					FColor(255, 185, 0)
+				);
+
+				rend.Rectangle(
+					 
+					screenHead.x - (width / 2 + 5),
+					screenHead.y + (height * (100 - player.health) / 100),
+					2,
+					height - (height * (100 - player.health) / 100),
+					FColor(
+						75,
+						(55 + player.health * 2),
+						(255 - player.health)
+					)
+				);
+
+				rend.StringA (
+					g_Font,
+					screenHead.x + (width / 2 + 5),
+					screenHead.y,
+					player.name,
+					FColor  (config::ShowName.color[0], config::ShowName.color[1], config::ShowName.color[2])
+					 //10
+				);
+
+				/**
+				* I know is not the best way but a simple way to not saturate the screen with a ton of information
+				*/
+				if (roundedDistance > config::flag_render_distance)
+					continue;
+
+				if (config::show_health_bar.enabled)
+				{
+					// ==== 血条绘制 ====
+					const int health_bar_width = 4;
+					int health_bar_height = box_height;
+
+					int health_fill_height = static_cast<int>(health_bar_height * (player.health / 100.0f));
+					int health_bar_bottom_y = box_y + health_bar_height;
+					int health_fill_top_y = health_bar_bottom_y - health_fill_height;
+
+					// 血条背景（灰色）
+					rend.Rectangle(
+						static_cast<float>(box_x - health_bar_width - 2),  // 血条位于box左侧，间隔2像素
+						static_cast<float>(box_y),
+						static_cast<float>(health_bar_width),
+						static_cast<float>(health_bar_height),
+						FColor(50, 50, 50),
+						1.0f
+					);
+
+					// 血量填充条（颜色渐变，红->绿）
+					FColor health_color(
+						0,
+						static_cast<uint8_t>(255 * (player.health / 100.0f)),         // 绿色随血量升高增加
+						static_cast<uint8_t>(255 * (1.0f - player.health / 100.0f))   // 红色随血量降低增加
+					);
+
+					rend.Rectangle(
+						static_cast<float>(box_x - health_bar_width - 2),
+						static_cast<float>(health_fill_top_y),
+						static_cast<float>(health_bar_width),
+						static_cast<float>(health_fill_height),
+						health_color,
+						1.0f
+					);
+				}
+			
+
+				char health_str[32] = { 0 };
+				if (!utils::string_utils::int_to_string(player.health, health_str, sizeof(health_str)))
+				{
+					return;
+				}
+			 
+				  
+					rend.StringA(
+						g_Font,
+						screenHead.x + (width / 2 + 5),
+						screenHead.y + 10,
+						utils::string_utils::concat_strings_no_alloc(health_str, "hp", sizeof(health_str)),
+						FColor(
+							75,
+							(55 + player.health * 2),
+							(255 - player.health))
+					);
+
+				  
+
+				char armor_str[32] = { 0 };
+			 
+				if (!utils::string_utils::int_to_string(player.armor, armor_str, sizeof(armor_str)))
+				{
+					return;
+				}
+
+					rend.StringA(
+						g_Font,
+						screenHead.x + (width / 2 + 5),
+						screenHead.y + 20,
+						utils::string_utils::concat_strings_no_alloc(armor_str, "armor", sizeof(armor_str)),
+						FColor(
+							(255 - player.armor),
+							(55 + player.armor * 2),
+							75
+						)
+					);
+					 
+
+				if (config::show_extra_flags.enabled)
+				{
+
+
+					rend.StringA(
+						g_Font,
+						screenHead.x + (width / 2 + 5),
+						screenHead.y + 30,
+						player.weapon,
+						FColor(config::show_extra_flags.color[0], config::show_extra_flags.color[1], config::show_extra_flags.color[2])
+						 //10
+						 
+					);
+
+
+					char  dist_str[32] = { 0 };
+
+					if (!utils::string_utils::int_to_string(roundedDistance, dist_str, sizeof(dist_str)))
+					{
+						return;
+					}
+					 
+
+				 
+						rend.StringA(
+							g_Font,
+							screenHead.x + (width / 2 + 5),
+							screenHead.y + 40,
+							utils::string_utils::concat_strings_no_alloc(dist_str, "m away", sizeof(dist_str)),
+							FColor(
+								config::show_extra_flags.color[0],
+								config::show_extra_flags.color[1],
+								config::show_extra_flags.color[2]
+							)
+						);
+ 
+
+
+					char* money_str = utils::string_utils::int_to_string_alloc(player.money);
+					if (!money_str) return;
+
+					char* money_display_str = utils::string_utils::concat_strings_alloc("$", money_str);
+
+					if (money_display_str)
+					{
+						rend.StringA(
+							g_Font,
+							screenHead.x + (width / 2 + 5),
+							screenHead.y + 50,
+							money_display_str,
+							FColor(0, 125, 0)
+						);
+
+						utils::internal_functions::pfn_ex_free_pool_with_tag(money_display_str, 0);
+					}
+
+					utils::internal_functions::pfn_ex_free_pool_with_tag(money_str, 0);
+
+
+					if (player.flashAlpha > 100)
+					{
+						rend.StringA(
+							g_Font,
+							screenHead.x + (width / 2 + 5),
+							screenHead.y + 60,
+							"Player is flashed",
+							FColor(
+								config::show_extra_flags.color[0],
+								config::show_extra_flags.color[1],
+								config::show_extra_flags.color[2]
+							)
+							//10
+						);
+					}
+
+					if (player.is_defusing)
+					{
+						const char * defuText = "Player is defusing";
+						rend.StringA(
+							g_Font,
+							screenHead.x + (width / 2 + 5),
+							screenHead.y + 60,
+							defuText,
+							FColor(
+								config::show_extra_flags.color[0],
+								config::show_extra_flags.color[1],
+								config::show_extra_flags.color[2]
+							)
+							//10
+						);
+					}
+
+
+
+				}
+
+
+
 			}
 		}
 		PULONG64 get_user_rsp_ptr()

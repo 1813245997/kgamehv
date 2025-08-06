@@ -8,35 +8,10 @@ namespace game
 	namespace kcsgo2
 	{
 
-
- 
-		// 最大玩家数量
-	
-
-	// 全局游戏状态变量
-	 
-
-		// 玩家数据
-		extern kcsgo2struct::CPlayer g_player_array[MAX_PLAYER_NUM];
-		extern int g_player_count;
-
-		// 初始化与清理
-	 
-		bool initialize_game_data();
-		NTSTATUS cleanup_game_process();
-
-		// 状态判断
-		bool is_game_process(_In_ PEPROCESS process);
-		bool is_initialize_game();
-
-		// 窗口相关
-		HANDLE find_cs2_window();
-		bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
-
-		// 玩家数据访问
-		bool get_player_data(kcsgo2struct::CPlayer* out_array);
-		void set_player_data(const kcsgo2struct::CPlayer* player_array, int count);
-		void reset_player_data();
+		  
+		 
+		 
+		 
 		void initialize_player_data_lock();
 
 
@@ -47,12 +22,22 @@ namespace game
 			void clear();
 			void loop();
 
+			bool CGame::get_player_data(utils::kvector<kcsgo2struct::CPlayer>* out_list);
+			bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3* out);
+			bool is_in_bounds(const Vector3& pos );
+		private:
+			HANDLE find_cs2_window();
+			bool get_cs2_window_info(HANDLE hwnd, POINT* screen_size);
+			void set_player_data(utils::kvector<kcsgo2struct::CPlayer>& list);
+			void reset_player_data();
+
 		public:
 
 			PEPROCESS m_game_process{};
 			HANDLE  m_game_pid{};
 			HANDLE  m_game_handle{};
 			POINT  m_game_size{};
+			RECT   m_game_bounds{};
 			ProcessModule m_base_client{};
 			ProcessModule m_base_engine{};
 			uintptr_t m_buildNumber{};
@@ -60,6 +45,8 @@ namespace game
 			bool isC4Planted;
 			int localTeam;
 			Vector3 localOrigin;
+			utils::kvector< kcsgo2struct::CPlayer> players = {};
+			FAST_MUTEX m_player_data_lock;
 		private:
 			uintptr_t entity_list;
 			uintptr_t localPlayer;
@@ -69,7 +56,7 @@ namespace game
 
 			matrix4x4_t  view_matrix;
 		};
-		inline CGame g_game;
+		inline CGame *g_game;
 
    }
 }
