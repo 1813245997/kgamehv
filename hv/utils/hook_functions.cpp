@@ -274,7 +274,7 @@ namespace hook_functions
 
 			   {
 				 
-				  // utils::hook_utils::remove_user_exception_handler(process);
+				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::g_game->clear();
 			   }
 			   //if (process == utils::dwm_draw::g_dwm_process)
@@ -472,7 +472,7 @@ namespace hook_functions
 		   }
 
 
-		   if ( !utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe" ,TRUE))
+		   if ( !utils::process_utils::is_process_name_match_wstr(process,(PWCHAR) VMProtectDecryptStringW( L"cs2.exe") ,TRUE))
 		   {
 			   return original_nt_create_section(
 				   section_handle,
@@ -486,7 +486,7 @@ namespace hook_functions
 
 		   }
 		    
-		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
+		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,(PWCHAR) VMProtectDecryptStringW(L"gpapi.dll"), TRUE))
 		   {
 			   return original_nt_create_section(
 				   section_handle,
@@ -499,30 +499,10 @@ namespace hook_functions
 			   );
 			  
 		   }
-		    
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
-
-
+ 
 
 		   game::kcsgo2::g_game->init(process);
-#endif
-
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
-		   // 这里写 ENABLE_GAME_DRAW_TYPE3 等于 2 时的代码逻辑
-		   game::kcsgo2::g_game->init2(process);
-#endif
-
-
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
-
-		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
-		   {
-			   game::kcsgo2::initialize_game_process3(process_id);
-		   }
-
-
-#endif  
-		 
+ 
 
 		  
 		  

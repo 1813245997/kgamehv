@@ -25,8 +25,8 @@ namespace game
 
 
 		 
-			m_base_client = utils::module_info::get_module(process,  L"client.dll");
-			m_base_engine = utils::module_info::get_module(process,   L"engine2.dll" );
+			m_base_client = utils::module_info::get_module(process, VMProtectDecryptStringW( L"client.dll"));
+			m_base_engine = utils::module_info::get_module(process, VMProtectDecryptStringW( L"engine2.dll") );
 
 			if (m_base_client.base == 0 || m_base_engine.base == 0)
 			{
@@ -59,53 +59,8 @@ namespace game
 			return true;
 		}
 
-		bool CGame::is_init2()
-		{
-			return m_is_initialized;
-		}
-		bool  CGame::init2(_In_ PEPROCESS process)
-		{
-			if (m_is_initialized)
-			{
-				return true;
-			}
-
 		 
-		 
-			 
-
-			m_base_client = utils::module_info::get_module(process,   L"client.dll");
-			m_base_engine = utils::module_info::get_module(process, L"engine2.dll");
-
-			if (m_base_client.base == 0 || m_base_engine.base == 0)
-			{
-				return false;
-			}
-
-		     
-		
-			 m_game_cr3 = utils::process_utils::get_process_cr3(process);
-
-			 m_game_process = process;
-			 m_buildNumber =  read<uintptr_t>(m_base_engine.base + updater::offsets::dwBuildNumber);
-
-			 /* if (g_game->m_buildNumber != updater::offsets::build_number)
-			  {
-				  m_cheat_update = true;
-				  return false;
-			  }*/
-			   
-		
-		
-			m_game_pid = utils::internal_functions::pfn_ps_get_process_id(process);
-			// 标记已初始化
-			m_is_initialized = true;
-
-			return true;
-
-
-
-		}
+	 
 		void initialize_player_data_lock()
 		{
 			 
@@ -213,38 +168,14 @@ namespace game
 				return false;
 			}
 			bool is_succeed = false;
-			KAPC_STATE apc_state{};
-
-			if (!m_game_process)
-			{
-				return  is_succeed;
-			}
-
-			if (utils::internal_functions::pfn_ps_get_process_exit_status(m_game_process) != STATUS_PENDING)
-			{
-
-				return  is_succeed;
-			}
-			utils::internal_functions::pfn_ke_stack_attach_process(m_game_process, &apc_state);
+			  
+			 
 			is_succeed = utils::memory::read_raw(address, &buffer, size);
-			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+		 
 
 			return  is_succeed;
 
-		/*	if (buffer == nullptr || size == 0)
-			{
-				return false;
-			}
-			ULONG size2 = size;
-			NTSTATUS status = utils::memory::read_virtual_memory(m_game_cr3, reinterpret_cast<void*> (address), &buffer, &size2);
-			if (!NT_SUCCESS(status))
-			{
-
-				return false;
-			}
-
-			 
-			return true;*/
+		 
 		}
 
 		HANDLE CGame::find_cs2_window(PVOID user_buffer)
@@ -258,8 +189,8 @@ namespace game
 			PVOID window_name_ptr = reinterpret_cast<PBYTE>(user_buffer) + 0x300;
 
 			// 第一次尝试："Counter-Strike 2"
-			const wchar_t* k_class_name = L"SDL_app";
-				const wchar_t* k_window_name_1 = L"Counter-Strike 2";
+			const wchar_t* k_class_name = VMProtectDecryptStringW(L"SDL_app");
+				const wchar_t* k_window_name_1 = VMProtectDecryptStringW(L"Counter-Strike 2");
 
 			SIZE_T class_name_len = (wcslen(k_class_name) + 1) * sizeof(WCHAR);
 			SIZE_T window_name_len_1 = (wcslen(k_window_name_1) + 1) * sizeof(WCHAR);
@@ -291,7 +222,7 @@ namespace game
 			}
 
 			// 第二次尝试："反恐精英：全球攻势"
-			const wchar_t* k_window_name_2 =   L"反恐精英：全球攻势" ;
+			const wchar_t* k_window_name_2 = VMProtectDecryptStringW( L"反恐精英：全球攻势") ;
 			SIZE_T window_name_len_2 = (wcslen(k_window_name_2) + 1) * sizeof(WCHAR);
 
 			RtlCopyMemory(window_name_ptr, k_window_name_2, window_name_len_2);
@@ -440,20 +371,16 @@ namespace game
 		{
 
 			 
+			
+
 			if (!m_game_handle)
 			{
-				m_game_handle = find_cs2_window(0);
+				return;
+			}
 
-				if (!m_game_handle)
-				{
-					return  ;
-				}
-
-				if (!get_cs2_window_info(m_game_handle, &m_game_size, 0))
-
-				{
-					return  ;
-				}
+			if (!m_game_size.x ||!m_game_size.y)
+			{
+				return;
 			}
 
 		 
@@ -634,219 +561,36 @@ namespace game
 			}
 
 
+			ExAcquireFastMutex(&m_player_data_lock);
 			players.clear();
-
 			players.assign(list.begin(), list.end());
+			ExReleaseFastMutex(&m_player_data_lock);
+		
 
 
 		}
-		 
-		void CGame::loop2(PVOID user_buffer)
+
+		bool CGame::update_game_windows(PVOID user_buffer)
 		{
-
-			if (!user_buffer)
-			{
-				return;
-			}
-
 			if (!m_game_handle)
 			{
 				m_game_handle = find_cs2_window(user_buffer);
 
 				if (!m_game_handle)
 				{
-					return;
+					return false;
 				}
 
 				if (!get_cs2_window_info(m_game_handle, &m_game_size, user_buffer))
 
 				{
-					return;
+					return false;
 				}
 			}
-
-			 
-			isC4Planted = false;
-
-			localPlayer =  read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
-			if (!localPlayer)
-			{
-				return;
-			}
-
-			localPlayerPawn =  read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
-			if (!localPlayerPawn)
-			{
-				return;
-			}
-
-			entity_list = read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
-			if (!entity_list)
-			{
-				return;
-			}
-
-
-			localList_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
-			localpCSPlayerPawn =  read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
-			if (!localpCSPlayerPawn)
-			{
-				return;
-			}
-			view_matrix =  read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
-
-
-			localTeam =  read<int>(localPlayer + updater::offsets::m_iTeamNum);
-			localOrigin =  read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
-			isC4Planted =  read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
-
-
-			int playerIndex = 0;
-
-			utils::kvector<kcsgo2struct::CPlayer>list;
-			kcsgo2struct::CPlayer player{};
-			uintptr_t list_entry, list_entry2, playerPawn, playerMoneyServices, clippingWeapon, weaponData;
-
-
-			if (isC4Planted)
-			{
-				c4Origin = game::kcsgo2::g_game->c4.get_origin();
-
-			}
-
-
-			while (true)
-			{
-				playerIndex++;
-				list_entry =  read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
-				if (!list_entry) break;
-
-				player.entity =  read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
-				if (!player.entity) continue;
-
-				/**
-				* Skip rendering your own character and teammates
-				*
-				* If you really want you can exclude your own character from the check but
-				* since you are in the same team as yourself it will be excluded anyway
-				**/
-
-				player.team =  read<int>(player.entity + updater::offsets::m_iTeamNum);
-				//if (config::team_esp && (player.team == localTeam)) continue;
-				if (player.team == localTeam) continue;
-
-				playerPawn =  read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
-
-				list_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
-				if (!list_entry2) continue;
-
-
-				player.pCSPlayerPawn =  read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
-				if (!player.pCSPlayerPawn) continue;
-
-
-				player.health =  read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
-				player.armor =  read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
-				if (player.health <= 0 || player.health > 100) continue;
-
-
-				//if (config::team_esp && (player.pCSPlayerPawn == localPlayer)) continue;
-				if (player.pCSPlayerPawn == localPlayer) continue;
-
-
-				/*
-				* Unused for now, but for a vis check
-				*
-				* player.spottedState = process->read<uintptr_t>(player.pCSPlayerPawn + 0x1630);
-				* player.is_spotted = process->read<DWORD_PTR>(player.spottedState + 0xC); // bSpottedByMask
-				* player.is_spotted = process->read<bool>(player.spottedState + 0x8); // bSpotted
-				*/
-
-				// Read entity controller from the player pawn
-				uintptr_t handle =  read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
-				int index = handle & 0x7FFF;
-				int segment = index >> 9;
-				int entry = index & 0x1FF;
-
-				uintptr_t controllerListSegment = read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
-				uintptr_t controller =  read<uintptr_t>(controllerListSegment + 120 * entry);
-
-				if (!controller)
-					continue;
-
-				// Read player name from the controller
-				 read_raw(controller + updater::offsets::m_iszPlayerName, player.name, sizeof(player.name) - 1);
-				player.name[sizeof(player.name) - 1] = '\0';
-
-				player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-				player.origin =  read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
-				player.head = { player.origin.x, player.origin.y, player.origin.z + 75.f };
-
-				if (player.origin.x == localOrigin.x && player.origin.y == localOrigin.y && player.origin.z == localOrigin.z)
-					continue;
-
-				//	if (config::render_distance != -1 && (localOrigin - player.origin).length2d() > config::render_distance) continue;
-				if (player.origin.x == 0 && player.origin.y == 0) continue;
-
-
-				if (config::show_skeleton_esp.enabled)
-				{
-					player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-					player.boneArray =  read<uintptr_t>(player.gameSceneNode + 0x1F0);
-					player.ReadBones((matrix4x4_t*)&view_matrix, m_game_size);
-				}
-
-				//if (config::show_head_tracker && !config::show_skeleton_esp) {
-				//	player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-				//	player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
-				//	player.ReadHead();
-				//}
-
-
-				if (config::show_extra_flags.enabled) {
-					/*
-					* Reading values for extra flags is now separated from the other reads
-					* This removes unnecessary memory reads, improving performance when not showing extra flags
-					*/
-					player.is_defusing =  read<bool>(player.pCSPlayerPawn + updater::offsets::m_bIsDefusing);
-
-					playerMoneyServices =  read<uintptr_t>(player.entity + updater::offsets::m_pInGameMoneyServices);
-					player.money =  read<int>(playerMoneyServices + updater::offsets::m_iAccount);
-
-					player.flashAlpha =  read<float>(player.pCSPlayerPawn + updater::offsets::m_flFlashOverlayAlpha);
-
-					clippingWeapon =  read< uint64_t>(player.pCSPlayerPawn + updater::offsets::m_pClippingWeapon);
-					uint64_t firstLevel =  read< uint64_t>(clippingWeapon + 0x10); // First offset
-					weaponData =  read< uint64_t>(firstLevel + 0x20); // Final offset
-					/*weaponData = process->read<std::uint64_t>(clippingWeapon + 0x10);
-					weaponData = process->read<std::uint64_t>(weaponData + updater::offsets::m_szName);*/
-
-					CHAR buffer[MAX_PATH] = {  };
-					CHAR prefix[] = "weapon_";
-
-					 read_raw(weaponData, buffer, sizeof(buffer));
-
-					// 判断前缀是否为 "weapon_"
-					if (RtlCompareMemory(buffer, prefix, sizeof("weapon_") - 1) == sizeof("weapon_") - 1)
-						// 拷贝去掉前缀后的内容到 player.weapon
-						RtlCopyMemory(player.weapon, buffer + sizeof("weapon_") - 1, sizeof(player.weapon) - 1);
-
-					else
-						RtlCopyMemory(player.weapon, "Invalid Weapon Name", sizeof("Invalid Weapon Name"));
-
-
-
-				}
-
-				list.push_back(player);
-
-			}
-
-
-			players.clear();
-
-			players.assign(list.begin(), list.end());
+			return true;
 		}
+		 
+	 
 
 
 

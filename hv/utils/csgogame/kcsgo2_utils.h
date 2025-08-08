@@ -25,14 +25,12 @@ namespace game
 		class  CGame
 		{
 		public:
-			//游戏强检测几乎用不了 
+		 
 			bool init(_In_ PEPROCESS process);
-			//强检测用
-			bool init2(_In_ PEPROCESS process);
-			bool is_init2();
 			void clear();
 			void loop();
-			void loop2(PVOID user_buffer);
+			 
+			bool update_game_windows(PVOID user_buffer);
 
 			bool CGame::get_player_data(utils::kvector<kcsgo2struct::CPlayer>* out_list);
 		//	bool world_to_screen(const _In_ Vector3* v, _In_opt_ Vector3* out);
@@ -43,32 +41,9 @@ namespace game
 			T read(uintptr_t address)
 			{
 				T buffer{};
-				KAPC_STATE apc_state{};
-
-				if (!m_game_process)
-				{
-					return buffer;
-				}
-
-				if (utils::internal_functions::pfn_ps_get_process_exit_status(m_game_process) != STATUS_PENDING)
-				{
-
-					return buffer;
-				}
-				utils::internal_functions::pfn_ke_stack_attach_process(m_game_process, &apc_state);
 				buffer = utils::memory::read<T>(address);
-				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-
 				return buffer;
-				/*	T buffer{};
-					ULONG size = sizeof(T);
-					NTSTATUS status = utils::memory::read_virtual_memory(m_game_cr3, reinterpret_cast<void*> (address), &buffer, &size);
-					if (!NT_SUCCESS(status))
-					{
-
-						return T{};
-					}
-					return buffer;*/
+				 
 			}
 
 			bool read_raw(uintptr_t address, void* buffer, size_t size);

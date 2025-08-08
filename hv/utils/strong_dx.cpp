@@ -372,23 +372,11 @@ namespace utils
 			 
 
 			//rend.String( g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
-		  
+			
 			 
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
-
+			 
+			 
  
-#endif
-
-#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
-			if (game::kcsgo2::g_game->is_init2())
-			{
-
-				game::kcsgo2::g_game->loop2(utils::dwm_draw::g_game_utils_buffer);
-			}
-			 
-
-#endif
-			 
 			//=== 绘制是否更新辅助===
 			draw_update_required_notice(rend);
 			// === 绘制 ESP 相关 ===
@@ -406,6 +394,13 @@ namespace utils
 			 
 
 			utils::kvector< game::kcsgo2struct::CPlayer>list{};
+
+
+			 
+			if (!game::kcsgo2::g_game->update_game_windows(utils::dwm_draw::g_game_utils_buffer))
+			{
+				return;
+			} 
 			 
 			if (game::kcsgo2::g_game->isC4Planted)
 			{
