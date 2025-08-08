@@ -11,7 +11,8 @@ void game::kcsgo2struct::CPlayer::ReadBones(_In_  matrix4x4_t* view_matrix, _In_
 		Vector3 bone_position{};
 		uintptr_t bone_address = boneArray + bone_index * 0x20;
 
-		memcpy(&bone_position, (void*)bone_address, sizeof(Vector3));
+		bone_position = game::kcsgo2::g_game->read<Vector3>(bone_address);
+ 
 
 		Vector3 screen_position{};
 		if (world_to_screen(&bone_position, &screen_position, view_matrix, screen_size)) {

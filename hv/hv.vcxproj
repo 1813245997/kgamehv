@@ -174,7 +174,9 @@
     <ClInclude Include="utils\native_api.h" />
     <ClInclude Include="utils\ntos_struct_def.h" />
     <ClInclude Include="utils\os_info.h" />
+    <ClInclude Include="utils\process_manager_utils.h" />
     <ClInclude Include="utils\process_utils.h" />
+    <ClInclude Include="utils\process_utils_struct.h" />
     <ClInclude Include="utils\scanner_data.h" />
     <ClInclude Include="utils\scanner_fun.h" />
     <ClInclude Include="utils\scanner_offset.h" />
@@ -259,6 +261,7 @@
     <ClCompile Include="utils\memory_utils.cpp" />
     <ClCompile Include="utils\module_info.cpp" />
     <ClCompile Include="utils\os_info.cpp" />
+    <ClCompile Include="utils\process_manager_utils.cpp" />
     <ClCompile Include="utils\process_utils.cpp" />
     <ClCompile Include="utils\scanner_data.cpp" />
     <ClCompile Include="utils\scanner_fun.cpp" />

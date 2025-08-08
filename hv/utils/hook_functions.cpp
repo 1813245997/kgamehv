@@ -274,7 +274,7 @@ namespace hook_functions
 
 			   {
 				 
-				   utils::hook_utils::remove_user_exception_handler(process);
+				  // utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::g_game->clear();
 			   }
 			   //if (process == utils::dwm_draw::g_dwm_process)
@@ -308,22 +308,17 @@ namespace hook_functions
 		   _In_ BOOLEAN Create
 	   )
 	   {
-		   /* if (!Create)
-			{
-
-				if ( game::kcsgo2::g_game_process!=nullptr)
-				{
-					if (ProcessId == utils::internal_functions::pfn_ps_get_process_id(game::kcsgo2::g_game_process))
-
-					{
-						utils::hook_utils::remove_user_exception_handler(game::kcsgo2::g_game_process);
-						game::kcsgo2::cleanup_game_process();
-					}
-				}
-
-
-
-			}*/
+		    
+		   if (Create)
+		   {
+			   //DbgBreakPoint();
+			   utils::process::add_process_entry(ProcessId);
+		   }
+		   else
+		   {
+			   //DbgBreakPoint();
+			   utils::process::remove_process_entry(ProcessId);
+		   }
 
 
 
@@ -509,11 +504,14 @@ namespace hook_functions
 
 
 
-		   if (utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer, L"gpapi.dll", TRUE))
-		   {
-			   game::kcsgo2::initialize_game_process(process);
-		   }
+		   game::kcsgo2::g_game->init(process);
 #endif
+
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
+		   // 这里写 ENABLE_GAME_DRAW_TYPE3 等于 2 时的代码逻辑
+		   game::kcsgo2::g_game->init2(process);
+#endif
+
 
 #if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
 
@@ -526,7 +524,7 @@ namespace hook_functions
 #endif  
 		 
 
-		   game ::kcsgo2:: g_game->init(process);
+		  
 		  
 	     
 

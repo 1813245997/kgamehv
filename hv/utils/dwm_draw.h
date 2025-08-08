@@ -42,6 +42,8 @@ namespace utils
 		extern unsigned long long g_get_foreground_window_fun;
 		extern unsigned long long g_find_windoww_fun;
 		extern unsigned long long g_get_window_rect_fun ;
+
+		extern PVOID g_game_utils_buffer;
 	
 		
 		NTSTATUS initialize();
@@ -50,7 +52,11 @@ namespace utils
 
 		NTSTATUS  initialize_dwm_utils_modules(_In_ PEPROCESS process);
 
+		NTSTATUS   initialize_user_buffer(PEPROCESS process, PVOID* uesr_buffer);
+
 		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long * ki_call_user_mode2);
+
+		
 
 		NTSTATUS get_dwm_process(_Out_ PEPROCESS* process);
 

@@ -8,6 +8,7 @@
 #include <ntimage.h>
 #include <intrin.h>
 #include <minwindef.h>
+
 #include "macros.h"
 #include "types.h"
 #include "ntos_struct_def.h"
@@ -18,6 +19,7 @@
 #include "string_utils.h"
 #include "module_info.h"
 #include "os_info.h"
+#include "process_utils_struct.h"
 #include "windows_version_enum.h"
 #include "xor_crypt.h"
 #include "import_encrypt.h"
@@ -28,6 +30,7 @@
 #include "scanner_offset.h"
 #include "hidden_module_list.h"
 #include "hook_manager.h"
+#include "process_manager_utils.h"
  
 #include "hook_functions.h"
 #include "internal_function_defs.h"

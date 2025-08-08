@@ -40,6 +40,7 @@ namespace utils
 
 		unsigned long long g_ki_call_user_mode2{};
 
+		PVOID g_game_utils_buffer{};
 		bool g_kvashadow{};
 
 		
@@ -79,6 +80,13 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("get_dwm_process failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = initialize_user_buffer(g_dwm_process, &g_game_utils_buffer);
+			if (!NT_SUCCESS(status))
+			{
+				LogError("initialize_user_buffer failed with status: 0x%X", status);
 				return status;
 			}
 
@@ -357,6 +365,25 @@ namespace utils
 
 			return STATUS_SUCCESS;
 		}
+
+
+		NTSTATUS initialize_user_buffer(PEPROCESS process, PVOID* user_buffer)
+		{
+			if (!process || !user_buffer)
+				return STATUS_INVALID_PARAMETER;
+
+			KAPC_STATE apc_state{};
+			NTSTATUS status = STATUS_UNSUCCESSFUL;
+
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			status = utils::memory::allocate_user_memory(user_buffer, 0x1000, PAGE_READWRITE, true, false);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			return status;
+		}
+
 
 
 		NTSTATUS get_stack_offset()

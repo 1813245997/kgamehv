@@ -352,10 +352,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
+			/*if (utils::auth::is_license_expired())
 			{
 				return;
-			}
+			}*/
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -372,8 +372,23 @@ namespace utils
 			 
 
 			//rend.String( g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
-		 
-	 
+		  
+			 
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 1
+
+ 
+#endif
+
+#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 2
+			if (game::kcsgo2::g_game->is_init2())
+			{
+
+				game::kcsgo2::g_game->loop2(utils::dwm_draw::g_game_utils_buffer);
+			}
+			 
+
+#endif
+			 
 			//=== 绘制是否更新辅助===
 			draw_update_required_notice(rend);
 			// === 绘制 ESP 相关 ===

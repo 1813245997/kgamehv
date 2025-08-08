@@ -51,6 +51,7 @@ namespace utils
 			 utils::dwm_draw::g_get_foreground_window_fun = 0;
 			 utils::dwm_draw::g_find_windoww_fun = 0;
 			 utils::dwm_draw::g_get_window_rect_fun = 0;
+			 utils::dwm_draw::g_game_utils_buffer=0;
 
 			 utils::strong_dx::g_initialized = 0;
 			 utils::strong_dx::  g_user_buffer = 0;
@@ -67,6 +68,8 @@ namespace utils
 		 
 		  
 			 utils::auth::g_license_expire_timestamp = 0;
+
+
 
 			 memory::g_pte_base = 0;
 			 memory::g_pde_base = 0;

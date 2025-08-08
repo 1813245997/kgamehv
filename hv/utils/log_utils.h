@@ -42,16 +42,16 @@ void LogPrint(__log_type type, const char* fmt, ...);
  
 
 #define LogError(format, ...) \
-        LogPrint(LOG_TYPE_ERROR, "  [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
+        LogPrint(LOG_TYPE_ERROR, "  [%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogDebug(format, ...) \
-        LogPrint(LOG_TYPE_DEBUG, "  [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
+        LogPrint(LOG_TYPE_DEBUG, "  [%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogDump(format, ...) \
-        LogPrint(LOG_TYPE_DUMP, " [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
+        LogPrint(LOG_TYPE_DUMP, "  [%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogInfo(format, ...) \
-        LogPrint(LOG_TYPE_INFO, "  [hv][%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
+        LogPrint(LOG_TYPE_INFO, "  [%s:%d] " format, __func__, __LINE__, ##__VA_ARGS__)
 
  
 

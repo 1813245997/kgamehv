@@ -313,6 +313,12 @@
     <ClInclude Include="utils\math_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\process_manager_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\process_utils_struct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -502,6 +508,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\math_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\process_manager_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
