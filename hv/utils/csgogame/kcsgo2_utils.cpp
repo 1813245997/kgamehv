@@ -25,8 +25,8 @@ namespace game
 
 
 		 
-			m_base_client = utils::module_info::get_module(process, VMProtectDecryptStringW(L"client.dll"));
-			m_base_engine = utils::module_info::get_module(process, VMProtectDecryptStringW( L"engine2.dll"));
+			m_base_client = utils::module_info::get_module(process,  L"client.dll");
+			m_base_engine = utils::module_info::get_module(process,   L"engine2.dll" );
 
 			if (m_base_client.base == 0 || m_base_engine.base == 0)
 			{
@@ -74,8 +74,8 @@ namespace game
 		 
 			 
 
-			m_base_client = utils::module_info::get_module(process, VMProtectDecryptStringW( L"client.dll"));
-			m_base_engine = utils::module_info::get_module(process, VMProtectDecryptStringW(L"engine2.dll"));
+			m_base_client = utils::module_info::get_module(process,   L"client.dll");
+			m_base_engine = utils::module_info::get_module(process, L"engine2.dll");
 
 			if (m_base_client.base == 0 || m_base_engine.base == 0)
 			{
@@ -86,17 +86,17 @@ namespace game
 		
 			 m_game_cr3 = utils::process_utils::get_process_cr3(process);
 
-			 
+			 m_game_process = process;
 			 m_buildNumber =  read<uintptr_t>(m_base_engine.base + updater::offsets::dwBuildNumber);
 
-			 if (g_game->m_buildNumber != updater::offsets::build_number)
-			 {
-				 m_cheat_update = true;
-				 return false;
-			 }
+			 /* if (g_game->m_buildNumber != updater::offsets::build_number)
+			  {
+				  m_cheat_update = true;
+				  return false;
+			  }*/
 			   
 		
-			m_game_process = process;
+		
 			m_game_pid = utils::internal_functions::pfn_ps_get_process_id(process);
 			// 标记已初始化
 			m_is_initialized = true;
@@ -212,6 +212,36 @@ namespace game
 			{
 				return false;
 			}
+			bool is_succeed = false;
+			KAPC_STATE apc_state{};
+
+			if (!m_game_process)
+			{
+				return  is_succeed;
+			}
+
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(m_game_process) != STATUS_PENDING)
+			{
+
+				return  is_succeed;
+			}
+			utils::internal_functions::pfn_ke_stack_attach_process(m_game_process, &apc_state);
+			is_succeed = utils::memory::read_raw(address, &buffer, size);
+			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+
+			if (is_succeed)
+			{
+				memcpy(buffer, reinterpret_cast<void*>(address), size);
+			}
+
+
+			return  is_succeed;
+
+		/*	if (buffer == nullptr || size == 0)
+			{
+				return false;
+			}
 			ULONG size2 = size;
 			NTSTATUS status = utils::memory::read_virtual_memory(m_game_cr3, reinterpret_cast<void*> (address), &buffer, &size2);
 			if (!NT_SUCCESS(status))
@@ -221,7 +251,7 @@ namespace game
 			}
 
 			memcpy(buffer, reinterpret_cast<void*>(address), size);
-			return true;
+			return true;*/
 		}
 
 		HANDLE CGame::find_cs2_window(PVOID user_buffer)
@@ -235,8 +265,8 @@ namespace game
 			PVOID window_name_ptr = reinterpret_cast<PBYTE>(user_buffer) + 0x300;
 
 			// 第一次尝试："Counter-Strike 2"
-			const wchar_t* k_class_name = VMProtectDecryptStringW( L"SDL_app");
-			const wchar_t* k_window_name_1 = VMProtectDecryptStringW(L"Counter-Strike 2");
+			const wchar_t* k_class_name = L"SDL_app";
+				const wchar_t* k_window_name_1 = L"Counter-Strike 2";
 
 			SIZE_T class_name_len = (wcslen(k_class_name) + 1) * sizeof(WCHAR);
 			SIZE_T window_name_len_1 = (wcslen(k_window_name_1) + 1) * sizeof(WCHAR);
@@ -268,7 +298,7 @@ namespace game
 			}
 
 			// 第二次尝试："反恐精英：全球攻势"
-			const wchar_t* k_window_name_2 = VMProtectDecryptStringW( L"反恐精英：全球攻势");
+			const wchar_t* k_window_name_2 =   L"反恐精英：全球攻势" ;
 			SIZE_T window_name_len_2 = (wcslen(k_window_name_2) + 1) * sizeof(WCHAR);
 
 			RtlCopyMemory(window_name_ptr, k_window_name_2, window_name_len_2);
@@ -369,7 +399,7 @@ namespace game
 		//}
 
 		uintptr_t CC4::get_planted() {
-			return  g_game->read<uintptr_t>(utils::memory::read<uintptr_t>(game::kcsgo2::g_game->m_base_client.base + updater::offsets::dwPlantedC4));
+			return  g_game->read<uintptr_t>(g_game->read<uintptr_t>(game::kcsgo2::g_game->m_base_client.base + updater::offsets::dwPlantedC4));
 		}
 
 		uintptr_t CC4::get_node() {
@@ -642,7 +672,7 @@ namespace game
 				}
 			}
 
-
+			 
 			isC4Planted = false;
 
 			localPlayer =  read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
@@ -695,10 +725,10 @@ namespace game
 			while (true)
 			{
 				playerIndex++;
-				list_entry = utils::memory::read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
+				list_entry =  read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
 				if (!list_entry) break;
 
-				player.entity = utils::memory::read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
+				player.entity =  read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
 				if (!player.entity) continue;
 
 				/**

@@ -43,14 +43,32 @@ namespace game
 			T read(uintptr_t address)
 			{
 				T buffer{};
-				ULONG size = sizeof(T);
-				NTSTATUS status = utils::memory:: read_virtual_memory(m_game_cr3, reinterpret_cast<void*> (address), &buffer, &size);
-				if (!NT_SUCCESS(status))
+				KAPC_STATE apc_state{};
+
+				if (!m_game_process)
 				{
-					 
-					return T{};
+					return buffer;
 				}
+
+				if (utils::internal_functions::pfn_ps_get_process_exit_status(m_game_process) != STATUS_PENDING)
+				{
+
+					return buffer;
+				}
+				utils::internal_functions::pfn_ke_stack_attach_process(m_game_process, &apc_state);
+				buffer = utils::memory::read<T>(address);
+				utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
 				return buffer;
+				/*	T buffer{};
+					ULONG size = sizeof(T);
+					NTSTATUS status = utils::memory::read_virtual_memory(m_game_cr3, reinterpret_cast<void*> (address), &buffer, &size);
+					if (!NT_SUCCESS(status))
+					{
+
+						return T{};
+					}
+					return buffer;*/
 			}
 
 			bool read_raw(uintptr_t address, void* buffer, size_t size);

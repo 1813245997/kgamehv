@@ -472,7 +472,7 @@ namespace hook_functions
 		   }
 
 
-		   if ( !utils::process_utils::is_process_name_match_wstr(process,L"cs2.exe",TRUE))
+		   if ( !utils::process_utils::is_process_name_match_wstr(process, L"cs2.exe" ,TRUE))
 		   {
 			   return original_nt_create_section(
 				   section_handle,

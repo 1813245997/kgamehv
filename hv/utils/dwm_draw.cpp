@@ -66,6 +66,7 @@ namespace utils
 			status = get_stack_offset();
 			if (!NT_SUCCESS(status))
 			{
+
 				LogError("get_stack_offset failed with status: 0x%X", status);
 				return status;
 			}
@@ -79,7 +80,7 @@ namespace utils
 			status = get_dwm_process(&g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
-				LogError("get_dwm_process failed with status: 0x%X", status);
+				LogError("get_process failed with status: 0x%X", status);
 				return status;
 			}
 
@@ -263,7 +264,7 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			if (!process_utils::get_process_by_name(L"dwm.exe", &process))
+			if (!process_utils::get_process_by_name( L"dwm.exe", &process))
 			{
 				return STATUS_NOT_FOUND;
 			}
