@@ -229,13 +229,6 @@ namespace game
 			is_succeed = utils::memory::read_raw(address, &buffer, size);
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 
-
-			if (is_succeed)
-			{
-				memcpy(buffer, reinterpret_cast<void*>(address), size);
-			}
-
-
 			return  is_succeed;
 
 		/*	if (buffer == nullptr || size == 0)
@@ -250,7 +243,7 @@ namespace game
 				return false;
 			}
 
-			memcpy(buffer, reinterpret_cast<void*>(address), size);
+			 
 			return true;*/
 		}
 
