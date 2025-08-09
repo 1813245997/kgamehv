@@ -472,7 +472,7 @@ namespace hook_functions
 		   }
 
 
-		   if ( !utils::process_utils::is_process_name_match_wstr(process,(PWCHAR) VMProtectDecryptStringW( L"cs2.exe") ,TRUE))
+		   if ( !utils::process_utils::is_process_name_match_wstr(process,(PWCHAR) L"cs2.exe" ,TRUE))
 		   {
 			   return original_nt_create_section(
 				   section_handle,
@@ -486,7 +486,7 @@ namespace hook_functions
 
 		   }
 		    
-		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,(PWCHAR) VMProtectDecryptStringW(L"gpapi.dll"), TRUE))
+		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll", TRUE))
 		   {
 			   return original_nt_create_section(
 				   section_handle,

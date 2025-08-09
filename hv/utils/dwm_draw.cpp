@@ -264,7 +264,7 @@ namespace utils
 				return STATUS_INVALID_PARAMETER;
 			}
 
-			if (!process_utils::get_process_by_name(VMProtectDecryptStringW(L"dwm.exe"), &process))
+			if (!process_utils::get_process_by_name(L"dwm.exe", &process))
 			{
 				return STATUS_NOT_FOUND;
 			}

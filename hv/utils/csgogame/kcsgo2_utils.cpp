@@ -25,8 +25,8 @@ namespace game
 
 
 		 
-			m_base_client = utils::module_info::get_module(process, VMProtectDecryptStringW( L"client.dll"));
-			m_base_engine = utils::module_info::get_module(process, VMProtectDecryptStringW( L"engine2.dll") );
+			m_base_client = utils::module_info::get_module(process,  L"client.dll");
+			m_base_engine = utils::module_info::get_module(process,  L"engine2.dll" );
 
 			if (m_base_client.base == 0 || m_base_engine.base == 0)
 			{
@@ -189,8 +189,8 @@ namespace game
 			PVOID window_name_ptr = reinterpret_cast<PBYTE>(user_buffer) + 0x300;
 
 			// 第一次尝试："Counter-Strike 2"
-			const wchar_t* k_class_name = VMProtectDecryptStringW(L"SDL_app");
-				const wchar_t* k_window_name_1 = VMProtectDecryptStringW(L"Counter-Strike 2");
+			const wchar_t* k_class_name = L"SDL_app";
+				const wchar_t* k_window_name_1 = L"Counter-Strike 2";
 
 			SIZE_T class_name_len = (wcslen(k_class_name) + 1) * sizeof(WCHAR);
 			SIZE_T window_name_len_1 = (wcslen(k_window_name_1) + 1) * sizeof(WCHAR);
@@ -222,7 +222,7 @@ namespace game
 			}
 
 			// 第二次尝试："反恐精英：全球攻势"
-			const wchar_t* k_window_name_2 = VMProtectDecryptStringW( L"反恐精英：全球攻势") ;
+			const wchar_t* k_window_name_2 =  L"反恐精英：全球攻势" ;
 			SIZE_T window_name_len_2 = (wcslen(k_window_name_2) + 1) * sizeof(WCHAR);
 
 			RtlCopyMemory(window_name_ptr, k_window_name_2, window_name_len_2);
@@ -386,37 +386,37 @@ namespace game
 		 
 			isC4Planted = false;
 
-			localPlayer =  utils::memory:: read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
+			localPlayer =    read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
 			if (!localPlayer)
 			{
 				return;
 			}
 
-			localPlayerPawn = utils::memory::read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
+			localPlayerPawn =  read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
 			if (!localPlayerPawn)
 			{
 				return;
 			}
 
-			entity_list = utils::memory::read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
+			entity_list = read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
 			if (!entity_list)
 			{
 				return;
 			}
 			
 
-			localList_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
-			localpCSPlayerPawn = utils::memory::read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
+			localList_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
+			localpCSPlayerPawn =  read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
 			if (!localpCSPlayerPawn)
 			{
 				return;
 			}
-			view_matrix = utils::memory::read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
+			view_matrix =  read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
 
 
-			localTeam = utils::memory::read<int>(localPlayer + updater::offsets::m_iTeamNum);
-			localOrigin = utils::memory::read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
-			isC4Planted = utils::memory::read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
+			localTeam =  read<int>(localPlayer + updater::offsets::m_iTeamNum);
+			localOrigin =  read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
+			isC4Planted =  read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
 
 
 			int playerIndex = 0;
@@ -428,7 +428,7 @@ namespace game
 			 
 			if (isC4Planted)
 			{
-				c4Origin = game::kcsgo2::g_game->c4.get_origin();
+				c4Origin =  g_game->c4.get_origin();
 
 			}
 		 
@@ -436,10 +436,10 @@ namespace game
 			while (true)
 			{
 				playerIndex++;
-				list_entry = utils::memory::read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
+				list_entry = read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
 				if (!list_entry) break;
 
-				player.entity = utils::memory::read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
+				player.entity = read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
 				if (!player.entity) continue;
 
 				/**
@@ -449,22 +449,22 @@ namespace game
 				* since you are in the same team as yourself it will be excluded anyway
 				**/
 
-				player.team = utils::memory::read<int>(player.entity + updater::offsets::m_iTeamNum);
+				player.team =  read<int>(player.entity + updater::offsets::m_iTeamNum);
 				//if (config::team_esp && (player.team == localTeam)) continue;
 				if ( player.team == localTeam ) continue;
 
-				playerPawn = utils::memory::read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
+				playerPawn = read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
 
-				list_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
+				list_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
 				if (!list_entry2) continue;
 
 
-				player.pCSPlayerPawn = utils::memory::read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
+				player.pCSPlayerPawn =  read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
 				if (!player.pCSPlayerPawn) continue;
 
 
-				player.health = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
-				player.armor = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
+				player.health = read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
+				player.armor =  read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
 				if (player.health <= 0 || player.health > 100) continue;
 
 
@@ -481,23 +481,23 @@ namespace game
 				*/
 
 				// Read entity controller from the player pawn
-				uintptr_t handle = utils::memory::read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
+				uintptr_t handle =  read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
 				int index = handle & 0x7FFF;
 				int segment = index >> 9;
 				int entry = index & 0x1FF;
 
-				uintptr_t controllerListSegment = utils::memory::read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
-				uintptr_t controller = utils::memory::read<uintptr_t>(controllerListSegment + 120 * entry);
+				uintptr_t controllerListSegment =  read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
+				uintptr_t controller =  read<uintptr_t>(controllerListSegment + 120 * entry);
 
 				if (!controller)
 					continue;
 
 				// Read player name from the controller
-				utils::memory::read_raw(controller + updater::offsets::m_iszPlayerName, player.name, sizeof(player.name) - 1);
+				 read_raw(controller + updater::offsets::m_iszPlayerName, player.name, sizeof(player.name) - 1);
 				player.name[sizeof(player.name) - 1] = '\0';
 
-				player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-				player.origin = utils::memory::read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
+				player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+				player.origin =  read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
 				player.head = { player.origin.x, player.origin.y, player.origin.z + 75.f };
 
 				if (player.origin.x == localOrigin.x && player.origin.y == localOrigin.y && player.origin.z == localOrigin.z)
@@ -509,8 +509,8 @@ namespace game
 
 				if (config::show_skeleton_esp.enabled)
 				{
-					player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-					player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
+					player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+					player.boneArray = read<uintptr_t>(player.gameSceneNode + 0x1F0);
 					player.ReadBones((matrix4x4_t*) & view_matrix, m_game_size);
 				}
 			
@@ -526,23 +526,23 @@ namespace game
 					* Reading values for extra flags is now separated from the other reads
 					* This removes unnecessary memory reads, improving performance when not showing extra flags
 					*/
-					player.is_defusing = utils::memory::read<bool>(player.pCSPlayerPawn + updater::offsets::m_bIsDefusing);
+					player.is_defusing = read<bool>(player.pCSPlayerPawn + updater::offsets::m_bIsDefusing);
 
-					playerMoneyServices = utils::memory::read<uintptr_t>(player.entity + updater::offsets::m_pInGameMoneyServices);
-					player.money = utils::memory::read<int>(playerMoneyServices + updater::offsets::m_iAccount);
+					playerMoneyServices = read<uintptr_t>(player.entity + updater::offsets::m_pInGameMoneyServices);
+					player.money =  read<int>(playerMoneyServices + updater::offsets::m_iAccount);
 
-					player.flashAlpha = utils::memory::read<float>(player.pCSPlayerPawn + updater::offsets::m_flFlashOverlayAlpha);
+					player.flashAlpha = read<float>(player.pCSPlayerPawn + updater::offsets::m_flFlashOverlayAlpha);
 
-					clippingWeapon = utils::memory::read< uint64_t>(player.pCSPlayerPawn + updater::offsets::m_pClippingWeapon);
-					 uint64_t firstLevel = utils::memory::read< uint64_t>(clippingWeapon + 0x10); // First offset
-					weaponData = utils::memory::read< uint64_t>(firstLevel + 0x20); // Final offset
+					clippingWeapon =  read< uint64_t>(player.pCSPlayerPawn + updater::offsets::m_pClippingWeapon);
+					 uint64_t firstLevel = read< uint64_t>(clippingWeapon + 0x10); // First offset
+					weaponData =  read< uint64_t>(firstLevel + 0x20); // Final offset
 					/*weaponData = process->read<std::uint64_t>(clippingWeapon + 0x10);
 					weaponData = process->read<std::uint64_t>(weaponData + updater::offsets::m_szName);*/
 
 					CHAR buffer[MAX_PATH] = {  };
 					CHAR prefix[] = "weapon_";
 
-					utils::memory::read_raw(weaponData, buffer, sizeof(buffer));
+					 read_raw(weaponData, buffer, sizeof(buffer));
 					 
 						// 判断前缀是否为 "weapon_"
 					if (RtlCompareMemory(buffer, prefix, sizeof("weapon_") - 1) == sizeof("weapon_") - 1)
