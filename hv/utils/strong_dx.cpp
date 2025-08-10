@@ -352,10 +352,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
+		/*	if (utils::auth::is_license_expired())
 			{
 				return;
-			}
+			}*/
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -363,19 +363,15 @@ namespace utils
 			
 			ByteRender rend;
 			rend.Setup(width, height, data);
-
 			int margin = 10;
-			Vector2 circle_center = { static_cast<float>(width - margin), static_cast<float>(margin) };
-			int radius = 5;
-			FColor color = FColor(255, 0, 0);
-			rend.FillCircle(circle_center, color, radius);
-			 
+			rend.String(
+				g_Font,
+				{ static_cast<float>(width - 150), static_cast<float>(margin) }, // 右上角位置
+				L"KGameBoxCS2",
+				PM_XRGB(255, 0, 0)
+			);
 
-			//rend.String( g_Font, { 100, 200 }, L"https://github.com/cs1ime", PM_XRGB(255, 0, 0));
-			
-			 
-			 
-			 
+		  
  
 			//=== 绘制是否更新辅助===
 			draw_update_required_notice(rend);
