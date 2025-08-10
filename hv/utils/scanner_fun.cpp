@@ -404,11 +404,19 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
-
+				 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base), 
-					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x75\x04\x00\x00", "x????xxxxxxxx"
+					"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x0F\x85\x75\x04\x00\x00", "x????xxxxxxxx",".text"
 				);
+
+				if (!temp_addr||! MmIsAddressValid(reinterpret_cast<PVOID> (temp_addr)) )
+				{
+					temp_addr = signature_scanner::find_pattern_image(
+						reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+						"\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x4D\x44\x8A\x45\x00", "x????xxxxxxxx", ".text"
+					);
+				}
 
 
 				ki_preprocess_fault_addr =
@@ -1783,14 +1791,20 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
-
+				 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
 					"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xA1\x73\x0F\x00", 
 					"x????xxxxxxxxx",
 					"PAGE"
 				);
-
+				if (!temp_addr || !MmIsAddressValid(reinterpret_cast<PVOID> (temp_addr)))
+				{
+					temp_addr = signature_scanner::find_pattern_image(
+						reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+						"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xCF\xD0\x0B\x00", "x????xxxxxxxxx", "PAGE"
+					);
+				}
 				 
 				mm_create_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
@@ -2963,7 +2977,7 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
-
+				 
 
 				temp_addr = signature_scanner::find_pattern_image(
 				    image_base ,
@@ -2971,7 +2985,16 @@ namespace utils
 					"xxxxxxxxxxxxxxxxxxxxxxxx",
 					".text"
 				);
-
+				if (!temp_addr || MmIsAddressValid(reinterpret_cast<PVOID> (temp_addr)))
+				{
+					temp_addr = signature_scanner::find_pattern_image(
+						image_base,
+						"\x48\x8B\xC4\x48\x89\x58\x20\x55\x56\x57\x41\x54\x41\x55\x41\x56\x41\x57\x48\x8D\xA8\xD8\xFE\xFF\xFF\x48\x81\xEC\xF0\x01\x00\x00\x0F\x29\x70\xB8\x0F\x29\x78\xA8\x44\x0F\x29\x40\x98\x44\x0F\x29\x48\x88\x48\x8B\x05", 
+						"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+						".text"
+					);
+				}
+				 
 
 				cocclusion_context_post_sub_graph_addr = temp_addr;
 
