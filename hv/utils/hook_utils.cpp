@@ -351,7 +351,7 @@ namespace utils
 					++hooked_page_info->ref_count;
 					InsertHeadList(&hooked_page_info->hooked_functions_list, &hook_info->hooked_function_list);
 
-					ExReleaseFastMutex(&g_user_hook_page_list_lock);
+					 
 					result = true;
 					goto CLEANUP;
 				}
