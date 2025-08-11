@@ -359,7 +359,7 @@ namespace utils
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
-
+			
 			
 			ByteRender rend;
 			rend.Setup(width, height, data);
