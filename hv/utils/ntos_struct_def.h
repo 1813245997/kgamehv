@@ -747,13 +747,25 @@ extern "C"
 		 uintptr_t base, size;
 	 };
 
-	 typedef struct _KSTACK_CREATE_INFO {
-		 ULONG Type;           // 0x00: 栈类型 / 创建模式（r15d）
-		 ULONG Pages;          // 0x04: 页数 / 大小类别（5）
-		 ULONG Flags;          // 0x08: 额外标志（先清零）
-		 ULONG Reserved;       // 0x0C: 对齐填充
-		 PVOID StackBase;      // 0x10: 栈基址指针（创建后由 MmCreateKernelStack 填充）
-	 } KSTACK_CREATE_INFO, * PKSTACK_CREATE_INFO;
+	 //typedef struct _KSTACK_CREATE_INFO {
+		// ULONG Type;           // 0x00: 栈类型 / 创建模式（r15d）
+		// ULONG Pages;          // 0x04: 页数 / 大小类别（5）
+		// ULONG Flags;          // 0x08: 额外标志（先清零）
+		// ULONG Reserved;       // 0x0C: 对齐填充
+		// PVOID StackBase;      // 0x10: 栈基址指针（创建后由 MmCreateKernelStack 填充）
+	 //} KSTACK_CREATE_INFO, * PKSTACK_CREATE_INFO;
+
+// 结构按反汇编恢复（与 KeUserModeCallback 对应）
+#pragma pack(push,1)
+	 typedef struct _KERNEL_STACK_CREATE_INFO {
+		 uint32_t Size;            // 0x00 (页数，例如 0x10)
+		 uint32_t Type;            // 0x04 (5 = CallUserMode)
+		 uint32_t ProcessorNode;   // 0x08
+		 uint32_t Reserved;        // 0x0C
+		 uint64_t Thread;          // 0x10 (输入：CurrentThread)
+		 uint64_t StackBase;       // 0x18 (输出：分配到的栈基址)
+	 } KERNEL_STACK_CREATE_INFO, * PKERNEL_STACK_CREATE_INFO;
+#pragma pack(pop)
 
 }
 
