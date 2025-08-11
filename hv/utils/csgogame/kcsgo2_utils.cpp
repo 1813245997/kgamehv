@@ -42,7 +42,7 @@ namespace game
 				m_cheat_update = true;
 				return false;
 			}
-
+			 
 			m_game_pid = utils::internal_functions::pfn_ps_get_process_id(process);
 			m_game_process = process;
 			unsigned  long long get_hp_fun = m_base_client.base + updater::offsets::m_hook_offset;
@@ -378,68 +378,68 @@ namespace game
 				return;
 			}
 
-			if (!m_game_size.x ||!m_game_size.y)
+			if (!m_game_size.x || !m_game_size.y)
 			{
 				return;
 			}
 
-		 
+
 			isC4Planted = false;
 
-			localPlayer =    read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
+			localPlayer = utils::memory::read<uintptr_t>(m_base_client.base + updater::offsets::dwLocalPlayerController);
 			if (!localPlayer)
 			{
 				return;
 			}
 
-			localPlayerPawn =  read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
+			localPlayerPawn = utils::memory::read< uint32_t>(localPlayer + updater::offsets::m_hPlayerPawn);
 			if (!localPlayerPawn)
 			{
 				return;
 			}
 
-			entity_list = read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
+			entity_list = utils::memory::read<uintptr_t>(m_base_client.base + updater::offsets::dwEntityList);
 			if (!entity_list)
 			{
 				return;
 			}
-			
 
-			localList_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
-			localpCSPlayerPawn =  read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
+
+			localList_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((localPlayerPawn & 0x7FFF) >> 9) + 16);
+			localpCSPlayerPawn = utils::memory::read<uintptr_t>(localList_entry2 + 120 * (localPlayerPawn & 0x1FF));
 			if (!localpCSPlayerPawn)
 			{
 				return;
 			}
-			view_matrix =  read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
+			view_matrix = utils::memory::read<view_matrix_t>(m_base_client.base + updater::offsets::dwViewMatrix);
 
 
-			localTeam =  read<int>(localPlayer + updater::offsets::m_iTeamNum);
-			localOrigin =  read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
-			isC4Planted =  read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
+			localTeam = utils::memory::read<int>(localPlayer + updater::offsets::m_iTeamNum);
+			localOrigin = utils::memory::read<Vector3>(localpCSPlayerPawn + updater::offsets::m_vOldOrigin);
+			isC4Planted = utils::memory::read<bool>(m_base_client.base + updater::offsets::dwPlantedC4 - 0x8);
 
 
 			int playerIndex = 0;
 
 			utils::kvector<kcsgo2struct::CPlayer>list;
 			kcsgo2struct::CPlayer player{};
-			uintptr_t list_entry,list_entry2, playerPawn, playerMoneyServices, clippingWeapon, weaponData ;
+			uintptr_t list_entry, list_entry2, playerPawn, playerMoneyServices, clippingWeapon, weaponData;
 
-			 
+
 			if (isC4Planted)
 			{
-				c4Origin =  g_game->c4.get_origin();
+				c4Origin = game::kcsgo2::g_game->c4.get_origin();
 
 			}
-		 
+
 
 			while (true)
 			{
 				playerIndex++;
-				list_entry = read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
+				list_entry = utils::memory::read<uintptr_t>(entity_list + (8 * (playerIndex & 0x7FFF) >> 9) + 16);
 				if (!list_entry) break;
 
-				player.entity = read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
+				player.entity = utils::memory::read<uintptr_t>(list_entry + 120 * (playerIndex & 0x1FF));
 				if (!player.entity) continue;
 
 				/**
@@ -449,22 +449,22 @@ namespace game
 				* since you are in the same team as yourself it will be excluded anyway
 				**/
 
-				player.team =  read<int>(player.entity + updater::offsets::m_iTeamNum);
+				player.team = utils::memory::read<int>(player.entity + updater::offsets::m_iTeamNum);
 				//if (config::team_esp && (player.team == localTeam)) continue;
-				if ( player.team == localTeam ) continue;
+				if (player.team == localTeam) continue;
 
-				playerPawn = read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
+				playerPawn = utils::memory::read<  uint32_t>(player.entity + updater::offsets::m_hPlayerPawn);
 
-				list_entry2 =  read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
+				list_entry2 = utils::memory::read<uintptr_t>(entity_list + 0x8 * ((playerPawn & 0x7FFF) >> 9) + 16);
 				if (!list_entry2) continue;
 
 
-				player.pCSPlayerPawn =  read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
+				player.pCSPlayerPawn = utils::memory::read<uintptr_t>(list_entry2 + 120 * (playerPawn & 0x1FF));
 				if (!player.pCSPlayerPawn) continue;
 
 
-				player.health = read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
-				player.armor =  read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
+				player.health = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_iHealth);
+				player.armor = utils::memory::read<int>(player.pCSPlayerPawn + updater::offsets::m_ArmorValue);
 				if (player.health <= 0 || player.health > 100) continue;
 
 
@@ -481,39 +481,39 @@ namespace game
 				*/
 
 				// Read entity controller from the player pawn
-				uintptr_t handle =  read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
+				uintptr_t handle = utils::memory::read< uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_hController);
 				int index = handle & 0x7FFF;
 				int segment = index >> 9;
 				int entry = index & 0x1FF;
 
-				uintptr_t controllerListSegment =  read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
-				uintptr_t controller =  read<uintptr_t>(controllerListSegment + 120 * entry);
+				uintptr_t controllerListSegment = utils::memory::read<uintptr_t>(entity_list + 0x8 * segment + 0x10);
+				uintptr_t controller = utils::memory::read<uintptr_t>(controllerListSegment + 120 * entry);
 
 				if (!controller)
 					continue;
 
 				// Read player name from the controller
-				 read_raw(controller + updater::offsets::m_iszPlayerName, player.name, sizeof(player.name) - 1);
+				utils::memory::read_raw(controller + updater::offsets::m_iszPlayerName, player.name, sizeof(player.name) - 1);
 				player.name[sizeof(player.name) - 1] = '\0';
 
-				player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-				player.origin =  read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
+				player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+				player.origin = utils::memory::read<Vector3>(player.pCSPlayerPawn + updater::offsets::m_vOldOrigin);
 				player.head = { player.origin.x, player.origin.y, player.origin.z + 75.f };
 
 				if (player.origin.x == localOrigin.x && player.origin.y == localOrigin.y && player.origin.z == localOrigin.z)
 					continue;
 
-			//	if (config::render_distance != -1 && (localOrigin - player.origin).length2d() > config::render_distance) continue;
+				//	if (config::render_distance != -1 && (localOrigin - player.origin).length2d() > config::render_distance) continue;
 				if (player.origin.x == 0 && player.origin.y == 0) continue;
 
 
 				if (config::show_skeleton_esp.enabled)
 				{
-					player.gameSceneNode =  read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
-					player.boneArray = read<uintptr_t>(player.gameSceneNode + 0x1F0);
-					player.ReadBones((matrix4x4_t*) & view_matrix, m_game_size);
+					player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
+					player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
+					player.ReadBones((matrix4x4_t*)&view_matrix, m_game_size);
 				}
-			
+
 				//if (config::show_head_tracker && !config::show_skeleton_esp) {
 				//	player.gameSceneNode = utils::memory::read<uintptr_t>(player.pCSPlayerPawn + updater::offsets::m_pGameSceneNode);
 				//	player.boneArray = utils::memory::read<uintptr_t>(player.gameSceneNode + 0x1F0);
@@ -526,38 +526,38 @@ namespace game
 					* Reading values for extra flags is now separated from the other reads
 					* This removes unnecessary memory reads, improving performance when not showing extra flags
 					*/
-					player.is_defusing = read<bool>(player.pCSPlayerPawn + updater::offsets::m_bIsDefusing);
+					player.is_defusing = utils::memory::read<bool>(player.pCSPlayerPawn + updater::offsets::m_bIsDefusing);
 
-					playerMoneyServices = read<uintptr_t>(player.entity + updater::offsets::m_pInGameMoneyServices);
-					player.money =  read<int>(playerMoneyServices + updater::offsets::m_iAccount);
+					playerMoneyServices = utils::memory::read<uintptr_t>(player.entity + updater::offsets::m_pInGameMoneyServices);
+					player.money = utils::memory::read<int>(playerMoneyServices + updater::offsets::m_iAccount);
 
-					player.flashAlpha = read<float>(player.pCSPlayerPawn + updater::offsets::m_flFlashOverlayAlpha);
+					player.flashAlpha = utils::memory::read<float>(player.pCSPlayerPawn + updater::offsets::m_flFlashOverlayAlpha);
 
-					clippingWeapon =  read< uint64_t>(player.pCSPlayerPawn + updater::offsets::m_pClippingWeapon);
-					 uint64_t firstLevel = read< uint64_t>(clippingWeapon + 0x10); // First offset
-					weaponData =  read< uint64_t>(firstLevel + 0x20); // Final offset
+					clippingWeapon = utils::memory::read< uint64_t>(player.pCSPlayerPawn + updater::offsets::m_pClippingWeapon);
+					uint64_t firstLevel = utils::memory::read< uint64_t>(clippingWeapon + 0x10); // First offset
+					weaponData = utils::memory::read< uint64_t>(firstLevel + 0x20); // Final offset
 					/*weaponData = process->read<std::uint64_t>(clippingWeapon + 0x10);
 					weaponData = process->read<std::uint64_t>(weaponData + updater::offsets::m_szName);*/
 
 					CHAR buffer[MAX_PATH] = {  };
 					CHAR prefix[] = "weapon_";
 
-					 read_raw(weaponData, buffer, sizeof(buffer));
-					 
-						// 判断前缀是否为 "weapon_"
+					utils::memory::read_raw(weaponData, buffer, sizeof(buffer));
+
+					// 判断前缀是否为 "weapon_"
 					if (RtlCompareMemory(buffer, prefix, sizeof("weapon_") - 1) == sizeof("weapon_") - 1)
 						// 拷贝去掉前缀后的内容到 player.weapon
 						RtlCopyMemory(player.weapon, buffer + sizeof("weapon_") - 1, sizeof(player.weapon) - 1);
-				
+
 					else
-					    RtlCopyMemory(player.weapon, "Invalid Weapon Name", sizeof("Invalid Weapon Name"));
-					
-					 
- 
+						RtlCopyMemory(player.weapon, "Invalid Weapon Name", sizeof("Invalid Weapon Name"));
+
+
+
 				}
 
 				list.push_back(player);
-			 
+
 			}
 
 
@@ -565,6 +565,7 @@ namespace game
 			players.clear();
 			players.assign(list.begin(), list.end());
 			ExReleaseFastMutex(&m_player_data_lock);
+
 		
 
 
