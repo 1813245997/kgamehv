@@ -278,9 +278,9 @@ namespace utils
 		 
 
 			// 锁页确保页面存在
-			if (!NT_SUCCESS(utils::memory::lock_memory( reinterpret_cast<unsigned  long long> (target_api_page_base), PAGE_SIZE, &mdl))) {
-				goto CLEANUP;
-			}
+			//if (!NT_SUCCESS(utils::memory::lock_memory( reinterpret_cast<unsigned  long long> (target_api_page_base), PAGE_SIZE, &mdl))) {
+			//	goto CLEANUP;
+			//}
 
 			// 分配 trampoline（可选）
 			if (allocate_trampoline_page) {
@@ -445,9 +445,9 @@ namespace utils
 
 		CLEANUP:
 			ExReleaseFastMutex(&g_user_hook_page_list_lock);
-			if (mdl) {
+	/*		if (mdl) {
 				utils::memory::unlock_memory(mdl);
-			}
+			}*/
 
 			if (!result && trampoline_va) {
 				utils::memory::free_user_memory(process_id, trampoline_va, PAGE_SIZE);
