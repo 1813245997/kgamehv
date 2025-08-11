@@ -311,12 +311,12 @@ namespace hook_functions
 		    
 		   if (Create)
 		   {
-			   //DbgBreakPoint();
+			    
 			   utils::process::add_process_entry(ProcessId);
 		   }
 		   else
 		   {
-			   //DbgBreakPoint();
+			   
 			   utils::process::remove_process_entry(ProcessId);
 		   }
 
