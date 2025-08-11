@@ -3018,7 +3018,7 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
-
+				 
 
 				temp_addr = signature_scanner::find_pattern_image(
 					 image_base ,
@@ -3026,6 +3026,17 @@ namespace utils
 					"xxxxxxxxxxx", 
 					".text"
 				);
+
+				//
+				if (!temp_addr||!MmIsAddressValid(reinterpret_cast<PVOID>(temp_addr)))
+				{
+					temp_addr = signature_scanner::find_pattern_image(
+						image_base,
+						"\x4C\x8B\xDC\x55\x53\x56\x57\x49\x8D\x6B\xB8",
+						"xxxxxxxxxxx",
+						".text"
+					);
+				}
 
 
 				cocclusion_context_post_sub_graph_addr = temp_addr;

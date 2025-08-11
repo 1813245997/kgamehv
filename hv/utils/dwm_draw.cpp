@@ -125,12 +125,12 @@ namespace utils
 			}
 
 
-			status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("find_ccomposition_present failed with status: 0x%X", status);
-				return status;
-			}
+			//status = find_ccomposition_present(g_dwm_process, g_dwmcore_base, &g_ccomposition_present);
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("find_ccomposition_present failed with status: 0x%X", status);
+			//	return status;
+			//}
 
 			status = find_cocclusion_context_pre_sub_graph(g_dwm_process, g_dwmcore_base, &g_cocclusion_context_pre_sub_graph);
 			if (!NT_SUCCESS(status))
@@ -210,6 +210,13 @@ namespace utils
 				return status;
 
 			}
+			status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
+				return status;
+			}
+
 			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -235,12 +242,7 @@ namespace utils
 
 
 
-			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
-			//if (!NT_SUCCESS(status))
-			//{
-			//	LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
-			//	return status;
-			//}
+
 
 
 		 

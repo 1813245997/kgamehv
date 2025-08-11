@@ -747,7 +747,13 @@ extern "C"
 		 uintptr_t base, size;
 	 };
 
-
+	 typedef struct _KSTACK_CREATE_INFO {
+		 ULONG Type;           // 0x00: 栈类型 / 创建模式（r15d）
+		 ULONG Pages;          // 0x04: 页数 / 大小类别（5）
+		 ULONG Flags;          // 0x08: 额外标志（先清零）
+		 ULONG Reserved;       // 0x0C: 对齐填充
+		 PVOID StackBase;      // 0x10: 栈基址指针（创建后由 MmCreateKernelStack 填充）
+	 } KSTACK_CREATE_INFO, * PKSTACK_CREATE_INFO;
 
 }
 

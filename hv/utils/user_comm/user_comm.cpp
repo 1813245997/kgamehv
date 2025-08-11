@@ -110,47 +110,44 @@ namespace utils
 				return false;
 			}
 
-			const WCHAR* prefix = L"\\??\\";
-			size_t prefix_len = wcslen(prefix);
-			size_t path_len = wcslen(file_path);
-			size_t total_len = prefix_len + path_len + 1; // +1 for null terminator
+			// 计算路径长度（字符数 + 1）
+			size_t path_len = wcslen(file_path) + 1;
 
-			if (total_len > 0xFFFF) // 过长，防止异常
-			{
-				request->status = STATUS_NAME_TOO_LONG;
-				return false;
-			}
+			// 申请非分页内存
+			PWCHAR safe_path = (PWCHAR)utils::internal_functions::pfn_ex_allocate_pool_with_tag(
+				NonPagedPool,
+				path_len * sizeof(WCHAR),
+				'dlfF' // 自定义TAG，保持你代码风格
+			);
 
-		 
-			PWCHAR full_path =  reinterpret_cast<PWCHAR> (utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, total_len * sizeof(WCHAR), 'dlfF'));
-			if (!full_path)
+			if (!safe_path)
 			{
 				request->status = STATUS_INSUFFICIENT_RESOURCES;
 				return false;
 			}
 
-		 
-			RtlZeroMemory(full_path, total_len * sizeof(WCHAR));
-			wcscpy(full_path, prefix);
-			wcscat(full_path, file_path);
-		 
-			UNICODE_STRING uni_path;
-			RtlInitUnicodeString(&uni_path, full_path);
+			// 拷贝路径字符串到安全内存
+			RtlCopyMemory(safe_path, file_path, path_len * sizeof(WCHAR));
 
-		 
+			// 初始化UNICODE_STRING
+			UNICODE_STRING uni_path;
+			RtlInitUnicodeString(&uni_path, safe_path);
+
+			// 调用删除文件
 			status = utils::file_utils::force_delete_file(&uni_path);
 
-			// 释放内存
-			ExFreePool(full_path);
+			// 释放池内存
+			ExFreePool(safe_path);
 
 			if (!NT_SUCCESS(status))
 			{
 				request->status = status;
-				 
 				return false;
 			}
 
 			request->status = STATUS_SUCCESS;
+			return true;
+
 		 
 		 
 			return true;

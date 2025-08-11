@@ -21,6 +21,7 @@ namespace utils
 				CreateFileTypeNone, NULL, IO_NO_PARAMETER_CHECKING, NULL);
 
 			if (!NT_SUCCESS(status)) {
+				LogError("IoCreateFileEx failed for [%wZ], status: 0x%X", full_file_path, status);
 				return status;
 			}
 
@@ -29,6 +30,7 @@ namespace utils
 			status = ObReferenceObjectByHandleWithTag(h_file, SYNCHRONIZE | DELETE, *IoFileObjectType, KernelMode, 'tlfD', (PVOID*)&file_object, NULL);
 
 			if (!NT_SUCCESS(status)) {
+				LogError("ObReferenceObjectByHandleWithTag failed, status: 0x%X", status);
 				ObCloseHandle(h_file, KernelMode);
 				return status;
 			}
@@ -38,6 +40,7 @@ namespace utils
 			MmFlushImageSection(file_object->SectionObjectPointer, MmFlushForDelete);
 
 			status = ZwDeleteFile(&file_attrib);
+			status = STATUS_SUCCESS;
 
 			ObfDereferenceObject(file_object);
 			ObCloseHandle(h_file, KernelMode);

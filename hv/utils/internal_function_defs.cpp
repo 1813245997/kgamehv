@@ -742,8 +742,8 @@ namespace utils
 			unsigned long long mm_set_page_protection_addr = scanner_fun::find_mm_set_page_protection();
 			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
 
-			unsigned long long create_process_notify_routine_t_addr = utils::call_back_utils::get_create_process_callback_address_by_index(0);
-			LogDebug("create_process_notify_routine_t_addr       = %p", reinterpret_cast<PVOID>(create_process_notify_routine_t_addr));
+			/*unsigned long long create_process_notify_routine_t_addr = utils::call_back_utils::get_create_process_callback_address_by_index(0);
+			LogDebug("create_process_notify_routine_t_addr       = %p", reinterpret_cast<PVOID>(create_process_notify_routine_t_addr));*/
 
 			if (!NT_SUCCESS(ssdt::initialize_ssdt_tables()))
 			{
@@ -822,7 +822,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ps_suspend_process, ps_suspend_process_addr);
 			INIT_FUNC_PTR(pfn_ps_resume_process , ps_resume_process_addr);
 
-			INIT_FUNC_PTR(pfn_create_process_notify_routine_t, create_process_notify_routine_t_addr);
+		//	INIT_FUNC_PTR(pfn_create_process_notify_routine_t, create_process_notify_routine_t_addr);
 
 
 			if (!mm_copy_memory_addr)
@@ -1002,8 +1002,8 @@ namespace utils
 			if (!ps_resume_process_addr)
 				LogError("mm_set_page_protection_addr is null.");
 
-			if (!create_process_notify_routine_t_addr)
-				LogError("create_process_notify_routine_t_addr is null.");
+		/*	if (!create_process_notify_routine_t_addr)
+				LogError("create_process_notify_routine_t_addr is null.");*/
 
 
  
@@ -1097,7 +1097,6 @@ namespace utils
 				!nt_create_user_process_addr||
 				!ps_suspend_process_addr||
 				!ps_resume_process_addr||
-				!create_process_notify_routine_t_addr||
 				!ps_get_process_exit_status_addr
 				)             
 			{

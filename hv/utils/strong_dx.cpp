@@ -352,10 +352,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-		/*	if (utils::auth::is_license_expired())
+			if (utils::auth::is_license_expired())
 			{
 				return;
-			}*/
+			}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -392,11 +392,11 @@ namespace utils
 			utils::kvector< game::kcsgo2struct::CPlayer>list{};
 
 
-			 
+
 			if (!game::kcsgo2::g_game->update_game_windows(utils::dwm_draw::g_game_utils_buffer))
 			{
 				return;
-			} 
+			}
 			 
 			if (game::kcsgo2::g_game->isC4Planted)
 			{
