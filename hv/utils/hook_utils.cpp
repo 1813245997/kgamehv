@@ -237,7 +237,7 @@ namespace utils
 				
 			}
 			 
-			LogError("hook: Successfully hooked target_api: %p -> new_api: %p, fake_page: %p, trampoline: %p",
+			LogInfo("hook: Successfully hooked target_api: %p -> new_api: %p, fake_page: %p, trampoline: %p",
 				target_api, new_api, hook_info->fake_va, *origin_function);
 		 
 			return true;
