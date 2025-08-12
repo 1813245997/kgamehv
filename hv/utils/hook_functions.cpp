@@ -1003,7 +1003,7 @@ namespace hook_functions
 			 
 			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
 			  *a3 = false;
-			// //告诉他窗口不是全屏
+			  //告诉他窗口不是全屏
 
 		 
 			 // 关键修复：直接返回到调用者的下一条指令

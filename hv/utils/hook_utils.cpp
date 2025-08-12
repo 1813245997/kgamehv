@@ -266,7 +266,7 @@ namespace utils
 
 			const bool is_intel = utils::khyper_vt::is_intel_cpu();
 			unsigned char* trampoline_va = nullptr;
-			PMDL mdl = nullptr;
+		 
 			KAPC_STATE apc_state{};
 			bool apc_attached = false;
 			bool result = false;
@@ -308,7 +308,7 @@ namespace utils
 			PLIST_ENTRY current = g_user_hook_page_list_head.Flink;
 			while (current != &g_user_hook_page_list_head) {
 				kernel_hook_info* hooked_page_info = CONTAINING_RECORD(current, kernel_hook_info, hooked_page_list);
-				if (hooked_page_info->pfn_of_hooked_page == target_page_pfn) {
+				if (hooked_page_info->process_id == process_id && hooked_page_info->pfn_of_hooked_page == target_page_pfn) {
 
 					LogInfo("Page already hooked");
 					hooked_function_info* hook_info = reinterpret_cast<hooked_function_info*>(
