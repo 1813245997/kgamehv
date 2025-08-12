@@ -352,10 +352,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
+		/*	if (utils::auth::is_license_expired())
 			{
 				return;
-			}
+			}*/
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -363,7 +363,7 @@ namespace utils
 			
 			ByteRender rend;
 			rend.Setup(width, height, data);
-			int margin = 10;
+			int margin =30;
 			rend.String(
 				g_Font,
 				{ static_cast<float>(width - 150), static_cast<float>(margin) }, // срио╫гн╩жц
