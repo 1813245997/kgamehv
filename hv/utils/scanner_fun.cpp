@@ -6456,6 +6456,34 @@ namespace utils
 
 			return ps_resume_process_addr;
 		}
+
+		unsigned long long find_ke_get_processor_node_number_by_index()
+		{
+			unsigned long long ke_get_processor_node_number_by_index_addr{};
+			unsigned long long temp_addr{};
+
+
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			if (Version >= utils::WINDOWS_11_VERSION_24H2)
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+					"\xE8\xCC\xCC\xCC\xCC\x44\x0F\xB7\xF0\xC7\x84\x24\xE8\x00\x00\x00\x10\x00\x00\x00", 
+					"x????xxxxxxxxxxxxxxx",
+					"PAGE"
+				);
+
+
+				ke_get_processor_node_number_by_index_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+
+			return ke_get_processor_node_number_by_index_addr;
+		}
 		 
 
 
