@@ -103,10 +103,17 @@ namespace utils
 			MM_KERNEL_STACK_CONTEXT info{};
 		   if (utils::os_info::get_build_number()>=WINDOWS_11_VERSION_24H2)
 		   {
-			   info.StackFlags = 0;
-			   info.StackType = 0x10;
-			   info.Thread = current_thread;
-			   info.IdealNode = utils::internal_functions::pfn_ke_get_processor_node_number_by_index(*(PULONG)(current_thread + 0X24C));
+			   
+			   // 反编译里的 0x500000010 拆解
+			   info.StackFlags =5;  // 原始 IDA 里低 32 位的 0x10
+			   info.StackType = 0;     // 高 32 位的 0x5 (0x500000000 >> 32)
+
+			   // ProcessorNodeNumberByIndex
+			   //info.IdealNode = utils::internal_functions::pfn_ke_get_processor_node_number_by_index(
+				  // *(PULONG)(current_thread + 0x24C));
+
+			   //// CurrentThread
+			   //info.Thread = (PVOID)current_thread;
 			   NTSTATUS status = pfn_mm_create_kernel_stack_win11(&info);
 		
 			   if (!NT_SUCCESS(status) || info.StackBase == 0) {

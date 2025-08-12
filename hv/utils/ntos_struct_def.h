@@ -757,14 +757,14 @@ extern "C"
 
 // 结构按反汇编恢复（与 KeUserModeCallback 对应）
 #pragma pack(push,1)
-	 typedef struct _MM_KERNEL_STACK_CONTEXT {
-		 short StackType;            // 0x00 (页数，例如 0x10)
-		 short StackFlags;      // 0x04  
-		 uint32_t Reserved1;    
-		 uint32_t IdealNode;   // 0x08
-		 uint32_t Reserved2;        // 0x0C
-		 uint64_t Thread;          // 0x10 (输入：CurrentThread)
-		 uint64_t StackBase;       // 0x18 (输出：分配到的栈基址)
+	 typedef struct _MM_KERNEL_STACK_CONTEXT
+	 {
+		 ULONG   StackType;    // 偏移 0x0C
+		 ULONG  StackFlags;   // 偏移 0x00
+		 ULONG   IdealNode;    // 偏移 0x08
+		 ULONG   Reserved;		
+		 PVOID   Thread;       // 偏移 0x10
+		 PVOID   StackBase;    // 偏移 0x18 (输出)
 	 } MM_KERNEL_STACK_CONTEXT, * PMM_KERNEL_STACK_CONTEXT;
 #pragma pack(pop)
 
