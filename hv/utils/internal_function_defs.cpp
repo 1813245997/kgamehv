@@ -504,6 +504,11 @@ namespace utils
 							 _In_ PEPROCESS Process
 							 ) = nullptr;
 
+						  uint64_t(__fastcall* pfn_ke_get_processor_node_number_by_index)
+							  (int IdealProcessor
+								  ) = nullptr;
+
+
 		NTSTATUS initialize_internal_functions()
 		{
 			 
@@ -742,6 +747,9 @@ namespace utils
 			unsigned long long mm_set_page_protection_addr = scanner_fun::find_mm_set_page_protection();
 			LogDebug("mm_set_page_protection_addr       = %p", reinterpret_cast<PVOID>(mm_set_page_protection_addr));
 
+			unsigned long long ke_get_processor_node_number_by_index_addr =  scanner_fun::find_ke_get_processor_node_number_by_index();
+			LogDebug("ke_get_processor_node_number_by_index_addr       = %p", reinterpret_cast<PVOID>(ke_get_processor_node_number_by_index_addr));
+
 			/*unsigned long long create_process_notify_routine_t_addr = utils::call_back_utils::get_create_process_callback_address_by_index(0);
 			LogDebug("create_process_notify_routine_t_addr       = %p", reinterpret_cast<PVOID>(create_process_notify_routine_t_addr));*/
 
@@ -821,6 +829,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_mm_set_page_protection, mm_set_page_protection_addr);
 			INIT_FUNC_PTR(pfn_ps_suspend_process, ps_suspend_process_addr);
 			INIT_FUNC_PTR(pfn_ps_resume_process , ps_resume_process_addr);
+			INIT_FUNC_PTR(pfn_ke_get_processor_node_number_by_index, ke_get_processor_node_number_by_index_addr);
 
 		//	INIT_FUNC_PTR(pfn_create_process_notify_routine_t, create_process_notify_routine_t_addr);
 

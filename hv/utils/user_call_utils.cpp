@@ -90,14 +90,43 @@ namespace utils
 
 			
 			//alloc new kernel stack
+			 
+			typedef NTSTATUS(__fastcall* PMM_CREATE_KERNEL_STACK_WIN11)(PMM_KERNEL_STACK_CONTEXT Info);
+			typedef VOID(__fastcall* PMM_DELETE_KERNEL_STACK_WIN11)(PMM_KERNEL_STACK_CONTEXT Info);
+			auto pfn_mm_create_kernel_stack_win11 = reinterpret_cast<PMM_CREATE_KERNEL_STACK_WIN11>(internal_functions::pfn_mm_create_kernel_stack);
+			auto pfn_mm_delete_kernel_stack_win11 = reinterpret_cast<PMM_DELETE_KERNEL_STACK_WIN11>(internal_functions::pfn_mm_delete_kernel_stack);
+
 			unsigned long long  ret_val_ptr{};
 			auto current_thread = reinterpret_cast<unsigned long long>  (internal_functions::pfn_ke_get_current_thread());
+			unsigned long long kernel_stack = 0;
+			 
+			MM_KERNEL_STACK_CONTEXT info{};
+		   if (utils::os_info::get_build_number()>=WINDOWS_11_VERSION_24H2)
+		   {
+			   info.StackFlags = 0;
+			   info.StackType = 0x10;
+			   info.Thread = current_thread;
+			   info.IdealNode = utils::internal_functions::pfn_ke_get_processor_node_number_by_index(*(PULONG)(current_thread + 0X24C));
+			   NTSTATUS status = pfn_mm_create_kernel_stack_win11(&info);
+		
+			   if (!NT_SUCCESS(status) || info.StackBase == 0) {
+				   return 0;
+			   }
+			   kernel_stack = (unsigned long long)info.StackBase;
+		   }
+		   else
+		   {
+			   kernel_stack = reinterpret_cast<unsigned long long> (internal_functions::pfn_mm_create_kernel_stack(false, 0, 0));
+			   if (!kernel_stack)
+			   {
+				   return 0;
+			   }
+		   }
+		 
 
-			auto kernel_stack = reinterpret_cast<unsigned long long > (internal_functions::pfn_mm_create_kernel_stack (false, 0, 0));
-			if (!kernel_stack)
-			{
-				return 0;
-			}
+
+
+		
 
 			//fill kernel stack control
 			auto kernel_stack_control = kernel_stack - 0x50;
@@ -143,8 +172,15 @@ namespace utils
 			*(unsigned short*)(current_thread + 0x1E4) = v1;
 			*(unsigned short*)(current_thread + 0x1E6) = v2;
 			*(unsigned char*)(current_thread + 0x24A) = apcIndex;
-
-			internal_functions::pfn_mm_delete_kernel_stack(reinterpret_cast<PVOID> (kernel_stack), false);
+			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+			{
+				pfn_mm_delete_kernel_stack_win11(&info);
+			}
+			else
+			{
+				internal_functions::pfn_mm_delete_kernel_stack(reinterpret_cast<PVOID> (kernel_stack), false);
+			}
+			
 			return ret_val_ptr;
 
 		}

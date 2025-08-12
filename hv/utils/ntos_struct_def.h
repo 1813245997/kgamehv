@@ -757,14 +757,15 @@ extern "C"
 
 // 结构按反汇编恢复（与 KeUserModeCallback 对应）
 #pragma pack(push,1)
-	 typedef struct _KERNEL_STACK_CREATE_INFO {
-		 uint32_t Size;            // 0x00 (页数，例如 0x10)
-		 uint32_t Type;            // 0x04 (5 = CallUserMode)
-		 uint32_t ProcessorNode;   // 0x08
-		 uint32_t Reserved;        // 0x0C
+	 typedef struct _MM_KERNEL_STACK_CONTEXT {
+		 short StackType;            // 0x00 (页数，例如 0x10)
+		 short StackFlags;      // 0x04  
+		 uint32_t Reserved1;    
+		 uint32_t IdealNode;   // 0x08
+		 uint32_t Reserved2;        // 0x0C
 		 uint64_t Thread;          // 0x10 (输入：CurrentThread)
 		 uint64_t StackBase;       // 0x18 (输出：分配到的栈基址)
-	 } KERNEL_STACK_CREATE_INFO, * PKERNEL_STACK_CREATE_INFO;
+	 } MM_KERNEL_STACK_CONTEXT, * PMM_KERNEL_STACK_CONTEXT;
 #pragma pack(pop)
 
 }

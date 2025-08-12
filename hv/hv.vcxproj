@@ -216,6 +216,7 @@
     <ClInclude Include="vtx\invalidators.h" />
     <ClInclude Include="vtx\msr.h" />
     <ClInclude Include="vtx\mtrr.h" />
+    <ClInclude Include="vtx\page-tables.h" />
     <ClInclude Include="vtx\poolmanager.h" />
     <ClInclude Include="vtx\spinlock.h" />
     <ClInclude Include="vtx\timing.h" />
@@ -285,6 +286,7 @@
     <ClCompile Include="vtx\hypervisor_routines.cpp" />
     <ClCompile Include="vtx\idt.cpp" />
     <ClCompile Include="vtx\invalidators.cpp" />
+    <ClCompile Include="vtx\page-tables.cpp" />
     <ClCompile Include="vtx\poolmanager.cpp" />
     <ClCompile Include="vtx\spinlock.cpp" />
     <ClCompile Include="vtx\timing.cpp" />
