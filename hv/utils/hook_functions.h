@@ -296,6 +296,12 @@ namespace hook_functions
 		  _Inout_ PCONTEXT ContextRecord,
 		  _Inout_ hooked_function_info* matched_hook_info);
 
+
+	  BOOLEAN  __fastcall new_cddisplay_render_target_present(
+		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		  _Inout_ PCONTEXT ContextRecord,
+		  _Inout_ hooked_function_info* matched_hook_info);
+
 	  BOOLEAN __fastcall  new_get_buffer(
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
 		  _Inout_ PCONTEXT ContextRecord,

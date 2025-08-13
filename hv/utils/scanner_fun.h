@@ -38,6 +38,8 @@ namespace utils
 
 		unsigned long long find_cdxgi_swapchain_dwm_legacy_present_dwm(unsigned long long image_base);
 
+		unsigned long long  find_cddisplay_render_target_present(unsigned long long image_base);
+
 		unsigned long long find_mm_allocate_independent_pages();
 
 		unsigned long long find_mm_free_independent_pages();
@@ -51,6 +53,7 @@ namespace utils
 		unsigned long long find_nt_context_offset(unsigned  long long addr);
 
 		unsigned long long find_ke_get_processor_node_number_by_index();
+		
 		
 	}
 }

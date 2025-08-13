@@ -4157,6 +4157,80 @@ namespace utils
 			return cdxgi_swapchain_dwm_legacy_present_dwm_addr;
 		}
 
+
+		unsigned long long  find_cddisplay_render_target_present(unsigned long long image_base)
+		{
+			unsigned long long cddisplay_render_target_present_addr{};
+
+			unsigned long long temp_addr{};
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+				break;
+			case utils::WINDOWS_7_SP1:
+				break;
+			case utils::WINDOWS_8:
+				break;
+			case utils::WINDOWS_8_1:
+				break;
+			case utils::WINDOWS_10_VERSION_1507:
+				break;
+			case utils::WINDOWS_10_VERSION_1511:
+				break;
+			case utils::WINDOWS_10_VERSION_1607:
+				break;
+			case utils::WINDOWS_10_VERSION_1703:
+				break;
+			case utils::WINDOWS_10_VERSION_1709:
+				break;
+			case utils::WINDOWS_10_VERSION_1803:
+				break;
+			case utils::WINDOWS_10_VERSION_1809:
+				break;
+			case utils::WINDOWS_10_VERSION_19H1:
+				break;
+			case utils::WINDOWS_10_VERSION_19H2:
+				break;
+			case utils::WINDOWS_10_VERSION_20H1:
+				break;
+			case utils::WINDOWS_10_VERSION_20H2:
+				break;
+			case utils::WINDOWS_10_VERSION_21H1:
+				break;
+			case utils::WINDOWS_10_VERSION_21H2:
+				break;
+			case utils::WINDOWS_10_VERSION_22H2:
+				break;
+			case utils::WINDOWS_11_VERSION_21H2:
+				break;
+			case utils::WINDOWS_11_VERSION_22H2:
+				break;
+			case utils::WINDOWS_11_VERSION_23H2:
+				break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+			 
+				//IDA: "48 89 5C 24 08 48 89 74 24 20 55 57 41 56 48 8B EC 48 83 EC 60"
+				temp_addr = signature_scanner::find_pattern_image(
+					image_base,
+					"\x48\x89\x5C\x24\x08\x48\x89\x74\x24\x20\x55\x57\x41\x56\x48\x8B\xEC\x48\x83\xEC\x60",
+					"xxxxxxxxxxxxxxxxxxxxx",
+					".text"
+				);
+
+
+				cddisplay_render_target_present_addr = temp_addr;
+			}
+				break;
+			default:
+				break;
+			}
+
+			return  cddisplay_render_target_present_addr;
+		}
 	  
 		unsigned long long find_mm_allocate_independent_pages()
 		{

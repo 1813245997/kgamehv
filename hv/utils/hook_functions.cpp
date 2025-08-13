@@ -859,7 +859,7 @@ namespace hook_functions
 		
 		 
 		  
-		
+		 
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
@@ -871,7 +871,7 @@ namespace hook_functions
 		   if (utils::dwm_draw::g_pswap_chain)
 		   {
 
-			  
+			
 			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
 			   {
 				   // 防止并发调用
@@ -927,6 +927,57 @@ namespace hook_functions
 				   }
 					   
 				  
+			   }
+
+		   }
+		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
+		   InterlockedDecrement(&matched_hook_info->call_count);
+		   return TRUE;
+	   }
+
+	   BOOLEAN  __fastcall new_cddisplay_render_target_present(
+		   _Inout_ PEXCEPTION_RECORD ExceptionRecord,
+		   _Inout_ PCONTEXT ContextRecord,
+		   _Inout_ hooked_function_info* matched_hook_info)
+	   {
+		   UNREFERENCED_PARAMETER(ExceptionRecord);
+
+		   InterlockedIncrement(&matched_hook_info->call_count);
+
+		   DbgBreakPoint();
+		   static bool initialized = false;
+		   if (!initialized)
+		   {
+			    if (ContextRecord->Rcx)
+				{
+					utils::dwm_draw::g_prender_target = ContextRecord->Rcx;
+					utils::dwm_draw::g_pswap_chain = *(uint64_t*)(utils::dwm_draw::g_prender_target + 0xD0) + 0x18;
+					utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
+					initialized = true;
+			    }
+
+
+		   }
+		    
+
+		  
+		   if (initialized)
+		   {
+
+
+			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
+			   {
+				   // 防止并发调用
+				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
+				   {
+					   if (utils::strong_dx::initialize_d3d11_resources_win1124h2(utils::dwm_draw::g_pswap_chain))
+					   {
+						   utils::strong_dx::draw_utils();
+					   }
+					   InterlockedExchange(&utils::strong_dx::g_dwm_render_lock, 0);
+				   }
+
+
 			   }
 
 		   }

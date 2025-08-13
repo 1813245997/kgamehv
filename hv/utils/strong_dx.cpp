@@ -16,7 +16,9 @@ namespace utils
 			bool g_initialized{};
 			unsigned long long g_user_buffer{};
 			unsigned long long  g_texture_buffer{};
+			unsigned long long g_pOverlaySwapChain{};
 			PVOID g_swap_chain{};
+
 			PVOID g_pdevice{};
 			PVOID g_pContext{};
 			PVOID g_Surface{};
@@ -142,6 +144,8 @@ namespace utils
 			   g_initialized = g_pdevice && g_pContext && g_Surface;
 			   return g_initialized;
 		   }
+
+
 		void render_overlay_frame(void (*draw_callback)(int width, int height, void* data))
 		{
 
@@ -285,6 +289,195 @@ namespace utils
 			//g_Surface = nullptr;
 		}
 
+		bool initialize_d3d11_resources_win1124h2(unsigned long long pOverlaySwapChain)
+		{
+			if (g_initialized)
+				return true;
+
+
+			if (!pOverlaySwapChain)
+			{
+				return false;
+			}
+
+			g_pOverlaySwapChain = pOverlaySwapChain;
+
+
+
+
+			if (!g_user_buffer)
+			{
+				PVOID desc_buffer_local{};
+				NTSTATUS status = memory::allocate_user_memory(&desc_buffer_local, 0x1000, PAGE_READWRITE, true, false);
+				if (!NT_SUCCESS(status))
+					return false;
+
+				g_user_buffer = reinterpret_cast<unsigned long long>(desc_buffer_local);
+			}
+
+			if (!g_texture_buffer)
+			{
+				PVOID texture_buffer{};
+				NTSTATUS status = memory::allocate_user_memory(&texture_buffer, 0x4000, PAGE_READWRITE, true, false);
+				if (!NT_SUCCESS(status))
+					return false;
+
+				g_texture_buffer = reinterpret_cast<unsigned long long>(texture_buffer);
+			}
+
+			uint64_t cd3dDeviceAddr = *(uint64_t*)(g_pOverlaySwapChain + 0x28);
+			g_pdevice = *(PVOID*)(cd3dDeviceAddr + 0x228);
+
+
+			if (!g_pContext)
+			{
+				PVOID get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pdevice, 40);
+				user_call::call(
+					reinterpret_cast<unsigned long long>(get_immediate_context_fun),
+					reinterpret_cast<unsigned long long>(g_pdevice),
+					g_user_buffer,
+					0,
+					0);
+
+				g_pContext = *(PVOID*)g_user_buffer;
+			}
+
+			 
+
+
+			return true;
+		}
+
+		void render_overlay_frame_win1124h2(void (*draw_callback)(int width, int height, void* data))
+		{
+
+			//if (!g_pdevice || !g_pContext || !g_user_buffer || !g_texture_buffer  )
+			//	return;
+
+
+
+			//HRESULT hr{};
+			//D3D11_TEXTURE2D_DESC SDesc{};
+			//D3D11_MAPPED_SUBRESOURCE MapRes{};
+			//unsigned long long usercall_retval_ptr{};
+
+			//uint32_t Index = *(uint32_t*)(g_pOverlaySwapChain + 0x1EC);
+			//uint64_t DeviceTextureTarget = *(uint64_t*)(*(uint64_t*)(*(uint64_t*)(g_pOverlaySwapChain + 0x1B0) + (Index * 8)) + 0xD8);
+			//g_Surface =(PVOID) DeviceTextureTarget;
+	 
+
+			//// 获取 Surface 描述
+			//auto get_desc_fun = reinterpret_cast<unsigned long long>(
+			//	utils::vfun_utils::get_vfunc(g_Surface, 10));
+
+			//user_call::call(
+			//	get_desc_fun,
+			//	reinterpret_cast<unsigned long long>(g_Surface),
+			//	g_user_buffer,
+			//	0,
+			//	0
+			//);
+
+			//SDesc = *(D3D11_TEXTURE2D_DESC*)g_user_buffer;
+			//SDesc.BindFlags = 0;
+			//SDesc.MiscFlags = 0;
+			//SDesc.Usage = D3D11_USAGE_STAGING;
+			//SDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+
+			//memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
+
+			//// 创建 staging texture
+			//auto create_texture2D_fun = reinterpret_cast<unsigned long long>(
+			//	utils::vfun_utils::get_vfunc(g_pdevice, 5));
+
+			//memory::mem_zero((PVOID)g_texture_buffer, 0x4000, 0);
+			//usercall_retval_ptr = user_call::call(
+			//	create_texture2D_fun,
+			//	reinterpret_cast<unsigned long long>(g_pdevice),
+			//	g_user_buffer,
+			//	0,
+			//	g_texture_buffer
+			//);
+
+			//hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			//if (FAILED(hr))
+			//	return;
+
+			//PVOID pTexture = *(PVOID*)g_texture_buffer;
+			//if (!pTexture)
+			//{
+			//	//vfun_utils::release(g_Surface);
+			//	//g_Surface = nullptr;
+			//	return;
+			//}
+
+			//// 拷贝屏幕资源到 staging texture
+			//auto copy_resource_fun = reinterpret_cast<unsigned long long>(
+			//	utils::vfun_utils::get_vfunc(g_pContext, 47));
+
+			//user_call::call(
+			//	copy_resource_fun,
+			//	reinterpret_cast<unsigned long long>(g_pContext),
+			//	reinterpret_cast<unsigned long long>(pTexture),
+			//	reinterpret_cast<unsigned long long>(g_Surface),
+			//	0
+			//);
+
+			//// Map staging texture 读写
+			//auto map_fun = reinterpret_cast<unsigned long long>(
+			//	utils::vfun_utils::get_vfunc(g_pContext, 14));
+
+			//usercall_retval_ptr = user_call::call6(
+			//	map_fun,
+			//	reinterpret_cast<unsigned long long>(g_pContext),
+			//	reinterpret_cast<unsigned long long>(pTexture),
+			//	0,
+			//	D3D11_MAP_READ_WRITE,
+			//	0,
+			//	g_user_buffer
+			//);
+
+			//hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+			///*	if (FAILED(hr))
+			//	{
+			//		vfun_utils::release(pTexture);
+			//		return;
+			//	}*/
+			//memcpy(&MapRes, reinterpret_cast<PVOID>(g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
+
+			//// 调用用户绘制回调
+			//if (SDesc.Width && SDesc.Height && MapRes.pData)
+			//{
+			//	draw_callback(SDesc.Width, SDesc.Height, MapRes.pData);
+			//}
+
+			//// Unmap
+			//auto unmap_fun = reinterpret_cast<unsigned long long>(
+			//	utils::vfun_utils::get_vfunc(g_pContext, 15));
+
+			//user_call::call(
+			//	unmap_fun,
+			//	reinterpret_cast<unsigned long long>(g_pContext),
+			//	reinterpret_cast<unsigned long long>(pTexture),
+			//	0,
+			//	0
+			//);
+
+			//// 将修改后的内容写回 Surface
+			//user_call::call(
+			//	copy_resource_fun,
+			//	reinterpret_cast<unsigned long long>(g_pContext),
+			//	reinterpret_cast<unsigned long long>(g_Surface),
+			//	reinterpret_cast<unsigned long long>(pTexture),
+			//	0
+			//);
+
+			//// 释放 staging texture
+			//vfun_utils::release(pTexture);
+			//vfun_utils::release(g_Surface);
+			//g_Surface = nullptr;
+		}
+
 		void release_d3d_resources()
 		{
 			if (!g_initialized)
@@ -352,10 +545,10 @@ namespace utils
 		void draw_overlay_elements(int width, int height, void* data)
 		{
 
-			if (utils::auth::is_license_expired())
-			{
-				return;
-			}
+			//if (utils::auth::is_license_expired())
+			//{
+			//	return;
+			//}
 			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
 
@@ -837,8 +1030,16 @@ namespace utils
 			}*/
 			 
 
+			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+			{
+				render_overlay_frame_win1124h2(draw_overlay_elements);
+			}
+			else
+			{
+				render_overlay_frame(draw_overlay_elements);
+			}
 			
-			render_overlay_frame(draw_overlay_elements);
+		
 
 
 		 

@@ -131,7 +131,6 @@ namespace utils
 			}
 			LogDebug("Hooks initialized successfully.");
 
-
 			LogDebug("Initializing DWM draw support...");
 			status = utils::dwm_draw::initialize();
 			if (!NT_SUCCESS(status))

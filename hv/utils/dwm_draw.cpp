@@ -33,13 +33,12 @@ namespace utils
 		unsigned long long g_cdxgi_swapchain_present_dwm{}; //CDXGISwapChain::PresentDWM
 		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{}; //CDXGISwapChain::PresentMultiplaneOverlay
 	    unsigned long long g_dxgk_open_resource{};
-
 		unsigned long long g_pswap_chain{};
-
+		unsigned long long g_prender_target{};
 		unsigned long long g_dxgk_get_device_state{};
-
 		unsigned long long g_ki_call_user_mode2{};
-
+		unsigned long long g_cddisplay_render_target_present{};//CDDisplayRenderTarget::Present
+		
 		PVOID g_game_utils_buffer{};
 		bool g_kvashadow{};
 
@@ -167,6 +166,18 @@ namespace utils
 				return status;
 			}
 
+		 
+			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+			{
+				status = find_cddisplay_render_target_present(g_dwm_process, g_dwmcore_base, &g_cddisplay_render_target_present);
+				if (!NT_SUCCESS(status))
+				{
+					LogError("find_coverlaycontext_presentmpo failed with status: 0x%X", status);
+					return status;
+				}
+			}
+
+
 			status = find_find_windoww(g_dwm_process, g_user32_base, &g_find_windoww_fun);
 			if (!NT_SUCCESS(status))
 			{
@@ -218,12 +229,12 @@ namespace utils
 			}
 
 
-			status = hook_swapchain_present_dwm(g_dwm_process);
+			/*status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("hook_swapchain_present_dwm failed with status: 0x%X", status);
 				return status;
-			}
+			}*/
 			//物理机走这个
 			status = hook_present_multiplane_overlay(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -240,7 +251,16 @@ namespace utils
 				return status;
 			}
 
-
+			
+			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+			{
+				status = hook_cddisplay_render_target_present(g_dwm_process);
+				if (!NT_SUCCESS(status))
+				{
+					LogError("hook_cddisplay_render_target_present failed with status: 0x%X", status);
+					return status;
+				}
+			}
 
 
 
@@ -885,6 +905,34 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
+		NTSTATUS  find_cddisplay_render_target_present(
+			IN PEPROCESS process,
+			IN unsigned long long dwmcore_base,
+			OUT unsigned long long* cddisplay_render_target_present_out)
+		{
+
+			 
+		 
+
+			KAPC_STATE apc_state{};
+
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_cddisplay_render_target_present(dwmcore_base);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*cddisplay_render_target_present_out = addr;
+
+			LogDebug(
+				"Found CDDisplayRenderTarget::Present at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
 		NTSTATUS find_find_windoww(
 			IN PEPROCESS process,
 			IN unsigned long long user32_base,
@@ -1202,6 +1250,26 @@ namespace utils
 				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm ,
 				true
 				 
+			);
+
+			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+		}
+
+		NTSTATUS hook_cddisplay_render_target_present(IN PEPROCESS process)
+		{
+			if (!process)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+	 
+
+			bool hook_result = hook_utils::hook_user_exception_handler(
+				process,
+				reinterpret_cast<PVOID>(g_cddisplay_render_target_present),
+				hook_functions::new_cddisplay_render_target_present,
+				true
+
 			);
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;

@@ -26,8 +26,9 @@ namespace utils
 		extern unsigned long long g_cdxgi_swapchain_present_multiplane_overlay ;
 		extern unsigned long long g_cdxgi_swapchain_present_dwm;
 		extern unsigned long long g_cdxgi_swap_chain_dwm_legacy_present_dwm ;
+		extern unsigned long long g_cddisplay_render_target_present;
 		extern unsigned long long g_pswap_chain ;
-		 
+		extern unsigned long long g_prender_target ;
 
 		extern unsigned long long g_dxgk_get_device_state ;
 
@@ -110,6 +111,11 @@ namespace utils
 			IN PEPROCESS process,
 			IN unsigned long long dxgi_base,
 			OUT unsigned long long* cdxgi_swap_chain_dwm_legacy_present_dwm_out);
+	 
+		NTSTATUS  find_cddisplay_render_target_present(
+			IN PEPROCESS process,
+			IN unsigned long long dwmcore_base,
+			OUT unsigned long long* coverlaycontext_presentmpo_out);
 
 		NTSTATUS find_find_windoww(
 			IN PEPROCESS process,
@@ -156,6 +162,8 @@ namespace utils
 		 NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process);
 
 		 NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process);
+
+		 NTSTATUS hook_cddisplay_render_target_present(IN PEPROCESS process);
 		  
 		 NTSTATUS  hook_get_buffer(IN PEPROCESS process);
 
