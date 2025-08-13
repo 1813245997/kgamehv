@@ -327,8 +327,8 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4() & ~CR4_VMX_ENABLE_FLAG);
 
 
-	hv::vmwrite<unsigned __int64>(VMCS_CTRL_CR3_TARGET_COUNT, 1);
-	hv::vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0, hv::get_system_directory_table_base());
+	hv::vmwrite<unsigned __int64>(VMCS_CTRL_CR3_TARGET_COUNT,0);
+	//hv::vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0, hv::get_system_directory_table_base());
 
 	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
 	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
