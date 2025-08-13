@@ -573,8 +573,7 @@ namespace game
 
 		bool CGame::update_game_windows(PVOID user_buffer)
 		{
-			if (!m_game_handle)
-			{
+			 
 				m_game_handle = find_cs2_window(user_buffer);
 
 				if (!m_game_handle)
@@ -587,7 +586,7 @@ namespace game
 				{
 					return false;
 				}
-			}
+			 
 			return true;
 		}
 		 
