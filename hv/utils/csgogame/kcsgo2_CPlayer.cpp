@@ -15,7 +15,7 @@ void game::kcsgo2struct::CPlayer::ReadBones(_In_  matrix4x4_t* view_matrix, _In_
  
 
 		Vector3 screen_position{};
-		if (world_to_screen(&bone_position, &screen_position, view_matrix, screen_size)) {
+		if (utils::math:: world_to_screen(&bone_position, &screen_position, view_matrix, screen_size)) {
 			bones.bone_positions[entry.bone_enum] = screen_position;
 		}
 		else {
@@ -28,13 +28,13 @@ void game::kcsgo2struct::CPlayer::CalcScreenPositions(matrix4x4_t* view_matrix, 
 {
 	screen_pos_valid = false;
 
-	if (!world_to_screen(&origin, &screen_foot, view_matrix, screen_size))
+	if (!utils::math::world_to_screen(&origin, &screen_foot, view_matrix, screen_size))
 		return;
 
 	Vector3 head_pos = origin;
 	head_pos.z += 70.0f;
 
-	if (!world_to_screen(&head_pos, &screen_head, view_matrix, screen_size))
+	if (!utils::math::world_to_screen(&head_pos, &screen_head, view_matrix, screen_size))
 		return;
 
 	screen_pos_valid = true;
@@ -54,7 +54,7 @@ void game::kcsgo2struct::CPlayer::ReadBones(_In_ unsigned long long directory_ta
 	 
 
 		Vector3 screen_position{};
-		if (world_to_screen(&bone_position, &screen_position, view_matrix, screen_size)) {
+		if (utils::math::world_to_screen(&bone_position, &screen_position, view_matrix, screen_size)) {
 			bones.bone_positions[entry.bone_enum] = screen_position;
 		}
 		else {

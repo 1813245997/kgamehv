@@ -45,14 +45,14 @@ public:
 		ULONG bitmaps_size = 0;
 		CharFileInfo* info = (CharFileInfo*)(file_base + sizeof(FileHeader));
 		g_MaxSize = info->size;
-		for (int i = 0; i < header->Count; i++) {
+		for (ULONG i = 0; i < header->Count; i++) {
 			ULONG size = info->bitmap_sz * 3 + info->stroke_sz * 3;
 			bitmaps_size += size;
 			info = (CharFileInfo*)(((PUCHAR)info) + sizeof(CharFileInfo) + size);
 		}
 		info = (CharFileInfo*)(file_base + sizeof(FileHeader));
 		int fidx = 1;
-		for (int i = 0; i < header->Count; i++) {
+		for (ULONG i = 0; i < header->Count; i++) {
 			ULONG size = info->bitmap_sz * 3 + info->stroke_sz * 3;
 			CFontInfo Glyph;
 			memset(&Glyph, 0, sizeof(CFontInfo));

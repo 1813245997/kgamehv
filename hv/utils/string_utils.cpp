@@ -110,6 +110,8 @@ namespace utils
 				return FALSE;
 			}
 
+			 
+
 			return  internal_functions::pfn_rtl_equal_unicode_string(str1, str2, case_insensitive);
 		}
 

@@ -55,7 +55,7 @@ namespace utils
 		unsigned long long g_get_foreground_window_fun{};
 		unsigned long long g_find_windoww_fun{};
 		unsigned long long g_get_window_rect_fun{};
-
+		unsigned long long g_get_keyboard_layout_fun{};
 		NTSTATUS initialize()
 		{
 			NTSTATUS status{};
@@ -213,6 +213,16 @@ namespace utils
 				return status;
 			}
 			 
+			status = find_get_keyboard_layout(
+				g_dwm_process,        // 目标进程
+				g_user32_base,        // User32.dll 基址
+				&g_get_keyboard_layout_fun); // 输出函数地址
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_get_keyboard_layout failed with status: 0x%X", status);
+				return status;
+			}
 			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
 			//if (!NT_SUCCESS(status))
 			//{
@@ -1089,6 +1099,38 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 	 
+		NTSTATUS find_get_keyboard_layout(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_keyboard_layout_addr)
+		{
+			if (!get_keyboard_layout_addr)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找 User32.dll 中的 GetKeyboardLayout 导出
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetKeyboardLayout"
+			);
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0)
+				return STATUS_NOT_FOUND;
+
+			*get_keyboard_layout_addr = addr;
+
+			LogDebug(
+				"Found GetKeyboardLayout at 0x%llX\n", addr);
+
+			return STATUS_SUCCESS;
+		}
+
 
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process,
@@ -1233,6 +1275,7 @@ namespace utils
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 		}
+
 
 		NTSTATUS hook_cdxgi_swapchain_dwm_legacy_present_dwm(IN PEPROCESS process)
 		{

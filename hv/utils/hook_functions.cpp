@@ -944,7 +944,7 @@ namespace hook_functions
 
 		   InterlockedIncrement(&matched_hook_info->call_count);
 
-		   DbgBreakPoint();
+		 
 		   static bool initialized = false;
 		   if (!initialized)
 		   {

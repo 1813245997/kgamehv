@@ -14,14 +14,14 @@ float roundf(float a) {
 	return a;
 }
 
-float floorf(float a) {
-	int ia = (int)a;
-	float xs = a - (float)ia;
-	if (xs > 0.f) {
-		return a + 1.f;
-	}
-	return a;
-}
+//float floorf(float a) {
+//	int ia = (int)a;
+//	float xs = a - (float)ia;
+//	if (xs > 0.f) {
+//		return a + 1.f;
+//	}
+//	return a;
+//}
 
 __forceinline FColor::FColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A)
 {
@@ -52,7 +52,7 @@ int ByteRender::EvenNumber(int val) {
 }
 
 FColor ByteRender::GetPixel(int x, int y) {
-	return FColor(Arr[(y * w) + x]);
+	return FColor(Arr[(y * w2) + x]);
 }
 
 
@@ -89,7 +89,7 @@ FColor  ByteRender::ColorBlend(FColor prev, FColor cur)
 
 void ByteRender::SetPixel(int x, int y, FColor color, int br  )
 {
-	if ((x >= w) || (y >= h))
+	if ((x >= w2) || (y >= h2))
 		return;
 	if (x < 0 || y < 0)
 		return;
@@ -106,12 +106,12 @@ void ByteRender::SetPixel(int x, int y, FColor color, int br  )
 	//
 
 	//apply pixels
-	PVOID ppix = &Arr[(y * w) + x];
+	PVOID ppix = &Arr[(y * w2) + x];
 
 	int pageidx = ((ULONG_PTR)ppix - (ULONG_PTR)Arr) / 0x1000;
 	if (pageidx < 0x10000) {
 		if (g_pagehit[pageidx] == 0) {
-			int edgeidx = (((h * w) + w - 1) * 4) / 0x1000;
+			int edgeidx = (((h2 * w2) + w2 - 1) * 4) / 0x1000;
 			if (pageidx > edgeidx)
 				return;
 			PVOID prevpix = 0;
@@ -147,7 +147,7 @@ void ByteRender::SetPixel(int x, int y, FColor color, int br  )
 				if (prevPx.RGBA[3])
 					color = ColorBlend(prevPx, color);
 			}
-			Arr[(y * w) + x] = color.Get();
+			Arr[(y * w2) + x] = color.Get();
 		}
 
 		//}

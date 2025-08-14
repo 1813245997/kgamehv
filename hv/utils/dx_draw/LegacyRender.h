@@ -24,7 +24,7 @@ public:
 class ByteRender
 {
 private:
-	int w, h;
+	int w2, h2;
 	bool align;
 	uint32_t* Arr;
 
@@ -48,12 +48,12 @@ private:
 public:
 	template<typename T>
 	__forceinline void Setup(int Width, int Height, T pixelsArr) {
-		w = Width; h = Height;
+		w2 = Width; h2 = Height;
 		Arr = (uint32_t*)pixelsArr;
 		align = true;
 	}
-	int GetScreenWidth() const { return w; }
-	int GetScreenHeight() const { return h; }
+	int GetScreenWidth() const { return w2; }
+	int GetScreenHeight() const { return h2; }
 
 	int DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const FColor& Color);
 	

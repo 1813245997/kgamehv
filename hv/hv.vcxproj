@@ -60,7 +60,7 @@
     <IntDir>$(SolutionDir)build\$(TargetName)\$(Configuration.toLower())\intermediate\</IntDir>
     <EnableInf2cat>false</EnableInf2cat>
     <ApiValidator_Enable>false</ApiValidator_Enable>
-    <IncludePath>$(SolutionDir)extern\ia32-doc\out;$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(SolutionDir)extern\ia32-doc\out;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -95,8 +95,8 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <DisableSpecificWarnings>4201;5040;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <DisableSpecificWarnings>4201;5040;4100;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -157,6 +157,14 @@
     <ClInclude Include="utils\hook_manager.h" />
     <ClInclude Include="LDE64.h" />
     <ClInclude Include="utils\hook_utils.h" />
+    <ClInclude Include="utils\ImGui\imconfig.h" />
+    <ClInclude Include="utils\ImGui\imgui.h" />
+    <ClInclude Include="utils\ImGui\imgui_impl_dx11.h" />
+    <ClInclude Include="utils\ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="utils\ImGui\imgui_internal.h" />
+    <ClInclude Include="utils\ImGui\imstb_rectpack.h" />
+    <ClInclude Include="utils\ImGui\imstb_textedit.h" />
+    <ClInclude Include="utils\ImGui\imstb_truetype.h" />
     <ClInclude Include="utils\import_encrypt.h" />
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
@@ -230,6 +238,7 @@
     <ClInclude Include="vtx\xsave.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="KernelSTL.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth\auth.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />
@@ -251,6 +260,12 @@
     <ClCompile Include="utils\hook_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="utils\hook_utils.cpp" />
+    <ClCompile Include="utils\ImGui\imgui.cpp" />
+    <ClCompile Include="utils\ImGui\imgui_draw.cpp" />
+    <ClCompile Include="utils\ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="utils\ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="utils\ImGui\imgui_tables.cpp" />
+    <ClCompile Include="utils\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="utils\import_encrypt.cpp" />
     <ClCompile Include="utils\internal_function_defs.cpp" />
     <ClCompile Include="utils\kernel_hide_utils.cpp" />

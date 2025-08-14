@@ -4,6 +4,8 @@
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
 #include "dx_draw/fontdata.h"
+#include "ImGui/imgui_impl_dx11.h"
+#include "ImGui/imgui_impl_win32.h"
  
 #define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
@@ -341,9 +343,18 @@ namespace utils
 
 				g_pContext = *(PVOID*)g_user_buffer;
 			}
-
 			 
 
+			if (g_pContext&&g_pdevice)
+			{
+				 IMGUI_CHECKVERSION();
+				 ImGui::CreateContext();
+				 ImGui::StyleColorsDark();
+
+			 
+				  ImGui_ImplWin32_Init(utils::window_utils::find_window_by_class_and_title((L"Progman"), (L"Program Manager"),(PVOID)g_user_buffer));
+				// ImGui_ImplDX11_Init(g_pdevice, g_pContext);
+			}
 
 			return true;
 		}

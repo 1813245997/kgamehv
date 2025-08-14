@@ -43,6 +43,7 @@ namespace utils
 		extern unsigned long long g_get_foreground_window_fun;
 		extern unsigned long long g_find_windoww_fun;
 		extern unsigned long long g_get_window_rect_fun ;
+		extern unsigned long long g_get_keyboard_layout_fun ;
 
 		extern PVOID g_game_utils_buffer;
 	
@@ -144,6 +145,11 @@ namespace utils
 			_In_ PEPROCESS process,
 			_In_ unsigned long long user32_base,
 			_Out_ unsigned long long* get_window_rect_addr);
+
+		NTSTATUS find_get_keyboard_layout(_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_keyboard_layout_addr);
+
 
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process, 

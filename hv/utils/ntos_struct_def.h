@@ -660,11 +660,7 @@ extern "C"
 		WindowIsForegroundThread,
 	} WINDOWINFOCLASS;
 
-	typedef struct tagPOINT
-	{
-		LONG  x;
-		LONG  y;
-	} POINT ;
+
 
 	typedef struct tagRECT {
 		LONG left;
