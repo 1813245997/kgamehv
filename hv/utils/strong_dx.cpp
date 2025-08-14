@@ -7,8 +7,7 @@
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
  
-#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
-#define FAILED(hr) (((HRESULT)(hr)) < 0)
+
 
 namespace utils
 {
@@ -352,8 +351,12 @@ namespace utils
 				 ImGui::StyleColorsDark();
 
 			 
-				  ImGui_ImplWin32_Init(utils::window_utils::find_window_by_class_and_title((L"Progman"), (L"Program Manager"),(PVOID)g_user_buffer));
-				// ImGui_ImplDX11_Init(g_pdevice, g_pContext);
+				  ImGui_ImplWin32_Init(utils::window_utils::find_window_by_class_and_title((L"Progman"), (L"Program Manager"),(PVOID)utils::dwm_draw::g_imgui_buffer));
+				   ImGui_ImplDX11_Init(g_pdevice, g_pContext);
+
+				   ImGuiIO& io = ImGui::GetIO();
+				   io.ConfigFlags |= ImGuiConfigFlags_NavEnableSetMousePos; 
+
 			}
 
 			return true;
@@ -362,13 +365,16 @@ namespace utils
 		void render_overlay_frame_win1124h2(void (*draw_callback)(int width, int height, void* data))
 		{
 
+
+			ImGui_ImplDX11_NewFrame();
+			ImGui_ImplWin32_NewFrame();
 			//if (!g_pdevice || !g_pContext || !g_user_buffer || !g_texture_buffer  )
 			//	return;
 
 
 
 			//HRESULT hr{};
-			//D3D11_TEXTURE2D_DESC SDesc{};
+			// D3D11_TEXTURE2D_DESC SDesc{};
 			//D3D11_MAPPED_SUBRESOURCE MapRes{};
 			//unsigned long long usercall_retval_ptr{};
 

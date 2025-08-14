@@ -51,5 +51,45 @@ namespace utils
 			return nullptr;
 		}
 
+
+		bool  get_window_rect_r0(
+			HANDLE hwnd,
+			RECT* rect_out,
+			PVOID user_buffer)
+		{
+			if (!rect_out || !hwnd || !user_buffer)
+				return false;
+
+			// 假设 g_get_window_rect_fun 已经存了 R3 函数地址
+			unsigned long long get_window_rect_fun = utils::dwm_draw::g_get_window_rect_fun;
+
+			// RECT 在用户缓冲区的偏移地址
+			unsigned long long rect_ptr = reinterpret_cast<unsigned long long>(user_buffer) + 0x500;
+
+			// R0→R3 调用函数
+			unsigned long long result_ptr = utils::user_call::call(
+				get_window_rect_fun,
+				reinterpret_cast<unsigned long long>(hwnd),
+				rect_ptr,
+				0,
+				0
+			);
+
+			if (!result_ptr)
+				return false;
+
+			// 获取返回值
+			BOOL* success_ptr = reinterpret_cast<BOOL*>(result_ptr);
+			if (!*success_ptr)
+				return false;
+
+			// 成功，解析 RECT 数据
+			RECT* rect = reinterpret_cast<RECT*>(rect_ptr);
+			*rect_out = *rect;
+
+			 
+
+			return true;
+		}
 	}
 }

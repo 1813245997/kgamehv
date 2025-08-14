@@ -13,6 +13,8 @@ namespace utils
 		unsigned long long g_precall_addr{};
 		unsigned long long g_postcall_addr{};
 		unsigned long long g_context_offset{};
+		unsigned long long g_kernel32_base{};
+		unsigned long long g_kernel32_size{};
 		unsigned long long g_gdi32_base{};
 		unsigned long long g_gdi32_size{};
 		unsigned long long g_ntdll_base{};
@@ -23,6 +25,8 @@ namespace utils
 		unsigned long long g_dwmcore_size{};
 		unsigned long long g_dxgi_base{};
 		unsigned long long g_dxgi_size{};
+		unsigned long long g_d3dcompiler_47_base{};
+		unsigned long long g_d3dcompiler_47_size{};
 		unsigned long long g_dxgkrnl_base{};
 		unsigned long long g_dxgkrnl_size{};
 		unsigned long long g_offset_stack{};
@@ -40,6 +44,7 @@ namespace utils
 		unsigned long long g_cddisplay_render_target_present{};//CDDisplayRenderTarget::Present
 		
 		PVOID g_game_utils_buffer{};
+		unsigned long long    g_imgui_buffer{};
 		bool g_kvashadow{};
 
 		
@@ -56,6 +61,13 @@ namespace utils
 		unsigned long long g_find_windoww_fun{};
 		unsigned long long g_get_window_rect_fun{};
 		unsigned long long g_get_keyboard_layout_fun{};
+		unsigned long long g_get_locale_info_a_fun{};
+		unsigned long long g_load_librarya_fun{};
+		unsigned long long g_get_proc_address_fun{};
+		unsigned long long g_d3dcompile_fun{};
+		unsigned long long g_set_cursor_pos_fun{};
+		unsigned long long g_screen_to_client_fun{};
+		unsigned long long g_get_cursor_pos_fun{};
 		NTSTATUS initialize()
 		{
 			NTSTATUS status{};
@@ -83,7 +95,7 @@ namespace utils
 				return status;
 			}
 
-			status = initialize_user_buffer(g_dwm_process, &g_game_utils_buffer);
+			status = initialize_user_buffer(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("initialize_user_buffer failed with status: 0x%X", status);
@@ -221,6 +233,92 @@ namespace utils
 			if (!NT_SUCCESS(status))
 			{
 				LogError("find_get_keyboard_layout failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = find_get_locale_info_a(
+				g_dwm_process,           // 目标进程
+				g_kernel32_base,         // Kernel32.dll 基址
+				&g_get_locale_info_a_fun // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_get_locale_info_a failed with status: 0x%X", status);
+				return status;
+			}
+
+
+			status = find_load_librarya(
+				g_dwm_process,            
+				g_kernel32_base,          
+				&g_load_librarya_fun     
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_load_librarya failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = find_get_proc_address(
+				g_dwm_process,             
+				g_kernel32_base,             
+				&g_get_proc_address_fun      
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_get_proc_address failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = find_d3dcompile(
+				g_dwm_process,
+				g_d3dcompiler_47_base,
+				&g_d3dcompile_fun
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_d3dcompile failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = find_set_cursor_pos(
+				g_dwm_process,           // 目标进程
+				g_user32_base,           // user32.dll 基址
+				&g_set_cursor_pos_fun    // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_set_cursor_pos failed with status: 0x%X", status);
+				return status;
+			}
+
+			status = find_screen_to_client(
+				g_dwm_process,              // 目标进程
+				g_user32_base,              // user32.dll 基址
+				&g_screen_to_client_fun     // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_screen_to_client failed with status: 0x%X", status);
+				return status;
+			}
+
+		 
+			status = find_get_cursor_pos(
+				g_dwm_process,             // 目标进程
+				g_user32_base,             // user32.dll 基址
+				&g_get_cursor_pos_fun      // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_GetCursorPos failed with status: 0x%X", status);
 				return status;
 			}
 			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
@@ -366,6 +464,19 @@ namespace utils
 				return status;
 			}
 
+			status = module_info::get_process_module_info(process, L"Kernel32.dll", &g_kernel32_base, &g_kernel32_size);
+			if (!NT_SUCCESS(status)) {
+				LogDebug(
+					"Failed to get kernel32.dll module info (0x%X)\n", status);
+				return status;
+			}
+
+			status = module_info::get_process_module_info(process, L"d3dcompiler_47.dll", &g_d3dcompiler_47_base, &g_d3dcompiler_47_size);
+			if (!NT_SUCCESS(status)) {
+				LogDebug(
+					"Failed to get d3dcompiler_47.dll module info (0x%X)\n", status);
+				return status;
+			}
 			 
 			g_ntdll_base = ntdll_base;
 			g_ntdll_size = ntdll_size;
@@ -401,9 +512,9 @@ namespace utils
 		}
 
 
-		NTSTATUS initialize_user_buffer(PEPROCESS process, PVOID* user_buffer)
+		NTSTATUS initialize_user_buffer(PEPROCESS process   )
 		{
-			if (!process || !user_buffer)
+			if (!process)
 				return STATUS_INVALID_PARAMETER;
 
 			KAPC_STATE apc_state{};
@@ -411,11 +522,28 @@ namespace utils
 
 			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
 
-			status = utils::memory::allocate_user_memory(user_buffer, 0x1000, PAGE_READWRITE, true, false);
+			// 分配 g_game_utils_buffer
+			status = utils::memory::allocate_user_memory(&g_game_utils_buffer, 0x1000, PAGE_READWRITE, true, false);
+			if (!NT_SUCCESS(status)) {
+				LogError("allocate_user_memory for g_game_utils_buffer failed: 0x%X", status);
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return status;
+			}
+
+			// 分配 g_imgui_buffer
+			status = utils::memory::allocate_user_memory(&(PVOID&)g_imgui_buffer, 0x1000, PAGE_READWRITE, true, false);
+			if (!NT_SUCCESS(status)) {
+				LogError("allocate_user_memory for g_imgui_buffer failed: 0x%X", status);
+				// 如果 g_game_utils_buffer 已分配，可选择释放
+				utils::memory::free_user_memory(&g_game_utils_buffer,0X1000,false);
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				return status;
+			}
 
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			return STATUS_SUCCESS;
 
-			return status;
+			 
 		}
 
 
@@ -1161,6 +1289,254 @@ namespace utils
 
 			return STATUS_SUCCESS;
 		}
+		NTSTATUS find_get_locale_info_a(PEPROCESS process, unsigned long long kernel32_base, unsigned long long* get_locale_info_addr)
+		{
+			if (!get_locale_info_addr || kernel32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+			unsigned long long addr = scanner_fun::find_module_export_by_name(reinterpret_cast<void*> (kernel32_base), "GetLocaleInfoA");
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*get_locale_info_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*get_locale_info_addr = addr;
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_load_librarya(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* load_librarya_addr)
+		{
+			if (!load_librarya_addr || kernel32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(kernel32_base),
+				"LoadLibraryA"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*load_librarya_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*load_librarya_addr = addr;
+			LogDebug(
+				"Found LoadLibraryA at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_get_proc_address(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* get_proc_address_addr)
+		{
+			if (!get_proc_address_addr || kernel32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(kernel32_base),
+				"GetProcAddress"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*get_proc_address_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*get_proc_address_addr = addr;
+			LogDebug(
+				"Found GetProcAddress at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+		NTSTATUS find_d3dcompile(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long d3dcompiler_47_base,
+			_Out_ unsigned long long* d3dcompile_addr
+		)
+		{
+			if (!d3dcompile_addr || d3dcompiler_47_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(d3dcompiler_47_base),
+				"D3DCompile"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*d3dcompile_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*d3dcompile_addr = addr;
+
+			LogDebug(
+				"Found D3DCompile at 0x%llX\n", addr
+			);
+			return STATUS_SUCCESS;
+		}
+		NTSTATUS find_client_to_screen(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* client_to_screen_addr)
+		{
+			if (!client_to_screen_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"ClientToScreen"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*client_to_screen_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*client_to_screen_addr = addr;
+
+			LogDebug("Found ClientToScreen at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_set_cursor_pos(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* set_cursor_pos_addr)
+		{
+
+			if (!set_cursor_pos_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"SetCursorPos"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*set_cursor_pos_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*set_cursor_pos_addr = addr;
+
+			LogDebug("Found SetCursorPos at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+
+		NTSTATUS find_screen_to_client(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* screen_to_client_addr)
+		{
+			if (!screen_to_client_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"ScreenToClient"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*screen_to_client_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*screen_to_client_addr = addr;
+
+			LogDebug("Found ScreenToClient at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_get_cursor_pos(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_cursor_pos_addr)
+		{
+			if (!get_cursor_pos_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetCursorPos"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*get_cursor_pos_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*get_cursor_pos_addr = addr;
+
+			LogDebug("Found GetCursorPos at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+
+		}
+
+
 		NTSTATUS   find_open_resource(
 			IN PEPROCESS process,
 			IN unsigned long long dxgkrnl_base,

@@ -291,6 +291,7 @@ void vmexit_ldtr_access_handler(__vcpu* vcpu)
 		// STR
 		case 1:
 		{
+			//À¶ÆÁ ´ýÐÞ¸´
 			*linear_address = hv::vmread(GUEST_TR_SELECTOR);
 
 			break;

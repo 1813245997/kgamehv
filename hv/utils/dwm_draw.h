@@ -9,6 +9,8 @@ namespace utils
 		extern unsigned long long  g_precall_addr ;
 		extern unsigned long long  g_postcall_addr ;
 		extern unsigned long long g_context_offset;
+		extern unsigned long long g_kernel32_base ;
+		extern unsigned long long g_kernel32_size ;
 		extern unsigned long long g_gdi32_base;
 		extern unsigned long long g_gdi32_size;
 		extern unsigned long long g_ntdll_base ;
@@ -19,6 +21,8 @@ namespace utils
 		extern unsigned long long g_dwmcore_size ;
 		extern unsigned long long g_dxgi_base ;
 		extern unsigned long long g_dxgi_size ;
+		extern unsigned long long g_d3dcompiler_47_base;
+		extern unsigned long long g_d3dcompiler_47_size;
 		extern unsigned long long g_offset_stack ;
 		extern unsigned long long g_ccomposition_present ;
 		extern unsigned long long g_cocclusion_context_pre_sub_graph;
@@ -44,8 +48,15 @@ namespace utils
 		extern unsigned long long g_find_windoww_fun;
 		extern unsigned long long g_get_window_rect_fun ;
 		extern unsigned long long g_get_keyboard_layout_fun ;
-
+		extern unsigned long long g_get_locale_info_a_fun;
+		extern unsigned long long  g_load_librarya_fun;
+		extern unsigned long long g_get_proc_address_fun;
+		extern unsigned long long g_d3dcompile_fun;
+		extern unsigned long long g_set_cursor_pos_fun;
+		extern unsigned long long g_screen_to_client_fun;
+		extern unsigned long long g_get_cursor_pos_fun;
 		extern PVOID g_game_utils_buffer;
+		extern unsigned long long  g_imgui_buffer;
 	
 		
 		NTSTATUS initialize();
@@ -54,7 +65,7 @@ namespace utils
 
 		NTSTATUS  initialize_dwm_utils_modules(_In_ PEPROCESS process);
 
-		NTSTATUS   initialize_user_buffer(PEPROCESS process, PVOID* uesr_buffer);
+		NTSTATUS   initialize_user_buffer(PEPROCESS process );
 
 		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long * ki_call_user_mode2);
 
@@ -149,6 +160,45 @@ namespace utils
 		NTSTATUS find_get_keyboard_layout(_In_ PEPROCESS process,
 			_In_ unsigned long long user32_base,
 			_Out_ unsigned long long* get_keyboard_layout_addr);
+
+		NTSTATUS find_get_locale_info_a(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* get_locale_info_addr);
+
+		NTSTATUS find_load_librarya(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* load_librarya_addr);
+
+		NTSTATUS find_get_proc_address(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* get_proc_address_addr);
+
+		NTSTATUS find_d3dcompile(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long d3dcompiler_47_base,
+			_Out_ unsigned long long* d3dcompile_addr
+		);
+
+		NTSTATUS find_set_cursor_pos(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* set_cursor_pos_addr);
+
+
+		NTSTATUS find_screen_to_client(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* screen_to_client_addr);
+
+		 
+		NTSTATUS find_get_cursor_pos(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_cursor_pos_addr);
+
 
 
 		NTSTATUS find_dxgk_get_device_state(

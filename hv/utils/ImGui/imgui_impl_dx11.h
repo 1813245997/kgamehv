@@ -15,8 +15,10 @@
 // - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
 // - Introduction, links and more at the top of imgui.cpp
 
-//#pragma once
-//#include "imgui.h"      // IMGUI_IMPL_API
+ #pragma once
+ #include "imgui.h"      // IMGUI_IMPL_API
+
+#include <ntifs.h>
 //#ifndef IMGUI_DISABLE
 //
 //struct ID3D11Device;
@@ -25,9 +27,9 @@
 //struct ID3D11Buffer;
 //
 //// Follow "Getting Started" link and check examples/ folder to learn about using backends!
-//IMGUI_IMPL_API bool     ImGui_ImplDX11_Init(ID3D11Device* device, ID3D11DeviceContext* device_context);
+ IMGUI_IMPL_API bool       ImGui_ImplDX11_Init(PVOID device, PVOID  device_context);
 //IMGUI_IMPL_API void     ImGui_ImplDX11_Shutdown();
-//IMGUI_IMPL_API void     ImGui_ImplDX11_NewFrame();
+ IMGUI_IMPL_API void     ImGui_ImplDX11_NewFrame();
 //IMGUI_IMPL_API void     ImGui_ImplDX11_RenderDrawData(ImDrawData* draw_data);
 //
 //// Use if you want to reset your rendering device without losing Dear ImGui state.

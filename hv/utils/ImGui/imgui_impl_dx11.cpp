@@ -40,10 +40,16 @@
 //  2018-02-06: Misc: Removed call to ImGui::Shutdown() which is not available from 1.60 WIP, user needs to call CreateContext/DestroyContext themselves.
 //  2016-05-07: DirectX11: Disabling depth-write.
 
-//#include "imgui.h"
-//#ifndef IMGUI_DISABLE
-//#include "imgui_impl_dx11.h"
 
+#include "imgui.h"
+//#ifndef IMGUI_DISABLE
+#include "imgui_impl_dx11.h"
+
+#include "../global_defs.h"
+#include "../dx11.h"
+
+
+#define	D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION	( 16384 )
 // DirectX
 //#include <stdio.h>
 //#include <d3d11.h>
@@ -58,45 +64,45 @@
 //#pragma clang diagnostic ignored "-Wsign-conversion"        // warning: implicit conversion changes signedness
 //#endif
 //
-//// DirectX11 data
-//struct ImGui_ImplDX11_Texture
-//{
-//    ID3D11Texture2D*            pTexture;
-//    ID3D11ShaderResourceView*   pTextureView;
-//};
-//
-//struct ImGui_ImplDX11_Data
-//{
-//    ID3D11Device*               pd3dDevice;
-//    ID3D11DeviceContext*        pd3dDeviceContext;
-//    IDXGIFactory*               pFactory;
-//    ID3D11Buffer*               pVB;
-//    ID3D11Buffer*               pIB;
-//    ID3D11VertexShader*         pVertexShader;
-//    ID3D11InputLayout*          pInputLayout;
-//    ID3D11Buffer*               pVertexConstantBuffer;
-//    ID3D11PixelShader*          pPixelShader;
-//    ID3D11SamplerState*         pFontSampler;
-//    ID3D11RasterizerState*      pRasterizerState;
-//    ID3D11BlendState*           pBlendState;
-//    ID3D11DepthStencilState*    pDepthStencilState;
-//    int                         VertexBufferSize;
-//    int                         IndexBufferSize;
-//
-//    ImGui_ImplDX11_Data()       { memset((void*)this, 0, sizeof(*this)); VertexBufferSize = 5000; IndexBufferSize = 10000; }
-//};
+// DirectX11 data
+struct ImGui_ImplDX11_Texture
+{
+    PVOID            pTexture;
+    PVOID     pTextureView;
+};
+
+struct ImGui_ImplDX11_Data
+{
+	 PVOID  pd3dDevice;
+     PVOID  pd3dDeviceContext;
+     PVOID  pFactory;
+     PVOID  pVB;
+     PVOID  pIB;
+     PVOID  pVertexShader;
+     PVOID  pInputLayout;
+     PVOID  pVertexConstantBuffer;
+     PVOID  pPixelShader;
+	 PVOID  pFontSampler;
+     PVOID  pRasterizerState;
+     PVOID  pBlendState;
+     PVOID  pDepthStencilState;
+	int                         VertexBufferSize;
+	int                         IndexBufferSize;
+
+	ImGui_ImplDX11_Data() { memset((void*)this, 0, sizeof(*this)); VertexBufferSize = 5000; IndexBufferSize = 10000; }
+};
 //
 //struct VERTEX_CONSTANT_BUFFER_DX11
 //{
 //    float   mvp[4][4];
 //};
 //
-//// Backend data stored in io.BackendRendererUserData to allow support for multiple Dear ImGui contexts
-//// It is STRONGLY preferred that you use docking branch with multi-viewports (== single Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
-//static ImGui_ImplDX11_Data* ImGui_ImplDX11_GetBackendData()
-//{
-//    return ImGui::GetCurrentContext() ? (ImGui_ImplDX11_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
-//}
+// Backend data stored in io.BackendRendererUserData to allow support for multiple Dear ImGui contexts
+// It is STRONGLY preferred that you use docking branch with multi-viewports (== single Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
+static ImGui_ImplDX11_Data* ImGui_ImplDX11_GetBackendData()
+{
+    return ImGui::GetCurrentContext() ? (ImGui_ImplDX11_Data*)ImGui::GetIO().BackendRendererUserData : nullptr;
+}
 //
 //// Functions
 //static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, ID3D11DeviceContext* device_ctx)
@@ -340,22 +346,23 @@
 //    device->IASetInputLayout(old.InputLayout); if (old.InputLayout) old.InputLayout->Release();
 //}
 //
-//static void ImGui_ImplDX11_DestroyTexture(ImTextureData* tex)
-//{
-//    ImGui_ImplDX11_Texture* backend_tex = (ImGui_ImplDX11_Texture*)tex->BackendUserData;
-//    if (backend_tex == nullptr)
-//        return;
-//    IM_ASSERT(backend_tex->pTextureView == (ID3D11ShaderResourceView*)(intptr_t)tex->TexID);
-//    backend_tex->pTextureView->Release();
-//    backend_tex->pTexture->Release();
-//    IM_DELETE(backend_tex);
-//
-//    // Clear identifiers and mark as destroyed (in order to allow e.g. calling InvalidateDeviceObjects while running)
-//    tex->SetTexID(ImTextureID_Invalid);
-//    tex->SetStatus(ImTextureStatus_Destroyed);
-//    tex->BackendUserData = nullptr;
-//}
-//
+static void ImGui_ImplDX11_DestroyTexture(ImTextureData* tex)
+{
+    ImGui_ImplDX11_Texture* backend_tex = (ImGui_ImplDX11_Texture*)tex->BackendUserData;
+    if (backend_tex == nullptr)
+        return;
+    IM_ASSERT(backend_tex->pTextureView == (PVOID)(intptr_t)tex->TexID);
+    utils::vfun_utils::release(backend_tex->pTextureView);
+    utils::vfun_utils::release(backend_tex->pTexture);
+   
+    IM_DELETE(backend_tex);
+
+    // Clear identifiers and mark as destroyed (in order to allow e.g. calling InvalidateDeviceObjects while running)
+    tex->SetTexID(ImTextureID_Invalid);
+    tex->SetStatus(ImTextureStatus_Destroyed);
+    tex->BackendUserData = nullptr;
+}
+ 
 //void ImGui_ImplDX11_UpdateTexture(ImTextureData* tex)
 //{
 //    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
@@ -419,232 +426,539 @@
 //        ImGui_ImplDX11_DestroyTexture(tex);
 //}
 //
-//bool    ImGui_ImplDX11_CreateDeviceObjects()
-//{
-//    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
-//    if (!bd->pd3dDevice)
-//        return false;
-//    ImGui_ImplDX11_InvalidateDeviceObjects();
-//
-//    // By using D3DCompile() from <d3dcompiler.h> / d3dcompiler.lib, we introduce a dependency to a given version of d3dcompiler_XX.dll (see D3DCOMPILER_DLL_A)
-//    // If you would like to use this DX11 sample code but remove this dependency you can:
-//    //  1) compile once, save the compiled shader blobs into a file or source code and pass them to CreateVertexShader()/CreatePixelShader() [preferred solution]
-//    //  2) use code to detect any version of the DLL and grab a pointer to D3DCompile from the DLL.
-//    // See https://github.com/ocornut/imgui/pull/638 for sources and details.
-//
-//    // Create the vertex shader
-//    {
-//        static const char* vertexShader =
-//            "cbuffer vertexBuffer : register(b0) \
-//            {\
-//              float4x4 ProjectionMatrix; \
-//            };\
-//            struct VS_INPUT\
-//            {\
-//              float2 pos : POSITION;\
-//              float4 col : COLOR0;\
-//              float2 uv  : TEXCOORD0;\
-//            };\
-//            \
-//            struct PS_INPUT\
-//            {\
-//              float4 pos : SV_POSITION;\
-//              float4 col : COLOR0;\
-//              float2 uv  : TEXCOORD0;\
-//            };\
-//            \
-//            PS_INPUT main(VS_INPUT input)\
-//            {\
-//              PS_INPUT output;\
-//              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-//              output.col = input.col;\
-//              output.uv  = input.uv;\
-//              return output;\
-//            }";
-//
-//        ID3DBlob* vertexShaderBlob;
-//        if (FAILED(D3DCompile(vertexShader, strlen(vertexShader), nullptr, nullptr, nullptr, "main", "vs_4_0", 0, 0, &vertexShaderBlob, nullptr)))
-//            return false; // NB: Pass ID3DBlob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-//        if (bd->pd3dDevice->CreateVertexShader(vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), nullptr, &bd->pVertexShader) != S_OK)
-//        {
-//            vertexShaderBlob->Release();
-//            return false;
-//        }
-//
-//        // Create the input layout
-//        D3D11_INPUT_ELEMENT_DESC local_layout[] =
-//        {
-//            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(ImDrawVert, pos), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-//            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(ImDrawVert, uv),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-//            { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (UINT)offsetof(ImDrawVert, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
-//        };
-//        if (bd->pd3dDevice->CreateInputLayout(local_layout, 3, vertexShaderBlob->GetBufferPointer(), vertexShaderBlob->GetBufferSize(), &bd->pInputLayout) != S_OK)
-//        {
-//            vertexShaderBlob->Release();
-//            return false;
-//        }
-//        vertexShaderBlob->Release();
-//
-//        // Create the constant buffer
-//        {
-//            D3D11_BUFFER_DESC desc = {};
-//            desc.ByteWidth = sizeof(VERTEX_CONSTANT_BUFFER_DX11);
-//            desc.Usage = D3D11_USAGE_DYNAMIC;
-//            desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-//            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-//            desc.MiscFlags = 0;
-//            bd->pd3dDevice->CreateBuffer(&desc, nullptr, &bd->pVertexConstantBuffer);
-//        }
-//    }
-//
-//    // Create the pixel shader
-//    {
-//        static const char* pixelShader =
-//            "struct PS_INPUT\
-//            {\
-//            float4 pos : SV_POSITION;\
-//            float4 col : COLOR0;\
-//            float2 uv  : TEXCOORD0;\
-//            };\
-//            sampler sampler0;\
-//            Texture2D texture0;\
-//            \
-//            float4 main(PS_INPUT input) : SV_Target\
-//            {\
-//            float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
-//            return out_col; \
-//            }";
-//
-//        ID3DBlob* pixelShaderBlob;
-//        if (FAILED(D3DCompile(pixelShader, strlen(pixelShader), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0, &pixelShaderBlob, nullptr)))
-//            return false; // NB: Pass ID3DBlob* pErrorBlob to D3DCompile() to get error showing in (const char*)pErrorBlob->GetBufferPointer(). Make sure to Release() the blob!
-//        if (bd->pd3dDevice->CreatePixelShader(pixelShaderBlob->GetBufferPointer(), pixelShaderBlob->GetBufferSize(), nullptr, &bd->pPixelShader) != S_OK)
-//        {
-//            pixelShaderBlob->Release();
-//            return false;
-//        }
-//        pixelShaderBlob->Release();
-//    }
-//
-//    // Create the blending setup
-//    {
-//        D3D11_BLEND_DESC desc;
-//        ZeroMemory(&desc, sizeof(desc));
-//        desc.AlphaToCoverageEnable = false;
-//        desc.RenderTarget[0].BlendEnable = true;
-//        desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
-//        desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-//        desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
-//        desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
-//        desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
-//        desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
-//        desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-//        bd->pd3dDevice->CreateBlendState(&desc, &bd->pBlendState);
-//    }
-//
-//    // Create the rasterizer state
-//    {
-//        D3D11_RASTERIZER_DESC desc;
-//        ZeroMemory(&desc, sizeof(desc));
-//        desc.FillMode = D3D11_FILL_SOLID;
-//        desc.CullMode = D3D11_CULL_NONE;
-//        desc.ScissorEnable = true;
-//        desc.DepthClipEnable = true;
-//        bd->pd3dDevice->CreateRasterizerState(&desc, &bd->pRasterizerState);
-//    }
-//
-//    // Create depth-stencil State
-//    {
-//        D3D11_DEPTH_STENCIL_DESC desc;
-//        ZeroMemory(&desc, sizeof(desc));
-//        desc.DepthEnable = false;
-//        desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-//        desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
-//        desc.StencilEnable = false;
-//        desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-//        desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-//        desc.BackFace = desc.FrontFace;
-//        bd->pd3dDevice->CreateDepthStencilState(&desc, &bd->pDepthStencilState);
-//    }
-//
-//    // Create texture sampler
-//    // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
-//    {
-//        D3D11_SAMPLER_DESC desc;
-//        ZeroMemory(&desc, sizeof(desc));
-//        desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-//        desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-//        desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-//        desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-//        desc.MipLODBias = 0.f;
-//        desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-//        desc.MinLOD = 0.f;
-//        desc.MaxLOD = 0.f;
-//        bd->pd3dDevice->CreateSamplerState(&desc, &bd->pFontSampler);
-//    }
-//
-//    return true;
-//}
-//
-//void    ImGui_ImplDX11_InvalidateDeviceObjects()
-//{
-//    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
-//    if (!bd->pd3dDevice)
-//        return;
-//
-//    // Destroy all textures
-//    for (ImTextureData* tex : ImGui::GetPlatformIO().Textures)
-//        if (tex->RefCount == 1)
-//            ImGui_ImplDX11_DestroyTexture(tex);
-//
-//    if (bd->pFontSampler)           { bd->pFontSampler->Release(); bd->pFontSampler = nullptr; }
-//    if (bd->pIB)                    { bd->pIB->Release(); bd->pIB = nullptr; }
-//    if (bd->pVB)                    { bd->pVB->Release(); bd->pVB = nullptr; }
-//    if (bd->pBlendState)            { bd->pBlendState->Release(); bd->pBlendState = nullptr; }
-//    if (bd->pDepthStencilState)     { bd->pDepthStencilState->Release(); bd->pDepthStencilState = nullptr; }
-//    if (bd->pRasterizerState)       { bd->pRasterizerState->Release(); bd->pRasterizerState = nullptr; }
-//    if (bd->pPixelShader)           { bd->pPixelShader->Release(); bd->pPixelShader = nullptr; }
-//    if (bd->pVertexConstantBuffer)  { bd->pVertexConstantBuffer->Release(); bd->pVertexConstantBuffer = nullptr; }
-//    if (bd->pInputLayout)           { bd->pInputLayout->Release(); bd->pInputLayout = nullptr; }
-//    if (bd->pVertexShader)          { bd->pVertexShader->Release(); bd->pVertexShader = nullptr; }
-//}
-//
-//bool    ImGui_ImplDX11_Init(PVOID device, PVOID  device_context)
-//{
-//    //ImGuiIO& io = ImGui::GetIO();
-//    //IMGUI_CHECKVERSION();
-//    //IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
-//
-//    //// Setup backend capabilities flags
-//    //ImGui_ImplDX11_Data* bd = IM_NEW(ImGui_ImplDX11_Data)();
-//    //io.BackendRendererUserData = (void*)bd;
-//    //io.BackendRendererName = "imgui_impl_dx11";
-//    //io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
-//    //io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
-//
-//    //ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-//    //platform_io.Renderer_TextureMaxWidth = platform_io.Renderer_TextureMaxHeight = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
-//
-//    //// Get factory from device
-//    //IDXGIDevice* pDXGIDevice = nullptr;
-//    //IDXGIAdapter* pDXGIAdapter = nullptr;
-//    //IDXGIFactory* pFactory = nullptr;
-//
-//    //if (device->QueryInterface(IID_PPV_ARGS(&pDXGIDevice)) == S_OK)
-//    //    if (pDXGIDevice->GetParent(IID_PPV_ARGS(&pDXGIAdapter)) == S_OK)
-//    //        if (pDXGIAdapter->GetParent(IID_PPV_ARGS(&pFactory)) == S_OK)
-//    //        {
-//    //            bd->pd3dDevice = device;
-//    //            bd->pd3dDeviceContext = device_context;
-//    //            bd->pFactory = pFactory;
-//    //        }
-//    //if (pDXGIDevice) pDXGIDevice->Release();
-//    //if (pDXGIAdapter) pDXGIAdapter->Release();
-//    //bd->pd3dDevice->AddRef();
-//    //bd->pd3dDeviceContext->AddRef();
-//
-//    return true;
-//}
+bool    ImGui_ImplDX11_CreateDeviceObjects()
+{
+    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
+    if (!bd->pd3dDevice)
+        return false;
+    ImGui_ImplDX11_InvalidateDeviceObjects();
+
+    // By using D3DCompile() from <d3dcompiler.h> / d3dcompiler.lib, we introduce a dependency to a given version of d3dcompiler_XX.dll (see D3DCOMPILER_DLL_A)
+    // If you would like to use this DX11 sample code but remove this dependency you can:
+    //  1) compile once, save the compiled shader blobs into a file or source code and pass them to CreateVertexShader()/CreatePixelShader() [preferred solution]
+    //  2) use code to detect any version of the DLL and grab a pointer to D3DCompile from the DLL.
+    // See https://github.com/ocornut/imgui/pull/638 for sources and details.
+
+		// 假设 g_imgui_buffer 已经分配 0x1000 字节
+	// 1. 动态分配用户缓冲区存放返回值（ID3DBlob*）
+	PVOID user_buffer = nullptr;
+	NTSTATUS status = utils::memory::allocate_user_memory(
+		&user_buffer,
+		0x1000,        // 分配 0x1000 字节
+		PAGE_READWRITE,
+		true,          // 清零
+		false          // 不隐藏
+	);
+
+	if (!NT_SUCCESS(status) || !user_buffer)
+	{
+		LogError("Failed to allocate user buffer for D3DCompile.");
+		return false;
+	}
+    unsigned char* buffer_ptr = reinterpret_cast<unsigned char*>(user_buffer);
+	// 5. 分配用户缓冲区存放返回的 ID3DBlob* 指针
+	PVOID blob_ptr = nullptr;
+	status = utils::memory::allocate_user_memory(
+		&blob_ptr,
+		0x1000,
+		PAGE_READWRITE,
+		true,
+		false
+	);
+	if (!NT_SUCCESS(status) || !blob_ptr)
+	{
+		LogError("Failed to allocate user buffer for ID3DBlob* output.");
+		return false;
+	}
+    // Create the vertex shader
+    {
+        static const char* vertexShader =
+            "cbuffer vertexBuffer : register(b0) \
+            {\
+              float4x4 ProjectionMatrix; \
+            };\
+            struct VS_INPUT\
+            {\
+              float2 pos : POSITION;\
+              float4 col : COLOR0;\
+              float2 uv  : TEXCOORD0;\
+            };\
+            \
+            struct PS_INPUT\
+            {\
+              float4 pos : SV_POSITION;\
+              float4 col : COLOR0;\
+              float2 uv  : TEXCOORD0;\
+            };\
+            \
+            PS_INPUT main(VS_INPUT input)\
+            {\
+              PS_INPUT output;\
+              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
+              output.col = input.col;\
+              output.uv  = input.uv;\
+              return output;\
+            }";
+
+       
+      
+
+	
+
+	
+
+		// 1. 拷贝 vertexShader 源码
+		size_t shader_len = strlen(vertexShader) + 1;
+		memcpy(buffer_ptr, vertexShader, shader_len);
+
+		// 2. 拷贝 pEntryPoint ("main") 到缓冲区末尾
+		size_t entry_offset = shader_len;
+		memcpy(buffer_ptr + entry_offset, "main", 5); // 包含 '\0'
+		unsigned long long pEntryPoint_addr = reinterpret_cast<unsigned long long>(buffer_ptr + entry_offset);
+
+		// 3. 拷贝 pTarget ("vs_4_0") 到缓冲区末尾
+		size_t target_offset = entry_offset + 5;
+		memcpy(buffer_ptr + target_offset, "vs_4_0", 7); // 包含 '\0'
+		unsigned long long pTarget_addr = reinterpret_cast<unsigned long long>(buffer_ptr + target_offset);
+
+		// 3. 调用 D3DCompile (R0→R3)
+        auto ret_ptr  =   utils::user_call::call11(
+            utils::dwm_draw::g_d3dcompile_fun,     // 函数地址
+            reinterpret_cast<unsigned long long>(user_buffer), // LPCVOID pSrcData
+            shader_len,                             // SIZE_T SrcDataSize
+            0,                                      // LPCSTR pSourceName
+            0,                                      // const D3D_SHADER_MACRO* pDefines
+            0,                                      // ID3DInclude* pInclude
+            pEntryPoint_addr,                                // pEntryPoint
+            pTarget_addr,                                    // pTarget
+            0,                                      // UINT Flags1
+            0,                                      // UINT Flags2
+            reinterpret_cast<unsigned long long>(blob_ptr), // 输出 ID3DBlob* 存放地址
+            0);
+
+		HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+		if (FAILED(hr))
+			return false;
+
+       
+        
+        PVOID vertexShaderBlob = *(PVOID*)blob_ptr;
+
+        utils::memory::mem_zero(buffer_ptr, 0x1000);
+
+        unsigned long long  GetBufferPointerfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(vertexShaderBlob, 3));
+
+        unsigned  long long GetBufferSizefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(vertexShaderBlob, 4));
+
+        ret_ptr = utils::user_call::call(GetBufferPointerfun, reinterpret_cast<unsigned  long long>( vertexShaderBlob), 0, 0, 0);
+        unsigned  long long BufferPointer = *reinterpret_cast<PULONG64>(ret_ptr);
+
+		ret_ptr = utils::user_call::call(GetBufferSizefun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
+		unsigned  long long BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
+
+        unsigned long long CreateVertexShaderfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 12));
+
+
+
+		 
+
+        utils::user_call::call6(CreateVertexShaderfun,
+            reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+            BufferPointer,
+            BufferSize,
+            0,
+            reinterpret_cast<unsigned long long>(buffer_ptr),
+            0
+        );
+
+		HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+		if (FAILED(hr))
+			return false;
+
+          bd->pVertexShader  = *(PVOID*)buffer_ptr;
+        
+          utils::memory::mem_zero(buffer_ptr, 0x1000);
+
+        // Create the input layout
+        D3D11_INPUT_ELEMENT_DESC local_layout[] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(ImDrawVert, pos), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,   0, (UINT)offsetof(ImDrawVert, uv),  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (UINT)offsetof(ImDrawVert, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        };
+
+
+        unsigned  long long CreateInputLayoutfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 11));
+
+
+		ret_ptr = utils::user_call::call(GetBufferPointerfun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
+		unsigned  long long BufferPointer = *reinterpret_cast<PULONG64>(ret_ptr);
+
+		ret_ptr = utils::user_call::call(GetBufferSizefun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
+		unsigned  long long BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
+
+        memcpy(buffer_ptr, &local_layout, sizeof(D3D11_INPUT_ELEMENT_DESC));
+        utils::user_call::call6(
+            CreateInputLayoutfun,
+            reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+            reinterpret_cast<unsigned  long long> (buffer_ptr),
+            3,
+            BufferPointer,
+            BufferSize,
+            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_INPUT_ELEMENT_DESC)
+        );
+
+		HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+		if (FAILED(hr))
+			return false;
+        bd->pInputLayout = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_INPUT_ELEMENT_DESC));
+ 
+        utils::vfun_utils::release(vertexShaderBlob);
+     
+        utils::memory::mem_zero(buffer_ptr, 0x1000);
+        // Create the constant buffer
+        {
+            D3D11_BUFFER_DESC desc = {};
+            desc.ByteWidth = sizeof(VERTEX_CONSTANT_BUFFER_DX11);
+            desc.Usage = D3D11_USAGE_DYNAMIC;
+            desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+            desc.MiscFlags = 0;
+
+            unsigned  long long  CreateBufferfun =reinterpret_cast<unsigned long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 3));
+            utils::memory::mem_copy(buffer_ptr, &desc, sizeof(D3D11_BUFFER_DESC));
+            utils::user_call::call(
+                CreateBufferfun,
+                reinterpret_cast<unsigned long long>(bd->pd3dDevice),
+                reinterpret_cast<unsigned long long>(buffer_ptr),
+                0,
+                reinterpret_cast<unsigned long long>(buffer_ptr) + sizeof(D3D11_BUFFER_DESC)
+            );
+            bd->pVertexConstantBuffer = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_BUFFER_DESC));
+            
+            utils::memory::mem_zero(buffer_ptr, 0x1000);
+        }
+    }
+
+    // Create the pixel shader
+    {
+        static const char* pixelShader =
+            "struct PS_INPUT\
+            {\
+            float4 pos : SV_POSITION;\
+            float4 col : COLOR0;\
+            float2 uv  : TEXCOORD0;\
+            };\
+            sampler sampler0;\
+            Texture2D texture0;\
+            \
+            float4 main(PS_INPUT input) : SV_Target\
+            {\
+            float4 out_col = input.col * texture0.Sample(sampler0, input.uv); \
+            return out_col; \
+            }";
+
+
+		// 1. 拷贝 vertexShader 源码
+		size_t shader_len = strlen(pixelShader) + 1;
+		memcpy(buffer_ptr, pixelShader, shader_len);
+
+		 
+		size_t entry_offset = shader_len;
+		memcpy(buffer_ptr + entry_offset, "main", 5); // 包含 '\0'
+		unsigned long long pEntryPoint_addr = reinterpret_cast<unsigned long long>(buffer_ptr + entry_offset);
+
+	 
+		size_t target_offset = entry_offset + 5;
+		memcpy(buffer_ptr + target_offset, "ps_4_0", 7); // 包含 '\0'
+		unsigned long long pTarget_addr = reinterpret_cast<unsigned long long>(buffer_ptr + target_offset);
+
+        utils::memory::mem_zero(blob_ptr, 0x1000);
+
+		auto ret_ptr = utils::user_call::call11(
+			utils::dwm_draw::g_d3dcompile_fun,     // 函数地址
+			reinterpret_cast<unsigned long long>(user_buffer), // LPCVOID pSrcData
+			shader_len,                             // SIZE_T SrcDataSize
+			0,                                      // LPCSTR pSourceName
+			0,                                      // const D3D_SHADER_MACRO* pDefines
+			0,                                      // ID3DInclude* pInclude
+			pEntryPoint_addr,                                // pEntryPoint
+			pTarget_addr,                                    // pTarget
+			0,                                      // UINT Flags1
+			0,                                      // UINT Flags2
+			reinterpret_cast<unsigned long long>(blob_ptr), // 输出 ID3DBlob* 存放地址
+			0);
+
+		HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+		if (FAILED(hr))
+			return false;
+
+        PVOID pixelShaderBlob = *(PVOID*)blob_ptr;
+
+        utils::memory::mem_zero(buffer_ptr, 0x1000);
+        utils::memory::mem_zero(blob_ptr, 0x1000);
+
+
+		unsigned long long  GetBufferPointerfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(pixelShaderBlob, 3));
+
+		unsigned  long long GetBufferSizefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(pixelShaderBlob, 4));
+
+		ret_ptr = utils::user_call::call(GetBufferPointerfun, reinterpret_cast<unsigned  long long>(pixelShaderBlob), 0, 0, 0);
+		unsigned  long long BufferPointer = *reinterpret_cast<PULONG64>(ret_ptr);
+
+		ret_ptr = utils::user_call::call(GetBufferSizefun, reinterpret_cast<unsigned  long long>(pixelShaderBlob), 0, 0, 0);
+		unsigned  long long BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
+
+        unsigned long long    CreatePixelShaderfun = reinterpret_cast<unsigned long long> ( utils::vfun_utils::get_vfunc(bd->pd3dDevice, 15));
+       
+
+        utils::user_call::call6(
+            CreatePixelShaderfun,
+            reinterpret_cast<unsigned long long>  (bd->pd3dDevice),
+            BufferPointer,
+            BufferSize,
+            0,
+            reinterpret_cast<unsigned long long>(buffer_ptr),
+            0
+        );
+		HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+        if (FAILED(hr))
+        {
+            utils::vfun_utils::release(pixelShaderBlob);
+            return false;
+
+        }
+
+        bd->pPixelShader =*(PVOID*)buffer_ptr;
+
+        utils::vfun_utils::release(pixelShaderBlob);
+ 
+
+		utils::memory::mem_zero(buffer_ptr, 0x1000);
+		utils::memory::mem_zero(blob_ptr, 0x1000);
+    }
+
+    // Create the blending setup
+    {
+        D3D11_BLEND_DESC desc;
+        RtlZeroMemory(&desc, sizeof(desc));
+        desc.AlphaToCoverageEnable = false;
+        desc.RenderTarget[0].BlendEnable = true;
+        desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+        desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+        desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+        desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+        desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
+        desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+        desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+        utils::memory::mem_copy(buffer_ptr, &desc, sizeof(D3D11_BLEND_DESC));
+        auto  CreateBlendStatefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 20));
+        utils::user_call::call(
+            CreateBlendStatefun,
+            reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+            reinterpret_cast<unsigned  long long>(buffer_ptr),
+            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_BLEND_DESC),
+            0
+        );
+
+        bd->pBlendState= *(PVOID*)buffer_ptr;
+        utils::memory::mem_zero(buffer_ptr, 0x1000);
+    }
+
+    // Create the rasterizer state
+    {
+        D3D11_RASTERIZER_DESC desc;
+        RtlZeroMemory(&desc, sizeof(desc));
+        desc.FillMode = D3D11_FILL_SOLID;
+        desc.CullMode = D3D11_CULL_NONE;
+        desc.ScissorEnable = true;
+        desc.DepthClipEnable = true;
+        auto  CreateRasterizerStatefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 22));
+
+        utils::memory::mem_copy(buffer_ptr, &desc, sizeof(D3D11_RASTERIZER_DESC));
+		utils::user_call::call(
+            CreateRasterizerStatefun,
+			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+			reinterpret_cast<unsigned  long long>(buffer_ptr),
+			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_RASTERIZER_DESC),
+			0
+		);
+
+        bd->pRasterizerState = *(PVOID*)buffer_ptr;
+        utils::memory::mem_zero(buffer_ptr, 0x1000);
+    }
+
+    // Create depth-stencil State
+    {
+        D3D11_DEPTH_STENCIL_DESC desc;
+        RtlZeroMemory(&desc, sizeof(desc));
+        desc.DepthEnable = false;
+        desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        desc.DepthFunc = D3D11_COMPARISON_ALWAYS;
+        desc.StencilEnable = false;
+        desc.FrontFace.StencilFailOp = desc.FrontFace.StencilDepthFailOp = desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+        desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+        desc.BackFace = desc.FrontFace;
+        auto  CreateDepthStencilStatefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 21));
+		utils::memory::mem_copy(buffer_ptr, &desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+		utils::user_call::call(
+            CreateDepthStencilStatefun,
+			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+			reinterpret_cast<unsigned  long long>(buffer_ptr),
+			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_DEPTH_STENCIL_DESC),
+			0
+		);
+
+        bd->pDepthStencilState = *(PVOID*)buffer_ptr;
+		utils::memory::mem_zero(buffer_ptr, 0x1000);
+      
+    }
+
+    // Create texture sampler
+    // (Bilinear sampling is required by default. Set 'io.Fonts->Flags |= ImFontAtlasFlags_NoBakedLines' or 'style.AntiAliasedLinesUseTex = false' to allow point/nearest sampling)
+    {
+        D3D11_SAMPLER_DESC desc;
+        RtlZeroMemory(&desc, sizeof(desc));
+        desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+        desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+        desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+        desc.MipLODBias = 0.f;
+        desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        desc.MinLOD = 0.f;
+        desc.MaxLOD = 0.f;
+		auto   CreateSamplerStatefun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 23));
+		utils::memory::mem_copy(buffer_ptr, &desc, sizeof(D3D11_SAMPLER_DESC));
+		utils::user_call::call(
+            CreateSamplerStatefun,
+			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
+			reinterpret_cast<unsigned  long long>(buffer_ptr),
+			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_SAMPLER_DESC),
+			0
+		);
+
+        bd->pFontSampler = *(PVOID*)buffer_ptr;
+		utils::memory::mem_zero(buffer_ptr, 0x1000);
+    }
+
+    return true;
+}
+
+void    ImGui_ImplDX11_InvalidateDeviceObjects()
+{
+    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
+    if (!bd->pd3dDevice)
+        return;
+
+    // Destroy all textures
+    for (ImTextureData* tex : ImGui::GetPlatformIO().Textures)
+        if (tex->RefCount == 1)
+            ImGui_ImplDX11_DestroyTexture(tex);
+
+	if (bd->pFontSampler) { utils::vfun_utils::release(bd->pFontSampler); bd->pFontSampler = nullptr; }
+	if (bd->pIB) { utils::vfun_utils::release(bd->pIB); bd->pIB = nullptr; }
+	if (bd->pVB) { utils::vfun_utils::release(bd->pVB); bd->pVB = nullptr; }
+	if (bd->pBlendState) { utils::vfun_utils::release(bd->pBlendState); bd->pBlendState = nullptr; }
+	if (bd->pDepthStencilState) { utils::vfun_utils::release(bd->pDepthStencilState); bd->pDepthStencilState = nullptr; }
+	if (bd->pRasterizerState) { utils::vfun_utils::release(bd->pRasterizerState); bd->pRasterizerState = nullptr; }
+	if (bd->pPixelShader) { utils::vfun_utils::release(bd->pPixelShader); bd->pPixelShader = nullptr; }
+	if (bd->pVertexConstantBuffer) { utils::vfun_utils::release(bd->pVertexConstantBuffer); bd->pVertexConstantBuffer = nullptr; }
+	if (bd->pInputLayout) { utils::vfun_utils::release(bd->pInputLayout); bd->pInputLayout = nullptr; }
+	if (bd->pVertexShader) { utils::vfun_utils::release(bd->pVertexShader); bd->pVertexShader = nullptr; }
+}
+
+bool    ImGui_ImplDX11_Init(PVOID device, PVOID  device_context)
+{
+    ImGuiIO& io = ImGui::GetIO();
+     IMGUI_CHECKVERSION();
+     IM_ASSERT(io.BackendRendererUserData == nullptr && "Already initialized a renderer backend!");
+
+    // Setup backend capabilities flags
+    ImGui_ImplDX11_Data* bd = IM_NEW(ImGui_ImplDX11_Data)();
+    io.BackendRendererUserData = (void*)bd;
+    io.BackendRendererName = "imgui_impl_dx11";
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;  // We can honor the ImDrawCmd::VtxOffset field, allowing for large meshes.
+    io.BackendFlags |= ImGuiBackendFlags_RendererHasTextures;   // We can honor ImGuiPlatformIO::Textures[] requests during render.
+
+    ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
+    platform_io.Renderer_TextureMaxWidth = platform_io.Renderer_TextureMaxHeight = D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+
+
+
+   
+
+	static const IID IID_IDXGIDevice =
+	{ 0x54EC77FA, 0x1377, 0x44E6, { 0x8C, 0x32, 0x88, 0xFD, 0x5F, 0x44, 0xC8, 0x4C } };
+  
+	static const IID IID_IDXGIAdapter =
+	{ 0x2411E7E1, 0x12AC, 0x4CCF, { 0xBD, 0x14, 0x97, 0x98, 0xE8, 0x53, 0x4D, 0xC0 } };
+	static const IID IID_IDXGIFactory =
+	{ 0x7B7166EC, 0x21C7, 0x44AE, { 0xB2, 0x1A, 0xC9, 0xAE, 0x32, 0x1A, 0xE3, 0x69 } };
+
+	// Get factory from device
+	PVOID pDXGIDevice = nullptr;
+	PVOID pDXGIAdapter = nullptr;
+	PVOID pFactory = nullptr;
+
+
+	// 1. 获取 IDXGIDevice
+	utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, (PVOID)&IID_IDXGIDevice, sizeof(IID_IDXGIDevice));
+	auto ret_ptr = utils::user_call::call(
+		(unsigned long long)utils::vfun_utils::get_vfunc(device, 0), // QueryInterface
+		(unsigned long long)device,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIDevice),
+		0
+	);
+	HRESULT hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+	if (FAILED(hr))
+		return false;
+	pDXGIDevice = *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIDevice));
+
+	// 2. 从 IDXGIDevice 获取 IDXGIAdapter
+	utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, (PVOID)&IID_IDXGIAdapter, sizeof(IID_IDXGIAdapter));
+	ret_ptr = utils::user_call::call(
+		(unsigned long long)utils::vfun_utils::get_vfunc(pDXGIDevice,6), // GetParent
+		(unsigned long long)pDXGIDevice,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIAdapter),
+		0
+	);
+	hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+	if (FAILED(hr))
+		return false;
+	pDXGIAdapter = *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIAdapter));
+
+	// 3. 从 IDXGIAdapter 获取 IDXGIFactory
+	utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, (PVOID)&IID_IDXGIFactory, sizeof(IID_IDXGIFactory));
+	ret_ptr = utils::user_call::call(
+		(unsigned long long)utils::vfun_utils::get_vfunc(pDXGIAdapter, 6), // GetParent
+		(unsigned long long)pDXGIAdapter,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer,
+		(unsigned long long)utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIFactory),
+		0
+	);
+	hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+	if (FAILED(hr))
+		return false;
+	pFactory = *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(IID_IDXGIFactory));
+
+	// 存到 bd
+	bd->pd3dDevice = device;
+	bd->pd3dDeviceContext = device_context;
+	bd->pFactory = pFactory;
+
+	// AddRef
+	utils::vfun_utils::add_ref(device);
+	utils::vfun_utils::add_ref(device_context);
+
+	// Release 中间对象
+	if (pDXGIDevice) utils::vfun_utils::release(pDXGIDevice);
+	if (pDXGIAdapter) utils::vfun_utils::release(pDXGIAdapter);
+
+    return true;
+}
 //
 //void ImGui_ImplDX11_Shutdown()
 //{
@@ -662,15 +976,15 @@
 //    IM_DELETE(bd);
 //}
 //
-//void ImGui_ImplDX11_NewFrame()
-//{
-//    ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
-//    IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplDX11_Init()?");
-//
-//    if (!bd->pVertexShader)
-//        if (!ImGui_ImplDX11_CreateDeviceObjects())
-//            IM_ASSERT(0 && "ImGui_ImplDX11_CreateDeviceObjects() failed!");
-//}
+void ImGui_ImplDX11_NewFrame()
+{
+	ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
+	IM_ASSERT(bd != nullptr && "Context or backend not initialized! Did you call ImGui_ImplDX11_Init()?");
+
+	if (!bd->pVertexShader)
+		if (!ImGui_ImplDX11_CreateDeviceObjects())
+			IM_ASSERT(0 && "ImGui_ImplDX11_CreateDeviceObjects() failed!");
+}
 //
 ////-----------------------------------------------------------------------------
 //

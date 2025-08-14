@@ -5,6 +5,8 @@ namespace utils
 	{
 		PVOID get_vfunc(PVOID class_ptr, ULONG index);
 		
+		void add_ref(PVOID class_ptr);
+
 		void release(PVOID class_ptr);
 	}
 }

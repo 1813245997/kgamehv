@@ -97,6 +97,39 @@
 //#endif
  #include <ntifs.h>
 
+#define LOCALE_IDEFAULTANSICODEPAGE   0x00001004   // default ansi code page for locale (user may configure as UTF-8, use of Unicode is recommended instead)
+#define LOCALE_RETURN_NUMBER          0x20000000   // return number instead of string
+
+#define CP_ACP                    0           // default to ANSI code page
+
+//
+// Constants for gamepad buttons
+//
+#define XINPUT_GAMEPAD_DPAD_UP          0x0001
+#define XINPUT_GAMEPAD_DPAD_DOWN        0x0002
+#define XINPUT_GAMEPAD_DPAD_LEFT        0x0004
+#define XINPUT_GAMEPAD_DPAD_RIGHT       0x0008
+#define XINPUT_GAMEPAD_START            0x0010
+#define XINPUT_GAMEPAD_BACK             0x0020
+#define XINPUT_GAMEPAD_LEFT_THUMB       0x0040
+#define XINPUT_GAMEPAD_RIGHT_THUMB      0x0080
+#define XINPUT_GAMEPAD_LEFT_SHOULDER    0x0100
+#define XINPUT_GAMEPAD_RIGHT_SHOULDER   0x0200
+#define XINPUT_GAMEPAD_A                0x1000
+#define XINPUT_GAMEPAD_B                0x2000
+#define XINPUT_GAMEPAD_X                0x4000
+#define XINPUT_GAMEPAD_Y                0x8000
+
+#define XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE  7849
+#define XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE 8689
+#define XINPUT_GAMEPAD_TRIGGER_THRESHOLD    30
+#define ERROR_SUCCESS                    0L
+
+//
+// Flags to pass to XInputGetCapabilities
+//
+#define XINPUT_FLAG_GAMEPAD             0x00000001
+
 typedef struct _XINPUT_GAMEPAD
 {
 	WORD                                wButtons;
@@ -190,9 +223,14 @@ static void ImGui_ImplWin32_UpdateKeyboardCodePage(ImGuiIO& io)
 	auto usercall_retval_ptr = utils::user_call::call(utils::dwm_draw::g_get_keyboard_layout_fun, 0, 0, 0, 0);
 	 
     HKL keyboard_layout = *reinterpret_cast<HKL*>(usercall_retval_ptr);
-    //LCID keyboard_lcid = MAKELCID(HIWORD(keyboard_layout), SORT_DEFAULT);
-    //if (::GetLocaleInfoA(keyboard_lcid, (LOCALE_RETURN_NUMBER | LOCALE_IDEFAULTANSICODEPAGE), (LPSTR)&bd->KeyboardCodePage, sizeof(bd->KeyboardCodePage)) == 0)
-    //    bd->KeyboardCodePage = CP_ACP; // Fallback to default ANSI code page when fails.
+     LCID keyboard_lcid = MAKELCID(HIWORD(keyboard_layout), SORT_DEFAULT);
+	 usercall_retval_ptr = utils::user_call::call(
+		 utils::dwm_draw::g_get_locale_info_a_fun, keyboard_lcid,
+		 (LOCALE_RETURN_NUMBER | LOCALE_IDEFAULTANSICODEPAGE),
+		 reinterpret_cast<uint64_t>(&bd->KeyboardCodePage),
+		 sizeof(bd->KeyboardCodePage));
+    if (*(PULONG) usercall_retval_ptr == 0)
+        bd->KeyboardCodePage = CP_ACP; // Fallback to default ANSI code page when fails.
 }
 //
 static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
@@ -223,21 +261,29 @@ static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 	main_viewport->PlatformHandle = main_viewport->PlatformHandleRaw = (void*)bd->hWnd;
 	IM_UNUSED(platform_has_own_dc); // Used in 'docking' branch
 
-//#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
-//	bd->WantUpdateHasGamepad = true;
-//	const char* xinput_dll_names[] =
-//	{
-//		"xinput1_4.dll", "xinput1_3.dll", "xinput9_1_0.dll", "xinput1_2.dll", "xinput1_1.dll"
-//	};
-//	for (int n = 0; n < IM_ARRAYSIZE(xinput_dll_names); n++)
-//		if (HMODULE dll = ::LoadLibraryA(xinput_dll_names[n]))
-//		{
-//			bd->XInputDLL = dll;
-//			bd->XInputGetCapabilities = (PFN_XInputGetCapabilities)::GetProcAddress(dll, "XInputGetCapabilities");
-//			bd->XInputGetState = (PFN_XInputGetState)::GetProcAddress(dll, "XInputGetState");
-//			break;
-//		}
-//#endif
+#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
+	bd->WantUpdateHasGamepad = true;
+	const char* xinput_dll_names[] =
+	{
+		"xinput1_4.dll", "xinput1_3.dll", "xinput9_1_0.dll", "xinput1_2.dll", "xinput1_1.dll"
+	};
+	for (int n = 0; n < IM_ARRAYSIZE(xinput_dll_names); n++)
+		if (HMODULE dll =  utils::user_call::load_librarya((xinput_dll_names[n]),(PVOID)utils::dwm_draw::g_imgui_buffer)  )
+		{
+			bd->XInputDLL = dll;
+
+			bd->XInputGetCapabilities = (PFN_XInputGetCapabilities)utils::user_call::get_proc_address(
+				dll,
+				"XInputGetCapabilities",
+				(PVOID)utils::dwm_draw::g_imgui_buffer);
+
+			bd->XInputGetState = (PFN_XInputGetState)utils::user_call::get_proc_address(
+				dll,
+				"XInputGetState",
+				(PVOID)utils::dwm_draw::g_imgui_buffer);
+			break;
+		}
+#endif
 
 	return true;
 }
@@ -304,33 +350,33 @@ static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 //    return true;
 //}
 //
-//static bool IsVkDown(int vk)
-//{
-//    return (::GetKeyState(vk) & 0x8000) != 0;
-//}
-//
-//static void ImGui_ImplWin32_AddKeyEvent(ImGuiIO& io, ImGuiKey key, bool down, int native_keycode, int native_scancode = -1)
-//{
-//    io.AddKeyEvent(key, down);
-//    io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)
-//    IM_UNUSED(native_scancode);
-//}
-//
-//static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds(ImGuiIO& io)
-//{
-//    // Left & right Shift keys: when both are pressed together, Windows tend to not generate the WM_KEYUP event for the first released one.
-//    if (ImGui::IsKeyDown(ImGuiKey_LeftShift) && !IsVkDown(VK_LSHIFT))
-//        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_LeftShift, false, VK_LSHIFT);
-//    if (ImGui::IsKeyDown(ImGuiKey_RightShift) && !IsVkDown(VK_RSHIFT))
-//        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_RightShift, false, VK_RSHIFT);
-//
-//    // Sometimes WM_KEYUP for Win key is not passed down to the app (e.g. for Win+V on some setups, according to GLFW).
-//    if (ImGui::IsKeyDown(ImGuiKey_LeftSuper) && !IsVkDown(VK_LWIN))
-//        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_LeftSuper, false, VK_LWIN);
-//    if (ImGui::IsKeyDown(ImGuiKey_RightSuper) && !IsVkDown(VK_RWIN))
-//        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_RightSuper, false, VK_RWIN);
-//}
-//
+static bool IsVkDown(int vk)
+{
+    return (::GetKeyState(vk) & 0x8000) != 0;
+}
+
+static void ImGui_ImplWin32_AddKeyEvent(ImGuiIO& io, ImGuiKey key, bool down, int native_keycode, int native_scancode = -1)
+{
+    io.AddKeyEvent(key, down);
+    io.SetKeyEventNativeData(key, native_keycode, native_scancode); // To support legacy indexing (<1.87 user code)
+    IM_UNUSED(native_scancode);
+}
+
+static void ImGui_ImplWin32_ProcessKeyEventsWorkarounds(ImGuiIO& io)
+{
+    // Left & right Shift keys: when both are pressed together, Windows tend to not generate the WM_KEYUP event for the first released one.
+    if (ImGui::IsKeyDown(ImGuiKey_LeftShift) && !IsVkDown(VK_LSHIFT))
+        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_LeftShift, false, VK_LSHIFT);
+    if (ImGui::IsKeyDown(ImGuiKey_RightShift) && !IsVkDown(VK_RSHIFT))
+        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_RightShift, false, VK_RSHIFT);
+
+    // Sometimes WM_KEYUP for Win key is not passed down to the app (e.g. for Win+V on some setups, according to GLFW).
+    if (ImGui::IsKeyDown(ImGuiKey_LeftSuper) && !IsVkDown(VK_LWIN))
+        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_LeftSuper, false, VK_LWIN);
+    if (ImGui::IsKeyDown(ImGuiKey_RightSuper) && !IsVkDown(VK_RWIN))
+        ImGui_ImplWin32_AddKeyEvent(io, ImGuiKey_RightSuper, false, VK_RWIN);
+}
+
 //static void ImGui_ImplWin32_UpdateKeyModifiers(ImGuiIO& io)
 //{
 //    io.AddKeyEvent(ImGuiMod_Ctrl, IsVkDown(VK_CONTROL));
@@ -339,125 +385,170 @@ static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 //    io.AddKeyEvent(ImGuiMod_Super, IsVkDown(VK_LWIN) || IsVkDown(VK_RWIN));
 //}
 //
-//static void ImGui_ImplWin32_UpdateMouseData(ImGuiIO& io)
-//{
-//    ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData(io);
-//    IM_ASSERT(bd->hWnd != 0);
-//
-//    HWND focused_window = ::GetForegroundWindow();
-//    const bool is_app_focused = (focused_window == bd->hWnd);
-//    if (is_app_focused)
-//    {
-//        // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when io.ConfigNavMoveSetMousePos is enabled by user)
-//        if (io.WantSetMousePos)
-//        {
-//            POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
-//            if (::ClientToScreen(bd->hWnd, &pos))
-//                ::SetCursorPos(pos.x, pos.y);
-//        }
-//
-//        // (Optional) Fallback to provide mouse position when focused (WM_MOUSEMOVE already provides this when hovered or captured)
-//        // This also fills a short gap when clicking non-client area: WM_NCMOUSELEAVE -> modal OS move -> gap -> WM_NCMOUSEMOVE
-//        if (!io.WantSetMousePos && bd->MouseTrackedArea == 0)
-//        {
-//            POINT pos;
-//            if (::GetCursorPos(&pos) && ::ScreenToClient(bd->hWnd, &pos))
-//                io.AddMousePosEvent((float)pos.x, (float)pos.y);
-//        }
-//    }
-//}
-//
-//// Gamepad navigation mapping
-//static void ImGui_ImplWin32_UpdateGamepads(ImGuiIO& io)
-//{
-//#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
-//    ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData(io);
-//
-//    // Calling XInputGetState() every frame on disconnected gamepads is unfortunately too slow.
-//    // Instead we refresh gamepad availability by calling XInputGetCapabilities() _only_ after receiving WM_DEVICECHANGE.
-//    if (bd->WantUpdateHasGamepad)
-//    {
-//        XINPUT_CAPABILITIES caps = {};
-//        bd->HasGamepad = bd->XInputGetCapabilities ? (bd->XInputGetCapabilities(0, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS) : false;
-//        bd->WantUpdateHasGamepad = false;
-//    }
-//
-//    io.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
-//    XINPUT_STATE xinput_state;
-//    XINPUT_GAMEPAD& gamepad = xinput_state.Gamepad;
-//    if (!bd->HasGamepad || bd->XInputGetState == nullptr || bd->XInputGetState(0, &xinput_state) != ERROR_SUCCESS)
-//        return;
-//    io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
-//
-//    #define IM_SATURATE(V)                      (V < 0.0f ? 0.0f : V > 1.0f ? 1.0f : V)
-//    #define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { io.AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
-//    #define MAP_ANALOG(KEY_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); io.AddKeyAnalogEvent(KEY_NO, vn > 0.10f, IM_SATURATE(vn)); }
-//    MAP_BUTTON(ImGuiKey_GamepadStart,           XINPUT_GAMEPAD_START);
-//    MAP_BUTTON(ImGuiKey_GamepadBack,            XINPUT_GAMEPAD_BACK);
-//    MAP_BUTTON(ImGuiKey_GamepadFaceLeft,        XINPUT_GAMEPAD_X);
-//    MAP_BUTTON(ImGuiKey_GamepadFaceRight,       XINPUT_GAMEPAD_B);
-//    MAP_BUTTON(ImGuiKey_GamepadFaceUp,          XINPUT_GAMEPAD_Y);
-//    MAP_BUTTON(ImGuiKey_GamepadFaceDown,        XINPUT_GAMEPAD_A);
-//    MAP_BUTTON(ImGuiKey_GamepadDpadLeft,        XINPUT_GAMEPAD_DPAD_LEFT);
-//    MAP_BUTTON(ImGuiKey_GamepadDpadRight,       XINPUT_GAMEPAD_DPAD_RIGHT);
-//    MAP_BUTTON(ImGuiKey_GamepadDpadUp,          XINPUT_GAMEPAD_DPAD_UP);
-//    MAP_BUTTON(ImGuiKey_GamepadDpadDown,        XINPUT_GAMEPAD_DPAD_DOWN);
-//    MAP_BUTTON(ImGuiKey_GamepadL1,              XINPUT_GAMEPAD_LEFT_SHOULDER);
-//    MAP_BUTTON(ImGuiKey_GamepadR1,              XINPUT_GAMEPAD_RIGHT_SHOULDER);
-//    MAP_ANALOG(ImGuiKey_GamepadL2,              gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
-//    MAP_ANALOG(ImGuiKey_GamepadR2,              gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
-//    MAP_BUTTON(ImGuiKey_GamepadL3,              XINPUT_GAMEPAD_LEFT_THUMB);
-//    MAP_BUTTON(ImGuiKey_GamepadR3,              XINPUT_GAMEPAD_RIGHT_THUMB);
-//    MAP_ANALOG(ImGuiKey_GamepadLStickLeft,      gamepad.sThumbLX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-//    MAP_ANALOG(ImGuiKey_GamepadLStickRight,     gamepad.sThumbLX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-//    MAP_ANALOG(ImGuiKey_GamepadLStickUp,        gamepad.sThumbLY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-//    MAP_ANALOG(ImGuiKey_GamepadLStickDown,      gamepad.sThumbLY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-//    MAP_ANALOG(ImGuiKey_GamepadRStickLeft,      gamepad.sThumbRX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-//    MAP_ANALOG(ImGuiKey_GamepadRStickRight,     gamepad.sThumbRX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-//    MAP_ANALOG(ImGuiKey_GamepadRStickUp,        gamepad.sThumbRY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
-//    MAP_ANALOG(ImGuiKey_GamepadRStickDown,      gamepad.sThumbRY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
-//    #undef MAP_BUTTON
-//    #undef MAP_ANALOG
-//#else // #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
-//    IM_UNUSED(io);
-//#endif
-//}
-//
-//void ImGui_ImplWin32_NewFrame()
-//{
-//	ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
-//	IM_ASSERT(bd != nullptr && "Context or backend not initialized? Did you call ImGui_ImplWin32_Init()?");
-//	ImGuiIO& io = ImGui::GetIO();
-//
-//	// Setup display size (every frame to accommodate for window resizing)
-//	RECT rect = { 0, 0, 0, 0 };
-//	::GetClientRect(bd->hWnd, &rect);
-//	io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
-//
-//	// Setup time step
-//	LARGE_INTEGER current_time = KeQueryPerformanceCounter(nullptr); // 内核态获取高精度计时器
-//	io.DeltaTime = (float)(current_time.QuadPart - bd->Time) / bd->TicksPerSecond;
-//	bd->Time = current_time.QuadPart;
-//
-//	// Update OS mouse position
-//	ImGui_ImplWin32_UpdateMouseData(io);
-//
-//	// Process workarounds for known Windows key handling issues
-//	ImGui_ImplWin32_ProcessKeyEventsWorkarounds(io);
-//
-//	// Update OS mouse cursor with the cursor requested by imgui
-//	ImGuiMouseCursor mouse_cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
-//	if (bd->LastMouseCursor != mouse_cursor)
-//	{
-//		bd->LastMouseCursor = mouse_cursor;
-//		ImGui_ImplWin32_UpdateMouseCursor(io, mouse_cursor);
-//	}
-//
-//	// Update game controllers (if enabled and available)
-//	ImGui_ImplWin32_UpdateGamepads(io);
-//}
-//
-//
+static void ImGui_ImplWin32_UpdateMouseData(ImGuiIO& io)
+{
+    ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData(io);
+    IM_ASSERT(bd->hWnd != 0);
+
+	PVOID focused_window =  utils::internal_functions::pfn_nt_user_get_foreground_window();   
+    const bool is_app_focused = (focused_window == bd->hWnd);
+    if (is_app_focused)
+    {
+        // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when io.ConfigNavMoveSetMousePos is enabled by user)
+        if (io.WantSetMousePos)
+        {
+            POINT pos = { (int)io.MousePos.x, (int)io.MousePos.y };
+
+			utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
+			utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, &pos, sizeof(POINT));
+			auto retval_ptr =  utils::user_call::call(
+				utils::dwm_draw::g_client_to_screen_fun,
+				reinterpret_cast<unsigned long long> (bd->hWnd),
+				utils::dwm_draw::g_imgui_buffer,
+				0,
+				0);
+			 
+            if (*(bool*)retval_ptr)
+                utils::user_call::call (utils::dwm_draw::g_set_cursor_pos_fun, pos.x, pos.y,0,0);
+        }
+
+        // (Optional) Fallback to provide mouse position when focused (WM_MOUSEMOVE already provides this when hovered or captured)
+        // This also fills a short gap when clicking non-client area: WM_NCMOUSELEAVE -> modal OS move -> gap -> WM_NCMOUSEMOVE
+        if (!io.WantSetMousePos && bd->MouseTrackedArea == 0)
+        {
+            POINT pos;
+
+
+
+
+			utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
+			  
+
+			auto retval_ptr = utils::user_call::call(
+				utils::dwm_draw::g_get_cursor_pos_fun,
+				utils::dwm_draw::g_imgui_buffer,
+				0,
+				0,
+				0
+
+			);
+
+			bool is_get_pos = *(bool*)retval_ptr;
+
+			if (is_get_pos)
+			{
+				auto retval_ptr = utils::user_call::call(
+					utils::dwm_draw::g_screen_to_client_fun,
+					reinterpret_cast<unsigned  long long> (bd->hWnd),
+					utils::dwm_draw::g_imgui_buffer,
+					0,
+					0
+
+				);
+				bool isClient = *(bool*)retval_ptr;
+				if (isClient)
+				{
+					io.AddMousePosEvent((float)pos.x, (float)pos.y);
+				}
+
+			}
+
+			 
+        }
+    }
+}
+
+// Gamepad navigation mapping
+static void ImGui_ImplWin32_UpdateGamepads(ImGuiIO& io)
+{
+#ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
+    ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData(io);
+
+    // Calling XInputGetState() every frame on disconnected gamepads is unfortunately too slow.
+    // Instead we refresh gamepad availability by calling XInputGetCapabilities() _only_ after receiving WM_DEVICECHANGE.
+    if (bd->WantUpdateHasGamepad)
+    {
+        XINPUT_CAPABILITIES caps = {};
+        bd->HasGamepad = bd->XInputGetCapabilities ? (bd->XInputGetCapabilities(0, XINPUT_FLAG_GAMEPAD, &caps) == ERROR_SUCCESS) : false;
+        bd->WantUpdateHasGamepad = false;
+    }
+
+    io.BackendFlags &= ~ImGuiBackendFlags_HasGamepad;
+    XINPUT_STATE xinput_state;
+    XINPUT_GAMEPAD& gamepad = xinput_state.Gamepad;
+    if (!bd->HasGamepad || bd->XInputGetState == nullptr || bd->XInputGetState(0, &xinput_state) != ERROR_SUCCESS)
+        return;
+    io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+
+    #define IM_SATURATE(V)                      (V < 0.0f ? 0.0f : V > 1.0f ? 1.0f : V)
+    #define MAP_BUTTON(KEY_NO, BUTTON_ENUM)     { io.AddKeyEvent(KEY_NO, (gamepad.wButtons & BUTTON_ENUM) != 0); }
+    #define MAP_ANALOG(KEY_NO, VALUE, V0, V1)   { float vn = (float)(VALUE - V0) / (float)(V1 - V0); io.AddKeyAnalogEvent(KEY_NO, vn > 0.10f, IM_SATURATE(vn)); }
+    MAP_BUTTON(ImGuiKey_GamepadStart,           XINPUT_GAMEPAD_START);
+    MAP_BUTTON(ImGuiKey_GamepadBack,            XINPUT_GAMEPAD_BACK);
+    MAP_BUTTON(ImGuiKey_GamepadFaceLeft,        XINPUT_GAMEPAD_X);
+    MAP_BUTTON(ImGuiKey_GamepadFaceRight,       XINPUT_GAMEPAD_B);
+    MAP_BUTTON(ImGuiKey_GamepadFaceUp,          XINPUT_GAMEPAD_Y);
+    MAP_BUTTON(ImGuiKey_GamepadFaceDown,        XINPUT_GAMEPAD_A);
+    MAP_BUTTON(ImGuiKey_GamepadDpadLeft,        XINPUT_GAMEPAD_DPAD_LEFT);
+    MAP_BUTTON(ImGuiKey_GamepadDpadRight,       XINPUT_GAMEPAD_DPAD_RIGHT);
+    MAP_BUTTON(ImGuiKey_GamepadDpadUp,          XINPUT_GAMEPAD_DPAD_UP);
+    MAP_BUTTON(ImGuiKey_GamepadDpadDown,        XINPUT_GAMEPAD_DPAD_DOWN);
+    MAP_BUTTON(ImGuiKey_GamepadL1,              XINPUT_GAMEPAD_LEFT_SHOULDER);
+    MAP_BUTTON(ImGuiKey_GamepadR1,              XINPUT_GAMEPAD_RIGHT_SHOULDER);
+    MAP_ANALOG(ImGuiKey_GamepadL2,              gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
+    MAP_ANALOG(ImGuiKey_GamepadR2,              gamepad.bRightTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 255);
+    MAP_BUTTON(ImGuiKey_GamepadL3,              XINPUT_GAMEPAD_LEFT_THUMB);
+    MAP_BUTTON(ImGuiKey_GamepadR3,              XINPUT_GAMEPAD_RIGHT_THUMB);
+    MAP_ANALOG(ImGuiKey_GamepadLStickLeft,      gamepad.sThumbLX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadLStickRight,     gamepad.sThumbLX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadLStickUp,        gamepad.sThumbLY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadLStickDown,      gamepad.sThumbLY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadRStickLeft,      gamepad.sThumbRX, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    MAP_ANALOG(ImGuiKey_GamepadRStickRight,     gamepad.sThumbRX, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadRStickUp,        gamepad.sThumbRY, +XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, +32767);
+    MAP_ANALOG(ImGuiKey_GamepadRStickDown,      gamepad.sThumbRY, -XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, -32768);
+    #undef MAP_BUTTON
+    #undef MAP_ANALOG
+#else // #ifndef IMGUI_IMPL_WIN32_DISABLE_GAMEPAD
+    IM_UNUSED(io);
+#endif
+}
+
+void ImGui_ImplWin32_NewFrame()
+{
+	ImGui_ImplWin32_Data* bd = ImGui_ImplWin32_GetBackendData();
+	IM_ASSERT(bd != nullptr && "Context or backend not initialized? Did you call ImGui_ImplWin32_Init()?");
+	ImGuiIO& io = ImGui::GetIO();
+
+	// Setup display size (every frame to accommodate for window resizing)
+	RECT rect = { 0, 0, 0, 0 };
+	  utils::window_utils::get_window_rect_r0(bd->hWnd, &rect,(PVOID)utils::dwm_draw::g_imgui_buffer);
+	io.DisplaySize = ImVec2((float)(rect.right - rect.left), (float)(rect.bottom - rect.top));
+
+	// Setup time step
+	LARGE_INTEGER current_time = KeQueryPerformanceCounter(nullptr); // 内核态获取高精度计时器
+	io.DeltaTime = (float)(current_time.QuadPart - bd->Time) / bd->TicksPerSecond;
+	bd->Time = current_time.QuadPart;
+
+	// Update OS mouse position
+	ImGui_ImplWin32_UpdateMouseData(io);
+
+	// Process workarounds for known Windows key handling issues
+	ImGui_ImplWin32_ProcessKeyEventsWorkarounds(io);
+
+	// Update OS mouse cursor with the cursor requested by imgui
+	ImGuiMouseCursor mouse_cursor = io.MouseDrawCursor ? ImGuiMouseCursor_None : ImGui::GetMouseCursor();
+	if (bd->LastMouseCursor != mouse_cursor)
+	{
+		bd->LastMouseCursor = mouse_cursor;
+		ImGui_ImplWin32_UpdateMouseCursor(io, mouse_cursor);
+	}
+
+	// Update game controllers (if enabled and available)
+	//ImGui_ImplWin32_UpdateGamepads(io);
+}
+
+
 //// Map VK_xxx to ImGuiKey_xxx.
 //// Not static to allow third-party code to use that if they want to (but undocumented)
 //ImGuiKey ImGui_ImplWin32_KeyEventToImGuiKey(WPARAM wParam, LPARAM lParam);

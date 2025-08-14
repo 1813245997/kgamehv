@@ -82,6 +82,46 @@ namespace utils
 			return ret;
 		}
 
+		unsigned long long call11(
+			unsigned long long func_ptr,
+			unsigned long long arg1,
+			unsigned long long arg2,
+			unsigned long long arg3,
+			unsigned long long arg4,
+			unsigned long long arg5,
+			unsigned long long arg6,
+			unsigned long long arg7,
+			unsigned long long arg8,
+			unsigned long long arg9,
+			unsigned long long arg10,
+			unsigned long long arg11
+	 
+		)
+		{
+			void* cdata[9]{};
+			auto new_user_rsp = (thread_utils::get_user_stack_ptr() - 0x200) & 0xFFFFFFFFFFFFFFF0ULL;
+
+			// 前4个参数放寄存器影子区
+			*(unsigned long long*)(new_user_rsp + 0x20 + (0 * 8)) = arg1;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (1 * 8)) = arg2;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (2 * 8)) = arg3;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (3 * 8)) = arg4;
+
+			// 剩下的参数依次压到栈
+			unsigned long long extra_args[] = {
+				arg5, arg6, arg7, arg8,
+				arg9, arg10, arg11 
+			};
+
+			for (int i = 0; i < 12; ++i)
+			{
+				*(unsigned long long*)(new_user_rsp + 0x70 + (i * 8)) = extra_args[i];
+			}
+
+			unsigned long long ret = call2(func_ptr, reinterpret_cast<char*>(new_user_rsp), cdata);
+			return ret;
+		}
+
 		unsigned long long call2(
 			unsigned long long ptr,
 			char* user_rsp,
@@ -190,7 +230,80 @@ namespace utils
 			return ret_val_ptr;
 
 		}
+
+		HMODULE load_librarya(const char* dll_name, PVOID user_buffer)
+		{
+			if (!dll_name || !user_buffer || !utils::dwm_draw::g_load_librarya_fun)
+				return nullptr;
+
+			// 确保偏移固定，避免缓冲区冲突
+			PVOID dll_name_ptr = reinterpret_cast<PBYTE>(user_buffer) + 0x100;
+
+			// 拷贝 DLL 名
+			SIZE_T dll_name_len = (strlen(dll_name) + 1) * sizeof(char);
+			RtlCopyMemory(dll_name_ptr, dll_name, dll_name_len);
+			reinterpret_cast<char*>(dll_name_ptr)[dll_name_len - 1] = '\0';
+
+			// 调用用户态 LoadLibraryA
+			unsigned long long result_ptr = utils::user_call::call(
+				utils::dwm_draw::g_load_librarya_fun,
+				reinterpret_cast<unsigned long long>(dll_name_ptr),
+				0, 0, 0);
+
+			if (result_ptr)
+			{
+				HMODULE module = reinterpret_cast<HMODULE>(
+					*reinterpret_cast<PULONG64>(result_ptr));
+
+				RtlZeroMemory(user_buffer, 0x1000);
+				if (module)
+				{
+					return module;
+				}
+			}
+
+			return nullptr;
+		}
 		
+
+		FARPROC get_proc_address(
+			HMODULE module,
+			const char* func_name,
+			PVOID user_buffer)
+		{
+			if (!module || !func_name || !user_buffer || !utils::dwm_draw::g_get_proc_address_fun)
+				return nullptr;
+
+			// 确保偏移固定，避免缓冲区冲突
+			PVOID func_name_ptr = reinterpret_cast<PBYTE>(user_buffer) + 0x100;
+
+			// 拷贝函数名
+			SIZE_T func_name_len = (strlen(func_name) + 1) * sizeof(char);
+			RtlCopyMemory(func_name_ptr, func_name, func_name_len);
+			reinterpret_cast<char*>(func_name_ptr)[func_name_len - 1] = '\0';
+
+			// 调用用户态 GetProcAddress
+			unsigned long long result_ptr = utils::user_call::call(
+				utils::dwm_draw::g_get_proc_address_fun,
+				reinterpret_cast<unsigned long long>(module),
+				reinterpret_cast<unsigned long long>(func_name_ptr),
+				0, 0 );
+
+			if (result_ptr)
+			{
+				FARPROC func_ptr = reinterpret_cast<FARPROC>(
+					*reinterpret_cast<PULONG64>(result_ptr));
+
+				RtlZeroMemory(user_buffer, 0x1000);
+				if (func_ptr)
+				{
+					return func_ptr;
+				}
+			}
+
+			return nullptr;
+		}
+
 	}
 
 

@@ -40,3 +40,7 @@
 #define NULL_ZERO   0
 #define NULL64_ZERO 0ull
 
+
+
+#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
+#define FAILED(hr) (((HRESULT)(hr)) < 0)
