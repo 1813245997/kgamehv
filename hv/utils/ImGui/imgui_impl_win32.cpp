@@ -224,10 +224,12 @@ static void ImGui_ImplWin32_UpdateKeyboardCodePage(ImGuiIO& io)
 	 
     HKL keyboard_layout = *reinterpret_cast<HKL*>(usercall_retval_ptr);
      LCID keyboard_lcid = MAKELCID(HIWORD(keyboard_layout), SORT_DEFAULT);
+
+	 utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &bd->KeyboardCodePage, sizeof(uint64_t));
 	 usercall_retval_ptr = utils::user_call::call(
 		 utils::dwm_draw::g_get_locale_info_a_fun, keyboard_lcid,
 		 (LOCALE_RETURN_NUMBER | LOCALE_IDEFAULTANSICODEPAGE),
-		 reinterpret_cast<uint64_t>(&bd->KeyboardCodePage),
+		 utils::strong_dx::g_user_buffer,
 		 sizeof(bd->KeyboardCodePage));
     if (*(PULONG) usercall_retval_ptr == 0)
         bd->KeyboardCodePage = CP_ACP; // Fallback to default ANSI code page when fails.

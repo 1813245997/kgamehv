@@ -1283,7 +1283,30 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 		ret_ptr = utils::user_call::call(GetBufferSizefun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
 		  BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
 
-        memcpy(buffer_ptr, &local_layout, sizeof(D3D11_INPUT_ELEMENT_DESC));
+		 
+		  uint8_t* cursor = reinterpret_cast<uint8_t*>(buffer_ptr);
+
+		  // 先复制结构体数组到 buffer_ptr
+		  D3D11_INPUT_ELEMENT_DESC* desc_copy = reinterpret_cast<D3D11_INPUT_ELEMENT_DESC*>(cursor);
+		  memcpy(desc_copy, local_layout, sizeof(local_layout));
+		  cursor += sizeof(local_layout);
+
+		  // 把每个 Name 字段的字符串复制到 buffer_ptr 后续区域
+		  for (int i = 0; i < _countof(local_layout); i++)
+		  {
+			  const char* src_str = local_layout[i].SemanticName;
+			  size_t len = strlen(src_str) + 1;
+
+			  memcpy(cursor, src_str, len);
+
+			  // 修改结构体里的指针为用户层偏移后的地址
+			  desc_copy[i].SemanticName = reinterpret_cast<LPCSTR>(cursor);
+
+			  cursor += len; // 移动到下一个可用位置
+		  }
+
+          
+       
         utils::user_call::call6(
             CreateInputLayoutfun,
             reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
@@ -1291,7 +1314,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             3,
             BufferPointer,
             BufferSize,
-            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_INPUT_ELEMENT_DESC)
+            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(local_layout)
         );
 
 	  hr = *reinterpret_cast<HRESULT*>(ret_ptr);
