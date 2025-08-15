@@ -55,8 +55,12 @@ namespace utils
 		extern unsigned long long g_set_cursor_pos_fun;
 		extern unsigned long long g_screen_to_client_fun;
 		extern unsigned long long g_get_cursor_pos_fun;
+		extern unsigned long long g_get_key_state_fun;
+		extern  unsigned long long g_set_cursor_fun ;
+		extern unsigned long long g_load_cursora_fun;
 		extern PVOID g_game_utils_buffer;
 		extern unsigned long long  g_imgui_buffer;
+		
 	
 		
 		NTSTATUS initialize();
@@ -199,12 +203,31 @@ namespace utils
 			_In_ unsigned long long user32_base,
 			_Out_ unsigned long long* get_cursor_pos_addr);
 
+		NTSTATUS find_get_key_state(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_key_state_addr
+		);
 
+		NTSTATUS find_set_cursor(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* set_cursor_addr
+		);
+
+
+		NTSTATUS find_load_cursora(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* load_cursor_a_addr
+		);
 
 		NTSTATUS find_dxgk_get_device_state(
 			IN PEPROCESS process, 
 			IN unsigned long long dxgkrnl_base,
 			OUT unsigned long long* dxgk_get_device_state);
+
+
 
 		NTSTATUS   find_open_resource(
 			IN PEPROCESS process,

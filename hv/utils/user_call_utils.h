@@ -19,7 +19,15 @@ namespace utils
 			unsigned long long arg5,
 			unsigned long long arg6);
 
-
+		unsigned long long call7(
+			unsigned long long func_ptr,
+			unsigned long long arg1,
+			unsigned long long arg2,
+			unsigned long long arg3,
+			unsigned long long arg4,
+			unsigned long long arg5,
+			unsigned long long arg6,
+			unsigned long long arg7);
 		unsigned long long call11(
 			unsigned long long func_ptr,
 			unsigned long long arg1,

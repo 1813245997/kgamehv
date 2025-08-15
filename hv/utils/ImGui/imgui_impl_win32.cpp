@@ -316,43 +316,54 @@ static bool ImGui_ImplWin32_InitEx(void* hwnd, bool platform_has_own_dc)
 //    io.BackendFlags &= ~(ImGuiBackendFlags_HasMouseCursors | ImGuiBackendFlags_HasSetMousePos | ImGuiBackendFlags_HasGamepad);
 //    IM_DELETE(bd);
 //}
-//
-//static bool ImGui_ImplWin32_UpdateMouseCursor(ImGuiIO& io, ImGuiMouseCursor imgui_cursor)
-//{
-//    if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
-//        return false;
-//
-//    if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
-//    {
-//        // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
-//        ::SetCursor(nullptr);
-//    }
-//    else
-//    {
-//        // Show OS mouse cursor
-//        LPTSTR win32_cursor = IDC_ARROW;
-//        switch (imgui_cursor)
-//        {
-//        case ImGuiMouseCursor_Arrow:        win32_cursor = IDC_ARROW; break;
-//        case ImGuiMouseCursor_TextInput:    win32_cursor = IDC_IBEAM; break;
-//        case ImGuiMouseCursor_ResizeAll:    win32_cursor = IDC_SIZEALL; break;
-//        case ImGuiMouseCursor_ResizeEW:     win32_cursor = IDC_SIZEWE; break;
-//        case ImGuiMouseCursor_ResizeNS:     win32_cursor = IDC_SIZENS; break;
-//        case ImGuiMouseCursor_ResizeNESW:   win32_cursor = IDC_SIZENESW; break;
-//        case ImGuiMouseCursor_ResizeNWSE:   win32_cursor = IDC_SIZENWSE; break;
-//        case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
-//        case ImGuiMouseCursor_Wait:         win32_cursor = IDC_WAIT; break;
-//        case ImGuiMouseCursor_Progress:     win32_cursor = IDC_APPSTARTING; break;
-//        case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
-//        }
-//        ::SetCursor(::LoadCursor(nullptr, win32_cursor));
-//    }
-//    return true;
-//}
-//
+ 
+static bool ImGui_ImplWin32_UpdateMouseCursor(ImGuiIO& io, ImGuiMouseCursor imgui_cursor)
+{
+    if (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)
+        return false;
+
+    if (imgui_cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
+    {
+        // Hide OS mouse cursor if imgui is drawing it or if it wants no cursor
+        
+		utils::user_call::call(utils::dwm_draw::g_set_cursor_fun, 0, 0, 0, 0);
+    }
+    else
+    {
+        // Show OS mouse cursor
+        LPTSTR win32_cursor = IDC_ARROW;
+        switch (imgui_cursor)
+        {
+        case ImGuiMouseCursor_Arrow:        win32_cursor = IDC_ARROW; break;
+        case ImGuiMouseCursor_TextInput:    win32_cursor = IDC_IBEAM; break;
+        case ImGuiMouseCursor_ResizeAll:    win32_cursor = IDC_SIZEALL; break;
+        case ImGuiMouseCursor_ResizeEW:     win32_cursor = IDC_SIZEWE; break;
+        case ImGuiMouseCursor_ResizeNS:     win32_cursor = IDC_SIZENS; break;
+        case ImGuiMouseCursor_ResizeNESW:   win32_cursor = IDC_SIZENESW; break;
+        case ImGuiMouseCursor_ResizeNWSE:   win32_cursor = IDC_SIZENWSE; break;
+        case ImGuiMouseCursor_Hand:         win32_cursor = IDC_HAND; break;
+        case ImGuiMouseCursor_Wait:         win32_cursor = IDC_WAIT; break;
+        case ImGuiMouseCursor_Progress:     win32_cursor = IDC_APPSTARTING; break;
+        case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
+        }
+
+		utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
+		utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, win32_cursor, strlen(win32_cursor) + 1);
+		auto retval_ptr =	 utils::user_call::call(utils::dwm_draw::g_load_cursora_fun, 0, utils::dwm_draw::g_imgui_buffer, 0, 0);
+
+		PVOID  hcursorval=*(PVOID*)retval_ptr;
+		utils::user_call::call(utils::dwm_draw::g_set_cursor_fun, (unsigned long long)hcursorval, 0, 0, 0);
+		 
+    }
+    return true;
+}
+
 static bool IsVkDown(int vk)
 {
-    return (::GetKeyState(vk) & 0x8000) != 0;
+	 
+   auto retval_ptr = utils::user_call::call(utils::dwm_draw::g_get_key_state_fun, vk, 0, 0, 0);
+
+    return ( *(short*)retval_ptr & 0x8000) != 0;
 }
 
 static void ImGui_ImplWin32_AddKeyEvent(ImGuiIO& io, ImGuiKey key, bool down, int native_keycode, int native_scancode = -1)
@@ -437,7 +448,7 @@ static void ImGui_ImplWin32_UpdateMouseData(ImGuiIO& io)
 
 			if (is_get_pos)
 			{
-				auto retval_ptr = utils::user_call::call(
+				  retval_ptr = utils::user_call::call(
 					utils::dwm_draw::g_screen_to_client_fun,
 					reinterpret_cast<unsigned  long long> (bd->hWnd),
 					utils::dwm_draw::g_imgui_buffer,
@@ -445,9 +456,12 @@ static void ImGui_ImplWin32_UpdateMouseData(ImGuiIO& io)
 					0
 
 				);
+
+
 				bool isClient = *(bool*)retval_ptr;
 				if (isClient)
 				{
+					pos =*(POINT*)utils::dwm_draw::g_imgui_buffer;
 					io.AddMousePosEvent((float)pos.x, (float)pos.y);
 				}
 

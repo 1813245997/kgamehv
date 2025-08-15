@@ -4247,17 +4247,17 @@ void ImGui::Initialize()
 
     // Add .ini handle for ImGuiWindow and ImGuiTable types
     {
-        ImGuiSettingsHandler ini_handler;
-        ini_handler.TypeName = "Window";
-        ini_handler.TypeHash = ImHashStr("Window");
-        ini_handler.ClearAllFn = WindowSettingsHandler_ClearAll;
-        ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
-        ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
-        ini_handler.ApplyAllFn = WindowSettingsHandler_ApplyAll;
-        ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
-        AddSettingsHandler(&ini_handler);
+		/*       ImGuiSettingsHandler ini_handler;
+			   ini_handler.TypeName = "Window";
+			   ini_handler.TypeHash = ImHashStr("Window");
+			   ini_handler.ClearAllFn = WindowSettingsHandler_ClearAll;
+			   ini_handler.ReadOpenFn = WindowSettingsHandler_ReadOpen;
+			   ini_handler.ReadLineFn = WindowSettingsHandler_ReadLine;
+			   ini_handler.ApplyAllFn = WindowSettingsHandler_ApplyAll;
+			   ini_handler.WriteAllFn = WindowSettingsHandler_WriteAll;
+			   AddSettingsHandler(&ini_handler);*/
     }
-    TableSettingsAddSettingsHandler();
+  //  TableSettingsAddSettingsHandler();
 
     // Setup default localization table
     LocalizeRegisterEntries(GLocalizationEntriesEnUS, IM_ARRAYSIZE(GLocalizationEntriesEnUS));

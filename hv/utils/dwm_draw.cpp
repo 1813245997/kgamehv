@@ -68,6 +68,9 @@ namespace utils
 		unsigned long long g_set_cursor_pos_fun{};
 		unsigned long long g_screen_to_client_fun{};
 		unsigned long long g_get_cursor_pos_fun{};
+		unsigned long long g_get_key_state_fun{};
+		unsigned long long g_set_cursor_fun{};
+		unsigned long long g_load_cursora_fun{};
 		NTSTATUS initialize()
 		{
 			NTSTATUS status{};
@@ -321,6 +324,45 @@ namespace utils
 				LogError("find_GetCursorPos failed with status: 0x%X", status);
 				return status;
 			}
+
+			status = find_get_key_state(
+				g_dwm_process,          // 目标进程
+				g_user32_base,          // user32.dll 基址
+				&g_get_key_state_fun    // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_get_key_state failed with status: 0x%X", status);
+				return status;
+			}
+
+
+			status = find_set_cursor(
+				g_dwm_process,        // 目标进程
+				g_user32_base,        // user32.dll 基址
+				&g_set_cursor_fun     // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_set_cursor failed with status: 0x%X", status);
+				return status;
+			}
+
+
+			status = find_load_cursora(
+				g_dwm_process,       // 目标进程
+				g_user32_base,       // user32.dll 基址
+				&g_load_cursora_fun  // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_load_cursora failed with status: 0x%X", status);
+				return status;
+			}
+
 			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
 			//if (!NT_SUCCESS(status))
 			//{
@@ -1400,38 +1442,7 @@ namespace utils
 			);
 			return STATUS_SUCCESS;
 		}
-		NTSTATUS find_client_to_screen(
-			_In_ PEPROCESS process,
-			_In_ unsigned long long user32_base,
-			_Out_ unsigned long long* client_to_screen_addr)
-		{
-			if (!client_to_screen_addr || user32_base == 0) {
-				return STATUS_INVALID_PARAMETER;
-			}
-
-			KAPC_STATE apc_state{};
-			// 附加到目标进程
-			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-
-			// 查找导出函数地址
-			unsigned long long addr = scanner_fun::find_module_export_by_name(
-				reinterpret_cast<void*>(user32_base),
-				"ClientToScreen"
-			);
-
-			if (addr == 0) {
-				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-				*client_to_screen_addr = 0;
-				return STATUS_NOT_FOUND;
-			}
-
-			// 解除附加
-			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-			*client_to_screen_addr = addr;
-
-			LogDebug("Found ClientToScreen at 0x%llX\n", addr);
-			return STATUS_SUCCESS;
-		}
+		 
 
 
 		NTSTATUS find_set_cursor_pos(
@@ -1534,6 +1545,106 @@ namespace utils
 			LogDebug("Found GetCursorPos at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 
+		}
+
+		NTSTATUS find_get_key_state(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* get_key_state_addr)
+		{
+			if (!get_key_state_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"GetKeyState"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*get_key_state_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*get_key_state_addr = addr;
+
+			LogDebug("Found GetKeyState at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_set_cursor(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* set_cursor_addr
+		)
+		{
+			if (!set_cursor_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"SetCursor"
+			);
+
+			if (addr == 0) {
+				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+				*set_cursor_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			*set_cursor_addr = addr;
+
+			LogDebug("Found SetCursor at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_load_cursora(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long user32_base,
+			_Out_ unsigned long long* load_cursor_a_addr
+		)
+		{
+			if (!load_cursor_a_addr || user32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(user32_base),
+				"LoadCursorA"
+			);
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0) {
+				*load_cursor_a_addr = 0;
+				return STATUS_NOT_FOUND;
+			}
+
+			*load_cursor_a_addr = addr;
+			LogDebug("Found LoadCursorA at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
 		}
 
 

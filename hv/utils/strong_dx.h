@@ -8,6 +8,7 @@ namespace utils
 		extern unsigned long long g_user_buffer;
 		extern unsigned long long g_texture_buffer;
 		extern   unsigned long long g_pOverlaySwapChain;
+		extern  	unsigned long long g_mainRenderTargetView;
 		extern PVOID g_swap_chain;
 		extern PVOID g_pdevice ;
 		extern PVOID g_pContext;

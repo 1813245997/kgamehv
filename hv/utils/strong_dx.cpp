@@ -4,8 +4,9 @@
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
 #include "dx_draw/fontdata.h"
-#include "ImGui/imgui_impl_dx11.h"
+#include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_win32.h"
+#include "ImGui/imgui_impl_dx11.h"
  
 
 
@@ -18,6 +19,7 @@ namespace utils
 			unsigned long long g_user_buffer{};
 			unsigned long long  g_texture_buffer{};
 			unsigned long long g_pOverlaySwapChain{};
+			unsigned long long g_mainRenderTargetView{};
 			PVOID g_swap_chain{};
 
 			PVOID g_pdevice{};
@@ -343,6 +345,7 @@ namespace utils
 				g_pContext = *(PVOID*)g_user_buffer;
 			}
 			 
+			DbgBreakPoint();
 
 			if (g_pContext&&g_pdevice)
 			{
@@ -368,131 +371,53 @@ namespace utils
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
-			//if (!g_pdevice || !g_pContext || !g_user_buffer || !g_texture_buffer  )
-			//	return;
+			ImGui::NewFrame();
+			 
+
+			ImVec2 display_size = ImGui::GetIO().DisplaySize;
+			ImVec2 p1(display_size.x / 4, display_size.y / 2);     // 左端点
+			ImVec2 p2(display_size.x * 3 / 4, display_size.y / 2); // 右端点
+
+			// 在中间画一条线
+			ImGui::GetForegroundDrawList()->AddLine(
+				p1,
+				p2,
+				IM_COL32(255, 0, 0, 255), // 红色
+				2.0f                      // 线宽
+			);
+
+			[&]() {
+
+				uint32_t Index = *(uint32_t*)(g_pOverlaySwapChain + 0x1EC);
+				uint64_t DeviceTextureTarget = *(uint64_t*)(*(uint64_t*)(*(uint64_t*)(g_pOverlaySwapChain + 0x1B0) + (Index * 8)) + 0xD8);
+
+				g_mainRenderTargetView = *(PULONG64)(DeviceTextureTarget + 0x20);
+
+			}();
+
+			ImGui::EndFrame();
+			ImGui::Render();
+
+			unsigned long long OMSetRenderTargetsfun = (unsigned long long) utils::vfun_utils::get_vfunc(g_pContext, 33);
+
+			utils::memory::mem_zero((PVOID)g_user_buffer, 0x1000);
 
 
+			utils::memory::mem_copy((PVOID)g_user_buffer, &g_mainRenderTargetView, sizeof(PVOID));
 
-			//HRESULT hr{};
-			// D3D11_TEXTURE2D_DESC SDesc{};
-			//D3D11_MAPPED_SUBRESOURCE MapRes{};
-			//unsigned long long usercall_retval_ptr{};
+			utils::user_call::call(
+				OMSetRenderTargetsfun,
+				reinterpret_cast<unsigned long long> (g_pContext),
 
-			//uint32_t Index = *(uint32_t*)(g_pOverlaySwapChain + 0x1EC);
-			//uint64_t DeviceTextureTarget = *(uint64_t*)(*(uint64_t*)(*(uint64_t*)(g_pOverlaySwapChain + 0x1B0) + (Index * 8)) + 0xD8);
-			//g_Surface =(PVOID) DeviceTextureTarget;
-	 
 
-			//// 获取 Surface 描述
-			//auto get_desc_fun = reinterpret_cast<unsigned long long>(
-			//	utils::vfun_utils::get_vfunc(g_Surface, 10));
+				1,
+				 g_user_buffer ,
+				0
+			);
 
-			//user_call::call(
-			//	get_desc_fun,
-			//	reinterpret_cast<unsigned long long>(g_Surface),
-			//	g_user_buffer,
-			//	0,
-			//	0
-			//);
 
-			//SDesc = *(D3D11_TEXTURE2D_DESC*)g_user_buffer;
-			//SDesc.BindFlags = 0;
-			//SDesc.MiscFlags = 0;
-			//SDesc.Usage = D3D11_USAGE_STAGING;
-			//SDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-			//memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
-
-			//// 创建 staging texture
-			//auto create_texture2D_fun = reinterpret_cast<unsigned long long>(
-			//	utils::vfun_utils::get_vfunc(g_pdevice, 5));
-
-			//memory::mem_zero((PVOID)g_texture_buffer, 0x4000, 0);
-			//usercall_retval_ptr = user_call::call(
-			//	create_texture2D_fun,
-			//	reinterpret_cast<unsigned long long>(g_pdevice),
-			//	g_user_buffer,
-			//	0,
-			//	g_texture_buffer
-			//);
-
-			//hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			//if (FAILED(hr))
-			//	return;
-
-			//PVOID pTexture = *(PVOID*)g_texture_buffer;
-			//if (!pTexture)
-			//{
-			//	//vfun_utils::release(g_Surface);
-			//	//g_Surface = nullptr;
-			//	return;
-			//}
-
-			//// 拷贝屏幕资源到 staging texture
-			//auto copy_resource_fun = reinterpret_cast<unsigned long long>(
-			//	utils::vfun_utils::get_vfunc(g_pContext, 47));
-
-			//user_call::call(
-			//	copy_resource_fun,
-			//	reinterpret_cast<unsigned long long>(g_pContext),
-			//	reinterpret_cast<unsigned long long>(pTexture),
-			//	reinterpret_cast<unsigned long long>(g_Surface),
-			//	0
-			//);
-
-			//// Map staging texture 读写
-			//auto map_fun = reinterpret_cast<unsigned long long>(
-			//	utils::vfun_utils::get_vfunc(g_pContext, 14));
-
-			//usercall_retval_ptr = user_call::call6(
-			//	map_fun,
-			//	reinterpret_cast<unsigned long long>(g_pContext),
-			//	reinterpret_cast<unsigned long long>(pTexture),
-			//	0,
-			//	D3D11_MAP_READ_WRITE,
-			//	0,
-			//	g_user_buffer
-			//);
-
-			//hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
-			///*	if (FAILED(hr))
-			//	{
-			//		vfun_utils::release(pTexture);
-			//		return;
-			//	}*/
-			//memcpy(&MapRes, reinterpret_cast<PVOID>(g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
-
-			//// 调用用户绘制回调
-			//if (SDesc.Width && SDesc.Height && MapRes.pData)
-			//{
-			//	draw_callback(SDesc.Width, SDesc.Height, MapRes.pData);
-			//}
-
-			//// Unmap
-			//auto unmap_fun = reinterpret_cast<unsigned long long>(
-			//	utils::vfun_utils::get_vfunc(g_pContext, 15));
-
-			//user_call::call(
-			//	unmap_fun,
-			//	reinterpret_cast<unsigned long long>(g_pContext),
-			//	reinterpret_cast<unsigned long long>(pTexture),
-			//	0,
-			//	0
-			//);
-
-			//// 将修改后的内容写回 Surface
-			//user_call::call(
-			//	copy_resource_fun,
-			//	reinterpret_cast<unsigned long long>(g_pContext),
-			//	reinterpret_cast<unsigned long long>(g_Surface),
-			//	reinterpret_cast<unsigned long long>(pTexture),
-			//	0
-			//);
-
-			//// 释放 staging texture
-			//vfun_utils::release(pTexture);
-			//vfun_utils::release(g_Surface);
-			//g_Surface = nullptr;
 		}
 
 		void release_d3d_resources()
