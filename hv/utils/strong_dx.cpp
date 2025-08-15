@@ -176,6 +176,8 @@ namespace utils
 
 
 			ImGui_ImplDX11_NewFrame();
+
+			DbgBreakPoint();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 
@@ -403,7 +405,7 @@ namespace utils
 				g_pd3dDeviceContext = *(PVOID*)g_user_buffer;
 			}
 			 
-			DbgBreakPoint();
+			 
 
 			if (g_pd3dDeviceContext&&g_pdevice)
 			{
@@ -1029,7 +1031,7 @@ namespace utils
 				has_hooked_get_buffer = true;
 			}*/
 			 
-			DbgBreakPoint();
+			 
 			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
 			{
 				render_overlay_frame_win1124h2(draw_overlay_elements);

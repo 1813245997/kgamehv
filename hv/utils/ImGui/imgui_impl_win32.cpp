@@ -349,9 +349,8 @@ static bool ImGui_ImplWin32_UpdateMouseCursor(ImGuiIO& io, ImGuiMouseCursor imgu
         case ImGuiMouseCursor_NotAllowed:   win32_cursor = IDC_NO; break;
         }
 
-		utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
-		utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, win32_cursor, strlen(win32_cursor) + 1);
-		auto retval_ptr =	 utils::user_call::call(utils::dwm_draw::g_load_cursora_fun, 0, utils::dwm_draw::g_imgui_buffer, 0, 0);
+		
+		auto retval_ptr =	 utils::user_call::call(utils::dwm_draw::g_load_cursora_fun, 0, (unsigned long long)win32_cursor, 0, 0);
 
 		PVOID  hcursorval=*(PVOID*)retval_ptr;
 		utils::user_call::call(utils::dwm_draw::g_set_cursor_fun, (unsigned long long)hcursorval, 0, 0, 0);

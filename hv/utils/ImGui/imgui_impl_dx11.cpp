@@ -355,7 +355,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     if (draw_data->Textures != nullptr)
         for (ImTextureData* tex : *draw_data->Textures)
             if (tex->Status != ImTextureStatus_OK)
-                ImGui_ImplDX11_UpdateTexture(tex);
+                ImGui_ImplDX11_UpdateTexture(tex);//有问题
 
     // Create and grow vertex/index buffers if needed
     if (!bd->pVB || bd->VertexBufferSize < draw_data->TotalVtxCount)
@@ -1118,7 +1118,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
     if (!bd->pd3dDevice)
         return false;
     ImGui_ImplDX11_InvalidateDeviceObjects();
-
+    
     // By using D3DCompile() from <d3dcompiler.h> / d3dcompiler.lib, we introduce a dependency to a given version of d3dcompiler_XX.dll (see D3DCOMPILER_DLL_A)
     // If you would like to use this DX11 sample code but remove this dependency you can:
     //  1) compile once, save the compiled shader blobs into a file or source code and pass them to CreateVertexShader()/CreatePixelShader() [preferred solution]
@@ -1273,7 +1273,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             { "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (UINT)offsetof(ImDrawVert, col), D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-
+       
         unsigned  long long CreateInputLayoutfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 11));
 
 
@@ -1289,7 +1289,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 		  // 先复制结构体数组到 buffer_ptr
 		  D3D11_INPUT_ELEMENT_DESC* desc_copy = reinterpret_cast<D3D11_INPUT_ELEMENT_DESC*>(cursor);
 		  memcpy(desc_copy, local_layout, sizeof(local_layout));
-		  cursor += sizeof(local_layout);
+		  cursor += sizeof(local_layout)*2;
 
 		  // 把每个 Name 字段的字符串复制到 buffer_ptr 后续区域
 		  for (int i = 0; i < _countof(local_layout); i++)
@@ -1306,21 +1306,23 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 		  }
 
           
-       
-        utils::user_call::call6(
+         
+          ret_ptr=  utils::user_call::call6(
             CreateInputLayoutfun,
             reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
-            reinterpret_cast<unsigned  long long> (buffer_ptr),
+            reinterpret_cast<unsigned  long long> (desc_copy),
             3,
             BufferPointer,
             BufferSize,
-            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(local_layout)
+            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(local_layout)*3
         );
 
 	  hr = *reinterpret_cast<HRESULT*>(ret_ptr);
 		if (FAILED(hr))
 			return false;
-        bd->pInputLayout = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_INPUT_ELEMENT_DESC));
+
+
+        bd->pInputLayout = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr)   +sizeof(local_layout) * 3);
  
         utils::vfun_utils::release(vertexShaderBlob);
      
@@ -1470,8 +1472,8 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_BLEND_DESC),
             0
         );
-
-        bd->pBlendState= *(PVOID*)buffer_ptr;
+        
+        bd->pBlendState= *(PVOID*)(buffer_ptr + sizeof(D3D11_BLEND_DESC));
         utils::memory::mem_zero(buffer_ptr, 0x1000);
     }
 
@@ -1493,8 +1495,8 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_RASTERIZER_DESC),
 			0
 		);
-
-        bd->pRasterizerState = *(PVOID*)buffer_ptr;
+     
+        bd->pRasterizerState = *(PVOID*)(buffer_ptr + sizeof(D3D11_RASTERIZER_DESC));
         utils::memory::mem_zero(buffer_ptr, 0x1000);
     }
 
@@ -1519,7 +1521,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 			0
 		);
 
-        bd->pDepthStencilState = *(PVOID*)buffer_ptr;
+        bd->pDepthStencilState = *(PVOID*)(buffer_ptr + sizeof(D3D11_DEPTH_STENCIL_DESC)); 
 		utils::memory::mem_zero(buffer_ptr, 0x1000);
       
     }
@@ -1547,7 +1549,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 			0
 		);
 
-        bd->pFontSampler = *(PVOID*)buffer_ptr;
+        bd->pFontSampler = *(PVOID*)(buffer_ptr + sizeof(D3D11_SAMPLER_DESC));
 		utils::memory::mem_zero(buffer_ptr, 0x1000);
     }
 
