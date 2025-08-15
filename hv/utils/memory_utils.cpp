@@ -461,10 +461,10 @@ namespace utils
 				   return STATUS_INVALID_PARAMETER_2;
 			   }
 
-			   if (size == 0)
-			   {
-				   return STATUS_INVALID_PARAMETER_3;
-			   }
+			   /*  if (size == 0)
+				 {
+					 return STATUS_INVALID_PARAMETER_3;
+				 }*/
 
 
 

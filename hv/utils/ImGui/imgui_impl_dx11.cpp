@@ -349,14 +349,14 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
     ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
     PVOID device = bd->pd3dDeviceContext;
-
+ 
     // Catch up with texture updates. Most of the times, the list will have 1 element with an OK status, aka nothing to do.
     // (This almost always points to ImGui::GetPlatformIO().Textures[] but is part of ImDrawData to allow overriding or disabling texture updates).
     if (draw_data->Textures != nullptr)
         for (ImTextureData* tex : *draw_data->Textures)
             if (tex->Status != ImTextureStatus_OK)
                 ImGui_ImplDX11_UpdateTexture(tex);//有问题
-
+   
     // Create and grow vertex/index buffers if needed
     if (!bd->pVB || bd->VertexBufferSize < draw_data->TotalVtxCount)
     {
@@ -378,8 +378,9 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
             CreateBufferfun,
             (unsigned long long)bd->pd3dDevice,
             utils::dwm_draw::g_imgui_buffer,
-            utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC),
-            0);
+            0,
+            utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC)
+          );
 
         HRESULT hr = *(PULONG)usercall_retval_ptr;
 
@@ -389,6 +390,9 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
         bd->pVB = *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC));
     }
+
+
+    
     if (!bd->pIB || bd->IndexBufferSize < draw_data->TotalIdxCount)
     {
         if (bd->pIB) { utils::vfun_utils::release(bd->pIB) ; bd->pIB = nullptr; }
@@ -408,8 +412,8 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 			CreateBufferfun,
 			(unsigned long long)bd->pd3dDevice,
 			utils::dwm_draw::g_imgui_buffer,
-			utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC),
-			0);
+			0,
+            utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC));
 
 		HRESULT hr = *(PULONG)usercall_retval_ptr;
 
@@ -701,20 +705,40 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 	);
 
-   
+    DbgBreakPoint();
 
     // Setup desired DX state
     ImGui_ImplDX11_SetupRenderState(draw_data, device);
 
     // Setup render state structure (for callbacks and custom texture bindings)
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
-    ImGui_ImplDX11_RenderState render_state;
-    render_state.Device = bd->pd3dDevice;
-    render_state.DeviceContext = bd->pd3dDeviceContext;
-    render_state.SamplerDefault = bd->pFontSampler;
-    render_state.VertexConstantBuffer = bd->pVertexConstantBuffer;
-    platform_io.Renderer_RenderState = &render_state;
+	// 1. 创建原始 RenderState
+	ImGui_ImplDX11_RenderState render_state{};
+	render_state.Device = bd->pd3dDevice;
+	render_state.DeviceContext = bd->pd3dDeviceContext;
+	render_state.SamplerDefault = bd->pFontSampler;
+	render_state.VertexConstantBuffer = bd->pVertexConstantBuffer;
 
+	// 2. 分配用户态内存
+	PVOID user_render_state{};
+	status = utils:: memory::allocate_user_memory(&user_render_state,
+		sizeof(ImGui_ImplDX11_RenderState),
+		PAGE_READWRITE,
+		true, false);
+	if (!NT_SUCCESS(status))
+		return;
+
+	// 3. 复制 RenderState 结构本身
+	utils::memory::mem_copy(user_render_state, &render_state, sizeof(render_state));
+
+	// 4. 如果需要，单独把结构中的指针字段复制到用户态（可选，看访问需求）
+ 
+
+	// 5. 把用户态地址传给 platform_io
+	platform_io.Renderer_RenderState = reinterpret_cast<ImGui_ImplDX11_RenderState*>(user_render_state);
+    
+
+    //下面循环有问题
     // Render command lists
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
     int global_idx_offset = 0;
@@ -746,9 +770,14 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
                 // Apply scissor/clipping rectangle
                 const D3D11_RECT r = { (LONG)clip_min.x, (LONG)clip_min.y, (LONG)clip_max.x, (LONG)clip_max.y };
+
+
                 unsigned long long  RSSetScissorRectsfun =(unsigned long long)  utils::vfun_utils::get_vfunc(device, 45);
                 unsigned long long  PSSetShaderResourcesfun = (unsigned long long)  utils::vfun_utils::get_vfunc(device, 8);
                 unsigned long long DrawIndexedfun = (unsigned long long)  utils::vfun_utils::get_vfunc(device, 12);
+
+
+
                 utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer,(PVOID) &r, sizeof(D3D11_RECT));
 
                 utils::user_call::call(
@@ -757,10 +786,13 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
                     1,
                     utils::strong_dx::g_user_buffer, 0);
 
+
+
                 utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, (PVOID)&r, sizeof(D3D11_RECT));
 
                 // Bind texture, Draw
                  PVOID texture_srv = (PVOID)pcmd->GetTexID();
+
                  utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, (PVOID)&texture_srv, sizeof(PVOID));
 
                  utils::user_call::call(
@@ -1024,30 +1056,37 @@ void ImGui_ImplDX11_UpdateTexture(ImTextureData* tex)
         desc.Usage = D3D11_USAGE_DEFAULT;
         desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         desc.CPUAccessFlags = 0;
+
         D3D11_SUBRESOURCE_DATA subResource;
         subResource.pSysMem = pixels;
         subResource.SysMemPitch = desc.Width * 4;
         subResource.SysMemSlicePitch = 0;
-
+     
 
 		// 创建 staging texture
 		auto create_texture2D_fun = reinterpret_cast<unsigned long long>(
 			utils::vfun_utils::get_vfunc(bd->pd3dDevice, 5));
-
+      
          utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &desc, sizeof(desc));
-         utils::memory::mem_copy((PVOID)(utils::strong_dx::g_user_buffer+ sizeof(desc)), &subResource, sizeof(D3D11_SUBRESOURCE_DATA));
+         utils::memory::mem_copy((PVOID)(utils::strong_dx::g_user_buffer+ sizeof(D3D11_TEXTURE2D_DESC)), &subResource, sizeof(D3D11_SUBRESOURCE_DATA));
 
-        utils::memory::mem_zero((PVOID)utils::strong_dx:: g_texture_buffer, 0x4000, 0);
-	    utils::user_call::call(
+        
+        
+       
+	    auto usercall_retval_ptr= utils::user_call::call(
 			create_texture2D_fun,
 			reinterpret_cast<unsigned long long>(bd->pd3dDevice),
            utils::strong_dx::g_user_buffer,
-           utils::strong_dx::g_user_buffer + sizeof(desc),
-         utils::strong_dx::g_texture_buffer
+            utils::strong_dx::g_user_buffer + sizeof(D3D11_TEXTURE2D_DESC),
+            utils::strong_dx::g_texture_buffer
 		);
 
- 
+  HRESULT		hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
+		if (FAILED(hr))
+			return;
+
         backend_tex->pTexture = *(PVOID*)utils::strong_dx::g_texture_buffer;
+        
          
         IM_ASSERT(backend_tex->pTexture != nullptr && "Backend failed to create texture!");
 
@@ -1066,11 +1105,12 @@ void ImGui_ImplDX11_UpdateTexture(ImTextureData* tex)
         utils::user_call::call(
             CreateShaderResourceViewfun,
             reinterpret_cast<unsigned long long> (bd->pd3dDevice),
-            utils::strong_dx::g_user_buffer,
-            utils::strong_dx::g_user_buffer + sizeof(srvDesc),
-            0
+            reinterpret_cast<unsigned long long> (backend_tex->pTexture),
+            utils::strong_dx::g_user_buffer ,
+            utils::strong_dx::g_user_buffer+ sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC)
+             
         );
-        backend_tex->pTextureView  =*(PVOID*)  ( utils::strong_dx::g_user_buffer + sizeof(srvDesc));
+        backend_tex->pTextureView  =*(PVOID*)  ( utils::strong_dx::g_user_buffer + sizeof(D3D11_SHADER_RESOURCE_VIEW_DESC));
       
         IM_ASSERT(backend_tex->pTextureView != nullptr && "Backend failed to create texture!");
 

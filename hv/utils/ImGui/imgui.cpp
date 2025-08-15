@@ -1367,8 +1367,19 @@ ImGuiContext*   GImGui = NULL;
 // - You probably don't want to modify that mid-program, and if you use global/static e.g. ImVector<> instances you may need to keep them accessible during program destruction.
 // - DLL users: read comments above.
 #ifndef IMGUI_DISABLE_DEFAULT_ALLOCATORS
-static void* MallocWrapper(size_t size, void* user_data) { IM_UNUSED(user_data);  return utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, size,0); }
-static void    FreeWrapper(void* ptr, void* user_data)        { IM_UNUSED(user_data); utils::internal_functions::pfn_ex_free_pool_with_tag(ptr,0); }
+static void* MallocWrapper(size_t size, void* user_data)
+{ 
+            IM_UNUSED(user_data); 
+			PVOID user_mem{};
+			NTSTATUS status = utils:: memory::allocate_user_memory(&user_mem, size, PAGE_READWRITE, true, false);
+			if (!NT_SUCCESS(status))
+				return nullptr;
+
+			return user_mem;
+
+
+}
+static void    FreeWrapper(void* ptr, void* user_data) { IM_UNUSED(user_data); utils::memory::free_user_memory(ptr, 0, 0, false); }
 #else
 static void*   MallocWrapper(size_t size, void* user_data)    { IM_UNUSED(user_data); IM_UNUSED(size); IM_ASSERT(0); return NULL; }
 static void    FreeWrapper(void* ptr, void* user_data)        { IM_UNUSED(user_data); IM_UNUSED(ptr); IM_ASSERT(0); }

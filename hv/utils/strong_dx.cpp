@@ -177,7 +177,7 @@ namespace utils
 
 			ImGui_ImplDX11_NewFrame();
 
-			DbgBreakPoint();
+		
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
 
