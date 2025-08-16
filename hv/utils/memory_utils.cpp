@@ -391,7 +391,7 @@ namespace utils
 				   {
 					   utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
 				   }
-
+				   
 				   // 输出调试信息
 			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 					   "[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",

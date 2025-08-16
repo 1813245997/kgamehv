@@ -42,7 +42,7 @@ namespace utils
 		unsigned long long g_dxgk_get_device_state{};
 		unsigned long long g_ki_call_user_mode2{};
 		unsigned long long g_cddisplay_render_target_present{};//CDDisplayRenderTarget::Present
-		
+		unsigned long long g_rtl_copy_memory_fun{};
 		PVOID g_game_utils_buffer{};
 		unsigned long long    g_imgui_buffer{};
 		bool g_kvashadow{};
@@ -363,6 +363,21 @@ namespace utils
 				return status;
 			}
 
+
+			// 查找 RtlCopyMemory 函数地址
+			status = find_rtl_copy_memory(
+				g_dwm_process,       // 目标进程
+				g_kernel32_base,     // kernel32.dll 基址
+				&g_rtl_copy_memory_fun // 输出函数地址
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError("find_rtl_copy_memory failed with status: 0x%X", status);
+				return status;
+			}
+
+		 
 			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
 			//if (!NT_SUCCESS(status))
 			//{
@@ -1644,6 +1659,40 @@ namespace utils
 
 			*load_cursor_a_addr = addr;
 			LogDebug("Found LoadCursorA at 0x%llX\n", addr);
+			return STATUS_SUCCESS;
+		}
+
+		NTSTATUS find_rtl_copy_memory(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* rtl_copy_memory_addr
+		)
+		{
+			if (!rtl_copy_memory_addr || kernel32_base == 0) {
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			KAPC_STATE apc_state{};
+			// 附加到目标进程
+			internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+			// 查找导出函数地址
+			unsigned long long addr = scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(kernel32_base),
+				"RtlCopyMemory"
+			);
+
+			// 解除附加
+			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+
+			if (addr == 0) {
+				*rtl_copy_memory_addr = 0;
+				LogDebug("RtlCopyMemory not found!\n");
+				return STATUS_NOT_FOUND;
+			}
+
+			*rtl_copy_memory_addr = addr;
+			LogDebug("Found RtlCopyMemory at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 

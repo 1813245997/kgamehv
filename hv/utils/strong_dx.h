@@ -7,10 +7,11 @@ namespace utils
 		extern  bool g_initialized;
 		extern unsigned long long g_user_buffer;
 		extern unsigned long long g_texture_buffer;
+		extern unsigned long long g_old_user_buffer;
 		extern   unsigned long long g_pOverlaySwapChain;
 		extern  	unsigned long long g_RenderTargetView;
 		extern PVOID g_swap_chain;
-		extern PVOID g_pdevice ;
+		extern PVOID g_pd3dDevice;
 		extern PVOID g_pd3dDeviceContext;
 		extern PVOID g_Surface;
 	

@@ -57,7 +57,7 @@ namespace utils
 			 utils::strong_dx::  g_user_buffer = 0;
 			 utils::strong_dx::  g_texture_buffer = 0;
 			 utils::strong_dx::  g_swap_chain = 0;
-			 utils::strong_dx::  g_pdevice = 0;
+			 utils::strong_dx::  g_pd3dDevice = 0;
 			 utils::strong_dx::  g_pd3dDeviceContext = 0;
 			 utils::strong_dx::g_Surface = 0;
 			 utils::strong_dx::  g_dwm_render_lock = 0;

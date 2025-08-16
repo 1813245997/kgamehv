@@ -38,7 +38,7 @@ private:
 
 	FColor ColorBlend(FColor prev, FColor cur);
 	
-	void SetPixel(int x, int y, FColor color, int br = 0);
+
 	 
 	//line
 	void plotLineWidth(int x0, int y0, int x1, int y1, FColor clr, float th);
@@ -81,5 +81,6 @@ public:
 	 void LineY(int x, int y, int d, FColor col);
 
 	 void LineX(int x, int y, int d, FColor col);
+	 void SetPixel(int x, int y, FColor color, int br = 0);
 
 };

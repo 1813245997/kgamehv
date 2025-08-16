@@ -970,10 +970,10 @@ namespace hook_functions
 				   // 防止并发调用
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
-					   if (utils::strong_dx::initialize_d3d11_resources_win1124h2(utils::dwm_draw::g_pswap_chain))
+					/*   if (utils::strong_dx::initialize_d3d11_resources_win1124h2(utils::dwm_draw::g_pswap_chain))
 					   {
 						   utils::strong_dx::draw_utils();
-					   }
+					   }*/
 					   InterlockedExchange(&utils::strong_dx::g_dwm_render_lock, 0);
 				   }
 

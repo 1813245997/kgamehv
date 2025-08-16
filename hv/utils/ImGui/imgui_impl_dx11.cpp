@@ -49,6 +49,7 @@
 #include "../dx11.h"
 
 #include <cstddef> 
+#include "../../ia32/ia32.hpp"
 #define	D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION	( 16384 )
 // DirectX
 //#include <stdio.h>
@@ -109,54 +110,54 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 {
     ImGui_ImplDX11_Data* bd = ImGui_ImplDX11_GetBackendData();
 
+    D3D11_VIEWPORT * vp = (D3D11_VIEWPORT*)  utils::strong_dx::g_user_buffer;
     // Setup viewport
-    D3D11_VIEWPORT vp = {};
-    vp.Width = draw_data->DisplaySize.x * draw_data->FramebufferScale.x;
-    vp.Height = draw_data->DisplaySize.y * draw_data->FramebufferScale.y;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    vp.TopLeftX = vp.TopLeftY = 0;
+    
+    vp->Width = draw_data->DisplaySize.x * draw_data->FramebufferScale.x;
+    vp->Height = draw_data->DisplaySize.y * draw_data->FramebufferScale.y;
+    vp->MinDepth = 0.0f;
+    vp->MaxDepth = 1.0f;
+    vp->TopLeftX = vp->TopLeftY = 0;
 
-    utils::memory::mem_zero((PVOID)utils::strong_dx::g_user_buffer, 0X1000);
-    utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &vp,sizeof(D3D11_VIEWPORT));
+    
+  
 
-    unsigned long long  RSSetViewportsfun =(unsigned long long) utils::vfun_utils::get_vfunc(device_ctx, 44);
+    
     utils::user_call::call(
-        RSSetViewportsfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device_ctx, 44),
         (unsigned long long)device_ctx,
         1,
-        utils::strong_dx::g_user_buffer,
+        (unsigned long long) vp,
         0
 
     );
 
-    utils::memory::mem_copy(&vp, (PVOID)utils::strong_dx::g_user_buffer,  sizeof(D3D11_VIEWPORT));
-    utils::memory::mem_zero((PVOID)utils::strong_dx::g_user_buffer, 0X1000);
+     
 	// Map staging texture 读写
-	auto map_fun = reinterpret_cast<unsigned long long>(
-		utils::vfun_utils::get_vfunc(device_ctx, 14));
+	 
 
-
+    D3D11_MAPPED_SUBRESOURCE* mapped_resource = (D3D11_MAPPED_SUBRESOURCE*)utils::strong_dx::g_user_buffer;
 	// Setup orthographic projection matrix into our constant buffer
 	// Our visible imgui space lies from draw_data->DisplayPos (top left) to draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single viewport apps.
 	auto  usercall_retval_ptr = utils:: user_call::call6(
-		map_fun,
+		reinterpret_cast<unsigned long long>(
+			utils::vfun_utils::get_vfunc(device_ctx, 14)),
 		reinterpret_cast<unsigned long long>(device_ctx),
 		reinterpret_cast<unsigned long long>(bd->pVertexConstantBuffer),
 		0,
         D3D11_MAP_WRITE_DISCARD,
 		0,
-        utils::strong_dx::g_user_buffer
+        reinterpret_cast<unsigned long long>(mapped_resource)
 	);
 
-    D3D11_MAPPED_SUBRESOURCE mapped_resource;
+   ;
    HRESULT	hr = *reinterpret_cast<PULONG>(usercall_retval_ptr);
    if (hr == S_OK)
    {
-       memcpy(&mapped_resource, reinterpret_cast<PVOID>(utils::strong_dx::g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
+      
 
 
-	   VERTEX_CONSTANT_BUFFER_DX11* constant_buffer = (VERTEX_CONSTANT_BUFFER_DX11*)mapped_resource.pData;
+	   VERTEX_CONSTANT_BUFFER_DX11* constant_buffer = (VERTEX_CONSTANT_BUFFER_DX11*)mapped_resource->pData;
 	   float L = draw_data->DisplayPos.x;
 	   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
 	   float T = draw_data->DisplayPos.y;
@@ -170,11 +171,11 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	   };
 	   memcpy(&constant_buffer->mvp, mvp, sizeof(mvp));
 
-	   auto unmap_fun = reinterpret_cast<unsigned long long>(
-		   utils::vfun_utils::get_vfunc(device_ctx, 15));
+	 
 
        utils::user_call::call(
-		   unmap_fun,
+		   reinterpret_cast<unsigned long long>(
+			   utils::vfun_utils::get_vfunc(device_ctx, 15)),
 		   reinterpret_cast<unsigned long long>(device_ctx),
 		   reinterpret_cast<unsigned long long>(bd->pVertexConstantBuffer),
 		   0,
@@ -188,25 +189,23 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
  
 
     // Setup shader and vertex buffers
-    unsigned int stride = sizeof(ImDrawVert);
-    unsigned int offset = 0;
-    unsigned long long IASetInputLayoutfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 17);
-    unsigned long long  IASetVertexBuffersfun= (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 18);
-    unsigned long long IASetIndexBufferfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 19);
-    unsigned long long IASetPrimitiveTopologyfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 24);
-    unsigned long long VSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 10);
-    unsigned long long VSSetConstantBuffersfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 7);
-    unsigned long long PSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 9);
-    unsigned long long PSSetSamplersfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 10);
-    unsigned long long GSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 23);
-    unsigned long long HSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 60);
-    unsigned long long DSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 64);
-    unsigned long long CSSetShaderfun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 69);
-    unsigned long long OMSetBlendStatefun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 35);
-    unsigned long long OMSetDepthStencilStatefun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 36);
-    unsigned long long RSSetStatefun = (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 43);
+ 
+    
+   
+     
+     
+   
+  
+   
+   
+    
+   
+  
+   
+   
+   
     utils::user_call::call(
-        IASetInputLayoutfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 17),
         (unsigned long long)device_ctx,
         (unsigned long long) bd->pInputLayout,
         0,
@@ -214,28 +213,26 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
     );
 
-    utils::memory::mem_zero((PVOID)utils::strong_dx::g_user_buffer, 0X1000);
-
-
-    utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &bd->pVB, sizeof(PVOID));
- 
-
+   
+    unsigned int* stride = (unsigned int*)utils::strong_dx::g_user_buffer;  // sizeof(ImDrawVert);
+	unsigned int  * offset = (unsigned int*)utils::strong_dx::g_user_buffer+8;
+    *stride = sizeof(ImDrawVert);
 	utils::user_call::call6(
-        IASetVertexBuffersfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 18),
         (unsigned long long)device_ctx,
 		0,
 		1,
-        utils::strong_dx::g_user_buffer,
-        utils::strong_dx::g_user_buffer+ sizeof(PVOID),
-        utils::strong_dx::g_user_buffer + sizeof(PVOID)+4
+        (unsigned long long) &bd->pVB,
+        (unsigned long long) stride,
+        (unsigned long long) offset
 	);
-    stride =*(PULONG)(utils::strong_dx::g_user_buffer + 8);
-    offset = *(PULONG)(utils::strong_dx::g_user_buffer + 8+4);
+   * stride =*(unsigned int*)(utils::strong_dx::g_user_buffer + 4);
+   * offset = *(unsigned int*)(utils::strong_dx::g_user_buffer + 8 );
 
     
 
     utils::user_call::call(
-        IASetIndexBufferfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 19),
         (unsigned long long)device_ctx,
         (unsigned long long)bd->pIB,
         sizeof(ImDrawIdx) == 2 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT,
@@ -244,7 +241,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
     
     utils::user_call::call(
-        IASetPrimitiveTopologyfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 24),
         (unsigned long long)device_ctx,
         D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
         0,
@@ -253,25 +250,25 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     );
 
     utils::user_call::call(
-        VSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 11),
         (unsigned long long)device_ctx,
         (unsigned long long)bd->pVertexShader,
         0,
         0
     );
 
-	utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &bd->pVertexConstantBuffer, sizeof(PVOID));
+ 
 
     utils::user_call::call(
-        VSSetConstantBuffersfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 7),
         (unsigned long long)device_ctx,
         0,
         1,
-        utils::strong_dx::g_user_buffer
+        (unsigned long long)&bd->pVertexConstantBuffer
     );
 
 	utils::user_call::call(
-        PSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 9),
 		(unsigned long long)device_ctx,
         (unsigned long long) bd->pPixelShader,
 		0,
@@ -281,57 +278,64 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, &bd->pFontSampler, sizeof(PVOID));
 
 	utils::user_call::call(
-            PSSetSamplersfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 10),
 			(unsigned long long)device_ctx,
             0,
             1,
-		(unsigned long long) utils::strong_dx::g_user_buffer);
+        (unsigned long long)& bd->pFontSampler);
     
 
 	utils::user_call::call(
-        GSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 23),
 		(unsigned long long)device_ctx,
 		0,
 		0,
 		0);
     
 	utils::user_call::call(
-        HSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 60),
 		(unsigned long long)device_ctx,
 		0,
 		0,
 		0);
 
 	utils::user_call::call(
-        DSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 64),
 		(unsigned long long)device_ctx,
 		0,
 		0,
 		0);
     
 	utils::user_call::call(
-        CSSetShaderfun,
+        (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 69),
 		(unsigned long long)device_ctx,
 		0,
 		0,
 		0);
-    const float blend_factor[4] = { 0.f, 0.f, 0.f, 0.f };
-    utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, (PVOID)blend_factor, sizeof(blend_factor));
-		utils::user_call::call(
-            OMSetBlendStatefun,
+  
+
+    float* blend_factor =(float*)utils::strong_dx::g_user_buffer;
+
+    blend_factor[0 ]= { 0.f};
+    blend_factor[1] = { 0.f };
+    blend_factor[2] = { 0.f };
+    blend_factor[3] = { 0.f };
+
+ 		utils::user_call::call(
+            (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 35),
 			(unsigned long long)device_ctx,
             (unsigned long long) bd->pBlendState,
-            utils::strong_dx::g_user_buffer,
+            (unsigned long long) blend_factor,
             0xffffffff);
     // Setup render state
 		utils::user_call::call(
-            OMSetDepthStencilStatefun,
+            (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 36),
 			(unsigned long long)device_ctx,
 			(unsigned long long) bd->pDepthStencilState,
             0,
             0);
 		utils::user_call::call(
-            RSSetStatefun,
+            (unsigned long long)utils::vfun_utils::get_vfunc(device_ctx, 43),
 			(unsigned long long)device_ctx,
 			(unsigned long long) bd->pRasterizerState,
 			0,
@@ -355,8 +359,8 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     if (draw_data->Textures != nullptr)
         for (ImTextureData* tex : *draw_data->Textures)
             if (tex->Status != ImTextureStatus_OK)
-                ImGui_ImplDX11_UpdateTexture(tex);//有问题
-   
+                ImGui_ImplDX11_UpdateTexture(tex); 
+  
     // Create and grow vertex/index buffers if needed
     if (!bd->pVB || bd->VertexBufferSize < draw_data->TotalVtxCount)
     {
@@ -369,7 +373,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
         desc.MiscFlags = 0;
 
-        utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
+      
         utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, &desc, sizeof(D3D11_BUFFER_DESC));
 
         unsigned long long CreateBufferfun = (unsigned long long)  utils::vfun_utils::get_vfunc(bd->pd3dDevice, 3);
@@ -379,7 +383,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
             (unsigned long long)bd->pd3dDevice,
             utils::dwm_draw::g_imgui_buffer,
             0,
-            utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC)
+            (unsigned long long) &bd->pVB
           );
 
         HRESULT hr = *(PULONG)usercall_retval_ptr;
@@ -387,8 +391,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
         if (hr < 0)
             return;
-
-        bd->pVB = *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC));
+        
     }
 
 
@@ -404,7 +407,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
         desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
 
-		utils::memory::mem_zero((PVOID)utils::dwm_draw::g_imgui_buffer, 0x1000);
+	 
 		utils::memory::mem_copy((PVOID)utils::dwm_draw::g_imgui_buffer, &desc, sizeof(D3D11_BUFFER_DESC));
 		unsigned long long CreateBufferfun = (unsigned long long)  utils::vfun_utils::get_vfunc(bd->pd3dDevice, 3);
 
@@ -413,17 +416,19 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 			(unsigned long long)bd->pd3dDevice,
 			utils::dwm_draw::g_imgui_buffer,
 			0,
-            utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC));
+            (unsigned long long) &bd->pIB);
 
 		HRESULT hr = *(PULONG)usercall_retval_ptr;
 
 
 		if (hr < 0)
 			return;
-        bd->pIB =  *(PVOID*)(utils::dwm_draw::g_imgui_buffer + sizeof(D3D11_BUFFER_DESC));
+      
        
     }
 
+
+  
     // Upload vertex/index data into a single contiguous GPU buffer
     D3D11_MAPPED_SUBRESOURCE vtx_resource, idx_resource;
 
@@ -447,15 +452,13 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
         return;
     }
     memcpy(&vtx_resource, reinterpret_cast<PVOID>(utils::strong_dx::g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
-
-
-
+   
 	   usercall_retval_ptr = utils::user_call::call6(
 		map_fun,
 		reinterpret_cast<unsigned long long>(device),
 		reinterpret_cast<unsigned long long>(bd->pIB),
 		0,
-		D3D11_MAP_WRITE_DISCARD,
+           D3D11_MAP_WRITE_DISCARD,
 		0,
 		utils::strong_dx::g_user_buffer
 	);
@@ -467,17 +470,23 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 		return;
 	}
 	memcpy(&idx_resource, reinterpret_cast<PVOID>(utils::strong_dx::g_user_buffer), sizeof(D3D11_MAPPED_SUBRESOURCE));
-   
+  
+    //渲染
     ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource.pData;
     ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource.pData;
     for (int n = 0; n < draw_data->CmdListsCount; n++)
     {
-        const ImDrawList* draw_list = draw_data->CmdLists[n];
-        memcpy(vtx_dst, draw_list->VtxBuffer.Data, draw_list->VtxBuffer.Size * sizeof(ImDrawVert));
-        memcpy(idx_dst, draw_list->IdxBuffer.Data, draw_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-        vtx_dst += draw_list->VtxBuffer.Size;
-        idx_dst += draw_list->IdxBuffer.Size;
+    
+    
+      
+		const ImDrawList* draw_list = draw_data->CmdLists[n];
+		memcpy(vtx_dst, draw_list->VtxBuffer.Data, draw_list->VtxBuffer.Size * sizeof(ImDrawVert));
+		memcpy(idx_dst, draw_list->IdxBuffer.Data, draw_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+		 
+		vtx_dst += draw_list->VtxBuffer.Size;
+		idx_dst += draw_list->IdxBuffer.Size;
     }
+
 
 	auto unmap_fun = reinterpret_cast<unsigned long long>(
 		utils::vfun_utils::get_vfunc(device, 15));
@@ -523,51 +532,24 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
         DXGI_FORMAT                 IndexBufferFormat;
         PVOID          InputLayout;
     };
-    BACKUP_DX11_STATE * old = {};
-    unsigned long long user_buffer;
+    BACKUP_DX11_STATE *  old = (BACKUP_DX11_STATE*)utils::strong_dx::g_old_user_buffer;
      
-	 NTSTATUS status = utils::memory::allocate_user_memory(&(PVOID&)user_buffer, 0x10000, PAGE_READWRITE, true, false);
-	if (!NT_SUCCESS(status)) {
-		LogError("allocate_user_memory for g_imgui_buffer failed: 0x%X", status);
-		 
-        return;
-	}
-    old = (BACKUP_DX11_STATE*)user_buffer;
-
-
-
-    unsigned long long RSGetScissorRectsfun = (unsigned long long) utils::vfun_utils:: get_vfunc(device, 96);
-    unsigned long long RSGetViewportsfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 95);
-    unsigned long long  RSGetStatefun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 94);
-    unsigned long long  OMGetBlendStatefun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 91);
-    unsigned long long  OMGetDepthStencilStatefun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 92);
-    unsigned long long  PSGetShaderResourcesfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 73);
-    unsigned long long  PSGetSamplersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 75);
-    unsigned long long  PSGetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 74);
-    unsigned long long  VSGetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 76);
-    unsigned long long  VSGetConstantBuffersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 72);
-    unsigned long long  GSGetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 82);
-    unsigned long long  IAGetPrimitiveTopologyfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 83);
-    unsigned long long  IAGetIndexBufferfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 80);
-    unsigned long long  IAGetVertexBuffersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 79);
-    unsigned long long  IAGetInputLayoutfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 78);
-  
-
+     
 	old->ScissorRectsCount = old->ViewportsCount = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
 
      
 
     utils::user_call::call(
-        RSGetScissorRectsfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 96),
         (unsigned long long)  device,
         (unsigned long long)&old->ScissorRectsCount,
         (unsigned long long) old->ScissorRects,
         0
     );
 
-     
       
-    utils::user_call::call(RSGetViewportsfun,
+    utils::user_call::call(
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 95),
         (unsigned long long)  device,
         (unsigned long long)&old->ViewportsCount,
         (unsigned long long)old->Viewports,
@@ -578,7 +560,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        RSGetStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 94),
 		(unsigned long long)  device,
         (unsigned long long)&old->RS,
 	    0,
@@ -587,7 +569,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
      
 
 	utils::user_call::call(
-        OMGetBlendStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 91),
 		(unsigned long long)  device,
         (unsigned long long)&old->BlendState,
         (unsigned long long)  old->BlendFactor,
@@ -595,7 +577,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
 
 	utils::user_call::call(
-        OMGetDepthStencilStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 92),
 		(unsigned long long)  device,
         (unsigned long long)&old->DepthStencilState,
         (unsigned long long)&old->StencilRef,
@@ -605,7 +587,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        PSGetShaderResourcesfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 73),
 		(unsigned long long)  device,
         0, 
         1,
@@ -615,7 +597,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        PSGetSamplersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 75),
 		(unsigned long long)  device,
         0, 
         1, 
@@ -628,7 +610,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
      
 
 	utils::user_call::call(
-        PSGetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 74),
 		(unsigned long long)  device,
         (unsigned long long)&old->PS,
         (unsigned long long) old->PSInstances,
@@ -638,7 +620,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        VSGetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 76),
 		(unsigned long long)  device,
         (unsigned long long)&old->VS, 
         (unsigned long long) old->VSInstances,
@@ -648,7 +630,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        VSGetConstantBuffersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 72),
 		(unsigned long long)  device,
         0,
         1, 
@@ -658,7 +640,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        GSGetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 82),
 		(unsigned long long)  device,
         (unsigned long long)&old->GS,
         (unsigned long long)old->GSInstances,
@@ -667,7 +649,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
 
 	utils::user_call::call(
-        IAGetPrimitiveTopologyfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 83),
 		(unsigned long long)  device,
         (unsigned long long)&old->PrimitiveTopology,
 		 0,
@@ -676,7 +658,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
 
 	utils::user_call::call(
-        IAGetIndexBufferfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 80),
 		(unsigned long long)  device,
         (unsigned long long)&old->IndexBuffer,
         (unsigned long long)&old->IndexBufferFormat,
@@ -685,7 +667,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
 
 	utils::user_call::call6(
-        IAGetVertexBuffersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 79),
 		(unsigned long long)  device,
         0, 1, 
         (unsigned long long)&old->VertexBuffer,
@@ -696,7 +678,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
 	utils::user_call::call(
-        IAGetInputLayoutfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 78),
 		(unsigned long long)  device,
         (unsigned long long)&old->InputLayout,
         0,
@@ -705,39 +687,34 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 	);
 
-    DbgBreakPoint();
+ 
 
     // Setup desired DX state
     ImGui_ImplDX11_SetupRenderState(draw_data, device);
 
+	// 2. 分配用户态内存
+	static 	 PVOID user_render_state{};
+	if (!user_render_state)
+	{
+		NTSTATUS status = utils::memory::allocate_user_memory(&user_render_state,
+			sizeof(ImGui_ImplDX11_RenderState),
+			PAGE_READWRITE,
+			true, false);
+		if (!NT_SUCCESS(status))
+			return;
+	}
+
     // Setup render state structure (for callbacks and custom texture bindings)
     ImGuiPlatformIO& platform_io = ImGui::GetPlatformIO();
 	// 1. 创建原始 RenderState
-	ImGui_ImplDX11_RenderState render_state{};
-	render_state.Device = bd->pd3dDevice;
-	render_state.DeviceContext = bd->pd3dDeviceContext;
-	render_state.SamplerDefault = bd->pFontSampler;
-	render_state.VertexConstantBuffer = bd->pVertexConstantBuffer;
-
-	// 2. 分配用户态内存
-	PVOID user_render_state{};
-	status = utils:: memory::allocate_user_memory(&user_render_state,
-		sizeof(ImGui_ImplDX11_RenderState),
-		PAGE_READWRITE,
-		true, false);
-	if (!NT_SUCCESS(status))
-		return;
-
-	// 3. 复制 RenderState 结构本身
-	utils::memory::mem_copy(user_render_state, &render_state, sizeof(render_state));
-
-	// 4. 如果需要，单独把结构中的指针字段复制到用户态（可选，看访问需求）
- 
-
-	// 5. 把用户态地址传给 platform_io
-	platform_io.Renderer_RenderState = reinterpret_cast<ImGui_ImplDX11_RenderState*>(user_render_state);
+	ImGui_ImplDX11_RenderState* render_state =(ImGui_ImplDX11_RenderState*) user_render_state;
+	render_state->Device = bd->pd3dDevice;
+	render_state->DeviceContext = bd->pd3dDeviceContext;
+	render_state->SamplerDefault = bd->pFontSampler;
+	render_state->VertexConstantBuffer = bd->pVertexConstantBuffer;
+	platform_io.Renderer_RenderState = render_state;
     
-
+    
     //下面循环有问题
     // Render command lists
     // (Because we merged all buffers into a single one, we maintain our own offset into them)
@@ -762,6 +739,8 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
             }
             else
             {
+
+             
                 // Project scissor/clipping rectangles into framebuffer space
                 ImVec2 clip_min((pcmd->ClipRect.x - clip_off.x) * clip_scale.x, (pcmd->ClipRect.y - clip_off.y) * clip_scale.y);
                 ImVec2 clip_max((pcmd->ClipRect.z - clip_off.x) * clip_scale.x, (pcmd->ClipRect.w - clip_off.y) * clip_scale.y);
@@ -771,24 +750,18 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
                 // Apply scissor/clipping rectangle
                 const D3D11_RECT r = { (LONG)clip_min.x, (LONG)clip_min.y, (LONG)clip_max.x, (LONG)clip_max.y };
 
-
-                unsigned long long  RSSetScissorRectsfun =(unsigned long long)  utils::vfun_utils::get_vfunc(device, 45);
-                unsigned long long  PSSetShaderResourcesfun = (unsigned long long)  utils::vfun_utils::get_vfunc(device, 8);
-                unsigned long long DrawIndexedfun = (unsigned long long)  utils::vfun_utils::get_vfunc(device, 12);
-
-
-
+ 
                 utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer,(PVOID) &r, sizeof(D3D11_RECT));
 
                 utils::user_call::call(
-                    RSSetScissorRectsfun,
+                    (unsigned long long)  utils::vfun_utils::get_vfunc(device, 45),
                     (unsigned long long)device,
                     1,
                     utils::strong_dx::g_user_buffer, 0);
 
 
 
-                utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, (PVOID)&r, sizeof(D3D11_RECT));
+              
 
                 // Bind texture, Draw
                  PVOID texture_srv = (PVOID)pcmd->GetTexID();
@@ -796,7 +769,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
                  utils::memory::mem_copy((PVOID)utils::strong_dx::g_user_buffer, (PVOID)&texture_srv, sizeof(PVOID));
 
                  utils::user_call::call(
-                     PSSetShaderResourcesfun,
+                     (unsigned long long)  utils::vfun_utils::get_vfunc(device, 8),
                      (unsigned long long)device,
                      0,
                      1,
@@ -804,7 +777,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
                  );
                 
 					 utils::user_call::call(
-                         DrawIndexedfun,
+                         (unsigned long long)  utils::vfun_utils::get_vfunc(device, 12),
 						 (unsigned long long)device,
                          pcmd->ElemCount,
                          pcmd->IdxOffset + global_idx_offset,
@@ -816,27 +789,28 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
         global_idx_offset += draw_list->IdxBuffer.Size;
         global_vtx_offset += draw_list->VtxBuffer.Size;
     }
+    
+  
     platform_io.Renderer_RenderState = nullptr;
 
     // Restore modified DX state
-    unsigned long long RSSetScissorRectsfun =(unsigned long long) utils::vfun_utils::get_vfunc(device, 45);
-    unsigned long long RSSetViewportsfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 44);
-    unsigned long long RSSetStatefun  = (unsigned long long) utils::vfun_utils::get_vfunc(device, 43);
-    unsigned long long OMSetBlendStatefun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 35);
-    unsigned long long OMSetDepthStencilStatefun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 36);
-    unsigned long long PSSetShaderResourcesfun =   (unsigned long long) utils::vfun_utils::get_vfunc(device,8);
-    unsigned long long PSSetSamplersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device,10);
-    unsigned long long PSSetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 9);
-    unsigned long long VSSetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 11);
-    unsigned long long VSSetConstantBuffersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device,7);
-    unsigned long long GSSetShaderfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 23);
-    unsigned long long IASetPrimitiveTopologyfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 24);
-    unsigned long long IASetIndexBufferfun  = (unsigned long long) utils::vfun_utils::get_vfunc(device, 19);
-    unsigned long long IASetVertexBuffersfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 18);
-    unsigned  long long IASetInputLayoutfun = (unsigned long long) utils::vfun_utils::get_vfunc(device, 17);
+    
+    
+    
+    
+   
+ 
+   
+   
+    
+    
+    
+     
+    
+ 
     //GSSetShader
     utils::user_call::call(
-        RSSetScissorRectsfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 45),
         (unsigned long long)device,
         old->ScissorRectsCount,
         (unsigned long long)old->ScissorRects,
@@ -845,7 +819,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     );
 
 	utils::user_call::call(
-        RSSetViewportsfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 44),
 		(unsigned long long)device,
         old->ViewportsCount,
         (unsigned long long) old->Viewports,
@@ -854,21 +828,21 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
 
 	utils::user_call::call(
-        RSSetStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 43),
 		(unsigned long long)device,
         (unsigned long long)old->RS,
 		0,
 		0
 
 	);
-   
+  
     if (old->RS)
     {
         utils::vfun_utils::release(old->RS);
     }
     
 	utils::user_call::call(
-        OMSetBlendStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 35),
 		(unsigned long long)device,
 		(unsigned long long)old->BlendState,
         (unsigned long long) old->BlendFactor, 
@@ -880,7 +854,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     
 
 	utils::user_call::call(
-        OMSetDepthStencilStatefun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 36),
 		(unsigned long long)device,
 		(unsigned long long)old->DepthStencilState,
         old->StencilRef,
@@ -891,7 +865,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     if (old->DepthStencilState) utils::vfun_utils::release (old->DepthStencilState);
    
     utils::user_call::call(
-        PSSetShaderResourcesfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 8),
         (unsigned long long)device,
         0,
         1,
@@ -902,7 +876,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
     utils::user_call::call(
-        PSSetSamplersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 10),
         (unsigned long long)device,
         0,
         1,
@@ -914,7 +888,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
   
 
 	utils::user_call::call(
-        PSSetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 9),
 		(unsigned long long)device,
         (unsigned long long) old->PS,
         (unsigned long long) old->PSInstances,
@@ -929,7 +903,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     for (UINT i = 0; i < old->PSInstancesCount; i++) if (old->PSInstances[i])utils::vfun_utils::release( old->PSInstances[i]) ;
 
     utils::user_call::call(
-        VSSetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 11),
         (unsigned long long)device,
         (unsigned long long)old->VS,
         (unsigned long long) old->VSInstances,
@@ -939,13 +913,13 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     );
 
     if (old->VS) utils::vfun_utils::release (old->VS) ;
-
+     
 	utils::user_call::call(
-        VSSetConstantBuffersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 7),
 		(unsigned long long)device,
 		   0,
 		 1,
-        (unsigned long long) old->VSConstantBuffer
+        (unsigned long long) & old->VSConstantBuffer
 
 
 	);
@@ -953,7 +927,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     if (old->VSConstantBuffer) utils::vfun_utils::release (old->VSConstantBuffer);
 
 	utils::user_call::call(
-        GSSetShaderfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 23),
 		(unsigned long long)device,
         (unsigned long long) old->GS,
         (unsigned long long) old->GSInstances,
@@ -967,7 +941,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     for (UINT i = 0; i < old->VSInstancesCount; i++) if (old->VSInstances[i]) utils::vfun_utils::release(old->VSInstances[i]);
 
 	utils::user_call::call(
-        IASetPrimitiveTopologyfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 24),
 		(unsigned long long)device,
 		(unsigned long long)old->PrimitiveTopology,
 		0,
@@ -977,7 +951,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 	);
     
 	utils::user_call::call(
-        IASetIndexBufferfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 19),
 		(unsigned long long)device,
 		(unsigned long long)old->IndexBuffer,
         old->IndexBufferFormat,
@@ -988,7 +962,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
     if (old->IndexBuffer) utils::vfun_utils::release(old->IndexBuffer);
    
 	utils::user_call::call6(
-        IASetVertexBuffersfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 18),
 		(unsigned long long)device,
         0, 
         1,
@@ -1003,7 +977,7 @@ static void ImGui_ImplDX11_SetupRenderState(ImDrawData* draw_data, PVOID device_
 
 
     utils::user_call::call(
-        IASetInputLayoutfun,
+        (unsigned long long) utils::vfun_utils::get_vfunc(device, 17),
         (unsigned long long)device,
         (unsigned long long) old->InputLayout,
         0,
@@ -1167,35 +1141,11 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
 		// 假设 g_imgui_buffer 已经分配 0x1000 字节
 	// 1. 动态分配用户缓冲区存放返回值（ID3DBlob*）
-	PVOID user_buffer = nullptr;
-	NTSTATUS status = utils::memory::allocate_user_memory(
-		&user_buffer,
-		0x1000,        // 分配 0x1000 字节
-		PAGE_READWRITE,
-		true,          // 清零
-		false          // 不隐藏
-	);
-
-	if (!NT_SUCCESS(status) || !user_buffer)
-	{
-		LogError("Failed to allocate user buffer for D3DCompile.");
-		return false;
-	}
-    unsigned char* buffer_ptr = reinterpret_cast<unsigned char*>(user_buffer);
+	 
+    unsigned char* buffer_ptr = reinterpret_cast<unsigned char*>(utils::strong_dx:: g_user_buffer);
 	// 5. 分配用户缓冲区存放返回的 ID3DBlob* 指针
-	PVOID blob_ptr = nullptr;
-	status = utils::memory::allocate_user_memory(
-		&blob_ptr,
-		0x1000,
-		PAGE_READWRITE,
-		true,
-		false
-	);
-	if (!NT_SUCCESS(status) || !blob_ptr)
-	{
-		LogError("Failed to allocate user buffer for ID3DBlob* output.");
-		return false;
-	}
+	PVOID blob_ptr = (PVOID)utils::strong_dx::g_texture_buffer;
+	 
     // Create the vertex shader
     {
         static const char* vertexShader =
@@ -1250,7 +1200,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 		// 3. 调用 D3DCompile (R0→R3)
         auto ret_ptr  =   utils::user_call::call11(
             utils::dwm_draw::g_d3dcompile_fun,     // 函数地址
-            reinterpret_cast<unsigned long long>(user_buffer), // LPCVOID pSrcData
+            reinterpret_cast<unsigned long long>(buffer_ptr), // LPCVOID pSrcData
             shader_len,                             // SIZE_T SrcDataSize
             0,                                      // LPCSTR pSourceName
             0,                                      // const D3D_SHADER_MACRO* pDefines
@@ -1314,59 +1264,63 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
         };
 
        
-        unsigned  long long CreateInputLayoutfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 11));
+     
 
 
-		ret_ptr = utils::user_call::call(GetBufferPointerfun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
-		  BufferPointer = *reinterpret_cast<PULONG64>(ret_ptr);
 
-		ret_ptr = utils::user_call::call(GetBufferSizefun, reinterpret_cast<unsigned  long long>(vertexShaderBlob), 0, 0, 0);
-		  BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
+		// === 获取 Shader Buffer 信息 ===
+		ret_ptr = utils::user_call::call(GetBufferPointerfun, (uint64_t)vertexShaderBlob, 0, 0, 0);
+		BufferPointer = *reinterpret_cast<PULONG64>(ret_ptr);
 
-		 
-		  uint8_t* cursor = reinterpret_cast<uint8_t*>(buffer_ptr);
+		ret_ptr = utils::user_call::call(GetBufferSizefun, (uint64_t)vertexShaderBlob, 0, 0, 0);
+		BufferSize = *reinterpret_cast<PULONG64>(ret_ptr);
 
-		  // 先复制结构体数组到 buffer_ptr
-		  D3D11_INPUT_ELEMENT_DESC* desc_copy = reinterpret_cast<D3D11_INPUT_ELEMENT_DESC*>(cursor);
-		  memcpy(desc_copy, local_layout, sizeof(local_layout));
-		  cursor += sizeof(local_layout)*2;
+		// === 准备临时内存布局 ===
+		// layout 数组副本
+		uint8_t* cursor = reinterpret_cast<uint8_t*>(buffer_ptr);
+		D3D11_INPUT_ELEMENT_DESC* desc_copy = reinterpret_cast<D3D11_INPUT_ELEMENT_DESC*>(cursor);
+		memcpy(desc_copy, local_layout, sizeof(local_layout));
+		cursor += sizeof(local_layout);
 
-		  // 把每个 Name 字段的字符串复制到 buffer_ptr 后续区域
-		  for (int i = 0; i < _countof(local_layout); i++)
-		  {
-			  const char* src_str = local_layout[i].SemanticName;
-			  size_t len = strlen(src_str) + 1;
+		// layout 对应的字符串
+		for (int i = 0; i < _countof(local_layout); i++)
+		{
+			const char* src_str = local_layout[i].SemanticName;
+			size_t len = strlen(src_str) + 1;
 
-			  memcpy(cursor, src_str, len);
+			memcpy(cursor, src_str, len);
 
-			  // 修改结构体里的指针为用户层偏移后的地址
-			  desc_copy[i].SemanticName = reinterpret_cast<LPCSTR>(cursor);
+			// 修正 desc_copy 内部指针
+			desc_copy[i].SemanticName = reinterpret_cast<LPCSTR>(cursor);
 
-			  cursor += len; // 移动到下一个可用位置
-		  }
+			cursor += len;
+		}
 
-          
-         
-          ret_ptr=  utils::user_call::call6(
-            CreateInputLayoutfun,
-            reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
-            reinterpret_cast<unsigned  long long> (desc_copy),
-            3,
-            BufferPointer,
-            BufferSize,
-            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(local_layout)*3
-        );
+	  
+	 
 
-	  hr = *reinterpret_cast<HRESULT*>(ret_ptr);
-		if (FAILED(hr))
-			return false;
+		  // === 调用 CreateInputLayout ===
+		  ret_ptr = utils::user_call::call6(
+              reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(bd->pd3dDevice, 11)),
+			  (uint64_t)bd->pd3dDevice,
+			  (uint64_t)desc_copy,
+			  _countof(local_layout),
+			  BufferPointer,
+			  BufferSize,
+			  (uint64_t)buffer_ptr+0x500
+		  );
 
+		  hr = *reinterpret_cast<HRESULT*>(ret_ptr);
+		  if (FAILED(hr))
+			  return false;
 
-        bd->pInputLayout = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr)   +sizeof(local_layout) * 3);
+		  // 保存返回的 InputLayout
+		  bd->pInputLayout = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr + 0x500)); 
+           
  
         utils::vfun_utils::release(vertexShaderBlob);
      
-        utils::memory::mem_zero(buffer_ptr, 0x1000);
+     
         // Create the constant buffer
         {
             D3D11_BUFFER_DESC desc = {};
@@ -1383,11 +1337,11 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
                 reinterpret_cast<unsigned long long>(bd->pd3dDevice),
                 reinterpret_cast<unsigned long long>(buffer_ptr),
                 0,
-                reinterpret_cast<unsigned long long>(buffer_ptr) + sizeof(D3D11_BUFFER_DESC)
+                reinterpret_cast<unsigned long long>(&bd->pVertexConstantBuffer)
             );
-            bd->pVertexConstantBuffer = *(PVOID*)(reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_BUFFER_DESC));
+          
             
-            utils::memory::mem_zero(buffer_ptr, 0x1000);
+   
         }
     }
 
@@ -1428,7 +1382,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
 		auto ret_ptr = utils::user_call::call11(
 			utils::dwm_draw::g_d3dcompile_fun,     // 函数地址
-			reinterpret_cast<unsigned long long>(user_buffer), // LPCVOID pSrcData
+			reinterpret_cast<unsigned long long>( buffer_ptr ), // LPCVOID pSrcData
 			shader_len,                             // SIZE_T SrcDataSize
 			0,                                      // LPCSTR pSourceName
 			0,                                      // const D3D_SHADER_MACRO* pDefines
@@ -1446,8 +1400,8 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
         PVOID pixelShaderBlob = *(PVOID*)blob_ptr;
 
-        utils::memory::mem_zero(buffer_ptr, 0x1000);
-        utils::memory::mem_zero(blob_ptr, 0x1000);
+
+
 
 
 		unsigned long long  GetBufferPointerfun = reinterpret_cast<unsigned  long long> (utils::vfun_utils::get_vfunc(pixelShaderBlob, 3));
@@ -1469,7 +1423,7 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             BufferPointer,
             BufferSize,
             0,
-            reinterpret_cast<unsigned long long>(buffer_ptr),
+            reinterpret_cast<unsigned long long>(&bd->pPixelShader),
             0
         );
 		  hr = *reinterpret_cast<HRESULT*>(ret_ptr);
@@ -1480,13 +1434,9 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
 
         }
 
-        bd->pPixelShader =*(PVOID*)buffer_ptr;
-
-        utils::vfun_utils::release(pixelShaderBlob);
+      
  
 
-		utils::memory::mem_zero(buffer_ptr, 0x1000);
-		utils::memory::mem_zero(blob_ptr, 0x1000);
     }
 
     // Create the blending setup
@@ -1509,12 +1459,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             CreateBlendStatefun,
             reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
             reinterpret_cast<unsigned  long long>(buffer_ptr),
-            reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_BLEND_DESC),
+            reinterpret_cast<unsigned  long long>(&bd->pBlendState),
             0
         );
         
-        bd->pBlendState= *(PVOID*)(buffer_ptr + sizeof(D3D11_BLEND_DESC));
-        utils::memory::mem_zero(buffer_ptr, 0x1000);
+     
+       
     }
 
     // Create the rasterizer state
@@ -1532,12 +1482,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             CreateRasterizerStatefun,
 			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
 			reinterpret_cast<unsigned  long long>(buffer_ptr),
-			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_RASTERIZER_DESC),
+			reinterpret_cast<unsigned  long long>(&bd->pRasterizerState),
 			0
 		);
      
-        bd->pRasterizerState = *(PVOID*)(buffer_ptr + sizeof(D3D11_RASTERIZER_DESC));
-        utils::memory::mem_zero(buffer_ptr, 0x1000);
+    
+        
     }
 
     // Create depth-stencil State
@@ -1557,12 +1507,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             CreateDepthStencilStatefun,
 			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
 			reinterpret_cast<unsigned  long long>(buffer_ptr),
-			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_DEPTH_STENCIL_DESC),
+			reinterpret_cast<unsigned  long long>(&bd->pDepthStencilState),
 			0
 		);
 
-        bd->pDepthStencilState = *(PVOID*)(buffer_ptr + sizeof(D3D11_DEPTH_STENCIL_DESC)); 
-		utils::memory::mem_zero(buffer_ptr, 0x1000);
+
+		 
       
     }
 
@@ -1585,12 +1535,12 @@ bool    ImGui_ImplDX11_CreateDeviceObjects()
             CreateSamplerStatefun,
 			reinterpret_cast<unsigned  long long>(bd->pd3dDevice),
 			reinterpret_cast<unsigned  long long>(buffer_ptr),
-			reinterpret_cast<unsigned  long long>(buffer_ptr) + sizeof(D3D11_SAMPLER_DESC),
+			reinterpret_cast<unsigned  long long>(&bd->pFontSampler),
 			0
 		);
 
-        bd->pFontSampler = *(PVOID*)(buffer_ptr + sizeof(D3D11_SAMPLER_DESC));
-		utils::memory::mem_zero(buffer_ptr, 0x1000);
+       
+	 
     }
 
     return true;

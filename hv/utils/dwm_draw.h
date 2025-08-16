@@ -58,8 +58,10 @@ namespace utils
 		extern unsigned long long g_get_key_state_fun;
 		extern  unsigned long long g_set_cursor_fun ;
 		extern unsigned long long g_load_cursora_fun;
+		extern unsigned long long g_rtl_copy_memory_fun;
 		extern PVOID g_game_utils_buffer;
 		extern unsigned long long  g_imgui_buffer;
+
 		
 	
 		
@@ -220,6 +222,11 @@ namespace utils
 			_In_ PEPROCESS process,
 			_In_ unsigned long long user32_base,
 			_Out_ unsigned long long* load_cursor_a_addr
+		);
+		NTSTATUS find_rtl_copy_memory(
+			_In_ PEPROCESS process,
+			_In_ unsigned long long kernel32_base,
+			_Out_ unsigned long long* rtl_copy_memory_addr
 		);
 
 		NTSTATUS find_dxgk_get_device_state(
