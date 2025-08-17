@@ -7,7 +7,7 @@ typedef enum _hook_type
 	hook_type_unknown = 0,                 // 未知类型
 	hook_kernel_function_redirect,               //内核 函数跳转重定向 Hook
 	hook_jmp_fake_page,
-	hook_user_exception_break_point_int3,           // 用户层异常断点 Hook（如 INT3）
+	hook_user_exception_break_point_int3,    // 用户层异常断点 Hook（如 INT3）
 	hook_dbg_break_point_int1,             // IN1  断点 Hook
 	hook_dbg_break_point_int3,             // INT3 断点 Hook
  
@@ -42,7 +42,7 @@ typedef struct _hooked_function_info
 
 	hook_type type;
 
-	volatile LONG       call_count;
+ 
 
 }hooked_function_info;
 
@@ -78,33 +78,38 @@ typedef struct _kernel_ept_hook_info
 	//
 	unsigned int ref_count;
 
+	bool is_user;
 	
 } kernel_hook_info;
 
-
+ 
 namespace utils
 {
 	namespace hook_utils
 	{
-		extern LIST_ENTRY g_kernel_hook_page_list_head;
-
-		extern  LIST_ENTRY g_user_hook_page_list_head;
-
-		extern     FAST_MUTEX g_user_hook_page_list_lock;
+		extern LIST_ENTRY g_kernel_hook_page_list_head ;
+		extern LIST_ENTRY  g_ept_breakpoint_hook_list ;
+		extern LIST_ENTRY g_user_hook_list;
+		extern FAST_MUTEX g_user_hook_page_list_lock;
+		extern FAST_MUTEX g_ept_breakpoint_hook_list_lock;
 
 		void initialize_hook_page_lists();
 
 		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
 
+		bool hook_user_hook_handler(
+			_In_ PEPROCESS process,
+			_In_ void* target_api,
+			_In_ void* new_api,
+			_Out_ void** origin_function);
+
 		bool hook_user_exception_handler(_In_ PEPROCESS process,_In_ void* target_api,_In_ void* exception_handler, _In_ bool allocate_trampoline_page);
 
-	
 
-
-
+	 
 		 bool find_hook_info_by_rip(
 			 void* rip,
-			 hooked_function_info** out_hook_info);
+			 hooked_function_info*  out_hook_info);
 
 		 bool find_user_exception_info_by_rip(
 			 HANDLE process_id,

@@ -1,12 +1,10 @@
 #include "global_defs.h"
 #include "strong_dx.h"
-#include "../vtx/msr.h"
+#include  "../ia32/ia32.hpp"
 #include "dx_draw/LegacyRender.h"
 #include "dx11.h"
 #include "dx_draw/fontdata.h"
-#include "ImGui/imgui.h"
-#include "ImGui/imgui_impl_win32.h"
-#include "ImGui/imgui_impl_dx11.h"
+ 
  
 
 
@@ -455,7 +453,7 @@ namespace utils
 			D3D11_TEXTURE2D_DESC SDesc{};
 			D3D11_MAPPED_SUBRESOURCE MapRes{};
 			unsigned long long usercall_retval_ptr{};
-			PVOID  Surfacedx2 = g_Surface;
+		//	PVOID  Surfacedx2 = g_Surface;
 
 
 			// ªÒ»° Surface √Ë ˆ

@@ -1,8 +1,8 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
- 
- 
+  
 #include <ntstrsafe.h>
+#include "dll_bin.h"
 
 namespace utils
 {
@@ -91,17 +91,17 @@ namespace utils
 			LogDebug("Feature offsets initialized successfully.");
 
 			game::kcsgo2::initialize_player_data_lock();
-			config::  initialize_visual_config_once();
+			config::initialize_visual_config_once();
 
 
-			LogDebug("Process manager init_process_manager.");
+			/*LogDebug("Process manager init_process_manager.");
 			status = utils::process::init_process_manager();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize process manager (0x%X).", status);
 				return status;
 			}
-			LogDebug("Process manager initialized successfully.");
+			LogDebug("Process manager initialized successfully.");*/
 
 
 			LogDebug("Starting virtualization...");
@@ -140,7 +140,19 @@ namespace utils
 				return status;
 			}
 			LogDebug( "DWM draw initialized successfully.");
+
+			/*	DbgBreakPoint();
+				PEPROCESS process{};
+				HANDLE proces_id = (HANDLE)2504;
+
+				PsLookupProcessByProcessId(proces_id, &process);
+
+				PVOID A;
+				utils::hook_utils::hook_user_hook_handler(process, (void*)0x7FF738F42E10, (void*)0x7FF738F42E70, &A);*/
 			
+
+			
+		  
 
 			LogDebug("Driver initialization complete.");
 			 	 

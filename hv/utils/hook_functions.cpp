@@ -266,7 +266,7 @@ namespace hook_functions
 	   )
 	   {
 		   
-	 
+		  
 		   if (trim_address_space && process)
 		   {
 			   
@@ -277,15 +277,8 @@ namespace hook_functions
 				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::g_game->clear();
 			   }
-			   //if (process == utils::dwm_draw::g_dwm_process)
-			   //{
-				  //  
-				  // // utils::dwm_draw::finalize();
-				  // // utils::hook_utils::remove_user_exception_handler(process);
-			   //}
-
-
-			 
+			    
+			    
 			     
 		   }
 		  
@@ -900,7 +893,7 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
-		   InterlockedIncrement(&matched_hook_info->call_count);
+		   
 		
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
@@ -931,7 +924,7 @@ namespace hook_functions
 
 		   }
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   InterlockedDecrement(&matched_hook_info->call_count);
+		   
 		   return TRUE;
 	   }
 
@@ -942,7 +935,7 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
-		   InterlockedIncrement(&matched_hook_info->call_count);
+		  
 
 		 
 		   static bool initialized = false;
@@ -982,7 +975,7 @@ namespace hook_functions
 
 		   }
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   InterlockedDecrement(&matched_hook_info->call_count);
+		  
 		   return TRUE;
 	   }
 

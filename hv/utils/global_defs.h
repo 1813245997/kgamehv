@@ -2,31 +2,14 @@
 //
 // Success codes
 //
-#define _NO_CRT_STDIO_INLINE
+ 
 
 #include <ntifs.h>
 #include <ntimage.h>
 #include <intrin.h>
 #include <minwindef.h>
-
-
-//stl
-
-#include <functional>
-#include <string>
-#include <vector>
-#include <list>
-#include <deque>
-#include <map>
-#include <set>
-#include <queue>
-#include <stack>
-#include <set>
-#include <utility>
-#include <algorithm>
-#include <cctype>    // for std::tolower
-#include <locale>    // for std::locale
-
+ 
+ 
 
 #include "macros.h"
 #include "types.h"
@@ -50,7 +33,7 @@
 #include "hidden_module_list.h"
 #include "hook_manager.h"
 #include "process_manager_utils.h"
- 
+#include "inject_utils.h"
 #include "hook_functions.h"
 #include "internal_function_defs.h"
 #include "feature_data_initializer.h"
@@ -85,11 +68,7 @@
 #include "driver_feature_init.h"
 #include "hook_utils.h"
 #include "memory_pool.h"
-#include "../vtx/hypervisor_gateway.h"
 #include "vmcall_comm_args.h"
 #include "memory_pool.h"
 #include "call_back_utils.h"
-
- #include "ImGui/imgui.h"
-
 #include "VMProtectDDK.h"

@@ -14,14 +14,14 @@ float roundf(float a) {
 	return a;
 }
 
-//float floorf(float a) {
-//	int ia = (int)a;
-//	float xs = a - (float)ia;
-//	if (xs > 0.f) {
-//		return a + 1.f;
-//	}
-//	return a;
-//}
+float floorf(float a) {
+	int ia = (int)a;
+	float xs = a - (float)ia;
+	if (xs > 0.f) {
+		return a + 1.f;
+	}
+	return a;
+}
 
 __forceinline FColor::FColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A)
 {

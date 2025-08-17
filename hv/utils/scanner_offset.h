@@ -11,6 +11,8 @@ namespace utils
 
 		unsigned long long find_process_peb_offset();
 
+		unsigned long long find_thread_previous_mode_offset();
+
 		
 	}
 }

@@ -38,7 +38,24 @@ namespace utils
 			case  user_comm_file_delete_force:
 			{
 				is_succeed = handle_force_delete_file(request);
+				break;
 			}
+
+			case  user_comm_get_module_info:
+			{
+				 
+				is_succeed = handle_get_module_info(request);
+				break;
+				 
+			}
+
+			case  user_comm_user_hook:
+			{
+			 
+				is_succeed = handle_hook_user_api(request);
+				break;
+			}
+ 
 
 			default:
 
@@ -149,8 +166,129 @@ namespace utils
 			return true;
 
 		 
+		   
+		}
+
+
+		bool handle_get_module_info(user_comm_request* request)
+		{
+			if (!request)
+			{
+				return false;
+			}
+
+			if (!request->input_buffer)
+			{
+				return false;
+			}
+
+			p_user_comm_get_module_info_params params =reinterpret_cast<p_user_comm_get_module_info_params>(request->input_buffer);
+
+			HANDLE process_id = reinterpret_cast<HANDLE> (params->process_id);
+			PWCHAR module_name = reinterpret_cast<PWCHAR> (params->module_name);   // UTF-16 字符串地址
+			PULONG64 base_address = reinterpret_cast<PULONG64> (params->base_address);  // 输出参数指针
+			PULONG64 module_size = reinterpret_cast<PULONG64> (params->module_size);   // 输出参数指针
+
+			if (wcslen(module_name) == 0)
+			{
+				return STATUS_INVALID_PARAMETER;
+			}
+
+			*base_address = 0;
+			*module_size = 0;
+
+
+			PEPROCESS process = nullptr;
+			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (process_id, &process);
+			if (!NT_SUCCESS(status))
+			{
+				return status; // Return the status indicating failure to lookup the process
+			}
+
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
+			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				return STATUS_PROCESS_IS_TERMINATING; // Return status indicating the process is terminating
+			}
+
+	   
+			// --------------------------
+			// 拷贝字符串到新内存
+			// --------------------------
+			size_t name_len = (wcslen(module_name) + 1) * sizeof(WCHAR);
+			PWCHAR kernel_module_name = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, name_len, 'modN');
+			if (!kernel_module_name)
+			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				return STATUS_INSUFFICIENT_RESOURCES;
+			}
+
+			RtlZeroMemory(kernel_module_name, name_len);
+			RtlCopyMemory(kernel_module_name, module_name, name_len);
+
+			// --------------------------
+			// 调用 get_process_module_info
+			// --------------------------
+			status = utils::module_info:: get_process_module_info(
+				process,
+				kernel_module_name,
+				base_address,
+				reinterpret_cast<SIZE_T*>(module_size)
+			);
+
+			// --------------------------
+			// 释放内存
+			// --------------------------
+			ExFreePoolWithTag(kernel_module_name, 'modN');
+			utils::internal_functions::pfn_ob_dereference_object(process);
+			return status;
+
+
+			 
+		}
+
+		bool handle_hook_user_api(user_comm_request* request)
+		{
+			if (!request || !request->input_buffer)
+			{
+				return false;
+			}
 		 
-			return true;
+			p_user_comm_hook_params params =
+				reinterpret_cast<p_user_comm_hook_params>(request->input_buffer);
+
+			HANDLE process_id = reinterpret_cast<HANDLE>(params->process_id);
+			void* target_api = reinterpret_cast<void*>(params->target_api);
+			void* new_api = reinterpret_cast<void*>(params->new_api);
+			void** origin_function = reinterpret_cast<void**>(params->origin_function);
+
+			PEPROCESS process = nullptr;
+			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
+			if (!NT_SUCCESS(status))
+			{
+				
+				request->status = status;
+				return false;
+			}
+
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
+			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				request->status = STATUS_PROCESS_IS_TERMINATING;
+				return false;
+			}
+
+			bool hook_result = utils::hook_utils::hook_user_hook_handler(
+				process,
+				target_api,
+				new_api,
+				origin_function
+			);
+			utils::internal_functions::pfn_ob_dereference_object(process);
+			request->status = hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			return hook_result;
+
+
 		}
 	}
 }

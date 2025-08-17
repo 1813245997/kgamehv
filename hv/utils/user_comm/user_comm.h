@@ -15,6 +15,9 @@ namespace utils
 
 		bool handle_force_delete_file(user_comm_request* request);
 
+		bool handle_get_module_info(user_comm_request* request);
+
+		bool handle_hook_user_api(user_comm_request* request);
 		
 	}
 }

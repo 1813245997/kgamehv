@@ -1,6 +1,6 @@
 #include "global_defs.h"
 #include "global_initializer.h"
-#include "../vtx/CompatibilityChecks.h"
+ 
 
 namespace utils
 {

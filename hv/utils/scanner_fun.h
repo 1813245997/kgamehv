@@ -53,7 +53,10 @@ namespace utils
 		unsigned long long find_nt_context_offset(unsigned  long long addr);
 
 		unsigned long long find_ke_get_processor_node_number_by_index();
-		
+
+		unsigned long long find_ps_suspend_thread();
+	 
+		unsigned long long find_ps_resume_thread();
 		
 	}
 }

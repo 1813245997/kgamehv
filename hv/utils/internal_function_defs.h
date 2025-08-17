@@ -507,6 +507,36 @@ namespace utils
 
 
 		extern uint64_t(__fastcall* pfn_ke_get_processor_node_number_by_index)(int IdealProcessor);
+
+		extern NTSTATUS(NTAPI* pfn_nt_get_next_thread)(
+			__in HANDLE ProcessHandle,
+			__in HANDLE ThreadHandle,
+			__in ACCESS_MASK DesiredAccess,
+			__in ULONG HandleAttributes,
+			__in ULONG Flags,
+			__out PHANDLE NewThreadHandle);
+
+		extern NTSTATUS(__fastcall* pfn_ps_suspend_thread)(
+			IN PETHREAD Thread,
+			OUT PULONG PreviousSuspendCount OPTIONAL);
+
+
+		extern NTSTATUS(__fastcall* pfn_ps_resume_thread)(IN PETHREAD Thread, OUT PULONG PreviousSuspendCount OPTIONAL);
+	 
+		extern	NTSTATUS(NTAPI* pfn_nt_create_thread_ex)(
+			OUT PHANDLE ThreadHandle,
+			IN ACCESS_MASK DesiredAccess,
+			IN POBJECT_ATTRIBUTES ObjectAttributes OPTIONAL,
+			IN HANDLE ProcessHandle,
+			IN PVOID StartRoutine,
+			IN PVOID StartContext,
+			IN ULONG CreateThreadFlags,
+			IN SIZE_T ZeroBits OPTIONAL,
+			IN SIZE_T StackSize OPTIONAL,
+			IN SIZE_T MaximumStackSize OPTIONAL,
+			IN PVOID AttributeList
+			);
+		 
 		 
 	} 
 }

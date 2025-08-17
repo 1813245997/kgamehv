@@ -1,10 +1,8 @@
 #include "global_defs.h"
 #include "khyper_vt.h"
 #include "../ia32/ia32.hpp"
-#include "../vtx/vmm.h"
-#include "../vtx/hypervisor_routines.h"
-#include "../vtx/timing.h"
-__vmm_context* g_vmm_context = 0;
+#include "../vtx/hv.h"
+ 
 namespace utils
 {
 	namespace  khyper_vt
@@ -217,27 +215,31 @@ namespace utils
 			return status;
 		}
 
+		static uint64_t ping() {
+			hv::hypercall_input input;
+			input.code = hv::hypercall_ping;
+			input.key = hv::hypercall_key;
+			return hv::vmx_vmcall(input);
+		}
 		NTSTATUS initialize_intel_vtx()
 		{
-			if (vmm_init() == false)
+			LogDebug("Starting virtualization...");
+			if (!hv::start())
 			{
-				hv::disable_vmx_operation();
-				free_vmm_context();
-				LogError("Vmm initialization failed");
-				return STATUS_FAILED_DRIVER_ENTRY;
+				LogError("Failed to virtualize system.");
+				return STATUS_HV_OPERATION_FAILED;
 			}
+			LogDebug("Virtualization started successfully.");
 
-			if (hvgt::test_vmcall())
+			LogDebug("Pinging hypervisor...");
+			if (ping() == hv::hypervisor_signature)
 			{
-				LogInfo("Successfully pinged the hypervisor.\n");
+				LogDebug("Hypervisor signature matches.");
 			}
-			 
-
-			for (unsigned int iter = 0; iter < g_vmm_context->processor_count; iter++)
+			else
 			{
-				hv::measure_vm_exit_overheads(g_vmm_context->vcpu_table[iter]);
+				LogError("Failed to ping hypervisor!");
 			}
-
 			// Additional initialization code for Intel VT-x can be added here
 			// Placeholder for additional initialization code
 			LogInfo("Initializing Intel VT-x specific settings...");

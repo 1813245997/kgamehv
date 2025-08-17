@@ -60,7 +60,7 @@
     <IntDir>$(SolutionDir)build\$(TargetName)\$(Configuration.toLower())\intermediate\</IntDir>
     <EnableInf2cat>false</EnableInf2cat>
     <ApiValidator_Enable>false</ApiValidator_Enable>
-    <IncludePath>$(VC_IncludePath);$(SolutionDir)extern\ia32-doc\out;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)extern\ia32-doc\out;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -127,8 +127,6 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="asm\vm_context.h" />
-    <ClInclude Include="asm\vm_intrin.h" />
     <ClInclude Include="utils\auth\auth.h" />
     <ClInclude Include="utils\call_back_utils.h" />
     <ClInclude Include="utils\cpu_registers.h" />
@@ -136,6 +134,7 @@
     <ClInclude Include="utils\csgogame\kcsgo2_utils.h" />
     <ClInclude Include="utils\csgogame\KMenuConfig.h" />
     <ClInclude Include="utils\csgogame\offsets.h" />
+    <ClInclude Include="utils\dll_bin.h" />
     <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\ark_utils.h" />
@@ -157,15 +156,8 @@
     <ClInclude Include="utils\hook_manager.h" />
     <ClInclude Include="LDE64.h" />
     <ClInclude Include="utils\hook_utils.h" />
-    <ClInclude Include="utils\ImGui\imconfig.h" />
-    <ClInclude Include="utils\ImGui\imgui.h" />
-    <ClInclude Include="utils\ImGui\imgui_impl_dx11.h" />
-    <ClInclude Include="utils\ImGui\imgui_impl_win32.h" />
-    <ClInclude Include="utils\ImGui\imgui_internal.h" />
-    <ClInclude Include="utils\ImGui\imstb_rectpack.h" />
-    <ClInclude Include="utils\ImGui\imstb_textedit.h" />
-    <ClInclude Include="utils\ImGui\imstb_truetype.h" />
     <ClInclude Include="utils\import_encrypt.h" />
+    <ClInclude Include="utils\inject_utils.h" />
     <ClInclude Include="utils\internal_function_defs.h" />
     <ClInclude Include="utils\kernel_hide_utils.h" />
     <ClInclude Include="utils\khyper_vt.h" />
@@ -175,6 +167,7 @@
     <ClInclude Include="utils\macros.h" />
     <ClInclude Include="utils\Math.h" />
     <ClInclude Include="utils\math_utils.h" />
+    <ClInclude Include="utils\MemLoadDll.h" />
     <ClInclude Include="utils\memory_pool.h" />
     <ClInclude Include="utils\memory_utils.h" />
     <ClInclude Include="utils\module_info.h" />
@@ -204,41 +197,35 @@
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
-    <ClInclude Include="vtx\allocators.h" />
-    <ClInclude Include="vtx\bit_wise.h" />
-    <ClInclude Include="vtx\CompatibilityChecks.h" />
-    <ClInclude Include="vtx\exception-routines.h" />
-    <ClInclude Include="vtx\gdt.h" />
-    <ClInclude Include="vtx\hv_dpc_vm_call.h" />
-    <ClInclude Include="vtx\common.h" />
-    <ClInclude Include="vtx\cpuid.h" />
-    <ClInclude Include="vtx\cr.h" />
-    <ClInclude Include="vtx\dr.h" />
+    <ClInclude Include="vtx\arch.h" />
     <ClInclude Include="vtx\ept.h" />
+    <ClInclude Include="vtx\exception-routines.h" />
     <ClInclude Include="vtx\exception.h" />
-    <ClInclude Include="vtx\hypervisor_gateway.h" />
+    <ClInclude Include="vtx\exit-handlers.h" />
+    <ClInclude Include="vtx\gdt.h" />
+    <ClInclude Include="vtx\guest-context.h" />
+    <ClInclude Include="vtx\hv.h" />
+    <ClInclude Include="vtx\hypercalls.h" />
     <ClInclude Include="vtx\hypervisor_routines.h" />
     <ClInclude Include="vtx\idt.h" />
     <ClInclude Include="vtx\interrupt-handlers.h" />
     <ClInclude Include="vtx\interrupt.h" />
-    <ClInclude Include="vtx\invalidators.h" />
-    <ClInclude Include="vtx\msr.h" />
+    <ClInclude Include="vtx\introspection.h" />
+    <ClInclude Include="vtx\logger.h" />
+    <ClInclude Include="vtx\mm.h" />
     <ClInclude Include="vtx\mtrr.h" />
     <ClInclude Include="vtx\page-tables.h" />
-    <ClInclude Include="vtx\poolmanager.h" />
-    <ClInclude Include="vtx\spinlock.h" />
+    <ClInclude Include="vtx\prevmcall.h" />
+    <ClInclude Include="vtx\processor_affinity.h" />
+    <ClInclude Include="vtx\segment.h" />
+    <ClInclude Include="vtx\spin-lock.h" />
     <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\trap-frame.h" />
-    <ClInclude Include="vtx\vmcall_handler.h" />
-    <ClInclude Include="vtx\vmcall_reason.h" />
+    <ClInclude Include="vtx\vcpu.h" />
     <ClInclude Include="vtx\vmcs.h" />
-    <ClInclude Include="vtx\vmexit_handler.h" />
-    <ClInclude Include="vtx\vmm.h" />
-    <ClInclude Include="vtx\vt_global.h" />
-    <ClInclude Include="vtx\xsave.h" />
+    <ClInclude Include="vtx\vmx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="KernelSTL.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth\auth.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />
@@ -260,13 +247,8 @@
     <ClCompile Include="utils\hook_manager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="utils\hook_utils.cpp" />
-    <ClCompile Include="utils\ImGui\imgui.cpp" />
-    <ClCompile Include="utils\ImGui\imgui_draw.cpp" />
-    <ClCompile Include="utils\ImGui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="utils\ImGui\imgui_impl_win32.cpp" />
-    <ClCompile Include="utils\ImGui\imgui_tables.cpp" />
-    <ClCompile Include="utils\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="utils\import_encrypt.cpp" />
+    <ClCompile Include="utils\inject_utils.cpp" />
     <ClCompile Include="utils\internal_function_defs.cpp" />
     <ClCompile Include="utils\kernel_hide_utils.cpp" />
     <ClCompile Include="utils\khyper_vt.cpp" />
@@ -292,33 +274,39 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
-    <ClCompile Include="vtx\bit_wise.cpp" />
-    <ClCompile Include="vtx\CompatibilityChecks.cpp" />
-    <ClCompile Include="vtx\gdt.cpp" />
-    <ClCompile Include="vtx\hv_dpc_vm_call.cpp" />
     <ClCompile Include="vtx\ept.cpp" />
-    <ClCompile Include="vtx\hypervisor_gateway.cpp" />
+    <ClCompile Include="vtx\exit-handlers.cpp" />
+    <ClCompile Include="vtx\gdt.cpp" />
+    <ClCompile Include="vtx\hv.cpp" />
+    <ClCompile Include="vtx\hypercalls.cpp" />
     <ClCompile Include="vtx\hypervisor_routines.cpp" />
     <ClCompile Include="vtx\idt.cpp" />
-    <ClCompile Include="vtx\invalidators.cpp" />
+    <ClCompile Include="vtx\introspection.cpp" />
+    <ClCompile Include="vtx\logger.cpp" />
+    <ClCompile Include="vtx\mm.cpp" />
+    <ClCompile Include="vtx\mtrr.cpp" />
     <ClCompile Include="vtx\page-tables.cpp" />
-    <ClCompile Include="vtx\poolmanager.cpp" />
-    <ClCompile Include="vtx\spinlock.cpp" />
+    <ClCompile Include="vtx\prevmcall.cpp" />
+    <ClCompile Include="vtx\processor_affinity.cpp" />
+    <ClCompile Include="vtx\segment.cpp" />
     <ClCompile Include="vtx\timing.cpp" />
-    <ClCompile Include="vtx\vmcall_handler.cpp" />
+    <ClCompile Include="vtx\vcpu.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />
-    <ClCompile Include="vtx\vmexit_handler.cpp" />
-    <ClCompile Include="vtx\vmm.cpp" />
-    <ClCompile Include="vtx\vt_global.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="asm\vm_context.asm" />
-    <MASM Include="asm\vm_intrin.asm" />
     <MASM Include="lde64.asm" />
     <MASM Include="utils\cpu_registers.asm" />
     <MASM Include="utils\dx_draw\math.asm" />
+    <MASM Include="vtx\arch.asm" />
     <MASM Include="vtx\exception-routines.asm" />
     <MASM Include="vtx\interrupt-handlers.asm" />
+    <MASM Include="vtx\vm-exit.asm" />
+    <MASM Include="vtx\vm-launch.asm" />
+    <MASM Include="vtx\vmx.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="vtx\cpp.hint" />
+    <None Include="vtx\vmx.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

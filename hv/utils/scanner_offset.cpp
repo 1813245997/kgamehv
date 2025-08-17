@@ -319,5 +319,22 @@ namespace utils
 			 return process_peb_offset;
 		 }
 		
+
+		 unsigned long long find_thread_previous_mode_offset()
+		 {
+			 unsigned long long previous_mode_offset{};
+			 unsigned char* func_ptr = reinterpret_cast<unsigned char*>(ExGetPreviousMode);
+
+			 // 遍历函数，找到最后一个 C3（RET）指令
+			 unsigned char* ret_ptr = func_ptr;
+			 while (*ret_ptr != 0xC3) {
+				 ++ret_ptr;
+			 }
+
+			 // 在 RET 前 4 个字节读取偏移
+			 previous_mode_offset = *reinterpret_cast<ULONG*>(ret_ptr - 4);
+
+			 return previous_mode_offset;
+		 }
 	}
 }

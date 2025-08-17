@@ -64,10 +64,25 @@ namespace utils
 			 
 			hooked_function_info matched_hook_info{};
 			 
-			if (!utils::hook_utils::find_user_exception_info_by_rip(
-				process_id, ExceptionRecord->ExceptionAddress, &matched_hook_info))
+		 
+
+			BOOLEAN found = utils::hook_utils::find_user_exception_info_by_rip(
+				process_id, ExceptionRecord->ExceptionAddress, &matched_hook_info);
+
+			// 使用你封装的日志输出
+			/*if (found)
 			{
-				 
+				LogInfo("INT3 exception at VA %p matched a hooked function for PID %p",
+					ExceptionRecord->ExceptionAddress, process_id);
+			}
+			else
+			{
+				LogInfo("INT3 exception at VA %p NOT matched any hooked function for PID %p",
+					ExceptionRecord->ExceptionAddress, process_id);
+			}*/
+
+			if (!found)
+			{
 				return FALSE;
 			}
  

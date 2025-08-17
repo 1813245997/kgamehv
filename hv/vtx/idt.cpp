@@ -1,7 +1,7 @@
 #include "idt.h"
-#include "common.h"
+#include "vcpu.h"
 #include "interrupt-handlers.h"
- 
+#include "mm.h"
 
 namespace hv {
 

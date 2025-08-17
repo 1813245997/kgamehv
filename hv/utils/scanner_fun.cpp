@@ -6558,8 +6558,762 @@ namespace utils
 
 			return ke_get_processor_node_number_by_index_addr;
 		}
+
+
+		unsigned long long find_ps_suspend_thread()
+		{
+			unsigned long long ps_suspend_thread_addr{};
+			unsigned long long temp_addr{};
+
+
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+
+
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+				
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+				//"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75", "x????xxxxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				//PsSuspendThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+			 
+				//PsSuspendThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\x48\x8B\xC4\x48\x89\x58\x08\x48\x89\x68\x10\x48\x89\x70\x18\x48\x89\x78\x20\x41\x56\x48\x83\xEC\x20\x65\x48\x8B\x2C\x25\x88\x01\x00\x00\x48\x8B\xF1\x66\xFF\x8D\xE4\x01\x00\x00\x4C\x8D\xB1\x58\x04\x00\x00\x49\x8B\xCE\xE8\xCC\xCC\xCC\xCC\x3C\x01\x75\x3E", 
+					"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx????xxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr = temp_addr;
+					 
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+				//PsSuspendThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+				 
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75", 
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_suspend_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+
+
+
+			return ps_suspend_thread_addr;
+		}
+
+		unsigned long long find_ps_resume_thread()
+		{
+			unsigned long long ps_resume_thread_addr{};
+			unsigned long long temp_addr{};
+
+
+			WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+
+
+
+
+			switch (Version)
+			{
+			case utils::WINDOWS_7:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_7_SP1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+			}
+			break;
+			case utils::WINDOWS_8:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_8_1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1507:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1511:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1607:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1703:
+			{
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1709:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1803:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_1809:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H1:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_19H2:
+			{
+				//"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75", "x????xxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H1:
+			{
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_20H2:
+			{
+
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H1:
+			{
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_21H2:
+			{
+
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75",
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_10_VERSION_22H2:
+			{
+
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75", 
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_21H2:
+			{
+				//NtResumeThread
+				//"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75", "x????xxxxx"
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_22H2:
+			{
+				//PsSuspendThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\x8B\xF8\xBA\x50\x73\x53\x75",
+					"x????xxxxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_23H2:
+			{
+
+				//NtResumeThread
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75", 
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			case utils::WINDOWS_11_VERSION_24H2:
+			{
+
+				temp_addr = signature_scanner::find_pattern_image(
+					(unsigned long long)utils::module_info::ntoskrnl_base,
+					"\xE8\xCC\xCC\xCC\xCC\xBA\x50\x73\x53\x75", 
+					"x????xxxxx",
+					"PAGE"
+				);
+
+				ps_resume_thread_addr =
+					signature_scanner::resolve_relative_address(
+						reinterpret_cast<PVOID>(temp_addr), 1, 5);
+
+			}
+			break;
+			default:
+				break;
+			}
+
+
+
+			return ps_resume_thread_addr;
+		}
 		 
 
+		 
 
 	}
 }

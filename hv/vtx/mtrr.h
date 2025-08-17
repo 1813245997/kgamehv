@@ -1,70 +1,33 @@
 #pragma once
- 
 
-struct __mtrr_range_descriptor
-{
-	unsigned __int64 physcial_base_address;
-	unsigned __int64 physcial_end_address;
-	unsigned __int8 memory_type;
-	bool fixed_range;
+#include  "../ia32/ia32.hpp"
+
+namespace hv {
+
+struct mtrr_data {
+  ia32_mtrr_capabilities_register cap;
+  ia32_mtrr_def_type_register def_type;
+
+  // fixed-range MTRRs
+  struct {
+    // TODO: implement
+  } fixed;
+
+  // variable-range MTRRs
+  struct {
+    ia32_mtrr_physbase_register base;
+    ia32_mtrr_physmask_register mask;
+  } variable[64];
+
+  // number of valid variable-range MTRRs
+  size_t var_count;
 };
 
-union __mtrr_physmask_reg
-{
-	unsigned __int64 all;
-	struct
-	{
-		unsigned __int64 reserved : 11;
-		unsigned __int64 valid : 1;
-		unsigned __int64 physmask : 36;
-		unsigned __int64 reserved2 : 16;
-	};
-};
+// read MTRR data into a single structure
+mtrr_data read_mtrr_data();
 
-union __mtrr_physbase_reg
-{
-	unsigned __int64 all;
-	struct
-	{
-		unsigned __int64 type : 8;
-		unsigned __int64 reserved : 4;
-		unsigned __int64 physbase : 36;
-		unsigned __int64 reserved2 : 16;
-	};
-};
+// calculate the MTRR memory type for the given physical memory range
+uint8_t calc_mtrr_mem_type(mtrr_data const& mtrrs, uint64_t address, uint64_t size);
 
-union __mtrr_cap_reg
-{
-	unsigned __int64 all;
-	struct
-	{
-		unsigned __int64 range_register_number : 8;
-		unsigned __int64 fixed_range_support : 1;
-		unsigned __int64 reserved : 1;
-		unsigned __int64 write_combining_support : 1;
-		unsigned __int64 smrr_support : 1;
-		unsigned __int64 reserved2 : 52;
-	};
-};
+} // namespace hv
 
-union __mtrr_def_type 
-{
-	unsigned __int64 all;
-	struct
-	{
-		unsigned __int64 memory_type : 8;
-		unsigned __int64 reserved1 : 2;
-		unsigned __int64 fixed_range_mtrr_enabled : 1;
-		unsigned __int64 mtrr_enabled : 1;
-		unsigned __int64 reserved2 : 52;
-	};
-};
-
-union __mtrr_fixed_range_type 
-{
-	unsigned __int64 all;
-	struct
-	{
-		unsigned __int8 types[8];
-	};
-};

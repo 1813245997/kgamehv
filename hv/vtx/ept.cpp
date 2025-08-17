@@ -1,718 +1,338 @@
-#pragma warning( disable : 4201 4244)
-#include "../utils/global_defs.h"
-#include "../ASM\vm_context.h"
-#include <ntddk.h>
-#include <intrin.h>
-#include <stdlib.h>
-#include "common.h"
-#include "msr.h"
-#include "vmcs_encodings.h"
 #include "ept.h"
- 
-#include "hypervisor_routines.h"
+#include "arch.h"
+#include "vcpu.h"
 #include "mtrr.h"
-#include "allocators.h"
-#include "spinlock.h"
-
-
-namespace ept
-{
-	/// <summary>
-	/// Build mtrr map to track physical memory type
-	/// </summary>
-	void build_mtrr_map()
-	{
-		__mtrr_cap_reg mtrr_cap = { 0 };
-		__mtrr_physbase_reg current_phys_base = { 0 };
-		__mtrr_physmask_reg current_phys_mask = { 0 };
-		__mtrr_def_type mtrr_def_type = { 0 };
-		__mtrr_range_descriptor* descriptor;
-
-		//
-		// The memory type range registers (MTRRs) provide a mechanism for associating the memory types (see Section
-		// 11.3, 揗ethods of Caching Available? with physical - address ranges in system memory.They allow the processor to
-		// optimize operations for different types of memory such as RAM, ROM, frame - buffer memory, and memory - mapped
-		// I/O devices.They also simplify system hardware design by eliminating the memory control pins used for this func -
-		// tion on earlier IA - 32 processors and the external logic needed to drive them.
-		//
-
-		mtrr_cap.all = __readmsr(IA32_MTRRCAP);
-		mtrr_def_type.all = __readmsr(IA32_MTRR_DEF_TYPE);
-
-		if (mtrr_def_type.mtrr_enabled == false)
-		{
-			g_vmm_context->mtrr_info.default_memory_type = MEMORY_TYPE_UNCACHEABLE;
-			return;
-		}
-
-		g_vmm_context->mtrr_info.default_memory_type = mtrr_def_type.memory_type;
-
-		if (mtrr_cap.smrr_support == true)
-		{
-			current_phys_base.all = __readmsr(IA32_SMRR_PHYSBASE);
-			current_phys_mask.all = __readmsr(IA32_SMRR_PHYSMASK);
-
-			if (current_phys_mask.valid && current_phys_base.type != mtrr_def_type.memory_type)
-			{
-				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
-				descriptor->physcial_base_address = current_phys_base.physbase << PAGE_SHIFT;
-
-				unsigned long bits_in_mask = 0;
-				_BitScanForward64(&bits_in_mask, current_phys_mask.physmask << PAGE_SHIFT);
-
-				descriptor->physcial_end_address = descriptor->physcial_base_address + ((1ULL << bits_in_mask) - 1ULL);
-				descriptor->memory_type = (unsigned __int8)current_phys_base.type;
-				descriptor->fixed_range = false;
-			}
-		}
-
-		if (mtrr_cap.fixed_range_support == true && mtrr_def_type.fixed_range_mtrr_enabled)
-		{
-			constexpr auto k64_base = 0x0;
-			constexpr auto k64_size = 0x10000;
-			constexpr auto k16_base = 0x80000;
-			constexpr auto k16_size = 0x4000;
-			constexpr auto k4_base = 0xC0000;
-			constexpr auto k4_size = 0x1000;
-
-			__mtrr_fixed_range_type k64_types = { __readmsr(IA32_MTRR_FIX64K_00000) };
-
-			for (unsigned int i = 0; i < 8; i++)
-			{
-				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
-				descriptor->memory_type = k64_types.types[i];
-				descriptor->physcial_base_address = k64_base + (k64_size * i);
-				descriptor->physcial_end_address = k64_base + (k64_size * i) + (k64_size - 1);
-				descriptor->fixed_range = true;
-			}
-
-			for (unsigned int i = 0; i < 2; i++)
-			{
-				__mtrr_fixed_range_type k16_types = { __readmsr(IA32_MTRR_FIX16K_80000 + i) };
-
-				for (unsigned int j = 0; j < 8; j++)
-				{
-					descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
-					descriptor->memory_type = k16_types.types[j];
-					descriptor->physcial_base_address = (k16_base + (i * k16_size * 8)) + (k16_size * j);
-					descriptor->physcial_end_address = (k16_base + (i * k16_size * 8)) + (k16_size * j) + (k16_size - 1);
-					descriptor->fixed_range = true;
-				}
-			}
-
-			for (unsigned int i = 0; i < 8; i++)
-			{
-				__mtrr_fixed_range_type k4_types = { __readmsr(IA32_MTRR_FIX4K_C0000 + i) };
-
-				for (unsigned int j = 0; j < 8; j++)
-				{
-					descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
-					descriptor->memory_type = k4_types.types[j];
-					descriptor->physcial_base_address = (k4_base + (i * k4_size * 8)) + (k4_size * j);
-					descriptor->physcial_end_address = (k4_base + (i * k4_size * 8)) + (k4_size * j) + (k4_size - 1);
-					descriptor->fixed_range = true;
-				}
-			}
-		}
-
-		//
-		// Indicates the number of variable ranges
-		// implemented on the processor.
-		for (int i = 0; i < mtrr_cap.range_register_number; i++)
-		{
-			//
-			// The first entry in each pair (IA32_MTRR_PHYSBASEn) defines the base address and memory type for the range;
-			// the second entry(IA32_MTRR_PHYSMASKn) contains a mask used to determine the address range.The 搉?suffix
-			// is in the range 0 through m? and identifies a specific register pair.
-			//
-			current_phys_base.all = __readmsr(IA32_MTRR_PHYSBASE0 + (i * 2));
-			current_phys_mask.all = __readmsr(IA32_MTRR_PHYSMASK0 + (i * 2));
-
-			//
-			// If range is enabled
-			if (current_phys_mask.valid && current_phys_base.type != mtrr_def_type.memory_type)
-			{
-				descriptor = &g_vmm_context->mtrr_info.memory_range[g_vmm_context->mtrr_info.enabled_memory_ranges++];
-
-				//
-				// Calculate base address, physbase is truncated by 12 bits so we have to left shift it by 12
-				//
-				descriptor->physcial_base_address = current_phys_base.physbase << PAGE_SHIFT;
-
-				//
-				// Index of first bit set to one determines how much do we have to bit shift to get size of range
-				// physmask is truncated by 12 bits so we have to left shift it by 12
-				//
-				unsigned long bits_in_mask = 0;
-				_BitScanForward64(&bits_in_mask, current_phys_mask.physmask << PAGE_SHIFT);
-
-				//
-				// Calculate the end of range specified by mtrr
-				//
-				descriptor->physcial_end_address = descriptor->physcial_base_address + ((1ULL << bits_in_mask) - 1ULL);
-
-				//
-				// Get memory type of range
-				//
-				descriptor->memory_type = (unsigned __int8)current_phys_base.type;
-				descriptor->fixed_range = false;
-			}
-		}
-	}
-
-	/// <summary>
-	/// Get page cache memory type
-	/// </summary>
-	/// <param name="pfn"></param>
-	/// <param name="is_large_page"></param>
-	/// <returns></returns>
-	unsigned __int8 get_memory_type(unsigned __int64 pfn, bool is_large_page)
-	{
-		unsigned __int64 page_start_address = is_large_page == true ? pfn * LARGE_PAGE_SIZE : pfn * PAGE_SIZE;
-		unsigned __int64 page_end_address = is_large_page == true ? (pfn * LARGE_PAGE_SIZE) + (LARGE_PAGE_SIZE - 1) : (pfn * PAGE_SIZE) + (PAGE_SIZE - 1);
-		unsigned __int8 memory_type = g_vmm_context->mtrr_info.default_memory_type;
-
-		for (unsigned int i = 0; i < g_vmm_context->mtrr_info.enabled_memory_ranges; i++)
-		{
-			if (page_start_address >= g_vmm_context->mtrr_info.memory_range[i].physcial_base_address &&
-				page_end_address <= g_vmm_context->mtrr_info.memory_range[i].physcial_end_address)
-			{
-				memory_type = g_vmm_context->mtrr_info.memory_range[i].memory_type;
-
-				if (g_vmm_context->mtrr_info.memory_range[i].fixed_range == true)
-					break;
-
-				if (memory_type == MEMORY_TYPE_UNCACHEABLE)
-					break;
-			}
-		}
-
-		return memory_type;
-	}
-
-	/// <summary>
-	/// Check if potential large page doesn't land on two or more different cache memory types
-	/// </summary>
-	/// <param name="pfn"></param>
-	/// <returns></returns>
-	bool is_valid_for_large_page(unsigned __int64 pfn)
-	{
-		unsigned __int64 page_start_address = pfn * LARGE_PAGE_SIZE;
-		unsigned __int64 page_end_address = (pfn * LARGE_PAGE_SIZE) + (LARGE_PAGE_SIZE - 1);
-
-		for (unsigned int i = 0; i < g_vmm_context->mtrr_info.enabled_memory_ranges; i++)
-		{
-			if (page_start_address <= g_vmm_context->mtrr_info.memory_range[i].physcial_end_address &&
-				page_end_address > g_vmm_context->mtrr_info.memory_range[i].physcial_end_address)
-				return false;
-
-			else if (page_start_address < g_vmm_context->mtrr_info.memory_range[i].physcial_base_address &&
-					 page_end_address >= g_vmm_context->mtrr_info.memory_range[i].physcial_base_address)
-				return false;
-		}
-
-		return true;
-	}
-
-	/// <summary> 
-	/// Setup page memory type
-	/// </summary>
-	/// <param name="entry"> Pointer to pml2 entry </param>
-	/// <param name="pfn"> Page frame number </param>
-	bool setup_pml2_entry(__ept_state& ept_state, __ept_pde& entry, unsigned __int64 pfn)
-	{
-		entry.page_directory_entry.physical_address = pfn;
-		
-		if (is_valid_for_large_page(pfn) == true)
-		{
-			entry.page_directory_entry.memory_type = get_memory_type(pfn, true);
-			return true;
-		}
-
-		else
-		{
-			void* split_buffer = pool_manager::request_pool<void*>(pool_manager::INTENTION_SPLIT_PML2, true, sizeof(__ept_dynamic_split));
-			if (split_buffer == nullptr)
-			{
-				LogError("Failed to allocate split buffer");
-				return false;
-			}
-
-			return split_pml2(ept_state, split_buffer, pfn * LARGE_PAGE_SIZE);
-		}
-	}
-
-	/// <summary>
-	/// Create ept page table
-	/// </summary>
-	/// <returns> status </returns>
-	bool create_ept_page_table(__ept_state& ept_state)
-	{
-		PHYSICAL_ADDRESS max_size;
-		max_size.QuadPart = MAXULONG64;
-
-		ept_state.ept_page_table = allocate_contignous_memory<__vmm_ept_page_table>();
-		if (ept_state.ept_page_table == NULL)
-		{
-			LogError("Failed to allocate memory for PageTable");
-			return false;
-		}
-
-		__vmm_ept_page_table* page_table = ept_state.ept_page_table;
-		RtlSecureZeroMemory(page_table, sizeof(__vmm_ept_page_table));
-
-		//
-		// Set all pages as rwx to prevent unwanted ept violation
-		//
-		page_table->pml4[0].physical_address = GET_PFN(MmGetPhysicalAddress(&page_table->pml3[0]).QuadPart);
-		page_table->pml4[0].read = 1;
-		page_table->pml4[0].write = 1;
-		page_table->pml4[0].execute = 1;
-
-		__ept_pdpte pdpte_template = { 0 };
-
-		pdpte_template.read = 1;
-		pdpte_template.write = 1;
-		pdpte_template.execute = 1;
-
-		__stosq((unsigned __int64*)&page_table->pml3[0], pdpte_template.all, 512);
-
-		for (int i = 0; i < 512; i++)
-			page_table->pml3[i].physical_address = GET_PFN(MmGetPhysicalAddress(&page_table->pml2[i][0]).QuadPart);
-
-		__ept_pde pde_template = { 0 };
-
-		pde_template.page_directory_entry.read = 1;
-		pde_template.page_directory_entry.write = 1;
-		pde_template.page_directory_entry.execute = 1;
-
-		pde_template.page_directory_entry.large_page = 1;
-
-		__stosq((unsigned __int64*)&page_table->pml2[0], pde_template.all, 512 * 512);
-
-		for (int i = 0; i < 512; i++)
-			for (int j = 0; j < 512; j++)
-				if(setup_pml2_entry(ept_state, page_table->pml2[i][j], (i * 512) + j) == false)
-					return false;
-
-		return true;
-	}
-
-	/// <summary>
-	/// Initialize ept structure
-	/// </summary>
-	/// <returns></returns>
-	bool initialize(__ept_state& ept_state)
-	{
-		__eptp* ept_pointer = allocate_pool<__eptp*>(PAGE_SIZE);
-		if (ept_pointer == NULL)
-			return false;
-
-		RtlSecureZeroMemory(ept_pointer, PAGE_SIZE);
-
-		if (create_ept_page_table(ept_state) == false)
-			return false;
-
-		ept_pointer->memory_type = g_vmm_context->mtrr_info.default_memory_type;
-
-		// Indicates 4 level paging
-		ept_pointer->page_walk_length = 3;
-
-		ept_pointer->pml4_address = GET_PFN(MmGetPhysicalAddress(&ept_state.ept_page_table->pml4).QuadPart);
-
-		ept_state.ept_pointer = ept_pointer;
-
-		return true;
-	}
-
-	/// <summary>
-	/// Get pml2 entry
-	/// </summary>
-	/// <param name="physical_address"></param>
-	/// <returns> pointer to pml2 </returns>
-	__ept_pde* get_pml2_entry(__ept_state& ept_state, unsigned __int64 physical_address)
-	{
-		unsigned __int64 pml4_index = MASK_EPT_PML4_INDEX(physical_address);
-		unsigned __int64 pml3_index = MASK_EPT_PML3_INDEX(physical_address);
-		unsigned __int64 pml2_index = MASK_EPT_PML2_INDEX(physical_address);
-
-		if (pml4_index > 0)
-		{
-			LogError("Address above 512GB is invalid");
-			return nullptr;
-		}
-
-		return &ept_state.ept_page_table->pml2[pml3_index][pml2_index];
-	}
-
-	/// <summary>
-	/// Get pml1 entry
-	/// </summary>
-	/// <param name="physical_address"></param>
-	/// <returns></returns>
-	__ept_pte* get_pml1_entry(__ept_state& ept_state, unsigned __int64 physical_address)
-	{
-		unsigned __int64 pml4_index = MASK_EPT_PML4_INDEX(physical_address);
-		unsigned __int64 pml3_index = MASK_EPT_PML3_INDEX(physical_address);
-		unsigned __int64 pml2_index = MASK_EPT_PML2_INDEX(physical_address);
-
-		if (pml4_index > 0)
-		{
-			LogError("Address above 512GB is invalid");
-			return nullptr;
-		}
-
-		__ept_pde* pml2 = &ept_state.ept_page_table->pml2[pml3_index][pml2_index];
-		if (pml2->page_directory_entry.large_page == 1)
-		{
-			return nullptr;
-		}
-
-		PHYSICAL_ADDRESS pfn;
-		pfn.QuadPart = pml2->large_page.physical_address << PAGE_SHIFT;
-		__ept_pte* pml1 = (__ept_pte*)MmGetVirtualForPhysical(pfn);
-
-		if (pml1 == nullptr)
-		{
-			return nullptr;
-		}
-
-		pml1 = &pml1[MASK_EPT_PML1_INDEX(physical_address)];
-		return pml1;
-	}
-
-	/// <summary>
-	/// Split pml2 into 512 pml1 entries (From one 2MB page to 512 4KB pages)
-	/// </summary>
-	/// <param name="pre_allocated_buffer"> Pre allocated buffer for split </param>
-	/// <param name="physical_address"></param>
-	/// <returns> status </returns>
-	bool split_pml2(__ept_state& ept_state, void* pre_allocated_buffer, unsigned __int64 physical_address)
-	{
-		__ept_pde* entry = get_pml2_entry(ept_state, physical_address);
-		if (entry == NULL)
-		{
-			LogError("Invalid address passed");
-			return false;
-		}
-
-		__ept_dynamic_split* new_split = (__ept_dynamic_split*)pre_allocated_buffer;
-		RtlSecureZeroMemory(new_split, sizeof(__ept_dynamic_split));
-
-		//
-		// Set all pages as rwx to prevent unwanted ept violation
-		//
-		new_split->entry = entry;
-
-		__ept_pte entry_template = { 0 };
-		entry_template.read = 1;
-		entry_template.write = 1;
-		entry_template.execute = 1;
-		entry_template.ept_memory_type = entry->page_directory_entry.memory_type;
-		entry_template.ignore_pat = entry->page_directory_entry.ignore_pat;
-		entry_template.suppress_ve = entry->page_directory_entry.suppressve;
-
-		__stosq((unsigned __int64*)&new_split->pml1[0], entry_template.all, 512);
-		for (int i = 0; i < 512; i++)
-		{
-			unsigned __int64 pfn = ((entry->page_directory_entry.physical_address * LARGE_PAGE_SIZE) >> PAGE_SHIFT) + i;
-			new_split->pml1[i].physical_address = pfn;
-			new_split->pml1[i].ept_memory_type = get_memory_type(pfn, false);
-		}
-
-		__ept_pde new_entry = { 0 };
-		new_entry.large_page.read = 1;
-		new_entry.large_page.write = 1;
-		new_entry.large_page.execute = 1;
-
-		new_entry.large_page.physical_address = MmGetPhysicalAddress(&new_split->pml1[0]).QuadPart >> PAGE_SHIFT;
-
-		RtlCopyMemory(entry, &new_entry, sizeof(new_entry));
-
-		return true;
-	}
-
-	bool is_page_splitted(__ept_state& ept_state, unsigned __int64 physical_address)
-	{
-		__ept_pde* entry = get_pml2_entry(ept_state, physical_address);
-		return !entry->page_directory_entry.large_page;
-	}
-
-	/// <summary>
-	/// Swap physcial pages and invalidate tlb
-	/// </summary>
-	/// <param name="entry_address"> Pointer to page table entry which we want to change </param>
-	/// <param name="entry_value"> Pointer to page table entry which we want use to change </param>
-	/// <param name="invalidation_type"> Specifiy if we want to invalidate single context or all contexts  </param>
-	void swap_pml1_and_invalidate_tlb(__ept_state& ept_state, __ept_pte* entry_address, __ept_pte entry_value, invept_type invalidation_type)
-	{
-		// Set the value
-		entry_address->all = entry_value.all;
-
-		// Invalidate the cache
-		if (invalidation_type == invept_type::invept_single_context)
-		{
-			invept_single_context_address(ept_state.ept_pointer->all);
-		}
-		else
-		{
-			invept_all_contexts();
-		}
-	}
-
-	void write_int1(uint8_t* address)
-	{
-		*address = 0xF1; // INT1 (ICEBP)
-	}
-
-
-
-	bool hook_page_pfn_ept(
-		__ept_state& ept_state,
-		unsigned __int64 pfn_of_target_page,
-		unsigned __int64 pfn_of_fake_page
-	)
-	{
-		if (pfn_of_target_page == 0 || pfn_of_fake_page == 0)
-		{
-			LogError("Invalid PFN parameters");
-			return false;
-		}
-
-		// 计算目标页面的物理地址
-		unsigned __int64 target_physical_address = pfn_of_target_page << PAGE_SHIFT;
-
-		// 如果没有 split，则执行 PML2 拆页
-
-		if (is_page_splitted(ept_state, target_physical_address) == false)
-		{
-			void* split_buffer = pool_manager::request_pool<void*>(
-				pool_manager::INTENTION_SPLIT_PML2, true, sizeof(__ept_dynamic_split)
-				);
-			if (!split_buffer)
-			{
-				LogError("Failed to allocate split buffer");
-				return false;
-			}
-
-			if (!split_pml2(ept_state, split_buffer, target_physical_address))
-			{
-				pool_manager::release_pool(split_buffer);
-				LogError("PML2 Split failed");
-				return false;
-			}
-		}
-
-		// 获取 PML1 页表项
-		__ept_pte* target_page = get_pml1_entry(ept_state, target_physical_address);
-		if (!target_page)
-		{
-			LogError("Failed to get PML1 entry");
-			return false;
-		}
-
-		// 创建 Hook 信息结构
-		auto* hook_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
-		if (!hook_info)
-		{
-			LogError("Failed to allocate hooked page info");
-			return false;
-		}
-
-		// 填充 hook 信息
-		hook_info->pfn_of_hooked_page = pfn_of_target_page;
-		hook_info->pfn_of_fake_page = pfn_of_fake_page;
-		hook_info->entry_address = target_page;
-	
-	 
-		hook_info->entry_address->execute = 0;
-		hook_info->entry_address->read = 1;
-		hook_info->entry_address->write = 1;
-
-		hook_info->original_entry = *target_page;
-		hook_info->changed_entry = *target_page;
-
-	 
-		hook_info->changed_entry.read = 0;
-		hook_info->changed_entry.write = 0;
-		hook_info->changed_entry.execute = 1;
-		 
-		hook_info->changed_entry.physical_address = pfn_of_fake_page;
-		 
-
-		// 修改 EPT 映射并刷新 TLB
-		
-		// 插入到 hook 链表中
-		InsertHeadList(&ept_state.hooked_page_list, &hook_info->hooked_page_list);
-	    // swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->changed_entry, invept_type::invept_single_context);
-		 invept_single_context_address(ept_state.ept_pointer->all);
-
-		invept_all_contexts();
-		return true;
-	}
+#include "mm.h"
+#include "../utils/ntos_struct_def.h"
+#include "../utils/internal_function_defs.h"
+namespace hv {
+
+// identity-map the EPT paging structures
+void prepare_ept(vcpu_ept_data& ept) {
+  memset(&ept, 0, sizeof(ept));
   
+  ept.dummy_page_pfn = utils::internal_functions::pfn_mm_get_physical_address(ept.dummy_page).QuadPart >> 12;
 
-	bool unhook_page_pfn_ept(__ept_state& ept_state, unsigned __int64 pfn_of_target_page)
-	{
-		if (pfn_of_target_page == 0)
-		{
-			return false;
-		}
+  ept.num_used_free_pages = 0;
 
-		// 遍历 hooked_page_list 找到目标 PFN 对应的 hook 信息
-		for (PLIST_ENTRY entry = ept_state.hooked_page_list.Flink; entry != &ept_state.hooked_page_list; entry = entry->Flink)
-		{
-			auto* hook_info = CONTAINING_RECORD(entry, __ept_hooked_page_info, hooked_page_list);
+  for (size_t i = 0; i < ept_free_page_count; ++i)
+    ept.free_page_pfns[i] = utils::internal_functions::pfn_mm_get_physical_address(&ept.free_pages[i]).QuadPart >> 12;
 
-			if (hook_info->pfn_of_hooked_page != pfn_of_target_page)
-			{
-				continue;
+  ept.hooks.active_list_head = nullptr;
+  ept.hooks.free_list_head   = &ept.hooks.buffer[0];
 
-			}
+  for (size_t i = 0; i < ept.hooks.capacity - 1; ++i)
+    ept.hooks.buffer[i].next = &ept.hooks.buffer[i + 1];
 
-			 
-			 hook_info->original_entry.read = 1;
-			 hook_info->original_entry.write = 1;
-			 hook_info->original_entry.execute = 1;
-		 
-			 swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->original_entry, invept_type::invept_all_context);
-			 
-			RemoveEntryList(entry);
-			pool_manager::release_pool(hook_info);
-			return true;
-			 
-		}
+  // the last node points to NULL
+  ept.hooks.buffer[ept.hooks.capacity - 1].next = nullptr;
 
-		 
-		return false;
-	}
- 
- 
-//	bool unhook_process_all_user_exception(
-//		__ept_state& ept_state,
-//		HANDLE process_id
-//	)
-//	{
-//		bool unhooked_any = false;
-//		PLIST_ENTRY current_page = ept_state.hooked_page_list.Flink;
-//
-//		while (current_page != &ept_state.hooked_page_list)
-//		{
-//			PLIST_ENTRY next_page = current_page->Flink;
-//			__ept_hooked_page_info* hooked_page_info = CONTAINING_RECORD(current_page, __ept_hooked_page_info, hooked_page_list);
-//
-//			if (hooked_page_info->process_id != process_id)
-//			{
-//				current_page = next_page;
-//				continue;
-//			}
-//
-//			unhooked_any = true;
-//
-//	
-//
-//			// 遍历并清理该页内 hook 的函数
-//			PLIST_ENTRY current_func = hooked_page_info->hooked_functions_list.Flink;
-//			while (current_func != &hooked_page_info->hooked_functions_list)
-//			{
-//				PLIST_ENTRY next_func = current_func->Flink;
-//				__ept_hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, __ept_hooked_function_info, hooked_function_list);
-//
-//				RemoveEntryList(current_func);
-//
-//				RtlCopyMemory(hooked_function_info->fake_page_contents, hooked_function_info->original_instructions_backup, hooked_function_info->hook_size);
-//				if (hooked_function_info->original_instructions_backup)
-//				{
-//					pool_manager::release_pool(hooked_function_info->original_instructions_backup);
-//				}
-//
-//				pool_manager::release_pool(hooked_function_info);
-//				current_func = next_func;
-//			}
-//
-//
-//			// 恢复页表权限
-//			hooked_page_info->original_entry.execute = 1;
-//			swap_pml1_and_invalidate_tlb(ept_state, hooked_page_info->entry_address, hooked_page_info->original_entry, invept_type::invept_single_context);
-//			// 再释放 fake page 和页结构体
-//			pool_manager::release_pool(hooked_page_info->fake_page_contents);
-//			pool_manager::release_pool(hooked_page_info);
-//
-//		
-//	
-//			//invept_all_contexts();
-//			// 先移除 page 节点（防止在函数内提前释放 current_page 后续访问非法）
-//			RemoveEntryList(current_page);
-//
-//			current_page = next_page;
-//			 
-//		}
-//
-//		 
-//
-//		return unhooked_any;
-//	}
-//
-//	bool remove_breakpoints_by_type_for_process(
-//		_In_ HANDLE process_id,
-//		_In_ hook_type type )
-//	{
-//		bool removed = false;
-//		LIST_ENTRY* hook_page_list = &g_ept_breakpoint_hook_list;
-//
-//		for (PLIST_ENTRY page_entry = hook_page_list->Flink;
-//			page_entry != hook_page_list;
-//			)
-//		{
-//			auto* hooked_page = CONTAINING_RECORD(page_entry, ept_debugged_page_info, debugged_page_list_entry);
-//			PLIST_ENTRY next_page_entry = page_entry->Flink;
-//
-//			if (hooked_page->process_id != process_id)
-//			{
-//				page_entry = next_page_entry;
-//				continue;
-//			}
-//
-//			for (PLIST_ENTRY func_entry = hooked_page->breakpoints_list_head.Flink;
-//				func_entry != &hooked_page->breakpoints_list_head;
-//				)
-//			{
-//				auto* hook_info = CONTAINING_RECORD(func_entry, ept_breakpoint_info, breakpoint_list_entry);
-//				PLIST_ENTRY next_func_entry = func_entry->Flink;
-//
-//				if (hook_info->type == type)
-//				{
-//					  
-//					// 从链表中移除并释放
-//					RemoveEntryList(func_entry);
-//
-//					if (hook_info->trampoline_va)
-//					{
-//						utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x1000);
-//					}
-//					pool_manager::release_pool(hook_info );
-//					removed = true;
-//				}
-//
-//				func_entry = next_func_entry;
-//			}
-//			 
-//			if (IsListEmpty(&hooked_page->breakpoints_list_head))
-//			{
-//				RemoveEntryList(page_entry);
-//				pool_manager::release_pool(hooked_page);
-//			}
-//
-//			page_entry = next_page_entry;
-//		}
-//
-//		return removed;
-//	}
-//
-//	void install_ept_hook(__ept_state& ept_state, uint64_t const original_page_pfn,uint64_t const executable_page_pfn)
-//	{
-//
-//
-//	}
+  // setup the first PML4E so that it points to our PDPT
+  auto& pml4e             = ept.pml4[0];
+  pml4e.flags             = 0;
+  pml4e.read_access       = 1;
+  pml4e.write_access      = 1;
+  pml4e.execute_access    = 1;
+  pml4e.accessed          = 0;
+  pml4e.user_mode_execute = 1;
+  pml4e.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&ept.pdpt).QuadPart >> 12;
 
+  // MTRR data for setting memory types
+  auto const mtrrs = read_mtrr_data();
+
+  // TODO: allocate a PT for the fixed MTRRs region so that we can get
+  // more accurate memory typing in that area (as opposed to just
+  // mapping the whole PDE as UC).
+
+  for (size_t i = 0; i < ept_pd_count; ++i) {
+    // point each PDPTE to the corresponding PD
+    auto& pdpte             = ept.pdpt[i];
+    pdpte.flags             = 0;
+    pdpte.read_access       = 1;
+    pdpte.write_access      = 1;
+    pdpte.execute_access    = 1;
+    pdpte.accessed          = 0;
+    pdpte.user_mode_execute = 1;
+    pdpte.page_frame_number = utils::internal_functions::pfn_mm_get_physical_address(&ept.pds[i]).QuadPart >> 12;
+
+    for (size_t j = 0; j < 512; ++j) {
+      // identity-map every GPA to the corresponding HPA
+      auto& pde             = ept.pds_2mb[i][j];
+      pde.flags             = 0;
+      pde.read_access       = 1;
+      pde.write_access      = 1;
+      pde.execute_access    = 1;
+      pde.ignore_pat        = 0;
+      pde.large_page        = 1;
+      pde.accessed          = 0;
+      pde.dirty             = 0;
+      pde.user_mode_execute = 1;
+      pde.suppress_ve       = 0;
+      pde.page_frame_number = (i << 9) + j;
+      pde.memory_type       = calc_mtrr_mem_type(mtrrs,
+        pde.page_frame_number << 21, 0x1000 << 9);
+    }
+  }
 }
+
+// update the memory types in the EPT paging structures based on the MTRRs.
+// this function should only be called from root-mode during vmx-operation.
+void update_ept_memory_type(vcpu_ept_data& ept) {
+  // TODO: completely virtualize the guest MTRRs
+  auto const mtrrs = read_mtrr_data();
+
+  for (size_t i = 0; i < ept_pd_count; ++i) {
+    for (size_t j = 0; j < 512; ++j) {
+      auto& pde = ept.pds_2mb[i][j];
+
+      // 2MB large page
+      if (pde.large_page) {
+        // update the memory type for this PDE
+        pde.memory_type = calc_mtrr_mem_type(mtrrs,
+          pde.page_frame_number << 21, 0x1000 << 9);
+      }
+      // PDE points to a PT
+      else {
+        auto const pt = reinterpret_cast<ept_pte*>(host_physical_memory_base
+          + (ept.pds[i][j].page_frame_number << 12));
+
+        // update the memory type for every PTE
+        for (size_t k = 0; k < 512; ++k) {
+          pt[k].memory_type = calc_mtrr_mem_type(mtrrs,
+            pt[k].page_frame_number << 12, 0x1000);
+        }
+      }
+    }
+  }
+}
+
+// set the memory type in every EPT paging structure to the specified value
+void set_ept_memory_type(vcpu_ept_data& ept, uint8_t const memory_type) {
+  for (size_t i = 0; i < ept_pd_count; ++i) {
+    for (size_t j = 0; j < 512; ++j) {
+      auto& pde = ept.pds_2mb[i][j];
+
+      // 2MB large page
+      if (pde.large_page)
+        pde.memory_type = memory_type;
+      // PDE points to a PT
+      else {
+        auto const pt = reinterpret_cast<ept_pte*>(host_physical_memory_base
+          + (ept.pds[i][j].page_frame_number << 12));
+
+        // update the memory type for every PTE
+        for (size_t k = 0; k < 512; ++k)
+          pt[k].memory_type = memory_type;
+      }
+    }
+  }
+}
+
+// get the corresponding EPT PDPTE for a given physical address
+ept_pdpte* get_ept_pdpte(vcpu_ept_data& ept, uint64_t const physical_address) {
+  pml4_virtual_address const addr = { reinterpret_cast<void*>(physical_address) };
+
+  if (addr.pml4_idx != 0)
+    return nullptr;
+
+  if (addr.pdpt_idx >= ept_pd_count)
+    return nullptr;
+
+  return &ept.pdpt[addr.pdpt_idx];
+}
+
+// get the corresponding EPT PDE for a given physical address
+ept_pde* get_ept_pde(vcpu_ept_data& ept, uint64_t const physical_address) {
+  pml4_virtual_address const addr = { reinterpret_cast<void*>(physical_address) };
+
+  if (addr.pml4_idx != 0)
+    return nullptr;
+
+  if (addr.pdpt_idx >= ept_pd_count)
+    return nullptr;
+
+  return &ept.pds[addr.pdpt_idx][addr.pd_idx];
+}
+
+// get the corresponding EPT PTE for a given physical address
+ept_pte* get_ept_pte(vcpu_ept_data& ept,
+    uint64_t const physical_address, bool const force_split) {
+  pml4_virtual_address const addr = { reinterpret_cast<void*>(physical_address) };
+
+  if (addr.pml4_idx != 0)
+    return nullptr;
+
+  if (addr.pdpt_idx >= ept_pd_count)
+    return nullptr;
+
+  auto& pde_2mb = ept.pds_2mb[addr.pdpt_idx][addr.pd_idx];
+
+  if (pde_2mb.large_page) {
+    if (!force_split)
+      return nullptr;
+
+    split_ept_pde(ept, &pde_2mb);
+
+    // failed to split the PDE
+    if (pde_2mb.large_page)
+      return nullptr;
+  }
+
+  auto const pt = reinterpret_cast<ept_pte*>(host_physical_memory_base
+    + (ept.pds[addr.pdpt_idx][addr.pd_idx].page_frame_number << 12));
+
+  return &pt[addr.pt_idx];
+}
+
+// split a 2MB EPT PDE so that it points to an EPT PT
+void split_ept_pde(vcpu_ept_data& ept, ept_pde_2mb* const pde_2mb) {
+  // this PDE is already split
+  if (!pde_2mb->large_page)
+    return;
+
+  // no available free pages
+  if (ept.num_used_free_pages >= ept_free_page_count)
+    return;
+
+  // allocate a free page for the PT
+  auto const pt_pfn = ept.free_page_pfns[ept.num_used_free_pages];
+  auto const pt = reinterpret_cast<ept_pte*>(
+    &ept.free_pages[ept.num_used_free_pages]);
+  ++ept.num_used_free_pages;
+
+  for (size_t i = 0; i < 512; ++i) {
+    auto& pte = pt[i];
+    pte.flags = 0;
+
+    // copy the parent PDE flags
+    pte.read_access             = pde_2mb->read_access;
+    pte.write_access            = pde_2mb->write_access;
+    pte.execute_access          = pde_2mb->execute_access;
+    pte.memory_type             = pde_2mb->memory_type;
+    pte.ignore_pat              = pde_2mb->ignore_pat;
+    pte.accessed                = pde_2mb->accessed;
+    pte.dirty                   = pde_2mb->dirty;
+    pte.user_mode_execute       = pde_2mb->user_mode_execute;
+    pte.verify_guest_paging     = pde_2mb->verify_guest_paging;
+    pte.paging_write_access     = pde_2mb->paging_write_access;
+    pte.supervisor_shadow_stack = pde_2mb->supervisor_shadow_stack;
+    pte.suppress_ve             = pde_2mb->suppress_ve;
+    pte.page_frame_number       = (pde_2mb->page_frame_number << 9) + i;
+  }
+
+  auto const pde         = reinterpret_cast<ept_pde*>(pde_2mb);
+  pde->flags             = 0;
+  pde->read_access       = 1;
+  pde->write_access      = 1;
+  pde->execute_access    = 1;
+  pde->user_mode_execute = 1;
+  pde->page_frame_number = pt_pfn;
+}
+
+// memory read/written will use the original page while code
+// being executed will use the executable page instead
+bool install_ept_hook(vcpu_ept_data& ept,
+    uint64_t const original_page_pfn,
+    uint64_t const executable_page_pfn) {
+  // we ran out of EPT hooks :(
+  if (!ept.hooks.free_list_head)
+    return false;
+
+  // get the EPT PTE, and possible split an existing PDE if needed
+  auto const pte = get_ept_pte(ept, original_page_pfn << 12, true);
+  if (!pte)
+    return false;
+
+  // remove a hook node from the free list
+  auto const hook_node = ept.hooks.free_list_head;
+  ept.hooks.free_list_head = hook_node->next;
+
+  // insert the hook node into the active list
+  hook_node->next = ept.hooks.active_list_head;
+  ept.hooks.active_list_head = hook_node;
+
+  // initialize the hook node
+  hook_node->orig_pfn = static_cast<uint32_t>(original_page_pfn);
+  hook_node->exec_pfn = static_cast<uint32_t>(executable_page_pfn);
+
+  // an instruction fetch to this physical address will now trigger
+  // an ept-violation vm-exit where the real "meat" of the ept hook is
+  pte->execute_access = 0;
+
+  vmx_invept(invept_all_context, {});
+
+  return true;
+}
+
+// remove an EPT hook that was installed with install_ept_hook()
+void remove_ept_hook(vcpu_ept_data& ept, uint64_t const original_page_pfn) {
+  if (!ept.hooks.active_list_head)
+    return;
+
+  // the head is the target node
+  if (ept.hooks.active_list_head->orig_pfn == original_page_pfn) {
+    auto const new_head = ept.hooks.active_list_head->next;
+
+    // add to the free list
+    ept.hooks.active_list_head->next = ept.hooks.free_list_head;
+    ept.hooks.free_list_head = ept.hooks.active_list_head;
+
+    // remove from the active list
+    ept.hooks.active_list_head = new_head;
+  } else {
+    auto prev = ept.hooks.active_list_head;
+
+    // search for the node BEFORE the target node (prev if this was doubly)
+    while (prev->next) {
+      if (prev->next->orig_pfn == original_page_pfn)
+        break;
+
+      prev = prev->next;
+    }
+
+    if (!prev->next)
+      return;
+
+    auto const new_next = prev->next->next;
+
+    // add to the free list
+    prev->next->next = ept.hooks.free_list_head;
+    ept.hooks.free_list_head = prev->next;
+
+    // remove from the active list
+    prev->next = new_next;
+  }
+
+  auto const pte = get_ept_pte(ept, original_page_pfn << 12, false);
+
+  // this should NOT fail
+  if (!pte)
+    return;
+
+  // restore original EPT page attributes
+  pte->read_access       = 1;
+  pte->write_access      = 1;
+  pte->execute_access    = 1;
+  pte->page_frame_number = original_page_pfn;
+
+  vmx_invept(invept_all_context, {});
+}
+
+// find the EPT hook for the specified PFN
+vcpu_ept_hook_node* find_ept_hook(vcpu_ept_data& ept,
+    uint64_t const original_page_pfn) {
+  // TODO:
+  //   maybe use a more optimal data structure to handle a large
+  //   amount of EPT hooks?
+
+  // linear search through the active hook list
+  for (auto curr = ept.hooks.active_list_head; curr; curr = curr->next) {
+    if (curr->orig_pfn == original_page_pfn)
+      return curr;
+  }
+
+  return nullptr;
+}
+
+} // namespace hv
+

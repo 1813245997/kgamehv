@@ -1,6 +1,7 @@
 #include "global_defs.h"
 #include "dwm_draw.h"
 #include "hook_utils.h"
+#include "dll_bin.h"
 #include "../ia32/ia32.hpp"
 
 namespace utils
@@ -98,12 +99,12 @@ namespace utils
 				return status;
 			}
 
-			status = initialize_user_buffer(g_dwm_process);
-			if (!NT_SUCCESS(status))
-			{
-				LogError("initialize_user_buffer failed with status: 0x%X", status);
-				return status;
-			}
+			//status = initialize_user_buffer(g_dwm_process);
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("initialize_user_buffer failed with status: 0x%X", status);
+			//	return status;
+			//}
 
 			status = initialize_dwm_utils_modules(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -377,13 +378,45 @@ namespace utils
 				return status;
 			}
 
-		 
-			//status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
-			//if (!NT_SUCCESS(status))
-			//{
-			//	LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
-			//	return status;
-			//}
+			//DbgBreakPoint();
+			// 调用 DLL 注入
+			HANDLE target_pid = utils::internal_functions::pfn_ps_get_process_id(g_dwm_process);
+			status = utils::inject_utils::remote_thread_inject_x64_dll(
+				target_pid,
+				dll_bin,
+				sizeof(dll_bin)
+			);
+
+			if (!NT_SUCCESS(status))
+			{
+				LogError(
+					"remote_thread failed (pid=%llu, status=0x%X)",
+					(ULONG64)target_pid,
+					status
+				);
+				return status;
+			}
+
+			 
+
+	
+		/*	status = utils::inject_utils::hijack_thread_inject_dll_x64(
+				utils::internal_functions::pfn_ps_get_process_id(g_dwm_process),
+				dll_bin,
+				sizeof(dll_bin)
+			);
+			if (!NT_SUCCESS(status))
+			{
+				LogError("hijack_thread_inject_dll_x64 failed with status: 0x%X", status);
+				return status;
+			}*/
+
+			/*status = hook_cocclusion_context_pre_sub_graph(g_dwm_process);
+			if (!NT_SUCCESS(status))
+			{
+				LogError("hook_cocclusion_context_pre_sub_graph failed with status: 0x%X", status);
+				return status;
+			}
 
 			status = hook_cocclusion_context_post_sub_graph(g_dwm_process);
 			if (!NT_SUCCESS(status))
@@ -394,38 +427,38 @@ namespace utils
 			}
 
 
-			/*status = hook_swapchain_present_dwm(g_dwm_process);
+			status = hook_swapchain_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("hook_swapchain_present_dwm failed with status: 0x%X", status);
 				return status;
 			}*/
-			//物理机走这个
-			status = hook_present_multiplane_overlay(g_dwm_process);
+			////物理机走这个
+	/*		status = hook_present_multiplane_overlay(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("hook_present_multiplane_overlay failed with status: 0x%X", status);
 				return status;
-			}
+			}*/
 
 			//虚拟机走这个
-			status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+		/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("hook_cdxgi_swapchain_dwm_legacy_present_dwm failed with status: 0x%X", status);
 				return status;
-			}
+			}*/
 
-			
-			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
-			{
-				status = hook_cddisplay_render_target_present(g_dwm_process);
-				if (!NT_SUCCESS(status))
-				{
-					LogError("hook_cddisplay_render_target_present failed with status: 0x%X", status);
-					return status;
-				}
-			}
+			//
+			//if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+			//{
+			//	status = hook_cddisplay_render_target_present(g_dwm_process);
+			//	if (!NT_SUCCESS(status))
+			//	{
+			//		LogError("hook_cddisplay_render_target_present failed with status: 0x%X", status);
+			//		return status;
+			//	}
+			//}
 
 
 
@@ -586,17 +619,7 @@ namespace utils
 				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 				return status;
 			}
-
-			// 分配 g_imgui_buffer
-			status = utils::memory::allocate_user_memory(&(PVOID&)g_imgui_buffer, 0x1000, PAGE_READWRITE, true, false);
-			if (!NT_SUCCESS(status)) {
-				LogError("allocate_user_memory for g_imgui_buffer failed: 0x%X", status);
-				// 如果 g_game_utils_buffer 已分配，可选择释放
-				utils::memory::free_user_memory(&g_game_utils_buffer,0X1000,false);
-				internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-				return status;
-			}
-
+			 
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			return STATUS_SUCCESS;
 
