@@ -298,14 +298,32 @@ namespace utils
 				return status;
 			}
 
+			if (!dll_shellcode)
+			{
+				return STATUS_UNSUCCESSFUL;
+			}
+
+			if (!dll_size)
+			{
+				return STATUS_UNSUCCESSFUL;
+			}
+
+
 			// 检查进程是否已退出
 			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING) {
 				utils::internal_functions::pfn_ob_dereference_object (process);
 				return STATUS_UNSUCCESSFUL;
 			}
 
-			// 内核池中拷贝一份 DLL
-			PUCHAR kernel_dll_copy = (PUCHAR)ExAllocatePool(PagedPool, dll_size);
+			
+			PUCHAR kernel_dll_copy = reinterpret_cast<PUCHAR>(
+				ExAllocatePoolWithTag(PagedPool, dll_size, 'ldll')
+				);
+			if (!kernel_dll_copy) {
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				return STATUS_INSUFFICIENT_RESOURCES;
+			}
+			 
 			memcpy(kernel_dll_copy, dll_shellcode, dll_size);
 
 			// 资源相关标志位

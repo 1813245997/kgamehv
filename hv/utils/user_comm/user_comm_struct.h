@@ -5,7 +5,7 @@ enum user_comm_op : uint64_t {
 	user_comm_file_delete_force ,
 	user_comm_get_module_info,
 	user_comm_user_hook,
- 
+	user_comm_remote_inject
 	// ø…Õÿ’π
 };
 
@@ -40,3 +40,10 @@ typedef struct user_comm_hook_params {
 	uint64_t new_api;           /**< Address of the new API (hook handler) */
 	uint64_t origin_function;   /**< Pointer to receive the original function address */
 } user_comm_hook_params, * p_user_comm_hook_params;
+
+/** New: Remote injection parameters */
+typedef struct user_comm_remote_inject_params {
+	uint64_t process_id;     /**< PID of the target process */
+	uint64_t module_buffer;  /**< Memory address of the module buffer */
+	uint64_t module_size;    /**< Size of the module in bytes */
+} user_comm_remote_inject_params, * p_user_comm_remote_inject_params;

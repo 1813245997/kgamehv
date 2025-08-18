@@ -55,6 +55,11 @@ namespace utils
 				is_succeed = handle_hook_user_api(request);
 				break;
 			}
+
+			case  user_comm_remote_inject:
+			{
+				 is_succeed = 
+			}
  
 
 			default:
@@ -288,6 +293,49 @@ namespace utils
 			request->status = hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 			return hook_result;
 
+
+		}
+
+		bool handle_remote_inject(user_comm_request* request)
+		{
+
+			if (!request || !request->input_buffer)
+			{
+				return false;
+			}
+
+			p_user_comm_remote_inject_params params =
+				reinterpret_cast<p_user_comm_remote_inject_params>(request->input_buffer);
+
+			HANDLE process_id = reinterpret_cast<HANDLE>(params->process_id);
+			void* module_buffer = reinterpret_cast<void*>(params->module_buffer);
+			SIZE_T module_size = static_cast<SIZE_T>(params->module_size);
+
+			PEPROCESS process = nullptr;
+			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
+			if (!NT_SUCCESS(status))
+			{
+				request->status = status;
+				return false;
+			}
+
+			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
+			{
+				utils::internal_functions::pfn_ob_dereference_object(process);
+				request->status = STATUS_PROCESS_IS_TERMINATING;
+				return false;
+			}
+
+			bool inject_result = utils::inject_utils::remote_thread_inject_x64_dll(
+				process_id,
+				module_buffer,
+				module_size
+			);
+
+			utils::internal_functions::pfn_ob_dereference_object(process);
+			request->status = inject_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+
+			return inject_result;
 
 		}
 	}
