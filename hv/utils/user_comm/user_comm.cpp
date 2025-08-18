@@ -58,7 +58,8 @@ namespace utils
 
 			case  user_comm_remote_inject:
 			{
-				 is_succeed = 
+				is_succeed = handle_remote_inject(request);
+				break;
 			}
  
 
