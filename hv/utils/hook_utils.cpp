@@ -567,9 +567,7 @@ namespace utils
 
 
 			RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
-
-
-
+			 
 			hooked_page_info->process_id = process_id;
 			hooked_page_info->pfn_of_hooked_page = GET_PFN(target_pa);
 			hooked_page_info->pfn_of_fake_page_contents = GET_PFN(utils::internal_functions::pfn_mm_get_physical_address(hooked_page_info->fake_page_contents).QuadPart);
@@ -756,7 +754,7 @@ void write_int3(uint8_t* address)
 		 if (utils::memory::is_user_address(rip))
 		 {
 			 //这个地方不可以上APC锁 因为是DPC级别
-			// ExAcquireFastMutex(&g_user_hook_page_list_lock);
+		 
 			 LIST_ENTRY* hook_page_list = &g_user_hook_list;
 			 for (PLIST_ENTRY page_entry = hook_page_list->Flink;
 				 page_entry != hook_page_list;
@@ -776,12 +774,12 @@ void write_int3(uint8_t* address)
 					 {
 						 *out_hook_info = *hook_info;
 						 
-				//		 ExReleaseFastMutex(&g_user_hook_page_list_lock);
+				 
 						 return true;
 					 }
 				 }
 			 }
-			// ExReleaseFastMutex(&g_user_hook_page_list_lock);
+		 
 			 return false;
 
 		 }
@@ -903,10 +901,10 @@ void write_int3(uint8_t* address)
 
 				 if (hooked_function_info->original_instructions_backup != nullptr)
 				 {
-					 ExFreePool(hooked_function_info->original_instructions_backup);
+					 pool_manager::release_pool(hooked_function_info->original_instructions_backup);
 				 }
 
-				 ExFreePool(hooked_function_info);
+				 pool_manager::release_pool(hooked_function_info);
 
 				 
 				 RemoveEntryList(current_func);
@@ -918,18 +916,88 @@ void write_int3(uint8_t* address)
 			  
 			 prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
 				 
-			 ExFreePool(hooked_page_info->fake_page_contents);
+			 pool_manager::release_pool (hooked_page_info->fake_page_contents);
 			 RemoveEntryList(current_page);
-			ExFreePool(hooked_page_info);
+			 pool_manager::release_pool(hooked_page_info);
 			
 			 current_page = next_page;
 		 }
 		 ExReleaseFastMutex(&g_ept_breakpoint_hook_list_lock);
-		 //return unhooked_any;
+	 
 
-		 return false;
+		 return unhooked_any;
 		  
 	 }
+
+	   
+	 bool remove_user_hook_handler(_In_ PEPROCESS process)
+	 {
+		 if (!process)
+		 {
+			 return false;
+		 }
+
+		 const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
+		 const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
+
+		 if (target_cr3 == 0 || process_id == nullptr)
+		 {
+			 return false;
+		 }
+
+		 bool unhooked_any = false;
+
+		 
+		 PLIST_ENTRY current_page = g_user_hook_list.Flink;
+
+		 while (current_page != &g_user_hook_list)
+		 {
+			 PLIST_ENTRY next_page = current_page->Flink;
+			 kernel_hook_info* hooked_page_info = CONTAINING_RECORD(current_page, kernel_hook_info, hooked_page_list);
+
+			 if (hooked_page_info->process_id != process_id)
+			 {
+				 current_page = next_page;
+				 continue;
+			 }
+
+			 unhooked_any = true;
+
+			 // 遍历该页所有hook的函数
+			 PLIST_ENTRY current_func = hooked_page_info->hooked_functions_list.Flink;
+			 bool page_changed = false;
+
+			 while (current_func != &hooked_page_info->hooked_functions_list)
+			 {
+				 PLIST_ENTRY next_func = current_func->Flink;
+				 _hooked_function_info* hooked_function_info = CONTAINING_RECORD(current_func, _hooked_function_info, hooked_function_list);
+
+				 if (hooked_function_info->original_instructions_backup != nullptr)
+				 {
+					 pool_manager::release_pool(hooked_function_info->original_instructions_backup);
+				 }
+				 pool_manager::release_pool(hooked_function_info);
+				 RemoveEntryList(current_func);
+				 current_func = next_func;
+			 }
+
+
+
+			 prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
+
+			 pool_manager::release_pool(hooked_page_info->fake_page_contents);
+			 RemoveEntryList(current_page);
+			 pool_manager::release_pool(hooked_page_info);
+
+			 current_page = next_page;
+		 }
+		  
+		 //return unhooked_any;
+
+		 return unhooked_any;
+
+	 }
+
 		 
 	 }
 }

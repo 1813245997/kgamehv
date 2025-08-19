@@ -130,5 +130,6 @@ namespace utils
 
 
 		 bool remove_user_exception_handler(_In_ PEPROCESS process);
+		 bool remove_user_hook_handler(_In_ PEPROCESS process);
 	}
 }
