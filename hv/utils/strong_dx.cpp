@@ -659,10 +659,10 @@ namespace utils
 
 		  
  
-			//=== 绘制是否更新辅助===
-			draw_update_required_notice(rend);
-			// === 绘制 ESP 相关 ===
-			draw_players_esp(rend);
+			////=== 绘制是否更新辅助===
+			//draw_update_required_notice(rend);
+			//// === 绘制 ESP 相关 ===
+			//draw_players_esp(rend);
 			 
 			 
 

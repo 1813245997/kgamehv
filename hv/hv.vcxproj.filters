@@ -274,9 +274,6 @@
     <ClInclude Include="vtx\segment.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\spin-lock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vtx\timing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -308,6 +305,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\dll_bin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\spinlock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\poolmanager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\allocators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -508,6 +514,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\inject_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\spinlock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\poolmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

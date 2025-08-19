@@ -1,3 +1,4 @@
+#include "poolmanager.h"
 #include "hv.h"
 #include "vcpu.h"
 #include "mm.h"
@@ -120,7 +121,13 @@ static bool create() {
     return false;
   }
 
+  if (pool_manager::initialize() == false)
+  {
+	  return false;
+  }
+
   prepare_host_page_tables();
+
 
   DbgPrint("[hv] Mapped all of physical memory to address 0x%zX.\n",
     reinterpret_cast<uint64_t>(host_physical_memory_base));

@@ -150,7 +150,7 @@ namespace utils
 				PVOID A;
 				utils::hook_utils::hook_user_hook_handler(process, (void*)0x7FF738F42E10, (void*)0x7FF738F42E70, &A);*/
 			
-
+			//utils::dwm_draw::test();
 			
 		  
 

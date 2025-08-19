@@ -387,3 +387,6 @@
 
 #define IDC_HAND            MAKEINTRESOURCE(32649)
 #define IDC_APPSTARTING     MAKEINTRESOURCE(32650) /*not in win3.1 */
+
+
+#define VMM_TAG 'vhra'

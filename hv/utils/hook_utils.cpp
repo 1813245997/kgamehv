@@ -3,6 +3,7 @@
 #include "fault_uitls.h"
 #include "../LDE64.h"
 #include "../vtx/prevmcall.h"
+#include "../vtx/poolmanager.h"
 namespace utils
 {
 	namespace hook_utils
@@ -58,23 +59,26 @@ namespace utils
 				if (hooked_page_info->pfn_of_hooked_page == GET_PFN(target_pa))
 				{
 
-					auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+					auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));   
 					if (!hook_info)
+					{
 						return false;
 
+					}
 
-					hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+
+					hook_info->trampoline_va = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_EXEC_TRAMPOLINE, TRUE, 100);   
 					if (!hook_info->trampoline_va)
 					{
-						ExFreePool(hook_info);
+						pool_manager::release_pool(hook_info);
 						return false;
 					}
 
-					hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
 					if (hook_info->original_instructions_backup == nullptr)
 					{
-						ExFreePool(hook_info->trampoline_va);
-						ExFreePool(hook_info);
+						pool_manager::release_pool(hook_info->trampoline_va);
+						pool_manager::release_pool(hook_info);
 						LogError("There is no pre-allocated pool for trampoline");
 						return false;
 					}
@@ -102,55 +106,56 @@ namespace utils
 
 
 
-			auto* hooked_page_info = reinterpret_cast<kernel_hook_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(kernel_hook_info), POOL_TAG));
+			auto* hooked_page_info = pool_manager::request_pool<kernel_hook_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(kernel_hook_info));   
 			if (!hooked_page_info)
+			{
 				return false;
+			}
 
-			hooked_page_info->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+			hooked_page_info->fake_page_contents = pool_manager::request_pool<uint8_t*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE,PAGE_SIZE);    
 			if (!hooked_page_info->fake_page_contents)
 			{
-				ExFreePool(hooked_page_info);
+				pool_manager::release_pool(hooked_page_info);
 				return false;
 			}
 			uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(hooked_page_info->fake_page_contents).QuadPart;
 			if (fake_pa == 0)
 			{
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
 
 				return false;
 
 			}
 		
 
-			auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+			auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));
 			if (!hook_info)
 			{
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
 				return false;
 			}
 
 
-			hook_info->trampoline_va = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+			hook_info->trampoline_va = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_EXEC_TRAMPOLINE, TRUE, 100);
 
 			if (!hook_info->trampoline_va)
 			{
-				ExFreePool(hook_info);
+				pool_manager::release_pool(hook_info);
 				return false;
 
 			}
-			hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
 			if (hook_info->original_instructions_backup == nullptr)
 			{
-				ExFreePool(hook_info->trampoline_va);
-				ExFreePool(hook_info);
+				pool_manager::release_pool(hook_info->trampoline_va);
+				pool_manager::release_pool(hook_info);
+				 
 				LogError("There is no pre-allocated pool for trampoline");
 				return false;
 			}
-
-			RtlZeroMemory(hook_info->trampoline_va, 100);
-			RtlZeroMemory(hook_info->original_instructions_backup, 100);
+ 
 
 			RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
 
@@ -214,7 +219,7 @@ namespace utils
 			uint64_t target_pa{};
 			bool is_64_bit = false;
 			bool succeed = false;
-
+			uintptr_t trampoline_va = {};
 			is_64_bit = utils::process_utils::is_process_64_bit(process);
 
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
@@ -240,30 +245,34 @@ namespace utils
 				if (hooked_page_info->pfn_of_hooked_page == GET_PFN(target_pa) && hooked_page_info->process_id == process_id)
 				{
 
-					auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+					auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));
 					if (!hook_info)
 					{
-						goto clear;
+						return false;
 
 					}
 
 					if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
 					{
 
-						ExFreePool(hook_info);
+						pool_manager::release_pool(hook_info);
 						goto clear;
 
 					}
-					RtlZeroMemory(hook_info->trampoline_va,  100);
+					trampoline_va = reinterpret_cast<uint64_t> (hook_info->trampoline_va);
+					 
 					 
 
-					hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(
-						utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
-					if (!hook_info->original_instructions_backup) {
-						ExFreePool(hook_info);
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+					if (hook_info->original_instructions_backup == nullptr)
+					{
+						 
+						pool_manager::release_pool(hook_info);
+
+						LogError("There is no pre-allocated pool for trampoline");
 						goto clear;
 					}
-					RtlZeroMemory(hook_info->original_instructions_backup, 100);
+					 
 
 					hook_info->new_handler_va = new_api;
 					hook_info->original_va = target_api;
@@ -285,67 +294,60 @@ namespace utils
 
 
 
-			auto* hooked_page_info = reinterpret_cast<kernel_hook_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(kernel_hook_info), POOL_TAG));
+			auto* hooked_page_info = pool_manager::request_pool<kernel_hook_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(kernel_hook_info));
 			if (!hooked_page_info)
 			{
-				goto clear;
-
+				return false;
 			}
 
-			hooked_page_info->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+			hooked_page_info->fake_page_contents = pool_manager::request_pool<uint8_t*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
 			if (!hooked_page_info->fake_page_contents)
 			{
-
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				pool_manager::release_pool(hooked_page_info);
+				return false;
 			}
 			uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(hooked_page_info->fake_page_contents).QuadPart;
 			if (fake_pa == 0)
 			{
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
 
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				return false;
 
 			}
+			 
 
 
-			auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+			auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));
 			if (!hook_info)
 			{
-
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
+				return false;
 			}
-			memset(hook_info, 0, sizeof(hooked_function_info));
 			 
-				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
-				{
-					ExFreePool(hooked_page_info->fake_page_contents);
-					ExFreePool(hooked_page_info);
-					ExFreePool(hook_info);
+			if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
+			{
+					pool_manager::release_pool(hooked_page_info->fake_page_contents);
+					pool_manager::release_pool(hooked_page_info);
+					pool_manager::release_pool(hook_info);
 					goto clear;
 
-				}
-				RtlZeroMemory(hook_info->trampoline_va, 100);
+			}
+		 
 		 
 
 
-			hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
-			if (!hook_info->original_instructions_backup) {
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+			if (hook_info->original_instructions_backup == nullptr)
+			{
+				pool_manager::release_pool(hook_info->trampoline_va);
+				pool_manager::release_pool(hook_info);
 
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				ExFreePool(hook_info);
-
-				goto clear;
+				LogError("There is no pre-allocated pool for trampoline");
+				return false;
 			}
-			RtlZeroMemory(hook_info->original_instructions_backup, 100);
+
 
 
 			RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
@@ -362,6 +364,7 @@ namespace utils
 			hook_info->original_pa = target_pa;
 			hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
 			hook_info->fake_page_contents = hooked_page_info->fake_page_contents;
+			trampoline_va = reinterpret_cast<uint64_t> (hook_info->trampoline_va);
 			*origin_function = hook_info->trampoline_va;
 			++hooked_page_info->ref_count;
 
@@ -370,11 +373,11 @@ namespace utils
 
 			if (!hook_instruction_memory_int1(hook_info, target_api, page_offset))
 			{
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				ExFreePool(hook_info->original_instructions_backup);
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
+				pool_manager::release_pool(hook_info->original_instructions_backup);
 				utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 100);
-				ExFreePool(hook_info);
+				pool_manager::release_pool(hook_info);
 				goto clear;
 			}
 
@@ -391,6 +394,17 @@ namespace utils
 			ExReleaseFastMutex(&g_user_hook_page_list_lock);
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 		 
+
+			if (succeed) {
+				LogInfo("Hook info: target VA=%p, new handler VA=%p, trampoline VA=%p",
+					target_api,
+					new_api,
+					trampoline_va);
+
+			}
+			else {
+				LogInfo("Hook info not allocated. target VA: %p, handler VA: %p", target_api, new_api);
+			}
 
 
 			return succeed;
@@ -421,6 +435,7 @@ namespace utils
 			uint64_t target_pa{};
 			bool is_64_bit = false;
 			bool succeed = false;
+			uintptr_t trampoline_va = {};
 		
 			is_64_bit = utils::process_utils::is_process_64_bit(process);
 
@@ -446,33 +461,34 @@ namespace utils
 				if (hooked_page_info->pfn_of_hooked_page == GET_PFN(target_pa) && hooked_page_info->process_id == process_id)
 				{
 
-					auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+					auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));
 					if (!hook_info)
 					{
-						goto clear;
+						return false;
 
 					}
 
-
-					if (allocate_trampoline_page)
+					if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
 					{
-						if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va),  100)))
-						{
 
-							ExFreePool(hook_info);
-							goto clear;
+						pool_manager::release_pool(hook_info);
+						goto clear;
 
-						}
-						RtlZeroMemory(hook_info->trampoline_va,  100);
 					}
+					trampoline_va = reinterpret_cast<uint64_t> (hook_info->trampoline_va);
 
-					hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(
-						utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
-					if (!hook_info->original_instructions_backup) {
-						ExFreePool(hook_info);
+
+
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+					if (hook_info->original_instructions_backup == nullptr)
+					{
+
+						pool_manager::release_pool(hook_info);
+
+						LogError("There is no pre-allocated pool for trampoline");
 						goto clear;
 					}
-					RtlZeroMemory(hook_info->original_instructions_backup, 100);
+
 
 					hook_info->new_handler_va = exception_handler;
 					hook_info->original_va = target_api;
@@ -494,68 +510,60 @@ namespace utils
 
 
 
-			auto* hooked_page_info = reinterpret_cast<kernel_hook_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(kernel_hook_info), POOL_TAG));
+			auto* hooked_page_info = pool_manager::request_pool<kernel_hook_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(kernel_hook_info));
 			if (!hooked_page_info)
 			{
-				goto clear;
-
+				return false;
 			}
 
-			hooked_page_info->fake_page_contents = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, PAGE_SIZE, POOL_TAG));
+			hooked_page_info->fake_page_contents = pool_manager::request_pool<uint8_t*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
 			if (!hooked_page_info->fake_page_contents)
 			{
-
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				pool_manager::release_pool(hooked_page_info);
+				return false;
 			}
 			uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(hooked_page_info->fake_page_contents).QuadPart;
 			if (fake_pa == 0)
 			{
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
 
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				return false;
 
 			}
-			 
 
-			auto* hook_info = reinterpret_cast<hooked_function_info*>(utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(hooked_function_info), POOL_TAG));
+
+
+			auto* hook_info = pool_manager::request_pool<hooked_function_info*>(pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(hooked_function_info));
 			if (!hook_info)
 			{
-
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				goto clear;
-
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
+				return false;
 			}
-			memset(hook_info, 0, sizeof(hooked_function_info));
-			if (allocate_trampoline_page)
+
+			if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
 			{
-				if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 100)))
-				{
-					ExFreePool(hooked_page_info->fake_page_contents);
-					ExFreePool(hooked_page_info);
-					ExFreePool(hook_info);
-					goto clear;
-
-				}
-				RtlZeroMemory(hook_info->trampoline_va, 100);
-			}
-
-
-			hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, 100, POOL_TAG));
-			if (!hook_info->original_instructions_backup) {
-				
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				ExFreePool(hook_info);
-
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
+				pool_manager::release_pool(hook_info);
 				goto clear;
+
 			}
-			RtlZeroMemory(hook_info->original_instructions_backup, 100);
+
+
+
+
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+			if (hook_info->original_instructions_backup == nullptr)
+			{
+				pool_manager::release_pool(hook_info->trampoline_va);
+				pool_manager::release_pool(hook_info);
+
+				LogError("There is no pre-allocated pool for trampoline");
+				return false;
+			}
+			 
 
 
 			RtlCopyMemory(hooked_page_info->fake_page_contents, PAGE_ALIGN(target_api), PAGE_SIZE);
@@ -572,7 +580,7 @@ namespace utils
 			hook_info->original_pa = target_pa;
 			hook_info->fake_pa = utils::internal_functions::pfn_mm_get_physical_address(&hooked_page_info->fake_page_contents[page_offset]).QuadPart;
 			hook_info->fake_page_contents = hooked_page_info->fake_page_contents;
-	 
+			trampoline_va = reinterpret_cast<uintptr_t>(hook_info->trampoline_va);
 			++hooked_page_info->ref_count;
 			 
 
@@ -580,11 +588,11 @@ namespace utils
 
 			if (!hook_instruction_memory_int3(hook_info, target_api, page_offset ))
 			{
-				ExFreePool(hooked_page_info->fake_page_contents);
-				ExFreePool(hooked_page_info);
-				ExFreePool(hook_info->original_instructions_backup);
-				utils::memory::free_user_memory(process_id, hook_info->trampoline_va,  100);
-				ExFreePool(hook_info);
+				pool_manager::release_pool(hooked_page_info->fake_page_contents);
+				pool_manager::release_pool(hooked_page_info);
+				pool_manager::release_pool(hook_info->original_instructions_backup);
+				utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 100);
+				pool_manager::release_pool(hook_info);
 				goto clear;
 			}
 
@@ -600,7 +608,25 @@ namespace utils
 		clear:
 			ExReleaseFastMutex(&g_ept_breakpoint_hook_list_lock);
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-		 
+ 
+			bool is_int3_hook = true; // 如果你使用的是 INT3 断点 hook
+
+			if (succeed) {
+				LogInfo(
+					"Breakpoint hook installed: target VA=%p, handler VA=%p, trampoline VA=%p, INT3=%s",
+					target_api,
+					exception_handler,
+					(PVOID)trampoline_va,
+					is_int3_hook ? "yes" : "no"
+				);
+			}
+			else {
+				LogInfo(
+					"Hook installation failed: target VA=%p, handler VA=%p",
+					target_api,
+					exception_handler
+				);
+			}
 
 
 			return succeed;

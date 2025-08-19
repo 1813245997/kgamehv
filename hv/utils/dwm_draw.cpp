@@ -99,13 +99,6 @@ namespace utils
 				return status;
 			}
 
-			//status = initialize_user_buffer(g_dwm_process);
-			//if (!NT_SUCCESS(status))
-			//{
-			//	LogError("initialize_user_buffer failed with status: 0x%X", status);
-			//	return status;
-			//}
-
 			status = initialize_dwm_utils_modules(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
@@ -378,6 +371,15 @@ namespace utils
 				return status;
 			}
 
+
+
+			//status = initialize_user_buffer(g_dwm_process);
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("initialize_user_buffer failed with status: 0x%X", status);
+			//	return status;
+			//}
+
 			//DbgBreakPoint();
 			// 调用 DLL 注入
 			/*HANDLE target_pid = utils::internal_functions::pfn_ps_get_process_id(g_dwm_process);
@@ -442,13 +444,14 @@ namespace utils
 			}*/
 
 			//虚拟机走这个
-		/*	status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
+			/*status = hook_cdxgi_swapchain_dwm_legacy_present_dwm(g_dwm_process);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("hook_cdxgi_swapchain_dwm_legacy_present_dwm failed with status: 0x%X", status);
 				return status;
 			}*/
 
+			
 			//
 			//if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
 			//{
@@ -1929,7 +1932,46 @@ namespace utils
 
  
 
-	 
+		void test()
+		{
+			DbgBreakPoint();
+			PEPROCESS target_process = g_dwm_process; // 已获取的目标进程
+			KAPC_STATE apc_state;
+
+			// 附加到目标进程
+			KeStackAttachProcess(target_process, &apc_state);
+
+			// 遍历用户态虚拟地址
+			const unsigned long long user_start = 0x00010000;           // 用户态低地址起点
+			const unsigned long long user_end = 0x7FFFFFFF;           // 用户态高地址 (32-bit)
+			const unsigned long long page_size = 0x1000;               // 4KB
+			unsigned long long addr = user_start;
+
+			for (; addr < user_end; addr += page_size)
+			{
+				if (!utils::memory::is_virtual_address_valid(addr))
+				{
+					// addr 未被分配，可以作为 shadow page 或测试地址
+					DbgPrint("Found free user page: 0x%llx\n", addr);
+					// 你可以选择退出循环或者收集多个地址
+					break;
+				}
+			}
+
+			// 测试访问
+			__try {
+				volatile char value = *(char*)addr;
+				LogDebug("Read value at 0x%llx: %x\n", addr, value);
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER) {
+				LogDebug("Exception occurred at 0x%llx!\n", addr);
+			}
+
+			// 分离进程
+			KeUnstackDetachProcess(&apc_state);
+
+				 
+		}
 	 
 		 
 	}

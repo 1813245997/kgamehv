@@ -197,6 +197,7 @@
     <ClInclude Include="utils\windows_version_enum.h" />
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
+    <ClInclude Include="vtx\allocators.h" />
     <ClInclude Include="vtx\arch.h" />
     <ClInclude Include="vtx\ept.h" />
     <ClInclude Include="vtx\exception-routines.h" />
@@ -215,10 +216,11 @@
     <ClInclude Include="vtx\mm.h" />
     <ClInclude Include="vtx\mtrr.h" />
     <ClInclude Include="vtx\page-tables.h" />
+    <ClInclude Include="vtx\poolmanager.h" />
     <ClInclude Include="vtx\prevmcall.h" />
     <ClInclude Include="vtx\processor_affinity.h" />
     <ClInclude Include="vtx\segment.h" />
-    <ClInclude Include="vtx\spin-lock.h" />
+    <ClInclude Include="vtx\spinlock.h" />
     <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\trap-frame.h" />
     <ClInclude Include="vtx\vcpu.h" />
@@ -286,9 +288,11 @@
     <ClCompile Include="vtx\mm.cpp" />
     <ClCompile Include="vtx\mtrr.cpp" />
     <ClCompile Include="vtx\page-tables.cpp" />
+    <ClCompile Include="vtx\poolmanager.cpp" />
     <ClCompile Include="vtx\prevmcall.cpp" />
     <ClCompile Include="vtx\processor_affinity.cpp" />
     <ClCompile Include="vtx\segment.cpp" />
+    <ClCompile Include="vtx\spinlock.cpp" />
     <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vcpu.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />

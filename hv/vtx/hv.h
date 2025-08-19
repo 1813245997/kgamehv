@@ -1,12 +1,11 @@
 #pragma once
-
+ 
 #include "page-tables.h"
 #include "hypercalls.h"
 #include "logger.h"
 #include "vmx.h"
-
-#include <ntifs.h>
-
+ 
+namespace pool_manager { struct __pool_manager; }
 namespace hv {
 
 // signature that is returned by the ping hypercall
@@ -23,6 +22,7 @@ struct hypervisor {
   unsigned long vcpu_count;
   struct vcpu* vcpus;
 
+  pool_manager::__pool_manager* pool_manager;
   // pointer to the System process
   uint8_t* system_eprocess;
 
@@ -37,6 +37,7 @@ struct hypervisor {
   uint64_t kprcb_current_thread_offset;
   uint64_t kthread_apc_state_offset;
   uint64_t kapc_state_process_offset;
+
 };
 
 // global instance of the hypervisor
