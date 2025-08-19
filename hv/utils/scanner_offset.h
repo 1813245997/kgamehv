@@ -13,6 +13,9 @@ namespace utils
 
 		unsigned long long find_thread_previous_mode_offset();
 
+		unsigned long long find_start_address_offset();
+
+		unsigned long long find_win32_start_address_offset();
 		
 	}
 }

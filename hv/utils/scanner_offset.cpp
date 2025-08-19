@@ -336,5 +336,68 @@ namespace utils
 
 			 return previous_mode_offset;
 		 }
+		 unsigned long long find_start_address_offset()
+		 {
+			 ULONG start_address_offset = 0;
+			 UNICODE_STRING func_name = { 0 };
+			 RtlInitUnicodeString(&func_name, L"PsGetThreadId");
+			 PUCHAR func_addr = (PUCHAR)MmGetSystemRoutineAddress(&func_name);
+			 ULONG thread_id_offset = 0;
+
+			 for (int i = 0; i < 100; i++)
+			 {
+				 if (func_addr[i] == 0xc3 &&
+					 (func_addr[i + 1] == 0xcc || func_addr[i + 1] == 0x90) &&
+					 (func_addr[i + 2] == 0xcc || func_addr[i + 2] == 0x90))
+				 {
+					 thread_id_offset = *(PULONG)(func_addr + i - 4);
+					 break;
+				 }
+			 }
+
+			 if (!thread_id_offset)
+				 return 0;
+
+			 start_address_offset = thread_id_offset - 0x30;
+			 return start_address_offset;
+
+			 
+		 }
+		 unsigned long long find_win32_start_address_offset()
+		 {
+			 ULONG win32_start_address_offset = 0;
+
+		 
+			 WindowsVersion Version = static_cast<WindowsVersion>(os_info::get_build_number());
+			 UNICODE_STRING func_name = { 0 };
+			 RtlInitUnicodeString(&func_name, L"PsGetThreadId");
+			 PUCHAR func_addr = (PUCHAR)MmGetSystemRoutineAddress(&func_name);
+			 ULONG thread_id_offset = 0;
+
+			 for (int i = 0; i < 100; i++)
+			 {
+				 if (func_addr[i] == 0xc3 &&
+					 (func_addr[i + 1] == 0xcc || func_addr[i + 1] == 0x90) &&
+					 (func_addr[i + 2] == 0xcc || func_addr[i + 2] == 0x90))
+				 {
+					 thread_id_offset = *(PULONG)(func_addr + i - 4);
+					 break;
+				 }
+			 }
+
+			 if (!thread_id_offset)
+				 return 0;
+
+			 if (Version == WINDOWS_7 || Version == WINDOWS_7_SP1)
+			 {
+				 win32_start_address_offset = thread_id_offset + 0x58;
+			 }
+			 else
+			 {
+				 win32_start_address_offset = thread_id_offset + 0x50;
+			 }
+
+			 return win32_start_address_offset;
+		 }
 	}
 }

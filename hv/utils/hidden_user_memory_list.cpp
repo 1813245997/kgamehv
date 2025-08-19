@@ -14,6 +14,31 @@ namespace utils
 			ExInitializeResourceLite(&g_hidden_process_resource);
 		}
 
+		bool is_pid_hidden(HANDLE process_id)
+		{
+			BOOLEAN found = FALSE;
+
+			// 获取共享锁，保证线程安全
+			ExAcquireResourceSharedLite(&g_hidden_process_resource, TRUE);
+
+			PLIST_ENTRY pEntry = g_hidden_process_list_head.Flink;
+			while (pEntry != &g_hidden_process_list_head)
+			{
+				PHIDDEN_PROCESS_ENTRY pProcEntry = CONTAINING_RECORD(pEntry, HIDDEN_PROCESS_ENTRY, list_entry);
+
+				if (pProcEntry->process_pid == process_id)
+				{
+					found = TRUE;
+					break; // 找到 PID，直接退出
+				}
+
+				pEntry = pEntry->Flink;
+			}
+
+			ExReleaseResourceLite(&g_hidden_process_resource);
+			return found == TRUE;
+		}
+
 
 		NTSTATUS insert_hidden_address_for_pid(HANDLE process_id, unsigned long long start_address, unsigned long long end_address)
 		{

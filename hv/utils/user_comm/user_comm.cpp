@@ -326,7 +326,7 @@ namespace utils
 				request->status = STATUS_PROCESS_IS_TERMINATING;
 				return false;
 			}
-
+			
 			bool inject_result = utils::inject_utils::remote_thread_inject_x64_dll(
 				process_id,
 				module_buffer,

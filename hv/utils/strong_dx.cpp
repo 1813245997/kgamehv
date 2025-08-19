@@ -348,8 +348,7 @@ namespace utils
 
 					g_pd3dDeviceContext = *(PVOID*)g_user_buffer;
 				}
-
-				DbgBreakPoint();
+ 
 
 				//uint32_t buffer_index = *(uint32_t*)(g_pOverlaySwapChain + 0x1EC);
 				//uint64_t buffer_array = *(uint64_t*)(g_pOverlaySwapChain + 0x1B0);
@@ -443,7 +442,7 @@ namespace utils
 
 		void render_overlay_frame_win1124h2(void (*draw_callback)(int width, int height, void* data))
 		{
-			DbgBreakPoint();
+			 
 			if (!g_pd3dDevice || !g_pd3dDeviceContext || !g_user_buffer || !g_texture_buffer || !g_Surface)
 				return;
 

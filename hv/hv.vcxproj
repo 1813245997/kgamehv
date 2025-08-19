@@ -220,6 +220,7 @@
     <ClInclude Include="vtx\prevmcall.h" />
     <ClInclude Include="vtx\processor_affinity.h" />
     <ClInclude Include="vtx\segment.h" />
+    <ClInclude Include="vtx\spin-lock.h" />
     <ClInclude Include="vtx\spinlock.h" />
     <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\trap-frame.h" />

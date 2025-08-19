@@ -538,7 +538,7 @@ namespace utils
 							 IN SIZE_T MaximumStackSize OPTIONAL,
 							 IN PVOID AttributeList
 							 ) = nullptr;
-
+ 
 
 		NTSTATUS initialize_internal_functions()
 		{
@@ -614,7 +614,8 @@ namespace utils
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
 			unsigned long long ps_get_process_exit_status_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitStatus");
-
+		 
+			
 
 
 			LogDebug("RtlGetVersion               = %p", reinterpret_cast<PVOID>(rtl_get_version_addr));
@@ -674,8 +675,10 @@ namespace utils
 			LogDebug("ps_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ps_get_current_thread_addr));
 			LogDebug("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
 			LogDebug("ps_get_process_exit_status_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_status_addr));
+			LogDebug("ps_get_process_section_base_address_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
 			 
 
+			 
 			INIT_FUNC_PTR(pfn_mm_copy_memory, mm_copy_memory_addr);
 			INIT_FUNC_PTR(pfn_mm_is_address_valid, mm_is_address_valid_addr);
 			INIT_FUNC_PTR(pfn_rtl_walk_frame_chain, rtl_walk_frame_chain_addr);
@@ -743,6 +746,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_ob_reference_object_by_handle, ob_reference_object_by_handle_addr);
 			INIT_FUNC_PTR(pfn_io_query_file_dos_device_name, io_query_file_dos_device_name_addr);
 			INIT_FUNC_PTR(pfn_ps_get_process_exit_status, ps_get_process_exit_status_addr);
+			INIT_FUNC_PTR(pfn_ps_get_process_section_base_address, ps_get_process_section_base_address_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -800,12 +804,14 @@ namespace utils
 			unsigned long long nt_read_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtReadVirtualMemory");
 			unsigned long long nt_protect_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtProtectVirtualMemory");
 			unsigned long long nt_write_virtual_memory_addr = ssdt::get_syscall_fun_addr("NtWriteVirtualMemory");
+
 			unsigned long long nt_create_user_process_addr = ssdt::get_syscall_fun_addr("NtCreateUserProcess");
 		 
 			unsigned long long nt_suspend_process_addr = ssdt::get_syscall_fun_addr("NtSuspendProcess");
 			unsigned long long nt_resume_process_addr = ssdt::get_syscall_fun_addr("NtResumeProcess");
 			unsigned long long nt_get_next_thread_addr = ssdt::get_syscall_fun_addr("NtGetNextThread");
 			unsigned long long nt_create_thread_ex_addr = ssdt::get_syscall_fun_addr("NtCreateThreadEx");
+			
 
 			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
 			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
@@ -998,6 +1004,9 @@ namespace utils
 				LogError("ke_get_current_thread_addr is null.");
 			if(!ps_get_process_exit_status_addr)
 				LogError("ps_get_process_exit_status_addr is null.");
+			if (!ps_get_process_section_base_address_addr)
+				LogError("ps_get_process_section_base_address_addr is null.");
+			 
 
 			if (!zw_open_file_addr)
 				LogError("zw_open_file_addr is null.");
@@ -1035,6 +1044,7 @@ namespace utils
 				LogError("nt_write_virtual_memory_addr is null.");
 			if(!nt_create_user_process_addr)
 				LogError("nt_create_user_process_addr is null.");
+			
 
 
 			if (!ki_preprocess_fault_addr)
@@ -1132,6 +1142,7 @@ namespace utils
 				!ps_get_current_process_addr||
 				!ps_get_current_thread_addr||
 				!ke_get_current_thread_addr||
+				!ps_get_process_section_base_address_addr||
 				
 				!zw_open_file_addr||
 				!zw_create_section_addr||

@@ -80,17 +80,21 @@ namespace hook_functions
 	)
 	{
 
-	 //HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+	  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
 	   {
 		   return FALSE;
 	   }
 
-	   /*  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(VirtualAddress)))
-		 {
-			 return FALSE;
-		 }*/
+	   if (utils::hidden_user_memory::is_pid_hidden(process_id))
+	   {
+		   if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(VirtualAddress)))
+		   {
+			   return FALSE;
+		   }
+	   }
+	 
 
 		return   original_mm_is_address_valid(VirtualAddress);
 	}
@@ -137,7 +141,7 @@ namespace hook_functions
 		  }
 
 		  PVOID64 virtual_address = nullptr;
-		//  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		   HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 		  if (flags == MM_COPY_MEMORY_PHYSICAL)
 		  {
 			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
@@ -154,11 +158,17 @@ namespace hook_functions
 			  return STATUS_CONFLICTING_ADDRESSES;
 		  }
 
-		  //if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
-		  //{
-			 // *number_of_bytes_transferred = 0;
-			 // return STATUS_CONFLICTING_ADDRESSES;
-		  //}
+
+		  if (utils::hidden_user_memory::is_pid_hidden(process_id))
+		  {
+			  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
+			  {
+				  *number_of_bytes_transferred = 0;
+				  return STATUS_CONFLICTING_ADDRESSES;
+			  }
+		  }
+
+	
 		 
 		  return original_mm_copy_memory(
 			  target_address,
@@ -185,20 +195,31 @@ namespace hook_functions
 	 {
 		 
 
-		 // HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
+		  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
 		 for (ULONG i = 0; i < frames_captured; ++i)
 		 {
-			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers[i]))
+			 PVOID addr = callers[i];
+
+ 
+
+			 if (!utils::hidden_user_memory::is_pid_hidden(process_id) && utils::memory::is_user_address(addr))
+			 {
+				 continue;
+
+			 }
+
+			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(addr))
 			 {
 				 continue;
 			 }
 
-			 PVOID addr = callers[i];
-			//|| utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr))
-			 if (utils::hidden_modules::is_address_hidden(addr) )
+		 
+			
+			 if (utils::hidden_modules::is_address_hidden(addr) || 
+				 utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr)))
 			 {
 				 // 向前覆盖该帧
 				 for (ULONG j = i + 1; j < frames_captured; ++j)
@@ -229,7 +250,7 @@ namespace hook_functions
 	 {
 		  
 
-		//HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
+		 HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
 
 		 // 判断是否是隐藏模块地址
 		 if (utils::hidden_modules::is_address_hidden(reinterpret_cast<PVOID>(control_pc)))
@@ -241,15 +262,19 @@ namespace hook_functions
 			 return nullptr;
 		 }
 
-		 // 判断是否是该进程隐藏的用户态内存地址
-		/* if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, control_pc))
+
+		 if (utils::hidden_user_memory::is_pid_hidden(process_id))
 		 {
-			 if (image_base)
+			 if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, control_pc))
 			 {
-				 *image_base = 0;
+				 if (image_base)
+				 {
+					 *image_base = 0;
+				 }
+				 return nullptr;
 			 }
-			 return nullptr;
-		 }*/
+		 }
+		 
 
 		 return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
 	 }

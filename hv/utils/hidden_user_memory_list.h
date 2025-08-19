@@ -24,6 +24,8 @@ namespace utils
 
 		void initialize_hidden_user_memory();
 
+		bool is_pid_hidden(HANDLE process_id);
+
 		NTSTATUS insert_hidden_address_for_pid(HANDLE process_id, unsigned long long start_address, unsigned long long end_address);
 		bool is_address_hidden_for_pid(HANDLE process_id, unsigned long long address);
 		bool remove_hidden_address_for_pid(

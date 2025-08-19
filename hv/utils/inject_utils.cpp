@@ -266,7 +266,7 @@ namespace utils
 
 			}
 
-			// DbgBreakPoint(); //这里下断嘎嘎拉闸  因为断下来别人都没有办法执行 你玩你吗呢
+		 
 
 			KAPC_STATE kApcState = { 0 };
 		 
@@ -290,6 +290,7 @@ namespace utils
 
 		NTSTATUS remote_thread_inject_x64_dll(HANDLE process_id, PVOID dll_shellcode, ULONG dll_size)
 		{
+			 
 			PEPROCESS process = NULL;
 			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (process_id, &process);
 			KAPC_STATE kApcState = { 0 };
@@ -348,7 +349,7 @@ namespace utils
 					(PVOID*)&user_dll,
 					dll_size,
 					true,
-					false
+					true
 				);
 				if (!NT_SUCCESS(status)) break;
 
@@ -363,7 +364,7 @@ namespace utils
 					(PVOID*)&user_shellcode,
 					sizeof(MemLoadShellcode_x64),
 					true,
-					false
+					true
 				);
 				if (!NT_SUCCESS(status)) break;
 
@@ -385,7 +386,7 @@ namespace utils
 					(PVOID*)&user_image,
 					user_image_size,
 					true,
-					false
+					true
 				);
 				if (!NT_SUCCESS(status)) break;
 
@@ -411,6 +412,24 @@ namespace utils
 				);
 
 				if (NT_SUCCESS(status)) {
+
+					 
+					uint64_t exe_address = reinterpret_cast<uint64_t>(
+						utils::internal_functions::pfn_ps_get_process_section_base_address(process)
+						);
+
+					// 生成随机偏移 0 ~ 10000
+					ULONG seed = static_cast<ULONG>(__rdtsc());   // 用时间戳计数器初始化种子
+					ULONG random_offset = RtlRandomEx(&seed) % 10001;
+
+					*reinterpret_cast<ULONG64*>(
+						reinterpret_cast<PUCHAR>(thread) + utils::feature_offset::g_start_address_offset
+						) = exe_address + random_offset;
+
+					*reinterpret_cast<ULONG64*>(
+						reinterpret_cast<PUCHAR>(thread) + utils::feature_offset::g_win32_start_address_offset
+						) = exe_address + random_offset;
+
 					// 等待线程执行完成
 					KeWaitForSingleObject(thread, Executive, KernelMode, FALSE, NULL);
 					utils::internal_functions::pfn_ob_dereference_object(thread);
@@ -422,6 +441,8 @@ namespace utils
 
 			} while (0);
 
+
+			
 			//
 			// 7. 清理资源
 			//
@@ -432,9 +453,51 @@ namespace utils
 			if (allocated_shellcode) {
 				utils::memory::free_user_memory(process_id, user_shellcode, user_shellcode_size);
 			}
-
+		
 			// 注意：DLL 映像 user_image 一般不能释放，否则 DLL 会消失
-			// if (allocated_image_memory) { ... }
+			if (allocated_image_memory)
+			{
+				PIMAGE_DOS_HEADER dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>(user_image);
+				PIMAGE_NT_HEADERS nt_headers = reinterpret_cast<PIMAGE_NT_HEADERS>(user_image + dos_header->e_lfanew);
+
+				PIMAGE_SECTION_HEADER section = IMAGE_FIRST_SECTION(nt_headers);
+				for (UINT i = 0; i < nt_headers->FileHeader.NumberOfSections; ++i, ++section)
+				{
+					PUCHAR section_base = user_image + section->VirtualAddress;
+					SIZE_T section_size = section->Misc.VirtualSize;
+					ULONG protect = PAGE_NOACCESS;
+
+					if (memcmp(section->Name, ".text", 5) == 0)
+						protect = PAGE_EXECUTE_READ;
+					else if (memcmp(section->Name, ".rdata", 6) == 0)
+						protect = PAGE_READONLY;
+					else if (memcmp(section->Name, ".data", 5) == 0 || memcmp(section->Name, ".pdata", 6) == 0)
+						protect = PAGE_READWRITE;
+					else if (memcmp(section->Name, ".rsrc", 5) == 0)
+						protect = PAGE_READONLY;
+					else if (memcmp(section->Name, ".reloc", 6) == 0)
+						protect = PAGE_READONLY;
+					else
+						protect = PAGE_READONLY;  
+
+					auto previous_mode = utils::thread_utils::ke_set_previous_mode(KernelMode);
+					ULONG old_protect = 0;
+
+					utils::internal_functions::pfn_nt_protect_virtual_memory(
+						NtCurrentProcess(),
+						reinterpret_cast<PVOID*>(&section_base),
+						&section_size,
+						protect,
+						&old_protect
+					);
+
+					utils::thread_utils::ke_set_previous_mode(previous_mode);
+				}
+
+				RtlZeroMemory(user_image,sizeof(IMAGE_DOS_HEADER));
+			}
+		 
+		  
 
 			utils::internal_functions::pfn_ke_unstack_detach_process(&kApcState);
 			utils::internal_functions::pfn_ob_dereference_object(process);

@@ -923,8 +923,6 @@ void write_int3(uint8_t* address)
 			 current_page = next_page;
 		 }
 		 ExReleaseFastMutex(&g_ept_breakpoint_hook_list_lock);
-	 
-
 		 return unhooked_any;
 		  
 	 }
