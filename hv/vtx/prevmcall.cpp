@@ -31,4 +31,16 @@ namespace prevmcall
 		);
 	}
 
+	cr3 query_process_cr3(uint64_t const pid)
+	{
+		hv::hypercall_input input;
+		input.code = hv::hypercall_query_process_cr3;
+		input.key = hv::hypercall_key;
+		input.args[0] = pid;
+
+		cr3 cr3;
+		cr3.flags = hv::vmx_vmcall(input);
+		return cr3;
+	}
+
 }
