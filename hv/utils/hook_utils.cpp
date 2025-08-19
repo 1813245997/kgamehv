@@ -201,6 +201,7 @@ namespace utils
 			if (!process || !target_api  )
 				return false;
 
+			const bool is_intel = utils::khyper_vt::is_intel_cpu();
 			const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 			const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
 			if (target_cr3 == 0)
@@ -208,20 +209,12 @@ namespace utils
 				return false;
 			}
 
-			const bool is_intel = utils::khyper_vt::is_intel_cpu();
-			if (!target_api)
-			{
-				return false;
-			}
-
-
 
 			KAPC_STATE apc_state{};
-
 			uint64_t target_pa{};
 			bool is_64_bit = false;
 			bool succeed = false;
-	 
+
 			is_64_bit = utils::process_utils::is_process_64_bit(process);
 
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
@@ -235,6 +228,7 @@ namespace utils
 
 			}
 
+			 
 			ExAcquireFastMutex(&g_user_hook_page_list_lock);
 
 			for (PLIST_ENTRY entry = g_user_hook_list.Flink;
@@ -281,8 +275,7 @@ namespace utils
 					++hooked_page_info->ref_count;
 					hook_instruction_memory_int1(hook_info, target_api, page_offset);
 
-					utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-					utils::internal_functions::pfn_ob_dereference_object(process);
+				 
 					InsertHeadList(&hooked_page_info->hooked_functions_list, &hook_info->hooked_function_list);
 
 
@@ -415,6 +408,7 @@ namespace utils
 			if (!process || !target_api || !exception_handler)
 				return false;
 
+			const bool is_intel = utils::khyper_vt::is_intel_cpu();
 			const HANDLE process_id = utils::internal_functions::pfn_ps_get_process_id(process);
 			const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
 			if (target_cr3 == 0)
@@ -422,21 +416,12 @@ namespace utils
 				return false;
 			}
 
-			const bool is_intel = utils::khyper_vt::is_intel_cpu();
-			if (!target_api)
-			{
-				return false;
-			}
- 
-
 		 
 			KAPC_STATE apc_state{};
-
 			uint64_t target_pa{};
 			bool is_64_bit = false;
 			bool succeed = false;
-		 
-
+		
 			is_64_bit = utils::process_utils::is_process_64_bit(process);
 
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
@@ -499,8 +484,7 @@ namespace utils
 					++hooked_page_info->ref_count;
 					hook_instruction_memory_int3(hook_info, target_api, page_offset );
 
-					utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
-					utils::internal_functions::pfn_ob_dereference_object(process);
+				
 					InsertHeadList(&hooked_page_info->hooked_functions_list, &hook_info->hooked_function_list);
 					 
 
