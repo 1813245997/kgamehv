@@ -471,14 +471,14 @@ namespace utils
 
 					if (allocate_trampoline_page)
 					{
-						if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va), 0x100)))
+						if (!NT_SUCCESS(utils::memory::allocate_user_hidden_exec_memory(process, reinterpret_cast<PVOID*> (&hook_info->trampoline_va),  100)))
 						{
 
 							ExFreePool(hook_info);
 							goto clear;
 
 						}
-						RtlZeroMemory(hook_info->trampoline_va, 0X100);
+						RtlZeroMemory(hook_info->trampoline_va,  100);
 					}
 
 					hook_info->original_instructions_backup = reinterpret_cast<uint8_t*>(
@@ -599,7 +599,7 @@ namespace utils
 				ExFreePool(hooked_page_info->fake_page_contents);
 				ExFreePool(hooked_page_info);
 				ExFreePool(hook_info->original_instructions_backup);
-				utils::memory::free_user_memory(process_id, hook_info->trampoline_va, 0x100);
+				utils::memory::free_user_memory(process_id, hook_info->trampoline_va,  100);
 				ExFreePool(hook_info);
 				goto clear;
 			}
