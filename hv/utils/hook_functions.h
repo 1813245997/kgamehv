@@ -267,6 +267,18 @@ namespace hook_functions
 		  );
 
 
+	  extern  VOID(__fastcall* original_load_image_notify_routine)(
+		  _In_opt_ PUNICODE_STRING FullImageName,
+		  _In_ HANDLE ProcessId,
+		  _In_ PIMAGE_INFO ImageInfo
+		  );
+
+	  VOID  __fastcall  new_load_image_notify_routine (
+		  _In_opt_ PUNICODE_STRING FullImageName,
+		  _In_ HANDLE ProcessId,
+		  _In_ PIMAGE_INFO ImageInfo
+		  );
+
 
 
 	  BOOLEAN __fastcall new_present_dwm(

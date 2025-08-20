@@ -538,6 +538,11 @@ namespace utils
 			IN PVOID AttributeList
 			);
  
+		extern VOID(__fastcall*   pfn_load_image_notify_routine)(
+			_In_opt_ PUNICODE_STRING FullImageName,
+			_In_ HANDLE ProcessId,      
+			_In_ PIMAGE_INFO ImageInfo
+			);
 		 
 		 
 	} 

@@ -16,6 +16,17 @@ namespace hook_manager
 				reinterpret_cast<void**>(&hook_functions::original_ki_preprocess_fault)
 			);
 		}
+
+		if (pfn_load_image_notify_routine)
+		{
+			 
+			utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(pfn_load_image_notify_routine),
+				hook_functions::new_load_image_notify_routine,
+				reinterpret_cast<void**>(&hook_functions::original_load_image_notify_routine)
+			);
+		}
+
 		 
 		if (pfn_psp_exit_process)
 		{

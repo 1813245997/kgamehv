@@ -821,6 +821,56 @@ namespace hook_functions
 		  return  status;
 	   }
 
+
+
+	  VOID(__fastcall* original_load_image_notify_routine)(
+		  _In_opt_ PUNICODE_STRING FullImageName,
+		  _In_ HANDLE ProcessId,
+		  _In_ PIMAGE_INFO ImageInfo
+		  )=nullptr;
+
+	  VOID  __fastcall  new_load_image_notify_routine(
+		  _In_opt_ PUNICODE_STRING full_image_name,
+		  _In_ HANDLE process_id,
+		  _In_ PIMAGE_INFO image_info
+	  )
+
+	  {
+
+		  // 只处理内核驱动加载
+		  if (process_id != 0)
+		  {
+			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
+		  }
+		 // IDA: "48 89 5C 24 10 48 89 6C 24 20 4C 89 44 24 18"
+		 // "\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18", "xxxxxxxxxxxxxxx"
+		  if (!full_image_name )
+		  {
+			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
+
+		  }
+
+		  //&& wcsstr(full_image_name->Buffer, L"ACE-BASE.sys")
+		  unsigned  long long ace_hook_fun = utils::signature_scanner::find_pattern_image(
+			  reinterpret_cast<unsigned  long long> (image_info->ImageBase),
+			  "\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18",
+			  "xxxxxxxxxxxxxxx"
+			  ".text"
+		  );
+
+		  if (!ace_hook_fun)
+		  {
+			  LogError("ACE-BASE.sys loaded but target function not found, bugcheck now!");
+			  KeBugCheckEx(MANUALLY_INITIATED_CRASH, 0, 0, 0, 0);
+		  }
+
+		  utils::hook_utils::hook_kernel_function(ace_hook_fun)
+
+
+		  return original_load_image_notify_routine(full_image_name, process_id, image_info);
+
+	  }
+
 	   INT64(__fastcall* original_present_multiplane_overlay)(
 		   void* thisptr,
 		   PVOID dxgi_swap_chain,

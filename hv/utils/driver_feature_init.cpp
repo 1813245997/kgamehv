@@ -145,15 +145,15 @@ namespace utils
 			}
 			LogDebug("Hooks initialized successfully.");
 
-			LogDebug("Initializing DWM draw support...");
-			status = utils::dwm_draw::initialize();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize DWM draw (0x%X).", status);
-				//  VMProtectEnd();
-				return status;
-			}
-			LogDebug( "DWM draw initialized successfully.");
+			//LogDebug("Initializing DWM draw support...");
+			//status = utils::dwm_draw::initialize();
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("Failed to initialize DWM draw (0x%X).", status);
+			//	//  VMProtectEnd();
+			//	return status;
+			//}
+			//LogDebug( "DWM draw initialized successfully.");
 
 			/*	DbgBreakPoint();
 				PEPROCESS process{};
