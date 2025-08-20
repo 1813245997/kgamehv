@@ -329,5 +329,72 @@ namespace utils
 			return result;
 		}
 
+
+		// 从 PWCHAR 构造一个 UNICODE_STRING（带内存分配）
+		PUNICODE_STRING create_unicode_string_from_wchar(_In_ PCWCHAR src)
+		{
+			if (!src)
+				return nullptr;
+
+			// 计算长度
+			size_t len = 0;
+			while (src[len] != L'\0')
+				len++;
+
+			USHORT byte_len = (USHORT)(len * sizeof(WCHAR));
+
+			// 分配 UNICODE_STRING 结构体
+			PUNICODE_STRING uni_str = reinterpret_cast<PUNICODE_STRING>(
+				utils::internal_functions::pfn_ex_allocate_pool_with_tag(
+					NonPagedPool,
+					sizeof(UNICODE_STRING),
+					'gsuU' // tag: Uusg (utils string unicode)
+				));
+
+			if (!uni_str)
+				return nullptr;
+
+			RtlZeroMemory(uni_str, sizeof(UNICODE_STRING));
+
+			// 分配字符串 Buffer
+			uni_str->Buffer = reinterpret_cast<PWCH>(
+				utils::internal_functions::pfn_ex_allocate_pool_with_tag(
+					NonPagedPool,
+					byte_len + sizeof(WCHAR), // +1 WCHAR for null-terminator
+					'gsuB' // tag: Busg (utils string buffer)
+				));
+
+			if (!uni_str->Buffer)
+			{
+				utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str, 'gsuU');
+				return nullptr;
+			}
+
+			// 拷贝内容
+			RtlCopyMemory(uni_str->Buffer, src, byte_len);
+			uni_str->Buffer[len] = L'\0';
+
+			uni_str->Length = byte_len;
+			uni_str->MaximumLength = (USHORT)(byte_len + sizeof(WCHAR));
+			
+			return uni_str;
+		}
+
+		// 释放由 create_unicode_string_from_wchar 创建的 UNICODE_STRING
+		void free_unicode_string(_In_opt_ PUNICODE_STRING uni_str)
+		{
+			if (!uni_str)
+				return;
+
+			if (uni_str->Buffer)
+			{
+				utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str->Buffer, 'gsuB');
+				uni_str->Buffer = nullptr;
+			}
+
+			utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str, 'gsuU');
+		}
+
+
 	}
 }

@@ -5,7 +5,8 @@ enum user_comm_op : uint64_t {
 	user_comm_file_delete_force ,
 	user_comm_get_module_info,
 	user_comm_user_hook,
-	user_comm_remote_inject
+	user_comm_remote_inject,
+	user_comm_clear_unloaded_drivers
 	// ø…Õÿ’π
 };
 
@@ -47,3 +48,8 @@ typedef struct user_comm_remote_inject_params {
 	uint64_t module_buffer;  /**< Memory address of the module buffer */
 	uint64_t module_size;    /**< Size of the module in bytes */
 } user_comm_remote_inject_params, * p_user_comm_remote_inject_params;
+
+/** New: Clear unloaded drivers parameters */
+typedef struct user_comm_clear_unloaded_drivers_params {
+	uint64_t driver_name;   /**< Address of the driver name string (UTF-16) */
+} user_comm_clear_unloaded_drivers_params, * p_user_comm_clear_unloaded_drivers_params;

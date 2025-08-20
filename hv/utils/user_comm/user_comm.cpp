@@ -61,6 +61,11 @@ namespace utils
 				is_succeed = handle_remote_inject(request);
 				break;
 			}
+
+			case  user_comm_clear_unloaded_drivers:
+			{
+
+			}
  
 
 			default:
@@ -339,5 +344,32 @@ namespace utils
 			return inject_result;
 
 		}
+
+		bool handle_clear_unloaded_drivers(user_comm_request* request)
+		{
+			if (!request || !request->input_buffer)
+			{
+				return false;
+			}
+
+	 
+			p_user_comm_clear_unloaded_drivers_params params =
+				reinterpret_cast<p_user_comm_clear_unloaded_drivers_params>(request->input_buffer);
+
+			if (!params || !params->driver_name)
+			{
+				request->status = STATUS_INVALID_PARAMETER;
+				return false;
+			}
+
+			 
+			PWCHAR driver_name = reinterpret_cast<PWCHAR>(params->driver_name);
+ 
+			bool result = utils::kernel_hide::clear_mm_unloaded_drivers_instr(driver_name);
+
+			request->status = result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			return result;
+		}
+
 	}
 }
