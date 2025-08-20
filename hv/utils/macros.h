@@ -390,3 +390,5 @@
 
 
 #define VMM_TAG 'vhra'
+
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))

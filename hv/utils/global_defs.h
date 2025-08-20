@@ -13,6 +13,7 @@
 
 #include "macros.h"
 #include "types.h"
+#include "data_types.h"
 #include "ntos_struct_def.h"
 #include "native_api.h"
 #include "internal_function_defs.h"
@@ -25,6 +26,7 @@
 #include "windows_version_enum.h"
 #include "xor_crypt.h"
 #include "import_encrypt.h"
+#include "spinlock.h"
 #include "hook_manager.h"
 #include "hook_functions.h"
 #include "signature_scanner.h"

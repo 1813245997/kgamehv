@@ -38,6 +38,8 @@ struct hypervisor {
   uint64_t kthread_apc_state_offset;
   uint64_t kapc_state_process_offset;
 
+  bool initialized  ;
+
 };
 
 // global instance of the hypervisor

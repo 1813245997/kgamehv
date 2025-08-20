@@ -501,10 +501,11 @@ namespace utils
 			_In_ BOOLEAN Create
 			);
 
+
+
 		extern NTSTATUS(__fastcall* pfn_ps_get_process_exit_status)(
 			_In_ PEPROCESS Process
 			);
-
 
 		extern uint64_t(__fastcall* pfn_ke_get_processor_node_number_by_index)(int IdealProcessor);
 

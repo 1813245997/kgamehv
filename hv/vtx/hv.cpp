@@ -158,6 +158,7 @@ bool start() {
 
     utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex(orig_affinity);
   }
+  ghv.initialized = true;
 
   return true;
 }
@@ -192,6 +193,7 @@ void stop() {
 
     utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex(orig_affinity);
   }
+  ghv.initialized = false;
 
   utils::internal_functions::pfn_ex_free_pool_with_tag(ghv.vcpus, 'fr0g');
 }

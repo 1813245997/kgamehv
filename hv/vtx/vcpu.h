@@ -104,11 +104,15 @@ struct vcpu {
 
   // whether to devirtualize the current VCPU
   bool stop_virtualization;
+
+  bool is_on_vmx_root_mode;
 };
 
 // virtualize the specified cpu. this assumes that execution is already
 // restricted to the desired logical proocessor.
 bool virtualize_cpu(vcpu* cpu);
+
+bool vmx_get_current_execution_mode();
 
 } // namespace hv
 

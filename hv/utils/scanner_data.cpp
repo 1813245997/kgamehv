@@ -346,6 +346,7 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_22H2:
 			{
+				//8B 05 ?? ?? ?? ?? 83 F8 32
 				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
 					"\x8B\x05\x00\x00\x00\x00\x83\xF8\x32",
 					"xx????xxx");
@@ -354,6 +355,8 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
+				//8B 05 ?? ?? ?? ?? 83 F8 32   
+				// 8B 05 B1 74 42 00                                               mov     eax, cs:MmLastUnloadedDriver
 				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
 					"\x8B\x05\x00\x00\x00\x00\x83\xF8\x32",
 					"xx????xxx");

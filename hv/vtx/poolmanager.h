@@ -1,7 +1,6 @@
 #pragma once
- 
+#include "../utils/spinlock.h"
 #include "hv.h"
-#include "spinlock.h"
 #include <ntifs.h>
 namespace pool_manager
 {

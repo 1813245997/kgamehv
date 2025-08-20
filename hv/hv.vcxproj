@@ -134,6 +134,7 @@
     <ClInclude Include="utils\csgogame\kcsgo2_utils.h" />
     <ClInclude Include="utils\csgogame\KMenuConfig.h" />
     <ClInclude Include="utils\csgogame\offsets.h" />
+    <ClInclude Include="utils\data_types.h" />
     <ClInclude Include="utils\dll_bin.h" />
     <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
@@ -182,6 +183,7 @@
     <ClInclude Include="utils\scanner_fun.h" />
     <ClInclude Include="utils\scanner_offset.h" />
     <ClInclude Include="utils\signature_scanner.h" />
+    <ClInclude Include="utils\spinlock.h" />
     <ClInclude Include="utils\sstd_utils.h" />
     <ClInclude Include="utils\string_utils.h" />
     <ClInclude Include="utils\strong_dx.h" />
@@ -221,7 +223,6 @@
     <ClInclude Include="vtx\processor_affinity.h" />
     <ClInclude Include="vtx\segment.h" />
     <ClInclude Include="vtx\spin-lock.h" />
-    <ClInclude Include="vtx\spinlock.h" />
     <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\trap-frame.h" />
     <ClInclude Include="vtx\vcpu.h" />
@@ -268,6 +269,7 @@
     <ClCompile Include="utils\scanner_fun.cpp" />
     <ClCompile Include="utils\scanner_offset.cpp" />
     <ClCompile Include="utils\signature_scanner.cpp" />
+    <ClCompile Include="utils\spinlock.cpp" />
     <ClCompile Include="utils\sstd_utils.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />
     <ClCompile Include="utils\strong_dx.cpp" />
@@ -293,7 +295,6 @@
     <ClCompile Include="vtx\prevmcall.cpp" />
     <ClCompile Include="vtx\processor_affinity.cpp" />
     <ClCompile Include="vtx\segment.cpp" />
-    <ClCompile Include="vtx\spinlock.cpp" />
     <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vcpu.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />

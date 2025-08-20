@@ -963,7 +963,7 @@ void write_int3(uint8_t* address)
 
 			 // 遍历该页所有hook的函数
 			 PLIST_ENTRY current_func = hooked_page_info->hooked_functions_list.Flink;
-			 bool page_changed = false;
+		 
 
 			 while (current_func != &hooked_page_info->hooked_functions_list)
 			 {

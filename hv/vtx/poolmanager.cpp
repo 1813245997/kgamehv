@@ -4,7 +4,7 @@
 #include "poolmanager.h"
 #include "../utils/log_utils.h"
 #include "allocators.h"
-#include "spinlock.h"
+#include "../utils/spinlock.h"
 #include "../utils/hook_utils.h"
 
 namespace pool_manager 

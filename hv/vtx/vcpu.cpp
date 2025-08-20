@@ -11,6 +11,7 @@
 #include "introspection.h"
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
+#include "../utils/data_types.h"
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
 
@@ -237,7 +238,7 @@ bool handle_vm_exit(guest_context* const ctx) {
   // dont hide tsc overhead by default
   cpu->hide_vm_exit_overhead = false;
   cpu->stop_virtualization   = false;
-
+  cpu->is_on_vmx_root_mode   = true;
   dispatch_vm_exit(cpu, reason);
 
   vmentry_interrupt_information interrupt_info;
@@ -316,7 +317,7 @@ bool handle_vm_exit(guest_context* const ctx) {
   vmx_vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, cpu->preemption_timer);
 
   cpu->ctx = nullptr;
-
+  cpu->is_on_vmx_root_mode = false;
   return false;
 }
 
@@ -450,6 +451,18 @@ bool virtualize_cpu(vcpu* const cpu) {
     cpu->vm_exit_ref_tsc_overhead);
 
   return true;
+}
+
+bool vmx_get_current_execution_mode()
+{
+	if (!hv::ghv.initialized)
+		return VmxExecutionModeNonRoot;
+
+	ULONG index = KeGetCurrentProcessorNumberEx(nullptr);
+	vcpu* current_vm_state = &hv::ghv.vcpus[index];
+
+	return current_vm_state->is_on_vmx_root_mode ? VmxExecutionModeRoot : VmxExecutionModeNonRoot;
+    
 }
 
 } // namespace hv

@@ -21,6 +21,20 @@ namespace utils
 			PVOID module_base = nullptr;
 			SIZE_T image_size = {};
 
+			 
+			 
+			// 初始化日志系统
+			// 参数依次：日志目录，单文件最大大小（字节），最大日志文件数量
+			NTSTATUS status = logger::init_log_system(
+				L"\\SystemRoot\\Logs\\DriverLogs",  // 使用 SystemRoot
+				L"MyDriver",
+				1024 * 1024,  // 1MB
+				5
+			);
+			if (!NT_SUCCESS(status)) {
+				return status;
+			}
+			 
 			LogDebug("Driver loaded.");
 
 			LogDebug("Initializing ntoskrnl info...");
@@ -46,12 +60,9 @@ namespace utils
 				" Driver Base: 0x%p, Image Size: 0x%llX\n",
 				module_base,
 				static_cast<ULONGLONG>(image_size));
-			DbgPrintEx(77,0,
-				" Driver Base: 0x%p, Image Size: 0x%llX\n",
-				module_base,
-				static_cast<ULONGLONG>(image_size));
+			 
 			LogDebug("Initializing internal functions...");
-			NTSTATUS status = internal_functions::initialize_internal_functions();
+			  status = internal_functions::initialize_internal_functions();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize internal functions (0x%X).", status);
@@ -70,15 +81,16 @@ namespace utils
 			}
 			LogDebug("Paging base addresses initialized successfully.");
 
-			/*LogDebug("Initializing feature globals...");
+			LogDebug("Initializing feature globals...");
+			 
 			status = feature_data::initialize();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize feature globals (0x%X).", status);
-				   VMProtectEnd();
+				//VMProtectEnd();
 				return status;
 			}
-			LogDebug("Feature globals initialized successfully.");*/
+			LogDebug("Feature globals initialized successfully.");
 
 			LogDebug("Initializing feature offsets...");
 			status = feature_offset::initialize();
@@ -89,6 +101,8 @@ namespace utils
 				return status;
 			}
 			LogDebug("Feature offsets initialized successfully.");
+
+
 
 			game::kcsgo2::initialize_player_data_lock();
 			config::initialize_visual_config_once();
