@@ -3,7 +3,7 @@
 
 namespace utils
 {
-	namespace process 
+	namespace process_utils
 	{
 		extern	LIST_ENTRY g_process_list_head;
 		extern	KSPIN_LOCK g_process_list_lock;
