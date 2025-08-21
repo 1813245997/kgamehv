@@ -104,7 +104,7 @@ namespace logger {
 			g_log_ctx.current_file_size = 0;
 		}
 
-		ExFreePoolWithTag(path_buffer, 'gLoG');
+		 
 		return status;
 	}
 
@@ -130,7 +130,7 @@ namespace logger {
 			nullptr, nullptr);
 
 		NTSTATUS status = ZwDeleteFile(&objAttr);
-		ExFreePoolWithTag(path_buffer, 'gLoG');
+		 
 		return status;
 	}
 
