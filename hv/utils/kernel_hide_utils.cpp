@@ -98,7 +98,44 @@ namespace utils
 
 		bool clear_ci_ea_cache_lookaside_list()
 		{
-			return false;
+			BOOLEAN result = FALSE;
+
+			PLOOKASIDE_LIST_EX ci_ea_cache_lookaside_list = feature_data::g_ciea_cache_lookaside_list;
+			if (!ci_ea_cache_lookaside_list)
+			{
+				LogError("g_ciea_cache_lookaside_list is NULL");
+				return FALSE;
+			}
+
+			ULONG list_entry_size = ci_ea_cache_lookaside_list->L.Size;
+
+			// 删除原来的 lookaside list
+			ExDeleteLookasideListEx(ci_ea_cache_lookaside_list);
+
+			// 重新初始化
+			NTSTATUS status = ExInitializeLookasideListEx(
+				ci_ea_cache_lookaside_list,
+				NULL,
+				NULL,
+				PagedPool,
+				0,
+				list_entry_size,
+				'csIC',
+				0
+			);
+
+			if (NT_SUCCESS(status))
+			{
+				LogInfo("Successfully cleared and reinitialized g_CiEaCacheLookasideList (Size = %lu)", list_entry_size);
+				result = TRUE;
+			}
+			else
+			{
+				LogError("Failed to reinitialize g_CiEaCacheLookasideList, status = 0x%X", status);
+				result = FALSE;
+			}
+
+			return result;
 		}
 
 

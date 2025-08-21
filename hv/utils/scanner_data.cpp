@@ -635,7 +635,7 @@ namespace utils
 				//PAGE:00000001403380FA 48 8B D1                                                        mov     rdx, rcx
 				//PAGE : 00000001403380FD 48 8B 0D C4 6A EE FF                                            mov     rcx, cs:PspCidTable
 
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
 					"\x48\x8B\xD1\x48\x8B\x0D\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x44\x8D\x6B\x01",
 					"xxxxxx????x????xxxx",
 					"PAGE");
@@ -645,7 +645,7 @@ namespace utils
 			break;
 			case utils::WINDOWS_7_SP1:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
 					"\x48\x8B\xD1\x48\x8B\x0D\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x44\x8D\x6B\x01",
 					"xxxxxx????x????xxxx",
 					"PAGE");
@@ -658,7 +658,7 @@ namespace utils
 				//PspExitThread
 		   //PAGE:0000000140470474 48 8B 3D 0D 7D EE FF                                            mov     rdi, cs : PspCidTable
 		   //	PAGE : 000000014047047B F7 C2 FC 03 00 00                                               test    edx, 3FCh
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
 					"\x48\x8B\x3D\xCC\xCC\xCC\xCC\xF7\xC2\xFC\x03\x00\x00",
 					"xxx????xxxxxx",
 					"PAGE");
@@ -667,7 +667,7 @@ namespace utils
 			break;
 			case utils::WINDOWS_8_1:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
 					"\x48\x8B\x0D\xCC\xCC\xCC\xCC\xF0\x48\x0F\xC1\x2E",
 					"xxx????xxxxx",
 					"PAGE");
@@ -676,124 +676,150 @@ namespace utils
 			break;
 			case utils::WINDOWS_10_VERSION_1507:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xF9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05\xCC\xCC\xCC\xCC\xFF\x15\xCC\xCC\xCC\xCC\x48\x8B\xF8\x48\x85\xC0\x75\x0A\xBB\x17\x00\x00\xC0", 
+					"xx????xxx????xxx????xx????xx????xx????xxxxxxxxxxxxx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1511:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x0D\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x48\x8B\xCB",
-					"xxx????x????xxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05\xCC\xCC\xCC\xCC\xFF\x15\xCC\xCC\xCC\xCC\x48\x8B\xF8\x48\x85\xC0\x75\x0A\xBB\x17\x00\x00\xC0",
+					"xx????xxx????xxx????xx????xx????xx????xxxxxxxxxxxxx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1607:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x0D\xCC\xCC\xCC\xCC\xE8\xCC\xCC\xCC\xCC\x48\x8B\xCB",
-					"xxx????x????xxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1703:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1709:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1803:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x15;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_1809:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_19H1:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_19H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_20H1:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_20H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_21H1:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_21H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\x41\x0F\xB7\xD9",
-					"xxx????xxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05",
+					"xx????xxx????xxx????xx????xx",
 					"PAGE");
+				temp_addr -= 0x1B;
+
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_10_VERSION_22H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
 					"\x8B\x15\xCC\xCC\xCC\xCC\x48\x8B\x05\xCC\xCC\xCC\xCC\x44\x8B\x05\xCC\xCC\xCC\xCC\x8B\x0D\xCC\xCC\xCC\xCC\xFF\x05", 
 					"xx????xxx????xxx????xx????xx",
 					"PAGE");
@@ -804,37 +830,39 @@ namespace utils
 			break;
 			case utils::WINDOWS_11_VERSION_21H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x0D\xCC\xCC\xCC\xCC\x49\xD1\xE9",
-					"xxx????xxx",
+				//IDA: "48 8D 0D ?? ?? ?? ?? C7 44 24 28 43 49 73 63 45 33 C9 45 33 C0 48 C7 44 24 20 40 02 00 00"
+			   //g_CiEaCacheLookasideList
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x48\x8D\x0D\xCC\xCC\xCC\xCC\xC7\x44\x24\x28\x43\x49\x73\x63\x45\x33\xC9\x45\x33\xC0\x48\xC7\x44\x24\x20\x40\x02\x00\x00",
+					"xxx????xxxxxxxxxxxxxxxxxxxxxxx",
 					"PAGE");
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_11_VERSION_22H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\xF0\x48\x0F\xC1\x08",
-					"xxx????xxxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x48\x8D\x0D\xCC\xCC\xCC\xCC\xC7\x44\x24\x28\x43\x49\x73\x63\x45\x33\xC9\x45\x33\xC0\x48\xC7\x44\x24\x20\x40\x02\x00\x00",
+					"xxx????xxxxxxxxxxxxxxxxxxxxxxx",
 					"PAGE");
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_11_VERSION_23H2:
 			{
-				//PspClearProcessThreadCidRefs
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x15\xCC\xCC\xCC\xCC\xF0\x48\x0F\xC1\x08",
-					"xxx????xxxxx",
+				//IDA: "48 8D 0D ?? ?? ?? ?? C7 44 24 28 43 49 73 63 45 33 C9 45 33 C0 48 C7 44 24 20 40 02 00 00"
+				//g_CiEaCacheLookasideList
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x48\x8D\x0D\xCC\xCC\xCC\xCC\xC7\x44\x24\x28\x43\x49\x73\x63\x45\x33\xC9\x45\x33\xC0\x48\xC7\x44\x24\x20\x40\x02\x00\x00", 
+					"xxx????xxxxxxxxxxxxxxxxxxxxxxx",
 					"PAGE");
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}
 			break;
 			case utils::WINDOWS_11_VERSION_24H2:
 			{
-				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\x48\x8B\x2D\xCC\xCC\xCC\xCC\x0F\x0D\x08\x48\x8B\x00",
-					"xxx????xxxxxx",
+				temp_addr = signature_scanner::find_pattern_image(reinterpret_cast<ULONG_PTR>(module_info::g_ci_base),
+					"\x48\x8D\x0D\xCC\xCC\xCC\xCC\x89\x5C\x24\x28", "xxx????xxxx",
 					"PAGE");
 				ci_ea_cache_lookaside_list_addr = signature_scanner::resolve_relative_address(reinterpret_cast<PVOID>(temp_addr), 3, 7);
 			}

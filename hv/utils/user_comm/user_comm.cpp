@@ -482,8 +482,11 @@ namespace utils
 
 			 
 			PWCHAR driver_name = reinterpret_cast<PWCHAR>(params->driver_name);
- 
-			bool result = utils::kernel_hide::clear_mm_unloaded_drivers_instr(driver_name);
+
+			bool cleared_unloaded = utils::kernel_hide::clear_mm_unloaded_drivers_instr(driver_name);
+			bool cleared_ci_cache = utils::kernel_hide::clear_ci_ea_cache_lookaside_list();
+
+			bool result = cleared_unloaded && cleared_ci_cache;
 
 			request->status = result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 			return result;

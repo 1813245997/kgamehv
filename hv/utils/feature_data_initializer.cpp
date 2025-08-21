@@ -21,6 +21,7 @@ namespace utils {
 			mm_unloaded_drivers = reinterpret_cast<PMM_UNLOADED_DRIVER >(mm_unloaded_drivers_addr);
 			mm_last_unloaded_driver = reinterpret_cast<PULONG>(mm_last_unloaded_driver_addr);
 			g_psp_cid_table = reinterpret_cast<PHANDLE_TABLE>(psp_cid_table_addr);
+			g_ciea_cache_lookaside_list = reinterpret_cast<PLOOKASIDE_LIST_EX>(ciea_cache_lookaside_list_addr);
 			LogInfo("mm_unloaded_drivers = %p\n", mm_unloaded_drivers);
 
 			LogInfo("mm_last_unloaded_driver = %p\n", mm_last_unloaded_driver);
@@ -33,7 +34,7 @@ namespace utils {
 			if (!mm_unloaded_drivers_addr || 
 				!mm_last_unloaded_driver_addr||
 				!psp_cid_table_addr|
-				!g_ciea_cache_lookaside_list)
+				!ciea_cache_lookaside_list_addr)
 			{
 				LogInfo( 
 					"Failed to locate MmUnloadedDrivers or MmLastUnloadedDriver\n");

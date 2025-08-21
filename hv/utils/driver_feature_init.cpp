@@ -77,6 +77,8 @@ namespace utils
 			LogDebug("Paging base addresses initialized successfully.");
 
 			LogDebug("Initializing feature globals...");
+			
+
 			 
 			status = feature_data::initialize();
 			if (!NT_SUCCESS(status))

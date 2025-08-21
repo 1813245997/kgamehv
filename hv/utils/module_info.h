@@ -7,6 +7,8 @@ namespace utils
 		extern PVOID ntoskrnl_base;
 		extern ULONG64 ntoskrnl_size;
 
+		extern PVOID g_ci_base;
+		extern ULONG64 g_ci_size;
 
 		BOOLEAN  get_driver_module_info(const char* module_name, ULONG64& module_size, PVOID& module_base_address);
 

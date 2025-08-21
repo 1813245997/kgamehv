@@ -8,6 +8,9 @@ namespace utils
 		PVOID ntoskrnl_base{};
 		ULONG64 ntoskrnl_size{};
 
+		PVOID g_ci_base{};
+		ULONG64 g_ci_size{};
+
 		BOOLEAN  get_driver_module_info(const char* module_name, ULONG64& module_size, PVOID& module_base_address)
 		{
 			ULONG required_bytes{};
@@ -56,14 +59,26 @@ namespace utils
 		{
 			PVOID base_address = nullptr;
 			ULONG64 size = 0;
-
+ 
 			if (get_driver_module_info("ntoskrnl.exe", size, base_address)) {
 				ntoskrnl_base = base_address;
 				ntoskrnl_size = size;
-				return TRUE;
+				
 			}
-
-			return FALSE;
+			else
+			{
+				return FALSE;
+			}
+			// ªÒ»° ci.dll
+			if (get_driver_module_info("ci.dll", size, base_address)) {
+				g_ci_base = base_address;
+				g_ci_size = size;
+			}
+			else {
+				 
+				return FALSE;
+			}
+			return TRUE;
 		}
 
 		NTSTATUS get_process_module_info(
