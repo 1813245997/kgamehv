@@ -295,13 +295,13 @@ namespace hook_functions
 		   if (trim_address_space && process)
 		   {
 			   
-			   if (game::kcsgo2::g_game->m_game_process!=0&& game::kcsgo2::g_game->m_game_process == process)
+			  /* if (game::kcsgo2::g_game->m_game_process!=0&& game::kcsgo2::g_game->m_game_process == process)
 
 			   {
 				 
 				   utils::hook_utils::remove_user_exception_handler(process);
 				   game::kcsgo2::g_game->clear();
-			   }
+			   }*/
 			    
 			    
 			     
