@@ -330,12 +330,12 @@ namespace hook_functions
 		   if (Create)
 		   {
 			    
-			   utils::process::add_process_entry(ProcessId);
+			   utils::process_utils ::add_process_entry(ProcessId);
 		   }
 		   else
 		   {
 			   
-			   utils::process::remove_process_entry(ProcessId);
+			   utils::process_utils::remove_process_entry(ProcessId);
 		   }
 
 
@@ -885,13 +885,30 @@ namespace hook_functions
 		  void* DetourAddress,
 		  void** origin_function)
 	  {
-		  PEPROCESS CurrentProcess; // rax
-		  const char* ProcessImageFileName; // rax
+		  UNICODE_STRING* process_name = nullptr;
+		  PEPROCESS CurrentProcess = IoGetCurrentProcess();
 
-		  CurrentProcess = IoGetCurrentProcess();
-		  ProcessImageFileName = (const char*)PsGetProcessImageFileName(CurrentProcess);
-		 LogInfo("[Hook] TargetAddress %p Function %p [%s]\n", TargetAddress, DetourAddress, ProcessImageFileName);
+		  // 获取进程名
+		  NTSTATUS status = utils::process_utils::get_process_name(CurrentProcess, &process_name);
+		  if (NT_SUCCESS(status) && process_name && process_name->Buffer)
+		  {
+			  LogInfo("[Hook] TargetAddress %p Function %p [PID: %u, Name: %wZ]\n",
+				  TargetAddress,
+				  DetourAddress,
+				  (ULONG)PsGetProcessId(CurrentProcess),
+				  process_name);
 
+			  // 安全释放
+			  utils::internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer, 0);
+			  utils::internal_functions::pfn_ex_free_pool_with_tag(process_name, 0);
+		  }
+		  else
+		  {
+			  LogInfo("[Hook] TargetAddress %p Function %p [PID: %u, Name: <Unknown>]\n",
+				  TargetAddress,
+				  DetourAddress,
+				  (ULONG)PsGetProcessId(CurrentProcess));
+		  }
 		  return original_ace_create_hook_internal(a1, TargetAddress, DetourAddress, origin_function);
 	  }
 

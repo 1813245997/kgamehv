@@ -6,7 +6,9 @@ enum user_comm_op : uint64_t {
 	user_comm_get_module_info,
 	user_comm_user_hook,
 	user_comm_remote_inject,
-	user_comm_clear_unloaded_drivers
+	user_comm_clear_unloaded_drivers,
+	user_comm_read_virt_mem,
+	user_comm_write_virt_mem
 	// ¿ÉÍØÕ¹
 };
 
@@ -53,3 +55,22 @@ typedef struct user_comm_remote_inject_params {
 typedef struct user_comm_clear_unloaded_drivers_params {
 	uint64_t driver_name;   /**< Address of the driver name string (UTF-16) */
 } user_comm_clear_unloaded_drivers_params, * p_user_comm_clear_unloaded_drivers_params;
+
+
+/** New: Read virtual memory parameters */
+typedef struct user_comm_read_virt_mem_params {
+	uint64_t process_id;     /**< PID of the target process */
+	uint64_t src_address;    /**< Address in target process to read from */
+	uint64_t dst_buffer;     /**< Buffer address in caller process to store data */
+	uint64_t size;           /**< Number of bytes to read */
+	uint64_t bytes_read;     /**< Output: actual number of bytes read */
+} user_comm_read_virt_mem_params, * p_user_comm_read_virt_mem_params;
+
+/** New: Write virtual memory parameters */
+typedef struct user_comm_write_virt_mem_params {
+	uint64_t process_id;     /**< PID of the target process */
+	uint64_t dst_address;    /**< Address in target process to write to */
+	uint64_t src_buffer;     /**< Buffer address in caller process containing data */
+	uint64_t size;           /**< Number of bytes to write */
+	uint64_t bytes_written;  /**< Output: actual number of bytes written */
+} user_comm_write_virt_mem_params, * p_user_comm_write_virt_mem_params;

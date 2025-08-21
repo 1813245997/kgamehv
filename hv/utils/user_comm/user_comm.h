@@ -20,6 +20,12 @@ namespace utils
 		bool handle_hook_user_api(user_comm_request* request);
 
 		bool handle_remote_inject(user_comm_request* request);
+
+		bool handle_read_virt_mem(user_comm_request* request);
+		
+		bool handle_write_virt_mem(user_comm_request* request);
+
+		bool handle_clear_unloaded_drivers(user_comm_request* request);
 		
 	}
 }
