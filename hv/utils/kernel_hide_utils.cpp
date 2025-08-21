@@ -8,44 +8,64 @@ namespace utils
 	{
 		bool clear_mm_unloaded_drivers_instr(_In_ PWCHAR driver_name)
 		{
-		 
-			 
 			constexpr unsigned int max_unloaded_driver_count = 50;
 			unsigned long unloaders_count{};
 
 			if (!driver_name) {
+				LogError("driver_name is null.");
 				return false;
 			}
 
 			if (!feature_data::mm_unloaded_drivers) {
+				LogError("mm_unloaded_drivers is null.");
 				return false;
 			}
 
 			if (!feature_data::mm_last_unloaded_driver) {
+				LogError("mm_last_unloaded_driver is null.");
 				return false;
 			}
 
 			unloaders_count = *feature_data::mm_last_unloaded_driver;
 			if (unloaders_count == 0) {
+				LogDebug("unloaders_count == 0, nothing to clear.");
 				return false;
 			}
 
+			static ERESOURCE PsLoadedModuleResource;
 			if (!ExAcquireResourceExclusiveLite(&PsLoadedModuleResource, TRUE)) {
+				LogError("Failed to acquire PsLoadedModuleResource.");
 				return false;
 			}
 
-			// 用 utils::string_utils 来构造 UNICODE_STRING
 			PUNICODE_STRING target_name = utils::string_utils::create_unicode_string_from_wchar(driver_name);
 			if (!target_name) {
 				ExReleaseResourceLite(&PsLoadedModuleResource);
+				LogError("Failed to create UNICODE_STRING from driver_name: %ws", driver_name);
 				return false;
 			}
 
+			PMM_UNLOADED_DRIVER  unloaders = *(PMM_UNLOADED_DRIVER*) feature_data::mm_unloaded_drivers;
+			 
+			if (MmIsAddressValid(unloaders) == FALSE || 
+				MmIsAddressValid(feature_data::mm_last_unloaded_driver) == FALSE) 
+				return false;
+
 			for (unsigned long i = 0; i < unloaders_count && i < max_unloaded_driver_count; ++i)
 			{
-				PMM_UNLOADED_DRIVER entry = &feature_data::mm_unloaded_drivers[i];
-				if (entry->Name.Buffer && wcsstr(entry->Name.Buffer, target_name->Buffer))
+				PMM_UNLOADED_DRIVER entry = &unloaders[i];
+				if (!entry)
 				{
+					continue;
+				}
+				if (!entry->Name.Buffer)
+				{
+					continue;
+				}
+				if (  wcsstr(entry->Name.Buffer, target_name->Buffer))
+				{
+					 
+
 					ExFreePool(entry->Name.Buffer);
 					entry->Name.Buffer = nullptr;
 
@@ -66,6 +86,7 @@ namespace utils
 					utils::string_utils::free_unicode_string(target_name);
 					ExReleaseResourceLite(&PsLoadedModuleResource);
 
+					LogInfo("Successfully cleared unloaded driver: %ws (new count=%lu)", driver_name, *feature_data::mm_last_unloaded_driver);
 					return true;
 				}
 			}
@@ -73,8 +94,10 @@ namespace utils
 			utils::string_utils::free_unicode_string(target_name);
 			ExReleaseResourceLite(&PsLoadedModuleResource);
 
+			LogDebug("No matching unloaded driver entry found for: %ws", driver_name);
 			return false;
 		}
+
 
 
 	}

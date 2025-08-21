@@ -9,4 +9,4 @@ namespace utils
 
 }
 
-extern "C" ERESOURCE PsLoadedModuleResource;
+ 

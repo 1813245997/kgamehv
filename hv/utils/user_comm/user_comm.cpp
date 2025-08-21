@@ -464,6 +464,7 @@ namespace utils
 
 		bool handle_clear_unloaded_drivers(user_comm_request* request)
 		{
+			 
 			if (!request || !request->input_buffer)
 			{
 				return false;
