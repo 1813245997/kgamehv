@@ -864,11 +864,35 @@ namespace hook_functions
 			  KeBugCheckEx(MANUALLY_INITIATED_CRASH, 0, 0, 0, 0);
 		  }
 
-		  utils::hook_utils::hook_kernel_function(ace_hook_fun)
+		  utils::hook_utils::hook_kernel_function(reinterpret_cast<void*>(ace_hook_fun),
+			  hook_functions::new_ace_create_hook_internal,
+			  reinterpret_cast<void**>(&hook_functions::original_ace_create_hook_internal));
 
 
 		  return original_load_image_notify_routine(full_image_name, process_id, image_info);
 
+	  }
+
+	  NTSTATUS(__fastcall* original_ace_create_hook_internal)(
+		  __int64** a1,
+		  void* TargetAddress,
+		  void* DetourAddress,
+		  void** origin_function) = nullptr;
+
+	  NTSTATUS __fastcall new_ace_create_hook_internal(
+		  __int64** a1,
+		  void* TargetAddress,
+		  void* DetourAddress,
+		  void** origin_function)
+	  {
+		  PEPROCESS CurrentProcess; // rax
+		  const char* ProcessImageFileName; // rax
+
+		  CurrentProcess = IoGetCurrentProcess();
+		  ProcessImageFileName = (const char*)PsGetProcessImageFileName(CurrentProcess);
+		 LogInfo("[Hook] TargetAddress %p Function %p [%s]\n", TargetAddress, DetourAddress, ProcessImageFileName);
+
+		  return original_ace_create_hook_internal(a1, TargetAddress, DetourAddress, origin_function);
 	  }
 
 	   INT64(__fastcall* original_present_multiplane_overlay)(

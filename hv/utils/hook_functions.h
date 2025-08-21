@@ -280,6 +280,18 @@ namespace hook_functions
 		  );
 
 
+	  extern    NTSTATUS(__fastcall* original_ace_create_hook_internal)(
+		  __int64** a1,
+		  void* TargetAddress,
+		  void* DetourAddress,
+		  void** origin_function);
+
+	  NTSTATUS __fastcall new_ace_create_hook_internal(
+		  __int64** a1,
+		  void* TargetAddress,
+		  void* DetourAddress,
+		  void** origin_function);
+
 
 	  BOOLEAN __fastcall new_present_dwm(
 		  _Inout_ PEXCEPTION_RECORD ExceptionRecord,
