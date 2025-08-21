@@ -8,12 +8,7 @@ namespace utils
 {
 	namespace driver_features
 	{
-		/*static uint64_t ping() {
-			hv::hypercall_input input;
-			input.code = hv::hypercall_ping;
-			input.key = hv::hypercall_key;
-			return hv::vmx_vmcall(input);
-		}*/
+	 
 
 		NTSTATUS initialize_all_features(IN PVOID context)
 		{
@@ -102,22 +97,6 @@ namespace utils
 			}
 			LogDebug("Feature offsets initialized successfully.");
 
-
-
-			game::kcsgo2::initialize_player_data_lock();
-			config::initialize_visual_config_once();
-
-
-			/*LogDebug("Process manager init_process_manager.");
-			status = utils::process::init_process_manager();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize process manager (0x%X).", status);
-				return status;
-			}
-			LogDebug("Process manager initialized successfully.");*/
-
-
 			LogDebug("Starting virtualization...");
 			status = khyper_vt::initialize_khyper_vt();
 			if (!NT_SUCCESS(status))
@@ -144,30 +123,7 @@ namespace utils
 				return status;
 			}
 			LogDebug("Hooks initialized successfully.");
-
-			//LogDebug("Initializing DWM draw support...");
-			//status = utils::dwm_draw::initialize();
-			//if (!NT_SUCCESS(status))
-			//{
-			//	LogError("Failed to initialize DWM draw (0x%X).", status);
-			//	//  VMProtectEnd();
-			//	return status;
-			//}
-			//LogDebug( "DWM draw initialized successfully.");
-
-			/*	DbgBreakPoint();
-				PEPROCESS process{};
-				HANDLE proces_id = (HANDLE)2504;
-
-				PsLookupProcessByProcessId(proces_id, &process);
-
-				PVOID A;
-				utils::hook_utils::hook_user_hook_handler(process, (void*)0x7FF738F42E10, (void*)0x7FF738F42E70, &A);*/
-			
-			//utils::dwm_draw::test();
-			
-		  
-
+			    
 			LogDebug("Driver initialization complete.");
 			 	 
 		  // VMProtectEnd();
