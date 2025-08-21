@@ -7,6 +7,7 @@ namespace utils
 		unsigned long long find_mm_unloaded_drivers_instr();
 		unsigned long long find_mm_last_unloaded_driver_instr();
 		unsigned long long find_psp_cid_table();
+		unsigned long long find_ci_ea_cache_lookaside_list();
 	}
 
 }

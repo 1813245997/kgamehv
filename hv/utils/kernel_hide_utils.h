@@ -5,6 +5,8 @@ namespace utils
 	{
 	
 		bool clear_mm_unloaded_drivers_instr(_In_ PWCHAR driver_name);
+
+		bool clear_ci_ea_cache_lookaside_list();
 	}
 
 }

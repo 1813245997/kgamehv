@@ -10,7 +10,7 @@ namespace utils {
 
 		extern PHANDLE_TABLE g_psp_cid_table;
 
-
+		extern 	PLOOKASIDE_LIST_EX g_ciea_cache_lookaside_list;
 
 		NTSTATUS initialize();
 	}

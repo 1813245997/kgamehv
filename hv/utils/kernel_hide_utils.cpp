@@ -47,9 +47,7 @@ namespace utils
 
 			PMM_UNLOADED_DRIVER  unloaders = *(PMM_UNLOADED_DRIVER*) feature_data::mm_unloaded_drivers;
 			 
-			if (MmIsAddressValid(unloaders) == FALSE || 
-				MmIsAddressValid(feature_data::mm_last_unloaded_driver) == FALSE) 
-				return false;
+		 
 
 			for (unsigned long i = 0; i < unloaders_count && i < max_unloaded_driver_count; ++i)
 			{
@@ -95,6 +93,11 @@ namespace utils
 			ExReleaseResourceLite(&PsLoadedModuleResource);
 
 			LogDebug("No matching unloaded driver entry found for: %ws", driver_name);
+			return false;
+		}
+
+		bool clear_ci_ea_cache_lookaside_list()
+		{
 			return false;
 		}
 
