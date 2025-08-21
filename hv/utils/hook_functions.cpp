@@ -844,13 +844,17 @@ namespace hook_functions
 		  }
 		 // IDA: "48 89 5C 24 10 48 89 6C 24 20 4C 89 44 24 18"
 		 // "\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18", "xxxxxxxxxxxxxxx"
-		  if (!full_image_name )
+		  if (!full_image_name ||!full_image_name->Buffer)
 		  {
 			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
 
 		  }
 
-		  //&& wcsstr(full_image_name->Buffer, L"ACE-BASE.sys")
+		  if (!wcsstr(full_image_name->Buffer, L"ACE-BASE.sys"))
+		  {
+			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
+		  }
+		  
 		  unsigned  long long ace_hook_fun = utils::signature_scanner::find_pattern_image(
 			  reinterpret_cast<unsigned  long long> (image_info->ImageBase),
 			  "\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18",
