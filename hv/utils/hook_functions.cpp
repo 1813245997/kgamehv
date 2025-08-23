@@ -976,7 +976,7 @@ namespace hook_functions
 		   if (!utils::dwm_draw::g_pswap_chain)
 		   {
 			   utils::dwm_draw::g_pswap_chain = ContextRecord->Rcx;
-			   LogDebug("g_pswap_chain RCX value: 0x%llX", ContextRecord->Rcx);
+			   LogInfo("g_pswap_chain RCX value: 0x%llX", ContextRecord->Rcx);
 			   utils::dwm_draw::g_dwm_render_thread = utils::internal_functions::pfn_ps_get_current_thread();
 			  
 		   }
@@ -1213,7 +1213,7 @@ namespace hook_functions
 		   ExSystemTimeToLocalTime(&system_time_before, &local_time_before);
 		   RtlTimeToTimeFields(&local_time_before, &time_fields_before);
 
-		 LogDebug( "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+		 LogInfo( "[DWM-HOOK] Before Sleep Time: %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
 			   time_fields_before.Year,
 			   time_fields_before.Month,
 			   time_fields_before.Day,
@@ -1244,7 +1244,7 @@ namespace hook_functions
 		   ExSystemTimeToLocalTime(&system_time_after, &local_time_after);
 		   RtlTimeToTimeFields(&local_time_after, &time_fields_after);
 
-		   LogDebug(  "[DWM-HOOK] After Sleep Time:  %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
+		   LogInfo(  "[DWM-HOOK] After Sleep Time:  %04d-%02d-%02d %02d:%02d:%02d.%03d\n",
 			   time_fields_after.Year,
 			   time_fields_after.Month,
 			   time_fields_after.Day,
@@ -1253,7 +1253,7 @@ namespace hook_functions
 			   time_fields_after.Second,
 			   time_fields_after.Milliseconds);
 
-		   LogDebug( "[DWM-HOOK] Screen capture attempt detected. Count=%lu RSP=0x%llX\n",
+		   LogInfo( "[DWM-HOOK] Screen capture attempt detected. Count=%lu RSP=0x%llX\n",
 			   count, ContextRecord->Rsp);
 		  
 
@@ -1272,7 +1272,7 @@ namespace hook_functions
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   LogDebug( 
+		   LogInfo( 
 			   "[NVFBC_HOOK_EX] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
 			   ContextRecord->Rcx,
 			   ContextRecord->Rdx,
@@ -1290,7 +1290,7 @@ namespace hook_functions
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		   ContextRecord->Rip = reinterpret_cast<unsigned long long> (matched_hook_info->trampoline_va);
-		   LogDebug( 
+		   LogInfo( 
 			   "[NVFBC_HOOK] RCX=0x%llx, RDX=0x%llx, R8=0x%llx, R9=0x%llx\n",
 			   ContextRecord->Rcx,
 			   ContextRecord->Rdx,

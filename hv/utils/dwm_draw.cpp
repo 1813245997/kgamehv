@@ -517,7 +517,7 @@ namespace utils
 			// ntdll.dll
 			status = module_info::get_process_module_info(process, L"ntdll.dll", &ntdll_base, &ntdll_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get ntdll.dll module info (0x%X)\n", status);
 				return status;
 			}
@@ -525,7 +525,7 @@ namespace utils
 			// user32.dll
 			status = module_info::get_process_module_info(process, L"user32.dll", &user32_base, &user32_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get user32.dll module info (0x%X)\n", status);
 				return status;
 			}
@@ -533,40 +533,40 @@ namespace utils
 			// dwmcore.dll
 			status = module_info::get_process_module_info(process, L"dwmcore.dll", &dwmcore_base, &dwmcore_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug( 
+				LogInfo( 
 					"Failed to get dwmcore.dll module info (0x%X)\n", status);
 				return status;
 			}
 			status = module_info::get_process_module_info(process, L"dxgi.dll", &dxgi_base, &dxgi_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get dxgi.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			if (!module_info::get_driver_module_info("dxgkrnl.sys", dxgkrnl_size, (PVOID&)dxgkrnl_base)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get dxgkrnl.sys module info (0x%X)\n", status);
 				return STATUS_INVALID_PARAMETER;
 			}
 
 			status = module_info::get_process_module_info(process, L"gdi32.dll", &gdi32_base, &gdi32_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug( 
+				LogInfo( 
 					"Failed to get gdi32.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			status = module_info::get_process_module_info(process, L"Kernel32.dll", &g_kernel32_base, &g_kernel32_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get kernel32.dll module info (0x%X)\n", status);
 				return status;
 			}
 
 			status = module_info::get_process_module_info(process, L"d3dcompiler_47.dll", &g_d3dcompiler_47_base, &g_d3dcompiler_47_size);
 			if (!NT_SUCCESS(status)) {
-				LogDebug(
+				LogInfo(
 					"Failed to get d3dcompiler_47.dll module info (0x%X)\n", status);
 				return status;
 			}
@@ -587,17 +587,17 @@ namespace utils
 
 			
 
-			LogDebug(
+			LogInfo(
 				"ntdll.dll  -> Base: 0x%llX, Size: 0x%llX\n", g_ntdll_base, g_ntdll_size);
-			LogDebug( 
+			LogInfo( 
 				"user32.dll -> Base: 0x%llX, Size: 0x%llX\n", g_user32_base, g_user32_size);
-			LogDebug( 
+			LogInfo( 
 				"dwmcore.dll -> Base: 0x%llX, Size: 0x%llX\n", g_dwmcore_base, g_dwmcore_size);
-			LogDebug(  
+			LogInfo(  
 				"dxgi.dll    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgi_base, g_dxgi_size);
-			LogDebug( 
+			LogInfo( 
 				"gdi32.dll   -> Base: 0x%llX, Size: 0x%llX\n", g_gdi32_base, g_gdi32_size);
-			LogDebug( 
+			LogInfo( 
 				"dxgkrnl.sys    -> Base: 0x%llX, Size: 0x%llX\n", g_dxgkrnl_base, g_dxgkrnl_size);
 	
 
@@ -813,7 +813,7 @@ namespace utils
 
 			*precall_addr_out = match_addr;
 
-			LogDebug(
+			LogInfo(
 				"PreCall found at: 0x%llX\n", *precall_addr_out);
 
 			return STATUS_SUCCESS;
@@ -848,7 +848,7 @@ namespace utils
 
 			*postcall_addr_out = match_addr;
 
-			LogDebug(
+			LogInfo(
 				"PostCall found at: 0x%llX\n", *postcall_addr_out);
 
 			return STATUS_SUCCESS;
@@ -918,7 +918,7 @@ namespace utils
 
 			*context_offset_out = abs_addr - ntdll_base;
 
-			LogDebug(
+			LogInfo(
 				"Found context offset = 0x%llX\n", *context_offset_out);
 
 
@@ -987,7 +987,7 @@ namespace utils
 				return STATUS_NOT_FOUND;
 			}
 
-			LogDebug(
+			LogInfo(
 				"Found CComposition::Present at 0x%llX\n", resolved_addr);
 			*ccomposition_present_addr_out = resolved_addr;
 			 
@@ -1014,7 +1014,7 @@ namespace utils
 
 			*cocclusion_context_pre_sub_graph_addr_out = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found COcclusionContext::PreSubgraph at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1041,7 +1041,7 @@ namespace utils
 
 			*cocclusion_context_post_sub_graph_addr_out = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found COcclusionContext::PostSubgraph at 0x%llX\n", addr);
 		 
 			return STATUS_SUCCESS;
@@ -1068,7 +1068,7 @@ namespace utils
 
 			*cdxgi_swapchain_present_dwm_out = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found CDXGISwapChain::PresentDWM at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1093,7 +1093,7 @@ namespace utils
 
 			*cdxgi_swapchain_present_multiplane_overlay_out = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found CDXGISwapChain::PresentMultiplaneOverlay at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1120,7 +1120,7 @@ namespace utils
 
 			*cdxgi_swap_chain_dwm_legacy_present_dwm_out = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found CDXGISwapChainDWMLegacy::PresentDWM at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1148,7 +1148,7 @@ namespace utils
 
 			*cddisplay_render_target_present_out = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found CDDisplayRenderTarget::Present at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1177,7 +1177,7 @@ namespace utils
 
 			*find_windoww_addr = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found FindWindowW at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1208,7 +1208,7 @@ namespace utils
 
 			*client_to_screen_addr = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found ClientToScreen at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1240,7 +1240,7 @@ namespace utils
 
 			*get_client_rect_addr = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found GetClientRect at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1272,7 +1272,7 @@ namespace utils
 
 			*get_foreground_window_addr = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found GetForegroundWindow at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1304,7 +1304,7 @@ namespace utils
 
 			*get_window_rect_addr = addr;
 
-			LogDebug( 
+			LogInfo( 
 				"Found GetWindowRect at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1336,7 +1336,7 @@ namespace utils
 
 			*get_keyboard_layout_addr = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found GetKeyboardLayout at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1367,7 +1367,7 @@ namespace utils
 
 			*dxgk_get_device_state = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found DxgkGetDeviceState at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1417,7 +1417,7 @@ namespace utils
 
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*load_librarya_addr = addr;
-			LogDebug(
+			LogInfo(
 				"Found LoadLibraryA at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
@@ -1447,7 +1447,7 @@ namespace utils
 
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*get_proc_address_addr = addr;
-			LogDebug(
+			LogInfo(
 				"Found GetProcAddress at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
@@ -1478,7 +1478,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*d3dcompile_addr = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found D3DCompile at 0x%llX\n", addr
 			);
 			return STATUS_SUCCESS;
@@ -1516,7 +1516,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*set_cursor_pos_addr = addr;
 
-			LogDebug("Found SetCursorPos at 0x%llX\n", addr);
+			LogInfo("Found SetCursorPos at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1550,7 +1550,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*screen_to_client_addr = addr;
 
-			LogDebug("Found ScreenToClient at 0x%llX\n", addr);
+			LogInfo("Found ScreenToClient at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1583,7 +1583,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*get_cursor_pos_addr = addr;
 
-			LogDebug("Found GetCursorPos at 0x%llX\n", addr);
+			LogInfo("Found GetCursorPos at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 
 		}
@@ -1617,7 +1617,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*get_key_state_addr = addr;
 
-			LogDebug("Found GetKeyState at 0x%llX\n", addr);
+			LogInfo("Found GetKeyState at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1651,7 +1651,7 @@ namespace utils
 			internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			*set_cursor_addr = addr;
 
-			LogDebug("Found SetCursor at 0x%llX\n", addr);
+			LogInfo("Found SetCursor at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1684,7 +1684,7 @@ namespace utils
 			}
 
 			*load_cursor_a_addr = addr;
-			LogDebug("Found LoadCursorA at 0x%llX\n", addr);
+			LogInfo("Found LoadCursorA at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1713,12 +1713,12 @@ namespace utils
 
 			if (addr == 0) {
 				*rtl_copy_memory_addr = 0;
-				LogDebug("RtlCopyMemory not found!\n");
+				LogInfo("RtlCopyMemory not found!\n");
 				return STATUS_NOT_FOUND;
 			}
 
 			*rtl_copy_memory_addr = addr;
-			LogDebug("Found RtlCopyMemory at 0x%llX\n", addr);
+			LogInfo("Found RtlCopyMemory at 0x%llX\n", addr);
 			return STATUS_SUCCESS;
 		}
 
@@ -1747,7 +1747,7 @@ namespace utils
 
 			*dxgk_open_resource = addr;
 
-			LogDebug(
+			LogInfo(
 				"Found DxgkOpenResource at 0x%llX\n", addr);
 
 			return STATUS_SUCCESS;
@@ -1961,10 +1961,10 @@ namespace utils
 			// 测试访问
 			__try {
 				volatile char value = *(char*)addr;
-				LogDebug("Read value at 0x%llx: %x\n", addr, value);
+				LogInfo("Read value at 0x%llx: %x\n", addr, value);
 			}
 			__except (EXCEPTION_EXECUTE_HANDLER) {
-				LogDebug("Exception occurred at 0x%llx!\n", addr);
+				LogInfo("Exception occurred at 0x%llx!\n", addr);
 			}
 
 			// 分离进程

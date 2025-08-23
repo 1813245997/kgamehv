@@ -32,12 +32,12 @@ namespace utils
 			g_start_address_offset = scanner_offset::find_start_address_offset();
 			g_win32_start_address_offset = scanner_offset::find_win32_start_address_offset();
 
-			LogDebug("process_exit_time_offset       = 0x%llx\n", g_process_exit_time_offset);
-			LogDebug("dxgprocess_offset              = 0x%llx\n", g_dxgprocess_offset);
-			LogDebug("process_wow64_process_offset  = 0x%llx\n", g_process_wow64_process_offset);
-			LogDebug("process_peb_offset            = 0x%llx\n", g_process_peb_offset);
-			LogDebug("start_address_offset          = 0x%llx\n", g_start_address_offset);
-			LogDebug("win32_start_address_offset    = 0x%llx\n", g_win32_start_address_offset);
+			LogInfo("process_exit_time_offset       = 0x%llx\n", g_process_exit_time_offset);
+			LogInfo("dxgprocess_offset              = 0x%llx\n", g_dxgprocess_offset);
+			LogInfo("process_wow64_process_offset  = 0x%llx\n", g_process_wow64_process_offset);
+			LogInfo("process_peb_offset            = 0x%llx\n", g_process_peb_offset);
+			LogInfo("start_address_offset          = 0x%llx\n", g_start_address_offset);
+			LogInfo("win32_start_address_offset    = 0x%llx\n", g_win32_start_address_offset);
 
 			if (!g_process_exit_time_offset ||
 				!g_dxgprocess_offset ||

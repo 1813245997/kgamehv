@@ -10,8 +10,8 @@
 void driver_unload(PDRIVER_OBJECT) {
    
 
-  LogDebug("Devirtualized the system.\n");
-  LogDebug("Driver unloaded.\n");
+  LogInfo("Devirtualized the system.\n");
+  LogInfo("Driver unloaded.\n");
 }
 //snake_case
 extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT const driver, PUNICODE_STRING) {

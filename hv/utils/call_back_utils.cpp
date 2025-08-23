@@ -1076,7 +1076,8 @@ namespace utils
 
 				pPsSetLoadImageNotifyRoutineEx = MmGetSystemRoutineAddress(&ustrFuncName);
 				LogInfo("Address of PsSetLoadImageNotifyRoutineEx: %p", pPsSetLoadImageNotifyRoutineEx);
-				PspLoadImageNotifyRoutineAddr = utils::signature_scanner::find_pattern(reinterpret_cast<ULONG_PTR>(pPsSetLoadImageNotifyRoutineEx), 0X1000, "\x48\x8D\x0D\xCC\xCC\xCC\xCC\x45\x33\xC0\x48\x8D\x0C\xD9\x48\x8B\xD7\xE8\xCC\xCC\xCC\xCC\x84\xC0\x75\x0C\xFF\xC3\x83\xFB\x40\x72\xDF\xE9\x01\xAF\x18\x00", "xxx????xxxxxxxxxxx????xxxxxxxxxxxxxxxx");
+				PspLoadImageNotifyRoutineAddr = utils::signature_scanner::find_pattern(reinterpret_cast<ULONG_PTR>(pPsSetLoadImageNotifyRoutineEx), 0X1000, 
+					"\x48\x8D\x0D\xCC\xCC\xCC\xCC\x45\x33\xC0\x48\x8B\xD6\x48\x8D\x0C\xC1", "xxx????xxxxxxxxxx");
 				PspLoadImageNotifyRoutine = reinterpret_cast<PULONG64> (utils::signature_scanner::resolve_relative_address(reinterpret_cast<PVOID> (PspLoadImageNotifyRoutineAddr), 3, 7));
 
 			}

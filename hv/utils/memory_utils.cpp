@@ -28,7 +28,7 @@ namespace utils
 			g_ppe_base = mm_get_pte_address(g_pde_base);
 			g_pxe_base = mm_get_pte_address(g_ppe_base);
 
-			LogDebug("Paging Base Values:\n"
+			LogInfo("Paging Base Values:\n"
 				"  PTE Base: 0x%llX\n"
 				"  PDE Base: 0x%llX\n"
 				"  PPE Base: 0x%llX\n"

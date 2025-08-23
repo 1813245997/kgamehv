@@ -359,6 +359,7 @@ namespace utils
 
 		bool handle_read_virt_mem(user_comm_request* request)
 		{
+			 
 			if (!request || !request->input_buffer)
 			{
 				return false;

@@ -19,27 +19,27 @@ namespace utils
 				return status;
 			}
 
-			LogDebug("CPU vendor information initialized successfully.");
+			LogInfo("CPU vendor information initialized successfully.");
 
 			status = is_cpu_virtualization_supported(cpu_type);
 			if (!NT_SUCCESS(status)) {
 				LogError("CPU does not support virtualization. Status: 0x%X", status);
 				return status;  // Return the specific error code if virtualization is not supported
 			}
-			LogDebug("CPU supports virtualization.");
+			LogInfo("CPU supports virtualization.");
 			status = is_ept_or_rvi_supported(cpu_type);
 			if (!NT_SUCCESS(status)) {
 				LogError("EPT or RVI support check failed. Status: 0x%X", status);
 				return status;  // Return the specific error code if EPT or RVI is not supported
 			}
-			LogDebug("EPT or RVI support is confirmed.");
+			LogInfo("EPT or RVI support is confirmed.");
 
 			status = is_virtualization_enabled_in_bios(cpu_type);
 				if (!NT_SUCCESS(status)) {
 					LogError("Virtualization is not enabled in BIOS. Status: 0x%X", status);
 					return status;  // Return the specific error code if virtualization is not enabled
 				}
-			LogDebug("Virtualization is enabled in BIOS.");
+			LogInfo("Virtualization is enabled in BIOS.");
 			status = initialize_khyper_game_vm(cpu_type);
 			if (!NT_SUCCESS(status)) {
 				LogError("Failed to initialize virtualization functionality. Status: 0x%X", status);
@@ -64,16 +64,16 @@ namespace utils
 
 			if (strcmp(vendor, "GenuineIntel") == 0) {
 				*cpu_type = CpuVendor::intel;
-				LogDebug("CPU Vendor: Intel");
+				LogInfo("CPU Vendor: Intel");
 			}
 			else if (strcmp(vendor, "AuthenticAMD") == 0) {
 				*cpu_type = CpuVendor::amd;
-				LogDebug("CPU Vendor: AMD");
+				LogInfo("CPU Vendor: AMD");
 				return STATUS_NOT_SUPPORTED;
 			}
 			else {
 				*cpu_type = CpuVendor::unknown;
-				LogDebug("CPU Vendor: Unknown");
+				LogInfo("CPU Vendor: Unknown");
 				return STATUS_NOT_SUPPORTED;
 			}
 
@@ -223,18 +223,18 @@ namespace utils
 		}
 		NTSTATUS initialize_intel_vtx()
 		{
-			LogDebug("Starting virtualization...");
+			LogInfo("Starting virtualization...");
 			if (!hv::start())
 			{
 				LogError("Failed to virtualize system.");
 				return STATUS_HV_OPERATION_FAILED;
 			}
-			LogDebug("Virtualization started successfully.");
+			LogInfo("Virtualization started successfully.");
 
-			LogDebug("Pinging hypervisor...");
+			LogInfo("Pinging hypervisor...");
 			if (ping() == hv::hypervisor_signature)
 			{
-				LogDebug("Hypervisor signature matches.");
+				LogInfo("Hypervisor signature matches.");
 			}
 			else
 			{
@@ -272,7 +272,7 @@ namespace utils
 			 
 			}
 			else {
-				LogDebug("CPU Vendor: Unknown");
+				LogInfo("CPU Vendor: Unknown");
 			}
 
 			return false;

@@ -48,7 +48,7 @@ namespace utils
 				   return false;
 			   }
 
-			   LogDebug("Font initialized successfully.");
+			   LogInfo("Font initialized successfully.");
 			   return true;
 
 			    

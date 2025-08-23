@@ -28,7 +28,7 @@ namespace utils
 
 			unloaders_count = *feature_data::mm_last_unloaded_driver;
 			if (unloaders_count == 0) {
-				LogDebug("unloaders_count == 0, nothing to clear.");
+				LogInfo("unloaders_count == 0, nothing to clear.");
 				return false;
 			}
 
@@ -92,7 +92,7 @@ namespace utils
 			utils::string_utils::free_unicode_string(target_name);
 			ExReleaseResourceLite(&PsLoadedModuleResource);
 
-			LogDebug("No matching unloaded driver entry found for: %ws", driver_name);
+			LogInfo("No matching unloaded driver entry found for: %ws", driver_name);
 			return false;
 		}
 
