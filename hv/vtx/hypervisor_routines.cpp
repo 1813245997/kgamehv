@@ -1,5 +1,6 @@
 #include "hv.h"
 #include "hypervisor_routines.h"
+#include "vmcs_encodings.h"
 
 
 namespace hv
@@ -28,6 +29,11 @@ namespace hv
 			hv::vmwrite<unsigned __int64>(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE, error_code);
 
 		hv::vmwrite<unsigned __int64>(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt.flags);
+	}
+
+	unsigned __int8 get_guest_cpl()
+	{
+		return hv::vmread(GUEST_CS_SELECTOR) & 3;
 	}
 }
 

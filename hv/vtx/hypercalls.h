@@ -29,7 +29,8 @@ enum hypercall_code : uint64_t {
   hypercall_get_hv_base,
   hypercall_install_mmr,
   hypercall_remove_mmr,
-  hypercall_remove_all_mmrs
+  hypercall_remove_all_mmrs,
+  hypercall_set_msr_fault_bitmaps,
  
  
 };
@@ -106,6 +107,7 @@ void remove_all_mmrs(vcpu* cpu);
 void clear_unloaded_drivers_entry(vcpu* cpu);
 
 
+void set_invalid_msr_bitmaps(vcpu* cpu );
  
  
 

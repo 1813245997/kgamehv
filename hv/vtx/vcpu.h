@@ -114,5 +114,10 @@ bool virtualize_cpu(vcpu* cpu);
 
 bool vmx_get_current_execution_mode();
 
+ 
+
+ 
+
+
 } // namespace hv
 

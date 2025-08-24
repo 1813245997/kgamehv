@@ -16,7 +16,7 @@ struct hypervisor {
   host_page_tables host_page_tables;
 
   // logger that can be used in root-mode
-  logger logger;
+  logger22 logger;
 
   // dynamically allocated array of vcpus
   unsigned long vcpu_count;

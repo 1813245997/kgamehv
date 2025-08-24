@@ -7,6 +7,8 @@
 #include "introspection.h"
  
 #include <cstddef>
+#include "compatibility_checks.h"
+#include "vt_global.h"
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
 
@@ -602,7 +604,13 @@ void remove_all_mmrs(vcpu* const cpu) {
 
 
  
+void set_invalid_msr_bitmaps(vcpu* cpu)
+{
+	g_invalid_msr_bitmap = reinterpret_cast<unsigned  long long*>(cpu->ctx->rcx);
+	g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(cpu->ctx->rdx);
 
+    skip_instruction();
+}
 
  
 

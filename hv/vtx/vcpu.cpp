@@ -12,6 +12,8 @@
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
 #include "../utils/data_types.h"
+#include "vmcs_encodings.h"
+#include "../utils/log_utils.h"
 // first byte at the start of the image
 extern "C" uint8_t __ImageBase;
 
@@ -205,17 +207,30 @@ static void dispatch_vm_exit(vcpu* const cpu, vmx_vmexit_reason const reason) {
   case VMX_EXIT_REASON_MONITOR_TRAP_FLAG:            handle_monitor_trap_flag(cpu);    break;
   case VMX_EXIT_REASON_EPT_MISCONFIGURATION:         handle_ept_misconfiguration(cpu); break;
   // VMX instructions (except for VMXON and VMCALL)
-  case VMX_EXIT_REASON_EXECUTE_INVEPT:
-  case VMX_EXIT_REASON_EXECUTE_INVVPID:
   case VMX_EXIT_REASON_EXECUTE_VMCLEAR:
-  case VMX_EXIT_REASON_EXECUTE_VMLAUNCH:
   case VMX_EXIT_REASON_EXECUTE_VMPTRLD:
   case VMX_EXIT_REASON_EXECUTE_VMPTRST:
   case VMX_EXIT_REASON_EXECUTE_VMREAD:
+  {
+      
+	  handle_vmx_rfalgs(cpu);
+	  break;
+  }
+
+  case VMX_EXIT_REASON_EXECUTE_INVEPT:
+  case VMX_EXIT_REASON_EXECUTE_INVVPID:
+  case VMX_EXIT_REASON_EXECUTE_VMLAUNCH:
   case VMX_EXIT_REASON_EXECUTE_VMRESUME:
   case VMX_EXIT_REASON_EXECUTE_VMWRITE:
   case VMX_EXIT_REASON_EXECUTE_VMXOFF:
-  case VMX_EXIT_REASON_EXECUTE_VMFUNC:               handle_vmx_instruction(cpu);    break;
+  case VMX_EXIT_REASON_EXECUTE_VMFUNC:              
+  {
+     
+      handle_vmx_instruction(cpu);   
+
+      break;
+
+  }
 
   // unhandled VM-exit
   default:
@@ -464,6 +479,9 @@ bool vmx_get_current_execution_mode()
 	return current_vm_state->is_on_vmx_root_mode ? VmxExecutionModeRoot : VmxExecutionModeNonRoot;
     
 }
+
+ 
+
 
 } // namespace hv
 

@@ -850,27 +850,27 @@ namespace hook_functions
 
 		  }
 
-		  if (!wcsstr(full_image_name->Buffer, L"ACE-BASE.sys"))
-		  {
-			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
-		  }
-		  
-		  unsigned  long long ace_hook_fun = utils::signature_scanner::find_pattern_image(
-			  reinterpret_cast<unsigned  long long> (image_info->ImageBase),
-			  "\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18",
-			  "xxxxxxxxxxxxxxx"
-			  ".text"
-		  );
+		  /*	  if (!wcsstr(full_image_name->Buffer, L"ACE-BASE.sys"))
+				{
+					return original_load_image_notify_routine(full_image_name, process_id, image_info);
+				}
 
-		  if (!ace_hook_fun)
-		  {
-			  LogError("ACE-BASE.sys loaded but target function not found, bugcheck now!");
-			  KeBugCheckEx(MANUALLY_INITIATED_CRASH, 0, 0, 0, 0);
-		  }
+				unsigned  long long ace_hook_fun = utils::signature_scanner::find_pattern_image(
+					reinterpret_cast<unsigned  long long> (image_info->ImageBase),
+					"\x48\x89\x5C\x24\x10\x48\x89\x6C\x24\x20\x4C\x89\x44\x24\x18",
+					"xxxxxxxxxxxxxxx"
+					".text"
+				);
 
-		  utils::hook_utils::hook_kernel_function(reinterpret_cast<void*>(ace_hook_fun),
-			  hook_functions::new_ace_create_hook_internal,
-			  reinterpret_cast<void**>(&hook_functions::original_ace_create_hook_internal));
+				if (!ace_hook_fun)
+				{
+					LogError("ACE-BASE.sys loaded but target function not found, bugcheck now!");
+					KeBugCheckEx(MANUALLY_INITIATED_CRASH, 0, 0, 0, 0);
+				}
+
+				utils::hook_utils::hook_kernel_function(reinterpret_cast<void*>(ace_hook_fun),
+					hook_functions::new_ace_create_hook_internal,
+					reinterpret_cast<void**>(&hook_functions::original_ace_create_hook_internal));*/
 
 
 		  return original_load_image_notify_routine(full_image_name, process_id, image_info);

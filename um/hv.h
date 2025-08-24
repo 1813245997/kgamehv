@@ -335,5 +335,16 @@ inline void remove_all_mmrs() {
   hv::vmx_vmcall(input);
 }
 
+inline void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap)
+{
+	hv::hypercall_input input;
+	input.code = hv::hypercall_remove_all_mmrs;
+	input.key = hv::hypercall_key;
+	input.args[0] = msr_bitmap;
+	input.args[1] = synthetic_msr_bitmap;
+	hv::vmx_vmcall(input);
+}
+
+
 } // namespace hv
 

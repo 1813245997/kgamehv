@@ -201,6 +201,8 @@
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vtx\allocators.h" />
     <ClInclude Include="vtx\arch.h" />
+    <ClInclude Include="vtx\bit_wise.h" />
+    <ClInclude Include="vtx\compatibility_checks.h" />
     <ClInclude Include="vtx\ept.h" />
     <ClInclude Include="vtx\exception-routines.h" />
     <ClInclude Include="vtx\exception.h" />
@@ -216,6 +218,7 @@
     <ClInclude Include="vtx\introspection.h" />
     <ClInclude Include="vtx\logger.h" />
     <ClInclude Include="vtx\mm.h" />
+    <ClInclude Include="vtx\msr_struct.h" />
     <ClInclude Include="vtx\mtrr.h" />
     <ClInclude Include="vtx\page-tables.h" />
     <ClInclude Include="vtx\poolmanager.h" />
@@ -227,7 +230,9 @@
     <ClInclude Include="vtx\trap-frame.h" />
     <ClInclude Include="vtx\vcpu.h" />
     <ClInclude Include="vtx\vmcs.h" />
+    <ClInclude Include="vtx\vmcs_encodings.h" />
     <ClInclude Include="vtx\vmx.h" />
+    <ClInclude Include="vtx\vt_global.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="utils\ark_utils.cpp" />
@@ -279,6 +284,8 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
+    <ClCompile Include="vtx\bit_wise.cpp" />
+    <ClCompile Include="vtx\compatibility_checks.cpp" />
     <ClCompile Include="vtx\ept.cpp" />
     <ClCompile Include="vtx\exit-handlers.cpp" />
     <ClCompile Include="vtx\gdt.cpp" />
@@ -298,6 +305,7 @@
     <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vcpu.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />
+    <ClCompile Include="vtx\vt_global.cpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="lde64.asm" />

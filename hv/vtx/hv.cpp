@@ -6,6 +6,7 @@
  
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
+#include "compatibility_checks.h"
 namespace hv {
 
 hypervisor ghv;
@@ -127,6 +128,8 @@ static bool create() {
   }
 
   prepare_host_page_tables();
+
+  compatibility_check_perform_checks();
 
 
   DbgPrint("[hv] Mapped all of physical memory to address 0x%zX.\n",

@@ -32,7 +32,7 @@ struct logger_msg {
   char data[max_msg_length];
 };
 
-struct logger {
+struct logger22 {
   static constexpr uint32_t max_msg_count = 512;
 
   // signature to find logs in memory easier

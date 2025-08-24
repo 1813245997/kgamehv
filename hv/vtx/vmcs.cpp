@@ -7,6 +7,7 @@
 #include "exception.h"
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
+#include "msr_struct.h"
 namespace hv {
 
 // defined in vm-exit.asm
@@ -301,6 +302,15 @@ void write_vmcs_guest_fields() {
   vmx_vmwrite(VMCS_GUEST_VMCS_LINK_POINTER, MAXULONG64);
 
   vmx_vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, MAXULONG64);
+}
+
+unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
+{
+	__msr msr_value = { 0 };
+	msr_value.all = __readmsr(msr);
+	ctl &= msr_value.high;
+	ctl |= msr_value.low;
+	return ctl;
 }
 
 } // namespace hv

@@ -392,3 +392,17 @@
 #define VMM_TAG 'vhra'
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+
+				  /**
+				   * @brief Hypervisor reserved range for RDMSR and WRMSR
+				   *
+				   */
+#define RESERVED_MSR_RANGE_LOW 0x40000000
+#define RESERVED_MSR_RANGE_HI  0x400000F0
+
+				   /**
+					* @brief Cpuid to get virtual address width
+					*
+					*/
+#define CPUID_ADDR_WIDTH 0x80000008

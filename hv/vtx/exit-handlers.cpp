@@ -10,6 +10,12 @@
 #include "../utils/hook_utils.h"
 #include "hypervisor_routines.h"
 #include "interrupt.h"
+#include "../utils/macros.h"
+#include "vmcs_encodings.h"
+#include "msr_struct.h"
+#include "compatibility_checks.h"
+#include "vt_global.h"
+#include "bit_wise.h"
 namespace hv {
 
 void emulate_cpuid(vcpu* const cpu) {
@@ -28,64 +34,319 @@ void emulate_cpuid(vcpu* const cpu) {
 }
 
 void emulate_rdmsr(vcpu* const cpu) {
-  if (cpu->ctx->ecx == IA32_FEATURE_CONTROL) {
-    // return the fake guest FEATURE_CONTROL MSR
-    cpu->ctx->rax = cpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
-    cpu->ctx->rdx = cpu->cached.guest_feature_control.flags >> 32;
 
-    cpu->hide_vm_exit_overhead = true;
-    skip_instruction();
-    return;
-  }
+	if (cpu->ctx->ecx == IA32_FEATURE_CONTROL) {
+		// return the fake guest FEATURE_CONTROL MSR
+		cpu->ctx->rax = cpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
+		cpu->ctx->rdx = cpu->cached.guest_feature_control.flags >> 32;
 
-  host_exception_info e;
+		cpu->hide_vm_exit_overhead = true;
+		skip_instruction();
+		return;
+	}
 
-  // the guest could be reading from MSRs that are outside of the MSR bitmap
-  // range. refer to https://www.unknowncheats.me/forum/3425463-post15.html
-  auto const msr_value = rdmsr_safe(e, cpu->ctx->ecx);
+	host_exception_info e;
 
-  if (e.exception_occurred) {
-    // reflect the exception back into the guest
-    inject_hw_exception(general_protection, 0);
-    return;
-  }
+	// the guest could be reading from MSRs that are outside of the MSR bitmap
+	// range. refer to https://www.unknowncheats.me/forum/3425463-post15.html
+	auto const msr_value = rdmsr_safe(e, cpu->ctx->ecx);
 
-  cpu->ctx->rax = msr_value & 0xFFFF'FFFF;
-  cpu->ctx->rdx = msr_value >> 32;
+	if (e.exception_occurred) {
+		// reflect the exception back into the guest
+		inject_hw_exception(general_protection, 0);
+		return;
+	}
 
-  cpu->hide_vm_exit_overhead = true;
-  skip_instruction();
+	cpu->ctx->rax = msr_value & 0xFFFF'FFFF;
+	cpu->ctx->rdx = msr_value >> 32;
+
+	cpu->hide_vm_exit_overhead = true;
+	skip_instruction();
+ 
+
+
+
+
+ // if (cpu->ctx->ecx == IA32_FEATURE_CONTROL) {
+
+ //   
+ //   ia32_feature_control_register feature_control{};
+ //  
+ //   feature_control.flags = hv::vmread(IA32_FEATURE_CONTROL);
+ //   feature_control.enable_vmx_outside_smx = false;
+ //   // return the fake guest FEATURE_CONTROL MSR
+ //  /* cpu->ctx->rax = cpu->cached.guest_feature_control.flags & 0xFFFF'FFFF;
+ //   cpu->ctx->rdx = cpu->cached.guest_feature_control.flags >> 32;*/
+	//cpu->ctx->rax = feature_control.flags & 0xFFFF'FFFF;
+	//cpu->ctx->rdx = feature_control.flags >> 32;
+ //   cpu->hide_vm_exit_overhead = true;
+ //   skip_instruction();
+ //   return;
+ // }
+
+ //
+ // unsigned long long   msr_value = 0;
+ // unsigned long  msr_index = cpu->ctx->ecx;
+
+ //  if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
+	//  (msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
+ // {
+
+ //      
+
+	//  switch (msr_index)
+	//  {
+	//  case IA32_SYSENTER_CS:
+ //         msr_value = hv::vmread(VMCS_GUEST_SYSENTER_CS);
+	//	  break;
+
+	//  case IA32_SYSENTER_ESP:
+ //         msr_value = hv::vmread(VMCS_GUEST_SYSENTER_ESP);
+	//	  break;
+
+	//  case IA32_SYSENTER_EIP:
+ //         msr_value = hv::vmread(VMCS_GUEST_SYSENTER_EIP);
+	//	  break;
+
+	//  case IA32_GS_BASE:
+ //         msr_value = hv::vmread(VMCS_GUEST_GS_BASE);
+	//	  break;
+
+	//  case IA32_FS_BASE:
+ //         msr_value = hv::vmread(VMCS_GUEST_FS_BASE);
+	//	  break;
+
+	//  case IA32_INTERRUPT_SSP_TABLE_ADDR:
+ //         msr_value = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
+	//	  break;
+
+
+	//  case IA32_S_CET:
+ //         msr_value = hv::vmread(GUEST_S_CET);
+	//	  break;
+
+	//  case IA32_PERF_GLOBAL_CTRL:
+ //         msr_value = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
+	//	  break;
+
+	//  case IA32_PKRS:
+ //         msr_value = hv::vmread(GUEST_PKRS);
+	//	  break;
+
+	//  case IA32_RTIT_CTL:
+ //         msr_value = hv::vmread(GUEST_RTIT_CTL);
+	//	  break;
+
+	//  case IA32_BNDCFGS:
+ //         msr_value = hv::vmread(GUEST_BNDCFGS);
+	//	  break;
+
+	//  case IA32_PAT:
+ //         msr_value = hv::vmread(GUEST_PAT);
+	//	  break;
+
+	//  case IA32_EFER:
+ //         msr_value = hv::vmread(GUEST_EFER);
+	//	  break;
+
+	//  default:
+
+	//  {
+
+	//	  if (msr_index <= 0xfff && TestBit(msr_index, (unsigned long*)g_invalid_msr_bitmap) != NULL64_ZERO)
+	//	  {
+ //             inject_hw_exception(general_protection, 0);
+	//		  return;
+	//	  }
+
+	//	  if ((msr_index >= 0x40000000 && msr_index <= 0x400000FF) &&
+	//		  TestBit(msr_index - 0x40000000, (unsigned long*)g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
+	//	  {
+ //             inject_hw_exception(general_protection, 0);
+	//		  return;
+	//	  }
+
+ //         msr_value = __readmsr(msr_index);
+
+
+	//  }
+	//  break;
+	//  }
+
+	//  cpu->ctx->rax = msr_value & 0xFFFF'FFFF;
+	//  cpu->ctx->rdx = msr_value >> 32;
+	//  
+	//  cpu->hide_vm_exit_overhead = true;
+	//  skip_instruction();
+
+ // }
+ // else
+ // {
+ //     inject_hw_exception(general_protection, 0);
+	//  return;
+ // }
+   
+
 }
 
 void emulate_wrmsr(vcpu* const cpu) {
-  auto const msr = cpu->ctx->ecx;
-  auto const value = (cpu->ctx->rdx << 32) | cpu->ctx->eax;
 
-  // let the guest write to the MSRs
-  host_exception_info e;
-  wrmsr_safe(e, msr, value);
+	auto const msr = cpu->ctx->ecx;
+	auto const value = (cpu->ctx->rdx << 32) | cpu->ctx->eax;
 
-  if (e.exception_occurred) {
-    inject_hw_exception(general_protection, 0);
-    return;
-  }
+	// let the guest write to the MSRs
+	host_exception_info e;
+	wrmsr_safe(e, msr, value);
 
-  // we need to make sure to update EPT memory types if the guest
-  // modifies any of the MTRR registers
-  if (msr == IA32_MTRR_DEF_TYPE     || msr == IA32_MTRR_FIX64K_00000 ||
-      msr == IA32_MTRR_FIX16K_80000 || msr == IA32_MTRR_FIX16K_A0000 ||
-     (msr >= IA32_MTRR_FIX4K_C0000  && msr <= IA32_MTRR_FIX4K_F8000) ||
-     (msr >= IA32_MTRR_PHYSBASE0    && msr <= IA32_MTRR_PHYSBASE0 + 511)) {
-    // update EPT memory types
-    if (!read_effective_guest_cr0().cache_disable)
-      update_ept_memory_type(cpu->ept);
+	if (e.exception_occurred) {
+		inject_hw_exception(general_protection, 0);
+		return;
+	}
 
-    vmx_invept(invept_all_context, {});
-  }
+	// we need to make sure to update EPT memory types if the guest
+	// modifies any of the MTRR registers
+	if (msr == IA32_MTRR_DEF_TYPE || msr == IA32_MTRR_FIX64K_00000 ||
+		msr == IA32_MTRR_FIX16K_80000 || msr == IA32_MTRR_FIX16K_A0000 ||
+		(msr >= IA32_MTRR_FIX4K_C0000 && msr <= IA32_MTRR_FIX4K_F8000) ||
+		(msr >= IA32_MTRR_PHYSBASE0 && msr <= IA32_MTRR_PHYSBASE0 + 511)) {
+		// update EPT memory types
+		if (!read_effective_guest_cr0().cache_disable)
+			update_ept_memory_type(cpu->ept);
 
-  cpu->hide_vm_exit_overhead = true;
-  skip_instruction();
-  return;
+		vmx_invept(invept_all_context, {});
+	}
+
+	cpu->hide_vm_exit_overhead = true;
+	skip_instruction();
+	return;
+
+
+
+ //   unsigned long  msr_index = cpu->ctx->ecx;
+
+	//BOOLEAN     unused_kernel_flag{};
+	//auto const value = (cpu->ctx->rdx << 32) | cpu->ctx->eax;
+
+ //   __msr msr;
+ //   msr.all = value;
+ //
+
+	//if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
+	//	(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
+	//{
+	//	switch (msr_index)
+	//	{
+	//	case IA32_DS_AREA:
+	//	case IA32_FS_BASE:
+	//	case IA32_GS_BASE:
+	//	case IA32_KERNEL_GS_BASE:
+	//	case IA32_LSTAR:
+	//	case IA32_SYSENTER_EIP:
+	//	case IA32_SYSENTER_ESP:
+
+	//		if (!check_address_canonicality(msr.all, &unused_kernel_flag))
+	//		{
+	//			//
+	//			// Address is not canonical, inject #GP
+	//			//
+
+ //               inject_hw_exception(general_protection, 0);
+
+	//			return;
+	//		}
+
+	//		break;
+	//	}
+
+	//	switch (msr_index)
+	//	{
+
+
+	//	case IA32_INTERRUPT_SSP_TABLE_ADDR:
+	//		hv::vmwrite(GUEST_INTERRUPT_SSP_TABLE_ADDR, msr.all);
+	//		break;
+
+	//	case IA32_SYSENTER_CS:
+	//		hv::vmwrite(GUEST_SYSENTER_CS, msr.all);
+	//		break;
+
+	//	case IA32_SYSENTER_EIP:
+	//		hv::vmwrite(GUEST_SYSENTER_EIP, msr.all);
+	//		break;
+
+	//	case IA32_SYSENTER_ESP:
+	//		hv::vmwrite(GUEST_SYSENTER_ESP, msr.all);
+	//		break;
+
+	//	case IA32_S_CET:
+	//		hv::vmwrite(GUEST_S_CET, msr.all);
+	//		break;
+
+	//	case IA32_PERF_GLOBAL_CTRL:
+	//		hv::vmwrite(GUEST_PERF_GLOBAL_CONTROL, msr.all);
+	//		break;
+
+	//	case IA32_PKRS:
+	//		hv::vmwrite(GUEST_PKRS, msr.all);
+	//		break;
+
+	//	case IA32_RTIT_CTL:
+	//		hv::vmwrite(GUEST_RTIT_CTL, msr.all);
+	//		break;
+
+	//	case IA32_BNDCFGS:
+	//		hv::vmwrite(GUEST_BNDCFGS, msr.all);
+	//		break;
+
+	//	case IA32_PAT:
+	//		hv::vmwrite(GUEST_PAT, msr.all);
+	//		break;
+
+	//	case IA32_EFER:
+	//		hv::vmwrite(GUEST_EFER, msr.all);
+	//		break;
+
+	//	case IA32_GS_BASE:
+	//		hv::vmwrite(GUEST_GS_BASE, msr.all);
+	//		break;
+
+	//	case IA32_FS_BASE:
+	//		hv::vmwrite(GUEST_FS_BASE, msr.all);
+	//		break;
+
+	//	default:
+
+	//	{
+	//		__writemsr(msr_index, msr.all);
+
+	//		// we need to make sure to update EPT memory types if the guest
+ //         // modifies any of the MTRR registers
+	//		if (msr_index == IA32_MTRR_DEF_TYPE || msr_index == IA32_MTRR_FIX64K_00000 ||
+ //               msr_index == IA32_MTRR_FIX16K_80000 || msr_index == IA32_MTRR_FIX16K_A0000 ||
+	//			(msr_index >= IA32_MTRR_FIX4K_C0000 && msr_index <= IA32_MTRR_FIX4K_F8000) ||
+	//			(msr_index >= IA32_MTRR_PHYSBASE0 && msr_index <= IA32_MTRR_PHYSBASE0 + 511)) {
+	//			// update EPT memory types
+	//			if (!read_effective_guest_cr0().cache_disable)
+	//				update_ept_memory_type(cpu->ept);
+
+	//			vmx_invept(invept_all_context, {});
+	//		}
+
+	//		break;
+	//	}
+
+
+
+	//	}
+
+
+	//	 cpu->hide_vm_exit_overhead = true;
+ //        skip_instruction();
+	//}
+	//else
+	//{
+ //       inject_hw_exception(general_protection, 0);
+	//}
 }
 
 void emulate_getsec(vcpu*) {
@@ -111,6 +372,13 @@ void emulate_xsetbv(vcpu* const cpu) {
   xcr0 new_xcr0;
   new_xcr0.flags = (cpu->ctx->rdx << 32) | cpu->ctx->eax;
 
+ 
+  ULONG64 RCXANDRDX = cpu->ctx->rdx << 32 | cpu->ctx->rax;
+  if (cpu->ctx->ecx ==0 &&RCXANDRDX ==0)
+  {
+	  inject_hw_exception(general_protection, 0);
+	  return;
+  }
   // only XCR0 is supported
   if (cpu->ctx->ecx != 0) {
     inject_hw_exception(general_protection, 0);
@@ -186,12 +454,21 @@ void emulate_vmcall(vcpu* const cpu) {
   auto const code = cpu->ctx->rax & 0xFF;
   auto const key  = cpu->ctx->rax >> 8;
 
+  if (hv::get_guest_cpl() != 0)
+  {
+	  hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, 3, 0, 1);
+	  return;
+  }
   // validate the hypercall key
   if (key != hypercall_key  ) {
     HV_LOG_VERBOSE("Invalid VMCALL key. RIP=%p.", vmx_vmread(VMCS_GUEST_RIP));
     inject_hw_exception(invalid_opcode);
     return;
   }
+
+
+
+
 
   // handle the hypercall
   switch (code) {
@@ -213,7 +490,7 @@ void emulate_vmcall(vcpu* const cpu) {
   case hypercall_install_mmr:          hc::install_mmr(cpu);          return;
   case hypercall_remove_mmr:           hc::remove_mmr(cpu);           return;
   case hypercall_remove_all_mmrs:      hc::remove_all_mmrs(cpu);      return;
- 
+  case hypercall_set_msr_fault_bitmaps:hc::set_invalid_msr_bitmaps(cpu); return;
   
 
   }
@@ -538,7 +815,7 @@ void handle_exception_or_nmi(vcpu* const cpu) {
     UNREFERENCED_PARAMETER(cpu);
   // enqueue an NMI to be injected into the guest later on
 	const auto interrupt_flags = static_cast<uint32_t>(vmx_vmread(VMCS_VMEXIT_INTERRUPTION_INFORMATION));
-
+	const uint32_t error_code = static_cast<uint32_t>  (hv::vmread(VMCS_VMEXIT_INTERRUPTION_ERROR_CODE));
 	vmexit_interrupt_information interrupt_info{};
 	interrupt_info.flags = interrupt_flags;
     rflags guest_rflags{ vmx_vmread(VMCS_GUEST_RFLAGS) };
@@ -551,7 +828,7 @@ void handle_exception_or_nmi(vcpu* const cpu) {
 		__writecr2(qualification);
 	}
 	// === Single Step (#DB) 且 Trap Flag 未开启，判断是否为 Hook 原始地址命中 ===
-	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP&& !guest_rflags.trap_flag)
+	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP&& guest_rflags.trap_flag == false)
 	{
 	 
      
@@ -565,7 +842,7 @@ void handle_exception_or_nmi(vcpu* const cpu) {
              
 		 
 	}
-	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP && interrupt_info.interruption_type == privileged_software_exception && guest_rflags.trap_flag == true)
+	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP  && guest_rflags.trap_flag == true)
 	{
 		//asm_pg_KiErrata361Present proc
 		//	mov ax, ss
@@ -585,7 +862,7 @@ void handle_exception_or_nmi(vcpu* const cpu) {
 		__writedr(6, dr6.flags);
 	}
  
-    const uint32_t error_code = static_cast<uint32_t>  (hv::vmread(VMCS_VMEXIT_INTERRUPTION_ERROR_CODE));
+   
     hv::inject_interruption(interrupt_info.vector, interrupt_info.interruption_type, error_code, interrupt_info.error_code_valid);
   
 }
@@ -694,6 +971,15 @@ void handle_ept_violation(vcpu* const cpu) {
     pte->execute_access    = 0;
     pte->page_frame_number = hook->orig_pfn;
   }
+}
+
+void handle_vmx_rfalgs(vcpu* cpu)
+{
+	rflags guest_rflags{  };
+	guest_rflags.flags = vmx_vmread(VMCS_GUEST_RFLAGS);
+	guest_rflags.zero_flag=true;
+	__vmx_vmwrite(VMCS_GUEST_RFLAGS, guest_rflags.flags);
+	skip_instruction();
 }
 
 void emulate_rdtsc(vcpu* const cpu) {
