@@ -132,6 +132,7 @@ void enable_monitor_trap_flag();
 // disable MTF exiting
 void disable_monitor_trap_flag();
 
+
 } // namespace hv
 
 #include "vmx.inl"

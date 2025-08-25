@@ -1,12 +1,22 @@
 #include "timing.h"
 #include "vcpu.h"
 #include "vmx.h"
-#include "logger.h"
+#include "../utils/log_utils.h"
 
 #include <ntdef.h>
 
 namespace hv {
 
+	void measure_vm_exit_overheads(vcpu* cpu) {
+		cpu->vm_exit_tsc_overhead = measure_vm_exit_tsc_overhead();
+		cpu->vm_exit_mperf_overhead = measure_vm_exit_mperf_overhead();
+		cpu->vm_exit_ref_tsc_overhead = measure_vm_exit_ref_tsc_overhead();
+
+		LogDebug("Measured VM-exit overhead (TSC = %zi).\n", cpu->vm_exit_tsc_overhead);
+		LogDebug("Measured VM-exit overhead (MPERF = %zi).\n", cpu->vm_exit_mperf_overhead);
+		LogDebug("Measured VM-exit overhead (CPU_CLK_UNHALTED.REF_TSC = %zi).\n",
+			cpu->vm_exit_ref_tsc_overhead);
+	}
 // try to hide the vm-exit overhead from being detected through timings
 void hide_vm_exit_overhead(vcpu* const cpu) {
   //
@@ -73,6 +83,8 @@ uint64_t measure_vm_exit_tsc_overhead() {
   uint64_t lowest_vm_exit_overhead = ~0ull;
   uint64_t lowest_timing_overhead  = ~0ull;
 
+  int cpu_info[4] = { 0 };
+
   // perform the measurement 10 times and use the smallest time
   for (int i = 0; i < 10; ++i) {
     _mm_lfence();
@@ -85,13 +97,13 @@ uint64_t measure_vm_exit_tsc_overhead() {
 
     auto const timing_overhead = (end - start);
 
-    vmx_vmcall(hv_input);
+    __cpuid(cpu_info, 0);
 
     _mm_lfence();
     start = __rdtsc();
     _mm_lfence();
 
-    vmx_vmcall(hv_input);
+    __cpuid(cpu_info, 0);
 
     _mm_lfence();
     end = __rdtsc();
@@ -106,7 +118,7 @@ uint64_t measure_vm_exit_tsc_overhead() {
   }
 
   _enable();
-  return lowest_vm_exit_overhead - lowest_timing_overhead;
+  return lowest_vm_exit_overhead - lowest_timing_overhead ;
 }
 
 // measure the overhead of a vm-exit (CPU_CLK_UNHALTED.REF_TSC)

@@ -6,6 +6,8 @@ namespace hv {
 
 struct vcpu;
 
+void measure_vm_exit_overheads(vcpu* cpu);
+
 // try to hide the vm-exit overhead from being detected through timings
 void hide_vm_exit_overhead(vcpu* cpu);
 

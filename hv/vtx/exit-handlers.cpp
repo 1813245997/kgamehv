@@ -842,7 +842,7 @@ void handle_exception_or_nmi(vcpu* const cpu) {
              
 		 
 	}
-	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP  && guest_rflags.trap_flag == true)
+	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP && guest_rflags.trap_flag == true)
 	{
 		//asm_pg_KiErrata361Present proc
 		//	mov ax, ss

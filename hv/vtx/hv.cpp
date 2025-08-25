@@ -161,6 +161,9 @@ bool start() {
 
     utils::internal_functions::pfn_ke_revert_to_user_affinity_thread_ex(orig_affinity);
   }
+
+ 
+ 
   ghv.initialized = true;
 
   return true;

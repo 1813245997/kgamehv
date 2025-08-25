@@ -8,6 +8,7 @@
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
 #include "msr_struct.h"
+#include "hypervisor_routines.h"
 namespace hv {
 
 // defined in vm-exit.asm
@@ -152,6 +153,8 @@ void write_vmcs_ctrl_fields(vcpu* const cpu) {
   vmx_vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, 0);
   vmx_vmwrite(VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE,           0);
   vmx_vmwrite(VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH,             0);
+  //CONTROL_TPR_THRESHOLD
+  hv::vmwrite <unsigned __int64>(16412, 0);
 }
 
 // setup the VMCS host fields
@@ -208,14 +211,14 @@ void write_vmcs_host_fields(vcpu const* const cpu) {
   // configure PAT as if it wasn't supported (i.e. default settings after a reset)
   ia32_pat_register host_pat;
   host_pat.flags = 0;
-  host_pat.pa0   = MEMORY_TYPE_WRITE_BACK;
-  host_pat.pa1   = MEMORY_TYPE_WRITE_THROUGH;
-  host_pat.pa2   = MEMORY_TYPE_UNCACHEABLE_MINUS;
-  host_pat.pa3   = MEMORY_TYPE_UNCACHEABLE;
-  host_pat.pa4   = MEMORY_TYPE_WRITE_BACK;
-  host_pat.pa5   = MEMORY_TYPE_WRITE_THROUGH;
-  host_pat.pa6   = MEMORY_TYPE_UNCACHEABLE_MINUS;
-  host_pat.pa7   = MEMORY_TYPE_UNCACHEABLE;
+  host_pat.pa0 = MEMORY_TYPE_WRITE_BACK;
+  host_pat.pa1 = MEMORY_TYPE_WRITE_THROUGH;
+  host_pat.pa2 = MEMORY_TYPE_UNCACHEABLE_MINUS;
+  host_pat.pa3 = MEMORY_TYPE_UNCACHEABLE;
+  host_pat.pa4 = MEMORY_TYPE_WRITE_BACK;
+  host_pat.pa5 = MEMORY_TYPE_WRITE_THROUGH;
+  host_pat.pa6 = MEMORY_TYPE_UNCACHEABLE_MINUS;
+  host_pat.pa7 = MEMORY_TYPE_UNCACHEABLE;
   vmx_vmwrite(VMCS_HOST_PAT, host_pat.flags);
 
   // disable every PMC
