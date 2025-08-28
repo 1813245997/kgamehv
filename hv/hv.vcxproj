@@ -202,6 +202,7 @@
     <ClInclude Include="vtx\allocators.h" />
     <ClInclude Include="vtx\arch.h" />
     <ClInclude Include="vtx\bit_wise.h" />
+    <ClInclude Include="vtx\CommonTypes\CPUID.h" />
     <ClInclude Include="vtx\compatibility_checks.h" />
     <ClInclude Include="vtx\ept.h" />
     <ClInclude Include="vtx\exception-routines.h" />

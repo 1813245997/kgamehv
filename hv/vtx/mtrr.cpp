@@ -1,11 +1,17 @@
 #include "mtrr.h"
 #include "arch.h"
-
+#include "CommonTypes/CPUID.h"
 namespace hv {
 
 // read MTRR data into a single structure
 mtrr_data read_mtrr_data() {
   mtrr_data mtrrs;
+
+  CPUID::FEATURE_INFORMATION Features = {};
+  __cpuid(Features.Regs.Raw, CPUID::Intel::CPUID_FEATURE_INFORMATION);
+  mtrrs.IsSupported = Features.Intel.MTRR;
+
+  if (!mtrrs.IsSupported) return mtrrs;
 
   mtrrs.cap.flags      = __readmsr(IA32_MTRR_CAPABILITIES);
   mtrrs.def_type.flags = __readmsr(IA32_MTRR_DEF_TYPE);

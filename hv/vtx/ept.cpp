@@ -5,10 +5,12 @@
 #include "mm.h"
 #include "../utils/ntos_struct_def.h"
 #include "../utils/internal_function_defs.h"
+#include "../utils/macros.h"
 namespace hv {
 
 // identity-map the EPT paging structures
 void prepare_ept(vcpu_ept_data& ept) {
+    
   memset(&ept, 0, sizeof(ept));
   
   ept.dummy_page_pfn = utils::internal_functions::pfn_mm_get_physical_address(ept.dummy_page).QuadPart >> 12;
@@ -28,6 +30,7 @@ void prepare_ept(vcpu_ept_data& ept) {
   ept.hooks.buffer[ept.hooks.capacity - 1].next = nullptr;
 
   // setup the first PML4E so that it points to our PDPT
+  
   auto& pml4e             = ept.pml4[0];
   pml4e.flags             = 0;
   pml4e.read_access       = 1;
@@ -57,20 +60,67 @@ void prepare_ept(vcpu_ept_data& ept) {
 
     for (size_t j = 0; j < 512; ++j) {
       // identity-map every GPA to the corresponding HPA
-      auto& pde             = ept.pds_2mb[i][j];
-      pde.flags             = 0;
-      pde.read_access       = 1;
-      pde.write_access      = 1;
-      pde.execute_access    = 1;
-      pde.ignore_pat        = 0;
-      pde.large_page        = 1;
-      pde.accessed          = 0;
-      pde.dirty             = 0;
-      pde.user_mode_execute = 1;
-      pde.suppress_ve       = 0;
-      pde.page_frame_number = (i << 9) + j;
-      pde.memory_type       = calc_mtrr_mem_type(mtrrs,
-        pde.page_frame_number << 21, 0x1000 << 9);
+#if 0
+	  // identity-map every GPA to the corresponding HPA
+
+		auto& pde = ept.pds_2mb[i][j];
+		pde.flags = 0;
+		pde.read_access = 1;
+		pde.write_access = 1;
+		pde.execute_access = 1;
+		pde.ignore_pat = 0;
+		pde.large_page = 1;
+		pde.accessed = 0;
+		pde.dirty = 0;
+		pde.user_mode_execute = 1;
+		pde.suppress_ve = 0;
+		pde.page_frame_number = (i << 9) + j;
+		pde.memory_type = calc_mtrr_mem_type(mtrrs,
+			pde.page_frame_number << 21, 0x1000 << 9);
+#else
+		if (i == 0 && j == 0)
+		{
+
+			PVOID64 PtePhys = (PVOID64)(MmGetPhysicalAddress((PVOID)(ept.PteForFirstLargePage)).QuadPart);
+			ept.pds[i][j].read_access = TRUE;
+			ept.pds[i][j].write_access = TRUE;
+			ept.pds[i][j].execute_access = TRUE;
+			ept.pds[i][j].page_frame_number = PAGE_TO_PFN(reinterpret_cast<UINT64>(PtePhys));
+
+			for (unsigned int k = 0; k < _ARRAYSIZE(ept.PteForFirstLargePage); ++k)
+			{
+				uint8_t MemType = MEMORY_TYPE_UNCACHEABLE;
+				if (mtrrs.IsSupported)
+				{
+					MemType = calc_mtrr_mem_type(mtrrs, PFN_TO_PAGE(static_cast<unsigned long long>(k)), PAGE_SIZE);
+				}
+
+				ept.PteForFirstLargePage[k].read_access = TRUE;
+				ept.PteForFirstLargePage[k].write_access = TRUE;
+				ept.PteForFirstLargePage[k].execute_access = TRUE;
+				ept.PteForFirstLargePage[k].memory_type = static_cast<unsigned char>(MemType);
+				ept.PteForFirstLargePage[k].page_frame_number = k;
+			}
+		}
+		else
+		{
+			unsigned long long PagePfn = i * _ARRAYSIZE(ept.pds[i]) + j;
+			constexpr unsigned long long LargePageSize = 2 * 1048576; // 2 Mb
+
+			uint8_t MemType = MEMORY_TYPE_UNCACHEABLE;
+			if (mtrrs.IsSupported)
+			{
+				MemType = calc_mtrr_mem_type(mtrrs, PFN_TO_LARGE_PAGE(PagePfn), LargePageSize);
+			}
+
+			ept.pds_2mb[i][j].read_access = TRUE;
+			ept.pds_2mb[i][j].write_access = TRUE;
+			ept.pds_2mb[i][j].execute_access = TRUE;
+			ept.pds_2mb[i][j].memory_type = static_cast<unsigned char>(MemType);
+			ept.pds_2mb[i][j].large_page = TRUE;
+			ept.pds_2mb[i][j].page_frame_number = PagePfn;
+		}
+#endif
     }
   }
 }

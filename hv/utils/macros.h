@@ -406,3 +406,18 @@
 					*
 					*/
 #define CPUID_ADDR_WIDTH 0x80000008
+
+					// 1 << 12 == 4096 (0x1000, 4Kb):
+#define PFN_TO_PAGE(pfn)        ((pfn)  << 12)
+#define PAGE_TO_PFN(page)       ((page) >> 12)
+
+// 1 << 21 == 2097152 (0x200000, 2Mb):
+#define PFN_TO_LARGE_PAGE(pfn)  ((pfn)  << 21)
+#define LARGE_PAGE_TO_PFN(page) ((page) >> 21)
+
+ 
+#define PFN_TO_HUGE_PAGE(pfn)   ((pfn)  << 30)
+#define HUGE_PAGE_TO_PFN(page)  ((page) >> 30)
+
+// CR3 in PAE : PDP at 5:31
+#define PFN_TO_PDP_PAE(pfn) ((pfn) << 5)

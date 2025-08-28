@@ -68,7 +68,7 @@ struct vcpu_ept_data {
     alignas(0x1000) ept_pde     pds[ept_pd_count][512];
     alignas(0x1000) ept_pde_2mb pds_2mb[ept_pd_count][512];
   };
-
+  alignas(0x1000)   ept_pte  PteForFirstLargePage[2 * 1048576 / 4096];
   // free pages that can be used to split PDEs or for other purposes
   alignas(0x1000) uint8_t free_pages[ept_free_page_count][0x1000];
 
