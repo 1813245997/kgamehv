@@ -1,7 +1,6 @@
 #pragma once
 #include <ntddk.h>
-#include "../utils/macros.h"
- 
+#include "common.h"
 
 /// <summary>
 /// Allocate NonPagedPool with hypervisor tag, custom size
@@ -12,7 +11,7 @@
 template <typename T>
 inline T allocate_pool(unsigned __int64 size)
 {
-    return (T)ExAllocatePoolWithTag(NonPagedPool, size, VMM_TAG);
+    return (T)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, size, POOL_TAG);
 }
 
 /// <summary>
@@ -24,7 +23,7 @@ inline T allocate_pool(unsigned __int64 size)
 template <typename T>
 inline T* allocate_pool()
 {
-    return (T*)ExAllocatePoolWithTag(NonPagedPool, sizeof(T), VMM_TAG);
+    return (T*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(T), POOL_TAG);
 }
 
 /// <summary>
@@ -50,7 +49,7 @@ inline T allocate_contignous_memory(unsigned __int64 size)
 {
     PHYSICAL_ADDRESS a;
     a.QuadPart = 0ULL - 1;
-    return (T)MmAllocateContiguousMemory(size, a);
+    return (T)   MmAllocateContiguousMemory(size, a);
 }
 
 /// <summary>
@@ -59,7 +58,7 @@ inline T allocate_contignous_memory(unsigned __int64 size)
 /// <param name="pool_address"> Base address of pool </param>
 inline void free_pool(void* pool_address)
 {
-    ExFreePoolWithTag(pool_address, VMM_TAG);
+    ExFreePoolWithTag(pool_address, 0);
 }
 
 /// <summary>

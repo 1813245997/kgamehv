@@ -24,3 +24,5 @@ VOID
 compatibility_check_perform_checks();
 
 BOOLEAN check_address_canonicality(UINT64 vaddr, PBOOLEAN is_kernel_address);
+ 
+

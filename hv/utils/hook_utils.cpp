@@ -2,7 +2,6 @@
 #include "hook_utils.h"
 #include "fault_uitls.h"
 #include "../LDE64.h"
-#include "../vtx/prevmcall.h"
 #include "../vtx/poolmanager.h"
 namespace utils
 {
@@ -74,7 +73,8 @@ namespace utils
 						return false;
 					}
 
-					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 					if (hook_info->original_instructions_backup == nullptr)
 					{
 						pool_manager::release_pool(hook_info->trampoline_va);
@@ -146,7 +146,7 @@ namespace utils
 				return false;
 
 			}
-			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 			if (hook_info->original_instructions_backup == nullptr)
 			{
 				pool_manager::release_pool(hook_info->trampoline_va);
@@ -182,7 +182,7 @@ namespace utils
 			InsertHeadList(&g_kernel_hook_page_list_head, &hooked_page_info->hooked_page_list);
 		 
 
-			prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
+			//prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
 			 
 			LogInfo("hook: Successfully hooked target_api: %p -> new_api: %p, fake_page: %p, trampoline: %p",
 				target_api, new_api, hook_info->fake_va, *origin_function);
@@ -263,7 +263,7 @@ namespace utils
 					 
 					 
 
-					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 					if (hook_info->original_instructions_backup == nullptr)
 					{
 						 
@@ -338,7 +338,7 @@ namespace utils
 		 
 
 
-			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 			if (hook_info->original_instructions_backup == nullptr)
 			{
 				pool_manager::release_pool(hook_info->trampoline_va);
@@ -381,7 +381,7 @@ namespace utils
 				goto clear;
 			}
 
-			prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
+			//prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
 
 
 			InitializeListHead(&hooked_page_info->hooked_functions_list);
@@ -479,7 +479,7 @@ namespace utils
 
 
 
-					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+					hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 					if (hook_info->original_instructions_backup == nullptr)
 					{
 
@@ -554,7 +554,7 @@ namespace utils
 
 
 
-			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS, TRUE, 100);
+			hook_info->original_instructions_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
 			if (hook_info->original_instructions_backup == nullptr)
 			{
 				pool_manager::release_pool(hook_info->trampoline_va);
@@ -594,7 +594,7 @@ namespace utils
 				goto clear;
 			}
 
-			prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
+		//	prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
 
 
 			InitializeListHead(&hooked_page_info->hooked_functions_list);
@@ -914,7 +914,7 @@ void write_int3(uint8_t* address)
 
 			  
 			  
-			 prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
+		//	 prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
 				 
 			 pool_manager::release_pool (hooked_page_info->fake_page_contents);
 			 RemoveEntryList(current_page);
@@ -981,7 +981,7 @@ void write_int3(uint8_t* address)
 
 
 
-			 prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
+			// prevmcall::remove_ept_hook(hooked_page_info->pfn_of_hooked_page);
 
 			 pool_manager::release_pool(hooked_page_info->fake_page_contents);
 			 RemoveEntryList(current_page);

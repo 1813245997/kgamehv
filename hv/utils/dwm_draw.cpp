@@ -1,7 +1,6 @@
 #include "global_defs.h"
 #include "dwm_draw.h"
 #include "hook_utils.h"
-#include "dll_bin.h"
 #include "../ia32/ia32.hpp"
 
 namespace utils
@@ -382,7 +381,7 @@ namespace utils
 
 			//DbgBreakPoint();
 			// µ÷ÓÃ DLL ×¢Èë
-			HANDLE target_pid = utils::internal_functions::pfn_ps_get_process_id(g_dwm_process);
+		/*	HANDLE target_pid = utils::internal_functions::pfn_ps_get_process_id(g_dwm_process);
 			status = utils::inject_utils::remote_thread_inject_x64_dll(
 				target_pid,
 				dll_bin,
@@ -397,7 +396,7 @@ namespace utils
 					status
 				);
 				return status;
-			}
+			}*/
 
 			 
 

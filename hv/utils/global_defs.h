@@ -26,7 +26,7 @@
 #include "windows_version_enum.h"
 #include "xor_crypt.h"
 #include "import_encrypt.h"
-#include "spinlock.h"
+ 
 #include "hook_manager.h"
 #include "hook_functions.h"
 #include "signature_scanner.h"

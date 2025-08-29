@@ -3,15 +3,15 @@
  
  
 #include "utils/global_defs.h"
- 
+#include "vtx/common.h"
 
 
 
 void driver_unload(PDRIVER_OBJECT) {
    
 
-  LogInfo("Devirtualized the system.\n");
-  LogInfo("Driver unloaded.\n");
+  LogDebug("Devirtualized the system.\n");
+  LogDebug("Driver unloaded.\n");
 }
 //snake_case
 extern "C" NTSTATUS DriverEntry(PDRIVER_OBJECT const driver, PUNICODE_STRING) {

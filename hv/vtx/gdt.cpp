@@ -1,5 +1,5 @@
 #include "gdt.h"
-#include "vcpu.h"
+#include "common.h"
  
 
 namespace hv {

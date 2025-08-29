@@ -1,6 +1,7 @@
 #include "global_defs.h"
 #include "log_utils.h"
 #include <ntstrsafe.h>
+#include "../vtx/spinlock.h"
 
 // ------------------------- й╣ож -------------------------
 

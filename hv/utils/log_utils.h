@@ -1,7 +1,8 @@
 #pragma once
 
 
-#include "../vtx/vcpu.h"
+#include "../vtx/common.h"
+#include "../vtx/vmm.h"
 /**
 * @file LogMacros.h
 * @brief Defines macros for logging various levels of messages and a function for log printing.
@@ -61,16 +62,16 @@ namespace logger {
  
 #define LogError(format, ...) \
     logger::LogPrint(LOG_TYPE_ERROR, "  [VMXMode:%d][%s:%d] " format, \
-                     hv::vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
+                      vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogDebug(format, ...) \
     logger::LogPrint(LOG_TYPE_DEBUG, "  [VMXMode:%d][%s:%d] " format, \
-                     hv::vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
+                      vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogDump(format, ...) \
     logger::LogPrint(LOG_TYPE_DUMP, "  [VMXMode:%d][%s:%d] " format, \
-                     hv::vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
+                     vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
 
 #define LogInfo(format, ...) \
     logger::LogPrint(LOG_TYPE_INFO, "  [VMXMode:%d][%s:%d] " format, \
-                     hv::vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
+                     vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)

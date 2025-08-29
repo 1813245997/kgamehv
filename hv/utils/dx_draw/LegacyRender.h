@@ -8,7 +8,7 @@ extern  bool g_pagehit[0x10000] ;
 extern  bool g_pagevaild[0x10000] ;
 float roundf(float a);
 
-float floorf(float a);
+
 
 class FColor
 {

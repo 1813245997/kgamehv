@@ -1,10 +1,9 @@
 #include "../utils/global_defs.h"
-#include "compatibility_checks.h"
+#include "CompatibilityChecks.h"
+#include "common.h"
+#include "vmcs.h"
 #include "vt_global.h"
  
-#include "vmcs.h"
- 
-
 
 /**
  * @brief Check whether the processor supports RTM or not
@@ -15,7 +14,7 @@
 VOID
 CommonCpuidInstruction(UINT32 Func, UINT32 SubFunc, int* CpuInfo)
 {
-    __cpuidex(CpuInfo, Func, SubFunc);
+	__cpuidex(CpuInfo, Func, SubFunc);
 }
 
 BOOLEAN
@@ -96,7 +95,7 @@ CompatibilityCheckModeBasedExecution()
     // The PML address and PML index fields exist only on processors that support the 1-setting of
     // the "enable PML" VM - execution control
     //
-    UINT32 SecondaryProcBasedVmExecControls = hv::ajdust_controls(IA32_VMX_PROCBASED_CTLS2_MODE_BASED_EXECUTE_CONTROL_FOR_EPT_FLAG,
+    UINT32 SecondaryProcBasedVmExecControls = ajdust_controls(IA32_VMX_PROCBASED_CTLS2_MODE_BASED_EXECUTE_CONTROL_FOR_EPT_FLAG,
         IA32_VMX_PROCBASED_CTLS2);
 
     if (SecondaryProcBasedVmExecControls & IA32_VMX_PROCBASED_CTLS2_MODE_BASED_EXECUTE_CONTROL_FOR_EPT_FLAG)
@@ -127,7 +126,7 @@ CompatibilityCheckPml()
     // The PML address and PML index fields exist only on processors that support the 1-setting of
     // the "enable PML" VM - execution control
     //
-    UINT32 SecondaryProcBasedVmExecControls = hv::ajdust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_PML_FLAG, IA32_VMX_PROCBASED_CTLS2);
+    UINT32 SecondaryProcBasedVmExecControls = ajdust_controls(IA32_VMX_PROCBASED_CTLS2_ENABLE_PML_FLAG, IA32_VMX_PROCBASED_CTLS2);
 
     if (SecondaryProcBasedVmExecControls & IA32_VMX_PROCBASED_CTLS2_ENABLE_PML_FLAG)
     {
@@ -156,12 +155,12 @@ compatibility_check_perform_checks()
     //
     // Check if processor supports TSX (RTM)
     //
-    g_compatibility_check.RtmSupport = CompatibilityCheckCpuSupportForRtm();
+     g_compatibility_check.RtmSupport = CompatibilityCheckCpuSupportForRtm();
 
     //
     // Get x86 processor width for virtual address
     //
-    g_compatibility_check.VirtualAddressWidth = CompatibilityCheckGetX86VirtualAddressWidth();
+     g_compatibility_check.VirtualAddressWidth = CompatibilityCheckGetX86VirtualAddressWidth();
 
     //
     // Get x86 processor width for physical address
@@ -181,53 +180,53 @@ compatibility_check_perform_checks()
     //
     // Log for testing
     //
-    LogDebug("Mode based execution: %s | PML: %s",
-        g_compatibility_check.ModeBasedExecutionSupport ? "true" : "false",
+   LogDebug("Mode based execution: %s | PML: %s",
+       g_compatibility_check.ModeBasedExecutionSupport ? "true" : "false",
         g_compatibility_check.PmlSupport ? "true" : "false");
 }
 
 BOOLEAN check_address_canonicality(UINT64 vaddr, PBOOLEAN is_kernel_address)
 {
-    UINT64 Addr = (UINT64)vaddr;
-    UINT64 MaxVirtualAddrLowHalf, MinVirtualAddressHighHalf;
+	UINT64 Addr = (UINT64)vaddr;
+	UINT64 MaxVirtualAddrLowHalf, MinVirtualAddressHighHalf;
 
-    //
-    // Get processor's address width for VA
-    //
-    UINT32 AddrWidth = g_compatibility_check.VirtualAddressWidth;
+	//
+	// Get processor's address width for VA
+	//
+	UINT32 AddrWidth =  g_compatibility_check.VirtualAddressWidth;
 
-    //
-    // get max address in lower-half canonical addr space
-    // e.g. if width is 48, then 0x00007FFF_FFFFFFFF
-    //
-    MaxVirtualAddrLowHalf = ((UINT64)1ull << (AddrWidth - 1)) - 1;
+	//
+	// get max address in lower-half canonical addr space
+	// e.g. if width is 48, then 0x00007FFF_FFFFFFFF
+	//
+	MaxVirtualAddrLowHalf = ((UINT64)1ull << (AddrWidth - 1)) - 1;
 
-    //
-    // get min address in higher-half canonical addr space
-    // e.g., if width is 48, then 0xFFFF8000_00000000
-    //
-    MinVirtualAddressHighHalf = ~MaxVirtualAddrLowHalf;
+	//
+	// get min address in higher-half canonical addr space
+	// e.g., if width is 48, then 0xFFFF8000_00000000
+	//
+	MinVirtualAddressHighHalf = ~MaxVirtualAddrLowHalf;
 
-    //
-    // Check to see if the address in a canonical address
-    //
-    if ((Addr > MaxVirtualAddrLowHalf) && (Addr < MinVirtualAddressHighHalf))
-    {
-        *is_kernel_address = FALSE;
-        return FALSE;
-    }
+	//
+	// Check to see if the address in a canonical address
+	//
+	if ((Addr > MaxVirtualAddrLowHalf) && (Addr < MinVirtualAddressHighHalf))
+	{
+		*is_kernel_address = FALSE;
+		return FALSE;
+	}
 
-    //
-    // Set whether it's a kernel address or not
-    //
-    if (MinVirtualAddressHighHalf < Addr)
-    {
-        *is_kernel_address = TRUE;
-    }
-    else
-    {
-        *is_kernel_address = FALSE;
-    }
+	//
+	// Set whether it's a kernel address or not
+	//
+	if (MinVirtualAddressHighHalf < Addr)
+	{
+		*is_kernel_address = TRUE;
+	}
+	else
+	{
+		*is_kernel_address = FALSE;
+	}
 
-    return TRUE;
+	return TRUE;
 }

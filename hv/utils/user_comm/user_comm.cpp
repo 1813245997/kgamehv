@@ -1,6 +1,6 @@
 #include "../global_defs.h"
 #include "user_comm.h"
-#include "../../vtx/prevmcall.h"
+ 
  
 
 #define USER_COMM_KEY1 0X88889922
@@ -360,107 +360,110 @@ namespace utils
 		bool handle_read_virt_mem(user_comm_request* request)
 		{
 			 
-			if (!request || !request->input_buffer)
-			{
-				return false;
-			}
+			//if (!request || !request->input_buffer)
+			//{
+			//	return false;
+			//}
 
-			p_user_comm_read_virt_mem_params params =
-				reinterpret_cast<p_user_comm_read_virt_mem_params>(request->input_buffer);
+			//p_user_comm_read_virt_mem_params params =
+			//	reinterpret_cast<p_user_comm_read_virt_mem_params>(request->input_buffer);
 
-			if (!params || !params->process_id || !params->src_address || !params->dst_buffer || !params->size)
-			{
-				request->status = STATUS_INVALID_PARAMETER;
-				return false;
-			}
+			//if (!params || !params->process_id || !params->src_address || !params->dst_buffer || !params->size)
+			//{
+			//	request->status = STATUS_INVALID_PARAMETER;
+			//	return false;
+			//}
 
-			/*	PEPROCESS process = nullptr;
-				NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(reinterpret_cast<HANDLE> (params->process_id), &process);
-				if (!NT_SUCCESS(status))
-				{
-					request->status = status;
-					return false;
-				}
+			///*	PEPROCESS process = nullptr;
+			//	NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(reinterpret_cast<HANDLE> (params->process_id), &process);
+			//	if (!NT_SUCCESS(status))
+			//	{
+			//		request->status = status;
+			//		return false;
+			//	}
 
-				if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
-				{
-					utils::internal_functions::pfn_ob_dereference_object(process);
-					request->status = STATUS_PROCESS_IS_TERMINATING;
-					return false;
-				}
+			//	if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
+			//	{
+			//		utils::internal_functions::pfn_ob_dereference_object(process);
+			//		request->status = STATUS_PROCESS_IS_TERMINATING;
+			//		return false;
+			//	}
 
-				utils::internal_functions::pfn_ob_dereference_object(process);*/
-				// 初始化返回字节数
-			* reinterpret_cast<size_t*> (params->bytes_read) = 0;
+			//	utils::internal_functions::pfn_ob_dereference_object(process);*/
+			//	// 初始化返回字节数
+			//* reinterpret_cast<size_t*> (params->bytes_read) = 0;
 
-			// 调用 hypervisor 的 read_virt_mem 接口
-			size_t bytes_read = 0;
+			//// 调用 hypervisor 的 read_virt_mem 接口
+			//size_t bytes_read = 0;
 
-			cr3 target_cr3 = prevmcall::query_process_cr3(params->process_id);
-			if (!target_cr3.flags)
-			{
-				request->status = STATUS_NOT_FOUND;
-				return false;
-			}
+			//cr3 target_cr3 = prevmcall::query_process_cr3(params->process_id);
+			//if (!target_cr3.flags)
+			//{
+			//	request->status = STATUS_NOT_FOUND;
+			//	return false;
+			//}
 
-			bytes_read = prevmcall::read_virt_mem(
-				target_cr3,
-				reinterpret_cast<void*>(params->dst_buffer),
-				reinterpret_cast<void const*>(params->src_address),
-				static_cast<size_t>(params->size)
-			);
+			//bytes_read = prevmcall::read_virt_mem(
+			//	target_cr3,
+			//	reinterpret_cast<void*>(params->dst_buffer),
+			//	reinterpret_cast<void const*>(params->src_address),
+			//	static_cast<size_t>(params->size)
+			//);
 
 
-			// 填充结果
-			*reinterpret_cast<size_t*> (params->bytes_read) = bytes_read;
-			request->status = (bytes_read > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//// 填充结果
+			//*reinterpret_cast<size_t*> (params->bytes_read) = bytes_read;
+			//request->status = (bytes_read > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
-			return (bytes_read > 0);
+			//return (bytes_read > 0);
+			return false;
 		}
 
 		bool handle_write_virt_mem(user_comm_request* request)
 		{
-			if (!request || !request->input_buffer)
-			{
-				return false;
-			}
+			//if (!request || !request->input_buffer)
+			//{
+			//	return false;
+			//}
 
-			p_user_comm_write_virt_mem_params params =
-				reinterpret_cast<p_user_comm_write_virt_mem_params>(request->input_buffer);
+			//p_user_comm_write_virt_mem_params params =
+			//	reinterpret_cast<p_user_comm_write_virt_mem_params>(request->input_buffer);
 
-			if (!params || !params->process_id || !params->dst_address || !params->src_buffer || !params->size)
-			{
-				request->status = STATUS_INVALID_PARAMETER;
-				return false;
-			}
-
-
-			*reinterpret_cast<size_t*> (params->bytes_written) = 0;
-
-			size_t bytes_written = 0;
+			//if (!params || !params->process_id || !params->dst_address || !params->src_buffer || !params->size)
+			//{
+			//	request->status = STATUS_INVALID_PARAMETER;
+			//	return false;
+			//}
 
 
-			cr3 target_cr3 = prevmcall::query_process_cr3(params->process_id);
-			if (!target_cr3.flags)
-			{
-				request->status = STATUS_NOT_FOUND;
-				return false;
-			}
+			//*reinterpret_cast<size_t*> (params->bytes_written) = 0;
+
+			//size_t bytes_written = 0;
 
 
-			bytes_written = prevmcall::write_virt_mem(
-				target_cr3,
-				reinterpret_cast<void*>(params->dst_address),
-				reinterpret_cast<void const*>(params->src_buffer),
-				static_cast<size_t>(params->size)
-			);
+			//cr3 target_cr3 = prevmcall::query_process_cr3(params->process_id);
+			//if (!target_cr3.flags)
+			//{
+			//	request->status = STATUS_NOT_FOUND;
+			//	return false;
+			//}
+
+
+			//bytes_written = prevmcall::write_virt_mem(
+			//	target_cr3,
+			//	reinterpret_cast<void*>(params->dst_address),
+			//	reinterpret_cast<void const*>(params->src_buffer),
+			//	static_cast<size_t>(params->size)
+			//);
 
 
 
-			*reinterpret_cast<size_t*> (params->bytes_written) = bytes_written;
-			request->status = (bytes_written > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//*reinterpret_cast<size_t*> (params->bytes_written) = bytes_written;
+			//request->status = (bytes_written > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
-			return (bytes_written > 0);
+			//return (bytes_written > 0);
+
+			return false;
 		}
 
 		bool handle_clear_unloaded_drivers(user_comm_request* request)

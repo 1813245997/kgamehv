@@ -2,7 +2,7 @@
 #include "driver_feature_init.h"
   
 #include <ntstrsafe.h>
-#include "dll_bin.h"
+ 
 
 namespace utils
 {
@@ -116,15 +116,15 @@ namespace utils
 			utils::hidden_user_memory::initialize_hidden_user_memory();
 
 
-			LogInfo("Initializing hooks...");
-			status = hook_manager::initialize_all_hooks();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize hooks (0x%X).", status);
-				//  VMProtectEnd();
-				return status;
-			}
-			LogInfo("Hooks initialized successfully.");
+			//LogInfo("Initializing hooks...");
+			//status = hook_manager::initialize_all_hooks();
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("Failed to initialize hooks (0x%X).", status);
+			//	//  VMProtectEnd();
+			//	return status;
+			//}
+			//LogInfo("Hooks initialized successfully.");
 			    
 			LogInfo("Driver initialization complete.");
 			 	 

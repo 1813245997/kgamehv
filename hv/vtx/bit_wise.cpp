@@ -15,7 +15,7 @@ TestBit(int BitNumber, unsigned long* addr)
 	{
 		return 0;
 	}
-	return (BITMAP_ENTRY(BitNumber, addr) >> BITMAP_SHIFT(BitNumber)) & 1;
+    return (BITMAP_ENTRY(BitNumber, addr) >> BITMAP_SHIFT(BitNumber)) & 1;
 }
 
 /**
@@ -27,7 +27,7 @@ TestBit(int BitNumber, unsigned long* addr)
 void
 ClearBit(int BitNumber, unsigned long* addr)
 {
-	BITMAP_ENTRY(BitNumber, addr) &= ~(1UL << BITMAP_SHIFT(BitNumber));
+    BITMAP_ENTRY(BitNumber, addr) &= ~(1UL << BITMAP_SHIFT(BitNumber));
 }
 
 /**
@@ -39,5 +39,5 @@ ClearBit(int BitNumber, unsigned long* addr)
 void
 SetBit(int BitNumber, unsigned long* addr)
 {
-	BITMAP_ENTRY(BitNumber, addr) |= (1UL << BITMAP_SHIFT(BitNumber));
+    BITMAP_ENTRY(BitNumber, addr) |= (1UL << BITMAP_SHIFT(BitNumber));
 }

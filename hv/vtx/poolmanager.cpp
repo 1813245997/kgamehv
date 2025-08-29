@@ -1,11 +1,11 @@
 #pragma warning( disable : 4201)
+#include "..\utils/global_defs.h"
 #include <intrin.h>
-#include "hv.h"
 #include "poolmanager.h"
-#include "../utils/log_utils.h"
+#include "common.h"
+ 
 #include "allocators.h"
-#include "../utils/spinlock.h"
-#include "../utils/hook_utils.h"
+#include "spinlock.h"
 
 namespace pool_manager 
 {
@@ -48,7 +48,7 @@ namespace pool_manager
             single_pool->is_busy = false;
             single_pool->size = size;
 
-            InsertTailList(hv:: ghv.pool_manager->list_of_allocated_pools, &(single_pool->pool_list));
+            InsertTailList(g_vmm_context->pool_manager->list_of_allocated_pools, &(single_pool->pool_list));
         }
 
         return true;
@@ -63,21 +63,21 @@ namespace pool_manager
     /// <returns></returns>
     bool request_allocation(unsigned __int64 size, unsigned __int32 count, allocation_intention intention)
     {
-        spinlock allocation_lock(&hv::ghv.pool_manager->lock_for_request_allocation);
+        spinlock allocation_lock(&g_vmm_context->pool_manager->lock_for_request_allocation);
 
         for (unsigned __int64 i = 0; i < 10; i++)
         {
-            if (hv::ghv.pool_manager->allocation_requests->size[i] == 0)
+            if (g_vmm_context->pool_manager->allocation_requests->size[i] == 0)
             {
-               hv:: ghv.pool_manager->allocation_requests->count[i] = count;
-               hv:: ghv.pool_manager->allocation_requests->size[i] = size;
-               hv:: ghv.pool_manager->allocation_requests->intention[i] = intention;
-               hv:: ghv.pool_manager->is_request_for_allocation_recived = true;
+                g_vmm_context->pool_manager->allocation_requests->count[i] = count;
+                g_vmm_context->pool_manager->allocation_requests->size[i] = size;
+                g_vmm_context->pool_manager->allocation_requests->intention[i] = intention;
+                g_vmm_context->pool_manager->is_request_for_allocation_recived = true;
                 break;
             }
         }
 
-        return hv::ghv.pool_manager->is_request_for_allocation_recived;
+        return g_vmm_context->pool_manager->is_request_for_allocation_recived;
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ namespace pool_manager
     {
         bool status = true;
 
-        if (hv::ghv.pool_manager->is_request_for_allocation_recived == false)
+        if (g_vmm_context->pool_manager->is_request_for_allocation_recived == false)
         {
             LogInfo("No pending allocations");
             return status;
@@ -96,13 +96,13 @@ namespace pool_manager
 
         for (unsigned __int64 i = 0; i < 10; i++)
         {
-            if (hv::ghv.pool_manager->allocation_requests->size[i] != 0)
+            if (g_vmm_context->pool_manager->allocation_requests->size[i] != 0)
             {
                 status = allocate_pool
                 (
-                    hv:: ghv.pool_manager->allocation_requests->size[i],
-                    hv:: ghv.pool_manager->allocation_requests->count[i],
-                    hv:: ghv.pool_manager->allocation_requests->intention[i]
+                    g_vmm_context->pool_manager->allocation_requests->size[i],
+                    g_vmm_context->pool_manager->allocation_requests->count[i],
+                    g_vmm_context->pool_manager->allocation_requests->intention[i]
                 );
 
                 if (status == false)
@@ -111,15 +111,15 @@ namespace pool_manager
                     break;
                 }
 
-                hv:: ghv.pool_manager->allocation_requests->size[i] = 0;
-                hv:: ghv.pool_manager->allocation_requests->count[i] = 0;
-                hv:: ghv.pool_manager->allocation_requests->intention[i] = INTENTION_NONE;
+                g_vmm_context->pool_manager->allocation_requests->size[i] = 0;
+                g_vmm_context->pool_manager->allocation_requests->count[i] = 0;
+                g_vmm_context->pool_manager->allocation_requests->intention[i] = INTENTION_NONE;
 
                 LogInfo("Allocation successful");
             }
         }
 
-        hv::ghv.pool_manager->is_request_for_allocation_recived = false;
+        g_vmm_context->pool_manager->is_request_for_allocation_recived = false;
 
         return status;
     }
@@ -130,64 +130,71 @@ namespace pool_manager
     /// <returns> status </returns>
     bool initialize()
     {
-        hv::ghv.pool_manager = ::allocate_pool<__pool_manager>();
-        if (hv::ghv.pool_manager == nullptr)
+        g_vmm_context->pool_manager = ::allocate_pool<__pool_manager>();
+        if (g_vmm_context->pool_manager == nullptr)
         {
             LogError("Pool manager allocation failed");
             return false;
         }
-        RtlSecureZeroMemory(hv::ghv.pool_manager, sizeof(__pool_manager));
+        RtlSecureZeroMemory(g_vmm_context->pool_manager, sizeof(__pool_manager));
 
-        hv::ghv.pool_manager->allocation_requests = ::allocate_pool<__request_new_allocation>();
-        if (hv::ghv.pool_manager->allocation_requests == nullptr)
+        g_vmm_context->pool_manager->allocation_requests = ::allocate_pool<__request_new_allocation>();
+        if (g_vmm_context->pool_manager->allocation_requests == nullptr)
         {
             LogError("Allacation requests allocation failed");
             return false;
         }
-        RtlSecureZeroMemory(hv::ghv.pool_manager->allocation_requests, sizeof(__request_new_allocation));
+        RtlSecureZeroMemory(g_vmm_context->pool_manager->allocation_requests, sizeof(__request_new_allocation));
 
-        hv::ghv.pool_manager->list_of_allocated_pools = ::allocate_pool<LIST_ENTRY>();
-        if (hv::ghv.pool_manager->list_of_allocated_pools == nullptr)
+        g_vmm_context->pool_manager->list_of_allocated_pools = ::allocate_pool<LIST_ENTRY>();
+        if (g_vmm_context->pool_manager->list_of_allocated_pools == nullptr)
         {
             LogError("List of allocated pools allocation failed");
             return false;
         }
-        RtlSecureZeroMemory(hv::ghv.pool_manager->list_of_allocated_pools, sizeof(LIST_ENTRY));
+        RtlSecureZeroMemory(g_vmm_context->pool_manager->list_of_allocated_pools, sizeof(LIST_ENTRY));
 
-        InitializeListHead(hv::ghv.pool_manager->list_of_allocated_pools);
-         
-        if (request_allocation(sizeof(kernel_hook_info), hv::ghv.vcpu_count * 50, INTENTION_TRACK_HOOKED_PAGES) == false)
+        InitializeListHead(g_vmm_context->pool_manager->list_of_allocated_pools);
+
+        if (request_allocation(sizeof(__ept_dynamic_split), g_vmm_context->processor_count * 50, INTENTION_SPLIT_PML2) == false)
         {
             LogError("Pool mangaer request allocation Failed");
             return false;
         }
 
-		if (request_allocation(sizeof(hooked_function_info), hv::ghv.vcpu_count * 50, INTENTION_TRACK_HOOKED_FUNCTIONS) == false)
-		{
-			LogError("Pool mangaer request allocation Failed");
-			return false;
-		}
-
-        if (request_allocation(100, hv::ghv.vcpu_count * 50, INTENTION_EXEC_TRAMPOLINE) == false)
+        if (request_allocation(sizeof(__ept_hooked_page_info), g_vmm_context->processor_count * 50, INTENTION_TRACK_HOOKED_PAGES) == false)
         {
             LogError("Pool mangaer request allocation Failed");
             return false;
         }
 
-		if (request_allocation(100, hv::ghv.vcpu_count * 50, INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS) == false)
-		{
-			LogError("Pool mangaer request allocation Failed");
-			return false;
-		}
-        // 
-
+        if (request_allocation(100, g_vmm_context->processor_count * 50, INTENTION_EXEC_TRAMPOLINE) == false)
+        {
+            LogError("Pool mangaer request allocation Failed");
+            return false;
+        }
  
 
-        if (request_allocation(PAGE_SIZE, hv::ghv.vcpu_count * 50, INTENTION_FAKE_PAGE_CONTENTS) == false)
+
+		if (request_allocation(100, g_vmm_context->processor_count * 50, INTENTION_BACKUP_INSTRUCTION) == false)
+		{
+			LogError("Pool mangaer request allocation Failed");
+			return false;
+		}
+
+        if (request_allocation(sizeof(hooked_function_info), g_vmm_context->processor_count * 50, INTENTION_TRACK_HOOKED_FUNCTIONS) == false)
         {
             LogError("Pool mangaer request allocation Failed");
             return false;
         }
+
+        if (request_allocation(PAGE_SIZE, g_vmm_context->processor_count * 50, INTENTION_FAKE_PAGE_CONTENTS) == false)
+        {
+            LogError("Pool mangaer request allocation Failed");
+            return false;
+        }
+        
+
 
         return perform_allocation();
     }
@@ -197,10 +204,10 @@ namespace pool_manager
     void uninitialize()
     {
         PLIST_ENTRY current = 0;
-        if (hv::ghv.pool_manager->list_of_allocated_pools != nullptr)
+        if (g_vmm_context->pool_manager->list_of_allocated_pools != nullptr)
         {
-            current = hv::ghv.pool_manager->list_of_allocated_pools->Flink;
-            while (hv::ghv.pool_manager->list_of_allocated_pools != current)
+            current = g_vmm_context->pool_manager->list_of_allocated_pools->Flink;
+            while (g_vmm_context->pool_manager->list_of_allocated_pools != current)
             {
                 // Get the head of the record
                 __pool_table* pool_table = (__pool_table*)CONTAINING_RECORD(current, __pool_table, pool_list);
@@ -221,12 +228,12 @@ namespace pool_manager
                 free_pool(pool_table);
             }
 
-            free_pool(hv::ghv.pool_manager->list_of_allocated_pools);
+            free_pool(g_vmm_context->pool_manager->list_of_allocated_pools);
         }
 
-        if (hv::ghv.pool_manager->allocation_requests != nullptr)
+        if (g_vmm_context->pool_manager->allocation_requests != nullptr)
         {
-            free_pool(hv::ghv.pool_manager->allocation_requests);
+            free_pool(g_vmm_context->pool_manager->allocation_requests);
         }
     }
 
@@ -237,10 +244,10 @@ namespace pool_manager
     void release_pool(void* address)
     {
         PLIST_ENTRY current = 0;
-        current = hv::ghv.pool_manager->list_of_allocated_pools;
+        current = g_vmm_context->pool_manager->list_of_allocated_pools;
 
-        spinlock pool_lock(&hv::ghv.pool_manager->lock_for_reading_pool);
-        while (hv::ghv.pool_manager->list_of_allocated_pools != current->Flink)
+        spinlock pool_lock(&g_vmm_context->pool_manager->lock_for_reading_pool);
+        while (g_vmm_context->pool_manager->list_of_allocated_pools != current->Flink)
         {
             current = current->Flink;
 
@@ -264,7 +271,9 @@ namespace pool_manager
         case INTENTION_NONE:   return "None";
         case INTENTION_TRACK_HOOKED_PAGES:   return "Track Hooked Pages";
         case INTENTION_EXEC_TRAMPOLINE: return "Trampoline";
+        case INTENTION_SPLIT_PML2: return "Split Pml2";
         case INTENTION_TRACK_HOOKED_FUNCTIONS: return "Trace Hooked Functions";
+        case INTENTION_BACKUP_INSTRUCTION: return "Backup command";
         default:      return "Unknown";
         }
     }
@@ -274,13 +283,13 @@ namespace pool_manager
     /// </summary>
     void dump_pools_info()
     {
-        PLIST_ENTRY current = hv::ghv.pool_manager->list_of_allocated_pools;
+        PLIST_ENTRY current = g_vmm_context->pool_manager->list_of_allocated_pools;
 
-        spinlock pool_lock(&hv::ghv.pool_manager->lock_for_reading_pool);
-
+        spinlock pool_lock(&g_vmm_context->pool_manager->lock_for_reading_pool);
+        
         DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "-----------------------------------POOL MANAGER DUMP-----------------------------------\r\n");
 
-        while (hv::ghv.pool_manager->list_of_allocated_pools != current->Flink)
+        while (g_vmm_context->pool_manager->list_of_allocated_pools != current->Flink)
         {
             current = current->Flink;
 

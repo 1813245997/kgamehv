@@ -1,17 +1,18 @@
 #pragma once
-#include "../utils/spinlock.h"
-#include "hv.h"
-#include <ntifs.h>
+ 
+#include <ntddk.h>
+#include "common.h"
 namespace pool_manager
 {
     enum allocation_intention
     {
         INTENTION_NONE,
         INTENTION_TRACK_HOOKED_PAGES,
-        INTENTION_TRACK_HOOKED_FUNCTIONS,
         INTENTION_EXEC_TRAMPOLINE,
+        INTENTION_SPLIT_PML2,
+        INTENTION_TRACK_HOOKED_FUNCTIONS,
         INTENTION_FAKE_PAGE_CONTENTS,
-        INTENTION_BACKUP_ORIGINAL_INSTRUCTIONS
+        INTENTION_BACKUP_INSTRUCTION
     };
 
     struct __request_new_allocation
@@ -91,11 +92,11 @@ namespace pool_manager
         void* address = 0;
         bool is_recycled = false;
         __pool_table* pool_table;
-        current = hv::ghv.pool_manager->list_of_allocated_pools;
+        current = g_vmm_context->pool_manager->list_of_allocated_pools;
 
-        spinlock pool_lock(&hv::ghv.pool_manager->lock_for_reading_pool);
+        spinlock pool_lock(&g_vmm_context->pool_manager->lock_for_reading_pool);
 
-        while (hv::ghv.pool_manager->list_of_allocated_pools != current->Flink)
+        while (g_vmm_context->pool_manager->list_of_allocated_pools != current->Flink)
         {
             current = current->Flink;
 
@@ -121,4 +122,7 @@ namespace pool_manager
 
         return (T)address;
     }
+
+ 
+ 
 }

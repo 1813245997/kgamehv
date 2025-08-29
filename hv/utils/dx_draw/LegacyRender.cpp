@@ -14,7 +14,7 @@ float roundf(float a) {
 	return a;
 }
 
-float floorf(float a) {
+float myfloorf(float a) {
 	int ia = (int)a;
 	float xs = a - (float)ia;
 	if (xs > 0.f) {
@@ -211,7 +211,7 @@ void  ByteRender::plotEllipseRectWidth(int x0, int y0, int x1, int y1, float th,
 	if (x0 > x1) { x0 = x1; x1 += a; }        /* if called with swapped points */
 	if (y0 > y1) y0 = y1;                                  /* .. exchange them */
 	if (b2 <= 0) th = a;                                     /* filled ellipse */
-	e2 = th - floorf(th); th = x0 + th - e2;
+	e2 = th - myfloorf(th); th = x0 + th - e2;
 	dx2 = 4 * (a2 + 2 * e2 - 1) * b2 * b2; dy2 = 4 * (b1 - 1) * a2 * a2; e2 = dx2 * e2;
 	y0 += (b + 1) >> 1; y1 = y0 - b1;                              /* starting pixel */
 	a = 8 * a * a; b1 = 8 * b * b; a2 = 8 * a2 * a2; b2 = 8 * b2 * b2;

@@ -1,7 +1,5 @@
 #pragma once
 
- 
-
 /**
  * @brief Bitmap that marks MSRs which will cause #GP (General Protection Fault)
  */
