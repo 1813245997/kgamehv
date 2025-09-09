@@ -11,14 +11,12 @@
 #include "interrupt.h"
 #include "../asm\vm_intrin.h"
 #include "cr.h"
-#include "dr.h"
 #include "invalidators.h"
 #include "xsave.h"
 #include "segment.h"
 #include "vmcs.h"
 #include "../utils/log_utils.h"
 #include "vmm.h"
-#include "exception-routines.h"
 #include "../utils/macros.h"
 #include "../utils/global_initializer.h"
 #include "bit_wise.h"
@@ -663,10 +661,10 @@ void vmexit_exception_handler(__vcpu* vcpu)
 		//	popfq
 		//	ret
 		//	asm_pg_KiErrata361Present endp
-		__dr6 dr6;
-		dr6.all = __readdr(6);
+		dr6 dr6;
+		dr6.flags = __readdr(6);
 		dr6.single_instruction = 1;
-		__writedr(6, dr6.all);
+		__writedr(6, dr6.flags);
 	}
  
 
@@ -832,20 +830,20 @@ void vmexit_mov_dr_handler(__vcpu* vcpu)
 	//
 	// While dr7 bit general detect is set any access to any dr register cause #DB exception
 	//
-	__dr7 dr7;
-	dr7.all = hv::vmread(GUEST_DR7);
+	dr7 dr7;
+	dr7.flags = hv::vmread(GUEST_DR7);
 	if (dr7.general_detect == 1) 
 	{
-		__dr6 dr6;
-		dr6.all = __readdr(6);
+		dr6 dr6;
+		dr6.flags = __readdr(6);
 		dr6.breakpoint_condition = 0;
 		dr6.debug_register_access_detected = 1;
 
-		__writedr(6, dr6.all);
+		__writedr(6, dr6.flags);
 
 		dr7.general_detect = 0;
 
-		hv::vmwrite<unsigned __int64>(GUEST_DR7, dr7.all);
+		hv::vmwrite<unsigned __int64>(GUEST_DR7, dr7.flags);
 
 		hv::inject_interruption(EXCEPTION_VECTOR_SINGLE_STEP, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, false);
 		return;

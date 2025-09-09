@@ -214,7 +214,9 @@ namespace utils
 
 			if (wcslen(module_name) == 0)
 			{
-				return STATUS_INVALID_PARAMETER;
+				
+				request->status = STATUS_INVALID_PARAMETER;
+				return false;
 			}
 
 			*base_address = 0;
@@ -225,13 +227,15 @@ namespace utils
 			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id (process_id, &process);
 			if (!NT_SUCCESS(status))
 			{
-				return status; // Return the status indicating failure to lookup the process
+				request->status = status;
+				return false;
 			}
 
 			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
-				return STATUS_PROCESS_IS_TERMINATING; // Return status indicating the process is terminating
+				request->status = STATUS_PROCESS_IS_TERMINATING; // Return status indicating the process is terminating
+				return false;
 			}
 
 	   
@@ -243,7 +247,8 @@ namespace utils
 			if (!kernel_module_name)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
-				return STATUS_INSUFFICIENT_RESOURCES;
+				request->status = STATUS_INSUFFICIENT_RESOURCES;
+				return false;
 			}
 
 			RtlZeroMemory(kernel_module_name, name_len);
@@ -264,7 +269,8 @@ namespace utils
 			// --------------------------
 			ExFreePoolWithTag(kernel_module_name, 'modN');
 			utils::internal_functions::pfn_ob_dereference_object(process);
-			return status;
+			request->status = status;
+			return true;
 
 
 			 

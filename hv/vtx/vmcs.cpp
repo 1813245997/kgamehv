@@ -708,14 +708,7 @@ unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
 
  
  
-void prepare_external_structures(__vcpu* const vcpu)
-{
-	 
-	memset(&vcpu->host_tss, 0, sizeof(vcpu->host_tss));
-
-	hv:: prepare_host_idt(vcpu->host_idt);
-	hv::prepare_host_gdt(vcpu->host_gdt, &vcpu->host_tss);
-}
+ 
  
  
 

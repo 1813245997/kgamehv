@@ -247,9 +247,6 @@
     <ClInclude Include="vtx\cr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\dr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vtx\exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -269,18 +266,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="asm\vm_context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\exception-routines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\idt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\gdt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\interrupt-handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\trap-frame.h">
@@ -498,12 +483,6 @@
     <ClCompile Include="vtx\hv_dpc_vm_call.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vtx\idt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vtx\gdt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vtx\bit_wise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -549,12 +528,6 @@
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="asm\vm_context.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="vtx\exception-routines.asm">
-      <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="vtx\interrupt-handlers.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

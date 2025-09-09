@@ -14,7 +14,6 @@
 #include "vmcs_encodings.h"
 #include "allocators.h"
 #include "trap-frame.h"
-#include "exception-routines.h"
 #include "bit_wise.h"
 #include "CompatibilityChecks.h"
 #include "vt_global.h"
@@ -608,57 +607,5 @@ bool vmm_init()
   }
 
 
-
-  namespace hv
-  {
-	  void handle_host_interrupt(trap_frame* const frame) {
-		  switch (frame->vector) {
-			  // host NMIs
-		  case nmi: {
-			  auto ctrl = read_ctrl_proc_based();
-			  ctrl.nmi_window_exiting = 1;
-			  write_ctrl_proc_based(ctrl);
-
-			  auto const cpu = reinterpret_cast<__vcpu*>(_readfsbase_u64());
-			  ++cpu->queued_nmis;
-
-			  break;
-		  }
-				  // host exceptions
-		  default: {
-			  // no registered exception handler
-			  if (!frame->r10 || !frame->r11) {
-				 /* HV_LOG_ERROR("Unhandled exception. RIP=hv.sys+%p. Vector=%u.",
-					  frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
-
-				  // ensure a triple-fault
-				  segment_descriptor_register_64 idtr;
-				  idtr.base_address = frame->rsp;
-				  idtr.limit = 0xFFF;
-				  __lidt(&idtr);
-
-				  break;
-			  }
-
-			/*  HV_LOG_HOST_EXCEPTION("Handling host exception. RIP=hv.sys+%p. Vector=%u",
-				  frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
-
-			  // jump to the exception handler
-			  frame->rip = frame->r10;
-
-			  auto const e = reinterpret_cast<hv::host_exception_info*>(frame->r11);
-
-			  e->exception_occurred = true;
-			  e->vector = frame->vector;
-			  e->error = frame->error;
-
-			  // slightly helps prevent infinite exceptions
-			  frame->r10 = 0;
-			  frame->r11 = 0;
-		  }
-		  }
-	  }
-
-  }
-
+   
  
