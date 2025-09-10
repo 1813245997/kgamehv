@@ -74,7 +74,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* of this control.
 	*/
 #ifdef _MINIMAL
-	primary_controls.cr3_load_exiting = false;
+	primary_controls.cr3_load_exiting = true;
 #else
 	primary_controls.cr3_load_exiting = true;
 #endif
@@ -534,14 +534,14 @@ void set_pinbased_control_msr(__vmx_pinbased_control_msr& pinbased_controls)
 	* delivered normally using descriptor 2 of the IDT. This control also determines interactions
 	* between IRET and blocking by NMI (see Section 25.3).
 	*/
-	pinbased_controls.nmi_exiting = false;
+	pinbased_controls.nmi_exiting = true;
 
 	/**
 	* If this control is 1, NMIs are never blocked and the 揵locking by NMI?bit (bit 3) in the
 	* interruptibility-state field indicates 搗irtual-NMI blocking?(see Table 24-3). This control also
 	* interacts with the 揘MI-window exiting?VM-execution control (see Section 24.6.2).
 	*/
-	pinbased_controls.virtual_nmis = false;
+	pinbased_controls.virtual_nmis = true;
 
 	/**
 	* If this control is 1, the VMX-preemption timer counts down in VMX non-root operation; see
@@ -565,7 +565,7 @@ void set_exception_bitmap(__exception_bitmap& exception_bitmap)
 {
 	exception_bitmap.divide_error = false;
 
-	exception_bitmap.debug = true;
+	exception_bitmap.debug = false;
 
 	exception_bitmap.nmi_interrupt = false;
 
@@ -747,33 +747,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 	set_pinbased_control_msr(pinbased_controls);
 
-	//primary_controls.cr3_load_exiting = true;
- /*
-	primary_controls.use_msr_bitmaps = true;
-	primary_controls.active_secondary_controls = true;
-	primary_controls.mov_dr_exiting = true;
-	primary_controls.use_tsc_offsetting = true;*/
-	
-
-	//secondary_controls.descriptor_table_exiting = true;
-	//secondary_controls.wbinvd_exiting = true;
-	//secondary_controls.enable_ept = true;
-	//secondary_controls.enable_vpid = true;
-	//secondary_controls.enable_rdtscp = true;
-	//secondary_controls.enable_xsave_xrstor = true;
-	//secondary_controls.enable_invpcid = true;
-	//secondary_controls.conceal_vmx_from_pt = true;
-	//secondary_controls.rdrand_exiting = true;
-	//secondary_controls.rdseed_exiting = true;
-
-	//开启的场景（true）：
-	//	对抗分析 / 反调试 / 虚拟化隐藏：
-
-	//	防止 guest 使用 PT 检测是否运行在虚拟化环境中。
-
-	//	常见于 VM 虚拟机 rootkit、反虚拟化工具、恶意代码隐藏 VMX 痕迹等
-	//secondary_controls.conceal_vmx_from_pt = true;   
-	//secondary_controls.enable_user_wait_and_pause = true;//新加
+ 
 	
   
 	
@@ -843,14 +817,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	__vmx_vmclear((unsigned __int64*)&vcpu->vmcs_physical);
 	__vmx_vmptrld((unsigned __int64*)&vcpu->vmcs_physical);
 
-	__sgdt(&gdtr);
-	__sidt(&idtr);
-
-	// Global descriptor table and local one
-	hv::vmwrite<unsigned __int64>(GUEST_GDTR_LIMIT, gdtr.limit);
-	hv::vmwrite<unsigned __int64>(GUEST_IDTR_LIMIT, idtr.limit);
-	hv::vmwrite<unsigned __int64>(GUEST_GDTR_BASE, gdtr.base_address);
-	hv::vmwrite<unsigned __int64>(GUEST_IDTR_BASE, idtr.base_address);
+	
 
 
 	// Hypervisor features
@@ -859,6 +826,20 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite<unsigned __int64>(CONTROL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(secondary_controls.all, IA32_VMX_PROCBASED_CTLS2));
 	hv::vmwrite<unsigned __int64>(CONTROL_VM_EXIT_CONTROLS, ajdust_controls(exit_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
 	hv::vmwrite<unsigned __int64>(CONTROL_VM_ENTRY_CONTROLS, ajdust_controls(entry_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
+
+	// Features
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
+
+	hv::vmwrite<unsigned __int64>(VMCS_CTRL_EXCEPTION_BITMAP, exception_bitmap.all);
+
+	__sgdt(&gdtr);
+	__sidt(&idtr);
+
+	// Global descriptor table and local one
+	hv::vmwrite<unsigned __int64>(GUEST_GDTR_LIMIT, gdtr.limit);
+	hv::vmwrite<unsigned __int64>(GUEST_IDTR_LIMIT, idtr.limit);
+	hv::vmwrite<unsigned __int64>(GUEST_GDTR_BASE, gdtr.base_address);
+	hv::vmwrite<unsigned __int64>(GUEST_IDTR_BASE, idtr.base_address);
 
 	// Segments
 	fill_guest_selector_data((void*)gdtr.base_address, ES, __read_es());
@@ -964,10 +945,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	//hv::vmwrite(VMCS_HOST_PERF_GLOBAL_CTRL, 0);
 
 
-	// Features
-	hv::vmwrite<unsigned __int64>(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);
 
-	hv::vmwrite<unsigned __int64>(VMCS_CTRL_EXCEPTION_BITMAP, exception_bitmap.all);
 
 	if (primary_controls.use_msr_bitmaps == true)
 		hv::vmwrite<unsigned __int64>(VMCS_CTRL_MSR_BITMAP_ADDRESS, vcpu->vcpu_bitmaps.msr_bitmap_physical);
