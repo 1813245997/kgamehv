@@ -171,6 +171,7 @@ struct __vmm_context
 	cr3 system_cr3;
 
 	__mtrr_info mtrr_info;
+
 	pool_manager::__pool_manager* pool_manager;
 
 

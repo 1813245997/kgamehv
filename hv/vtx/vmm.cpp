@@ -4,6 +4,67 @@
 #include "vmm.h"
 
 
+bool init_vcpu(__vcpu*& vcpu);
+
+bool init_vmxon(__vcpu* vcpu);
+
+bool init_vmcs(__vcpu* vcpu);
+
+bool allocate_vmm_context();
+
+void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2);
+
+
+bool vmm_init()
+{
+	if (allocate_vmm_context() == false)
+	{
+		return false;
+	}
+
+	if (init_system_data() == false)
+	{
+		return false;
+	}
+
+
+	prepare_host_page_tables();
+
+
+	//
+	// Initalize vcpu for each logical core
+	for (unsigned int iter = 0; iter < g_vmm_context->processor_count; iter++)
+	{
+		if (init_vcpu(g_vmm_context->vcpu_table[iter]) == false)
+			return false;
+
+		if (init_vmxon(g_vmm_context->vcpu_table[iter]) == false)
+			return false;
+
+		if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
+			return false;
+	}
+
+	compatibility_check_perform_checks();
+
+	/* g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
+	if ( g_invalid_msr_bitmap == NULL)
+	{
+		return FALSE;
+	}
+
+	 g_invalid_synthetic_msr_bitmap = allocate_synthetic_msr_fault_bitmap();
+	if ( g_invalid_msr_bitmap == NULL)
+	{
+		return FALSE;
+	}*/
+
+	//
+	// Call derefered procedure call (DPC) to fill vmcs and launch vmm for every logical core
+	KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+	return true;
+}
+
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
 	UNREFERENCED_PARAMETER(DeferredContext);
@@ -105,12 +166,7 @@ void free_vmm_context()
 	g_vmm_context = 0;
 }
 
-
-/// <summary>
-/// Allocates contiguous memory for vmcs
-/// </summary>
-/// <param name="vcpu"> Pointer to vcpu </param>
-/// <returns> status </returns>
+ 
 bool init_vmcs(__vcpu* vcpu)
 {
 	ia32_vmx_basic_register vmx_basic = { 0 };
@@ -173,6 +229,9 @@ bool allocate_vmm_context()
 	}
 	RtlSecureZeroMemory(g_vmm_context->vcpu_table, sizeof(__vcpu*) * (g_vmm_context->processor_count));
 
+
+
+
 	//
 	// Build mtrr map for physcial memory caching informations
 	//
@@ -182,6 +241,8 @@ bool allocate_vmm_context()
 	{
 		return false;
 	}
+
+
 
 	g_vmm_context->hv_presence = true;
 
@@ -439,113 +500,14 @@ unsigned long long* allocate_synthetic_msr_fault_bitmap()
 
 	return fault_bitmap;
 }
-/// <summary>
-/// Initialize and launch vmm
-/// </summary>
-/// <returns> status </returns>
-bool vmm_init()
+ 
+
+
+bool init_system_data()
 {
-	if (allocate_vmm_context() == false)
-		return false;
-
-	//
-	// Initalize vcpu for each logical core
-	for (unsigned int iter = 0; iter < g_vmm_context->processor_count; iter++) 
-	{
-		if (init_vcpu(g_vmm_context->vcpu_table[iter]) == false)
-			return false;
-
-		if (init_vmxon(g_vmm_context->vcpu_table[iter]) == false)
-			return false;
-
-		if (init_vmcs(g_vmm_context->vcpu_table[iter]) == false)
-			return false;
-	}
-
-	compatibility_check_perform_checks();
-
-	/* g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
-	if ( g_invalid_msr_bitmap == NULL)
-	{
-		return FALSE;
-	}
-
-	 g_invalid_synthetic_msr_bitmap = allocate_synthetic_msr_fault_bitmap();
-	if ( g_invalid_msr_bitmap == NULL)
-	{
-		return FALSE;
-	}*/
-	 
-	//
-	// Call derefered procedure call (DPC) to fill vmcs and launch vmm for every logical core
-	KeGenericCallDpc(dpc_broadcast_initialize_guest, 0);
+	g_vmm_context->system_eprocess =  PsInitialSystemProcess ;
+	g_vmm_context->system_cr3.flags= utils::process_utils::get_process_cr3(PsInitialSystemProcess);
 	return true;
 }
 
 
-// get the value of CR0 that the guest believes is active.
-// this is a mixture of the guest CR0 and the CR0 read shadow.
-  cr0 read_effective_guest_cr0() {
-	// TODO: cache this value
-	auto const mask = hv::vmread (VMCS_CTRL_CR0_GUEST_HOST_MASK);
-
-	// bits set to 1 in the mask are read from CR0, otherwise from the shadow
-	cr0 cr0;
-	cr0.flags = (hv::vmread(VMCS_CTRL_CR0_READ_SHADOW) & mask)
-		| (hv::vmread(VMCS_GUEST_CR0) & ~mask);
-
-	return cr0;
-}
-
-// get the value of CR4 that the guest believes is active.
-// this is a mixture of the guest CR4 and the CR4 read shadow.
-  cr4 read_effective_guest_cr4() {
-	// TODO: cache this value
-	auto const mask = hv::vmread(VMCS_CTRL_CR4_GUEST_HOST_MASK);
-
-	// bits set to 1 in the mask are read from CR4, otherwise from the shadow
-	cr4 cr4;
-	cr4.flags = (hv::vmread(VMCS_CTRL_CR4_READ_SHADOW) & mask)
-		| (hv::vmread(VMCS_GUEST_CR4) & ~mask);
-
-	return cr4;
-}
-
-  uint16_t current_guest_cpl() {
-	  vmx_segment_access_rights ss;
-	  ss.flags = static_cast<uint32_t>(hv::vmread(VMCS_GUEST_SS_ACCESS_RIGHTS));
-	  return ss.descriptor_privilege_level;
-  }
-
-  ia32_vmx_procbased_ctls_register read_ctrl_proc_based() {
-	  ia32_vmx_procbased_ctls_register value;
-	  value.flags = hv::vmread(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS);
-	  return value;
-  }
-
-    void write_ctrl_proc_based(ia32_vmx_procbased_ctls_register const value) {
-	  hv::vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, value.flags);
-  }
-
-
-
-  bool vmx_get_current_execution_mode()
-  {
-	  if (!g_vmm_context)
-	  {
-		  return VmxExecutionModeNonRoot;
-	  }
-	  if (!g_vmm_context->initialized)
-	  {
-		  return VmxExecutionModeNonRoot;
-	  }
-
-	  ULONG index = KeGetCurrentProcessorNumberEx(nullptr);
-	  __vcpu* current_vm_state = g_vmm_context->vcpu_table[index];
-
-	  return current_vm_state->is_on_vmx_root_mode ? VmxExecutionModeRoot : VmxExecutionModeNonRoot;
-  }
-
-
-   
- 

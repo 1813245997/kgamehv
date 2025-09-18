@@ -109,6 +109,7 @@
 #include "../vtx/hv_dpc_vm_call.h"
 #include "../vtx/hypervisor_gateway.h"
 #include "../vtx/hypervisor_routines.h"
+#include "../vtx/vmcs_utils.h"
 #include "../vtx/vmcs.h"
 #include "../vtx/vmm.h"
 #include "../vtx/vmexit_handler.h"

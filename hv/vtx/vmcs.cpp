@@ -590,39 +590,7 @@ void set_exception_bitmap(__exception_bitmap& exception_bitmap)
 
 	exception_bitmap.virtualization_exception = false;
 }
-  void cache_cpu_data(vcpu_cached_data& cached) {
-	 
-	 
-	 
-
-	cpuid_eax_80000008 cpuid_80000008;
-	__cpuid(reinterpret_cast<int*>(&cpuid_80000008), 0x80000008);
-
-	cached.max_phys_addr = cpuid_80000008.eax.number_of_physical_address_bits;
-
-	cached.vmx_cr0_fixed0 = __readmsr(IA32_VMX_CR0_FIXED0);
-	cached.vmx_cr0_fixed1 = __readmsr(IA32_VMX_CR0_FIXED1);
-	cached.vmx_cr4_fixed0 = __readmsr(IA32_VMX_CR4_FIXED0);
-	cached.vmx_cr4_fixed1 = __readmsr(IA32_VMX_CR4_FIXED1);
-
-	cpuid_eax_0d_ecx_00 cpuid_0d;
-	__cpuidex(reinterpret_cast<int*>(&cpuid_0d), 0x0D, 0x00);
-
-	// features in XCR0 that are supported
-	cached.xcr0_unsupported_mask = ~((static_cast<uint64_t>(
-		cpuid_0d.edx.flags) << 32) | cpuid_0d.eax.flags);
-
-	cached.feature_control.flags = __readmsr(IA32_FEATURE_CONTROL);
-	cached.vmx_misc.flags = __readmsr(IA32_VMX_MISC);
-
-	// create a fake guest FEATURE_CONTROL MSR that has VMX and SMX disabled
-	cached.guest_feature_control = cached.feature_control;
-	cached.guest_feature_control.lock_bit = 1;
-	cached.guest_feature_control.enable_vmx_inside_smx = 0;
-	cached.guest_feature_control.enable_vmx_outside_smx = 0;
-	cached.guest_feature_control.senter_local_function_enables = 0;
-	cached.guest_feature_control.senter_global_enable = 0;
-}
+ 
 /// <summary>
 /// Get segment base
 /// </summary>
@@ -688,14 +656,7 @@ void fill_guest_selector_data(void* gdt_base, unsigned __int32 segment_register,
 	hv::vmwrite<unsigned __int64>(GUEST_ES_ACCESS_RIGHTS + segment_register * 2, segment_access_rights.all);
 }
 
-unsigned __int32 ajdust_controls(unsigned __int32 ctl, unsigned __int32 msr)
-{
-	__msr msr_value = { 0 };
-	msr_value.all = __readmsr(msr);
-	ctl &= msr_value.high;
-	ctl |= msr_value.low;
-	return ctl;
-}
+
 
  
  
@@ -859,8 +820,16 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	hv::vmwrite(VMCS_CTRL_CR4_READ_SHADOW, __readcr4() & ~CR4_VMX_ENABLE_FLAG);
 
 
-	hv::vmwrite<unsigned __int64>(VMCS_CTRL_CR3_TARGET_COUNT,0);
-	//hv::vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0, hv::get_system_directory_table_base());
+	if (vcpu->cached.vmx_misc.cr3_target_count >= 1)
+	{
+		hv::vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, 1);
+		hv::vmwrite(VMCS_CTRL_CR3_TARGET_VALUE_0,g_vmm_context->system_cr3.flags);
+	}
+	else
+	{
+		hv::vmwrite(VMCS_CTRL_CR3_TARGET_COUNT, 0);
+	}
+	 
 
 	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
 	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());

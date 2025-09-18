@@ -127,6 +127,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vtx\vmcs_utils.h" />
     <ClInclude Include="vtx\vm_context.h" />
     <ClInclude Include="vtx\vm_intrin.h" />
     <ClInclude Include="ia32\ia32.h" />
@@ -292,6 +293,7 @@
     <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vmcall_handler.cpp" />
     <ClCompile Include="vtx\vmcs.cpp" />
+    <ClCompile Include="vtx\vmcs_utils.cpp" />
     <ClCompile Include="vtx\vmexit_handler.cpp" />
     <ClCompile Include="vtx\vmm.cpp" />
     <ClCompile Include="vtx\vt_global.cpp" />
