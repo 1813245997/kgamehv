@@ -1,10 +1,16 @@
 #pragma once
 
-int
-TestBit(int BitNumber, unsigned long* Addr);
+namespace hv
+{
+	int
+		bit_test(int bit_number, unsigned long* addr);
 
-void
-ClearBit(int BitNumber, unsigned long* Addr);
+	void
+		bit_clear(int bit_number, unsigned long* addr);
 
-void
-SetBit(int BitNumber, unsigned long* Addr);
+	void
+		bit_set(int bit_number, unsigned long* addr);
+
+}
+
+

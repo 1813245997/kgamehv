@@ -8,7 +8,7 @@
 #include <ntimage.h>
 #include <intrin.h>
 #include <minwindef.h>
- 
+#include <xmmintrin.h>
  
 
 #include "macros.h"
@@ -56,13 +56,9 @@
 #include "hidden_user_memory_list.h"
 #include "fault_uitls.h"
 #include "window_utils.h"
-#include "csgogame\offsets.h"
-#include "csgogame\kcsgo2_utils.h"
-#include "csgogame\kcsgo2_CPlayer.h"
-#include "csgogame\KMenuConfig.h"
 #include "user_comm\user_comm_struct.h"
 #include "user_comm\user_comm.h"
-#include "auth\auth.h"
+#include "auth.h"
 #include "file_utils.h"
 #include "log_utils.h"
 #include "global_initializer.h"
@@ -74,4 +70,50 @@
 #include "memory_pool.h"
 #include "call_back_utils.h"
 #include "kernel_hide_utils.h"
+#include "math.h"
+#include "font.h"
+#include "pmcol.h"
+#include "dx11.h"
+#include "LegacyRender.h"
 #include "VMProtectDDK.h"
+
+#include "../LDE64.h"
+#include "../ia32/ia32.hpp"
+#include "../vtx/hv_defs.h"
+#include "../vtx/vmcs_encodings.h"
+#include "../vtx/mtrr.h"
+#include "../vtx/poolmanager.h"
+#include "../vtx/ept.h"
+#include "../vtx/page-tables.h"
+#include "../vtx/hv_vt_structs.h"
+#include "../vtx/vmcall_reason.h"
+#include "../vtx/exception.h"
+#include "../vtx/cpuid.h"
+#include "../vtx/msr.h"
+#include "../vtx/xsave.h"
+#include "../vtx/segment.h"
+#include "../vtx/vm_intrin.h"
+#include "../vtx/vm_context.h"
+#include "../vtx/compatibility_checks.h"
+#include "../vtx/vt_global.h"
+#include "../vtx/bit_wise.h"
+#include "../vtx/invalidators.h"
+#include "../vtx/exception-routines.h"
+#include "../vtx/gdt.h"
+#include "../vtx/idt.h"
+#include "../vtx/interrupt.h"
+#include "../vtx/interrupt-handlers.h"
+#include "../vtx/spinlock.h"
+#include "../vtx/allocators.h"
+#include "../vtx/timing.h"
+#include "../vtx/hv_dpc_vm_call.h"
+#include "../vtx/hypervisor_gateway.h"
+#include "../vtx/hypervisor_routines.h"
+#include "../vtx/vmcs.h"
+#include "../vtx/vmm.h"
+#include "../vtx/vmexit_handler.h"
+#include "../vtx/vmcall_handler.h"
+
+
+
+

@@ -1,14 +1,9 @@
 #pragma once
-#include "../ia32/ia32.hpp"
-#include "../vtx/invalidators.h"
+ 
+ 
 
 
-#define MASK_EPT_PML1_OFFSET(_VAR_) ((unsigned __int64)_VAR_ & 0xFFFULL)
-#define MASK_EPT_PML1_INDEX(_VAR_) ((_VAR_ & 0x1FF000ULL) >> 12)
-#define MASK_EPT_PML2_INDEX(_VAR_) ((_VAR_ & 0x3FE00000ULL) >> 21)
-#define MASK_EPT_PML3_INDEX(_VAR_) ((_VAR_ & 0x7FC0000000ULL) >> 30)
-#define MASK_EPT_PML4_INDEX(_VAR_) ((_VAR_ & 0xFF8000000000ULL) >> 39)
-#define CPU_BASED_MONITOR_TRAP_FLAG 0x08000000
+
 
 union __eptp
 {

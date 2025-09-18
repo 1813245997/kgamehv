@@ -1,7 +1,6 @@
 #include "../utils/global_defs.h"
 #include "timing.h"
-#include "../asm/vm_intrin.h"
-#include "vmcall_reason.h"
+ 
 
 namespace hv
 {

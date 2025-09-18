@@ -1,4 +1,4 @@
-#include <ntddk.h>
+#include "../utils/global_defs.h"
 #include "spinlock.h"
 
 // This implementation is derived from Hvpp by Petr Benes

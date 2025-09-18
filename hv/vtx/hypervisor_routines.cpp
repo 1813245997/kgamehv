@@ -1,24 +1,9 @@
 #pragma warning( disable : 4201 4244)
 #include "../utils/global_defs.h"
-#include <ntddk.h>
-#include <intrin.h>
 #include "hypervisor_routines.h"
-#include "cpuid.h"
-#include "..\asm\vm_context.h"
-#include "cr.h"
-#include "msr.h"
-#include "vmcs.h"
  
- 
-#include "vmcs_encodings.h"
-#include "vmcall_handler.h"
-#include "interrupt.h"
-#include "allocators.h"
-#include "../asm/vm_intrin.h"
-#include "spinlock.h"
 
-#define NON_CANONICIAL_ADDRESS_END 0xFFFF800000000000
-#define NON_CANONICIAL_ADDRESS_START 0x0000800000000000
+
 
 namespace hv 
 {
@@ -319,11 +304,12 @@ namespace hv
 	/// <returns></returns>
 	void disable_vmx_operation()
 	{
-		__cr4 cr4 = { 0 };
-		__ia32_feature_control_msr feature_msr = { 0 };
-		cr4.all = __readcr4();
+		cr4 cr4 = { 0 };
+
+		ia32_feature_control_register feature_msr = { 0 };
+		cr4.flags = __readcr4();
 		cr4.vmx_enable = 0;
-		__writecr4(cr4.all);
+		__writecr4(cr4.flags);
 	}
 
 	/// <summary>

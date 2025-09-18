@@ -1,7 +1,7 @@
 #pragma once
  
-#include <ntddk.h>
-#include "common.h"
+ 
+ 
 namespace pool_manager
 {
     enum allocation_intention

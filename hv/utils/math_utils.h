@@ -1,5 +1,5 @@
 #pragma once
-#include "dx_draw/math.h"
+#include "math.h"
  
 typedef struct tagPOINT
 {

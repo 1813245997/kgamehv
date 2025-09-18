@@ -68,3 +68,10 @@ union __mtrr_fixed_range_type
 		unsigned __int8 types[8];
 	};
 };
+
+struct __mtrr_info
+{
+	__mtrr_range_descriptor memory_range[100];
+	unsigned __int32 enabled_memory_ranges;
+	unsigned __int8 default_memory_type;
+};

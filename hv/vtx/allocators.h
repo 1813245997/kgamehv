@@ -1,6 +1,6 @@
 #pragma once
-#include <ntddk.h>
-#include "common.h"
+ 
+ 
 
 /// <summary>
 /// Allocate NonPagedPool with hypervisor tag, custom size

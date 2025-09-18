@@ -1,7 +1,7 @@
 #include "global_defs.h"
 #include "driver_feature_init.h"
   
-#include <ntstrsafe.h>
+
  
 
 namespace utils

@@ -118,13 +118,13 @@
     <ClInclude Include="utils\Math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\LegacyRender.h">
+    <ClInclude Include="utils\LegacyRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\math.h">
+    <ClInclude Include="utils\math.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\pmcol.h">
+    <ClInclude Include="utils\pmcol.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\time_utils.h">
@@ -145,25 +145,13 @@
     <ClInclude Include="utils\ark_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\csgogame\offsets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\csgogame\kcsgo2_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\csgogame\kcsgo2_CPlayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\window_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\imgui_utils.h">
+    <ClInclude Include="utils\imgui_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\csgogame\KMenuConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\dx_draw\font.h">
+    <ClInclude Include="utils\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\user_comm\user_comm.h">
@@ -172,7 +160,7 @@
     <ClInclude Include="utils\user_comm\user_comm_struct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\auth\auth.h">
+    <ClInclude Include="utils\auth.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\file_utils.h">
@@ -191,9 +179,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\allocators.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\hypervisor_gateway.h">
@@ -244,9 +229,6 @@
     <ClInclude Include="vtx\cpuid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\cr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vtx\exception.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -262,19 +244,16 @@
     <ClInclude Include="vtx\hv_dpc_vm_call.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="asm\vm_intrin.h">
+    <ClInclude Include="vtx\vm_intrin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="asm\vm_context.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\trap-frame.h">
+    <ClInclude Include="vtx\vm_context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\bit_wise.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\CompatibilityChecks.h">
+    <ClInclude Include="vtx\compatibility_checks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\vt_global.h">
@@ -292,7 +271,7 @@
     <ClInclude Include="utils\kvector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dx_draw\fontdata.h">
+    <ClInclude Include="utils\fontdata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\math_utils.h">
@@ -317,6 +296,36 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\MemLoadDll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32\ia32.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32\ia32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32\ia32_compact.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ia32\ia32_defines_only.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hv_defs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hv_vt_structs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\gdt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\exception-routines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\idt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\interrupt-handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -408,28 +417,19 @@
     <ClCompile Include="utils\ark_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\csgogame\kcsgo2_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="utils\window_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\dx_draw\imgui_utils.cpp">
+    <ClCompile Include="utils\imgui_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\csgogame\KMenuConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils\csgogame\kcsgo2_CPlayer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils\dx_draw\LegacyRender.cpp">
+    <ClCompile Include="utils\LegacyRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\user_comm\user_comm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\auth\auth.cpp">
+    <ClCompile Include="utils\auth.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\file_utils.cpp">
@@ -486,7 +486,7 @@
     <ClCompile Include="vtx\bit_wise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vtx\CompatibilityChecks.cpp">
+    <ClCompile Include="vtx\compatibility_checks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\vt_global.cpp">
@@ -513,12 +513,18 @@
     <ClCompile Include="utils\inject_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vtx\gdt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\idt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="lde64.asm">
       <Filter>Source Files</Filter>
     </MASM>
-    <MASM Include="utils\dx_draw\math.asm">
+    <MASM Include="utils\math.asm">
       <Filter>Source Files</Filter>
     </MASM>
     <MASM Include="utils\cpu_registers.asm">
@@ -530,5 +536,14 @@
     <MASM Include="asm\vm_context.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="asm\interrupt-handlers.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="asm\exception-routines.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ia32\Doxyfile" />
   </ItemGroup>
 </Project>

@@ -1,22 +1,6 @@
 #pragma warning( disable : 4201 4244 4805 4189)
-
-#include <intrin.h>
-#include "common.h"
+#include "../utils/global_defs.h"
 #include "vmcall_handler.h"
-#include "../asm\vm_intrin.h"
-#include "vmcall_reason.h"
-#include "vmcs_encodings.h"
-#include "msr.h"
-#include "cr.h"
-#include "cpuid.h"
-#include "vmexit_handler.h"
-#include "hypervisor_routines.h"
-#include "interrupt.h"
-#include "../asm\vm_context.h"
-#include "CompatibilityChecks.h"
-
-#include "vt_global.h"
-#include "hypervisor_gateway.h"
 
 void restore_segment_registers()
 {

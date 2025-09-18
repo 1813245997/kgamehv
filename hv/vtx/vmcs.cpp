@@ -1,18 +1,9 @@
 #pragma warning( disable : 4201 4244)
 #include "../utils/global_defs.h"
-#include <intrin.h>
-#include "segment.h"
-#include "common.h"
 #include "vmcs.h"
-#include "vmcs_encodings.h"
-#include "msr.h"
-#include "../asm\vm_intrin.h"
-#include "../asm\vm_context.h"
-#include "cr.h"
- 
-#include "hypervisor_routines.h"
+  
 
-#define  _MINIMAL  1
+
 
 /// <summary>
 /// Derived from Intel Manuals Voulme 3 Section 24.6.2 Table 24-6. Definitions of Primary Processor-Based VM-Execution Controls
@@ -723,7 +714,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	__pseudo_descriptor64 idtr = { 0 };
 
 	__exception_bitmap exception_bitmap = { 0 };
-	__vmx_basic_msr vmx_basic = { 0 };
+	ia32_vmx_basic_register vmx_basic = { 0 };
 	__vmx_entry_control entry_controls = { 0 };
 	__vmx_exit_control exit_controls = { 0 };
 	__vmx_pinbased_control_msr pinbased_controls = { 0 };
@@ -732,7 +723,7 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	
 	const unsigned __int8 selector_mask = 7;
 
-	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
 
 	set_entry_control(entry_controls);
@@ -821,11 +812,11 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 
 
 	// Hypervisor features
-	hv::vmwrite<unsigned __int64>(CONTROL_PIN_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(pinbased_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
-	hv::vmwrite<unsigned __int64>(CONTROL_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(primary_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
+	hv::vmwrite<unsigned __int64>(CONTROL_PIN_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(pinbased_controls.all, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PINBASED_CTLS : IA32_VMX_PINBASED_CTLS));
+	hv::vmwrite<unsigned __int64>(CONTROL_PRIMARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(primary_controls.all, vmx_basic.vmx_controls ? IA32_VMX_TRUE_PROCBASED_CTLS : IA32_VMX_PROCBASED_CTLS));
 	hv::vmwrite<unsigned __int64>(CONTROL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, ajdust_controls(secondary_controls.all, IA32_VMX_PROCBASED_CTLS2));
-	hv::vmwrite<unsigned __int64>(CONTROL_VM_EXIT_CONTROLS, ajdust_controls(exit_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
-	hv::vmwrite<unsigned __int64>(CONTROL_VM_ENTRY_CONTROLS, ajdust_controls(entry_controls.all, vmx_basic.true_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
+	hv::vmwrite<unsigned __int64>(CONTROL_VM_EXIT_CONTROLS, ajdust_controls(exit_controls.all, vmx_basic.vmx_controls ? IA32_VMX_TRUE_EXIT_CTLS : IA32_VMX_EXIT_CTLS));
+	hv::vmwrite<unsigned __int64>(CONTROL_VM_ENTRY_CONTROLS, ajdust_controls(entry_controls.all, vmx_basic.vmx_controls ? IA32_VMX_TRUE_ENTRY_CTLS : IA32_VMX_ENTRY_CTLS));
 
 	// Features
 	hv::vmwrite<unsigned __int64>(VMCS_GUEST_VMCS_LINK_POINTER, ~0ULL);

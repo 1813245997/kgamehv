@@ -1,6 +1,6 @@
 #pragma once
-#include <ntddk.h>
-#include "common.h"
+
+ 
 
 enum __syscall_type
 {

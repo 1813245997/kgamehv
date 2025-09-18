@@ -1,7 +1,8 @@
 #pragma warning( disable : 4201)
+#include "../utils/global_defs.h"
 #include "invalidators.h"
-#include "..\asm\vm_intrin.h"
-#include "..\ia32\ia32.hpp"
+ 
+ 
 
 /// <summary>
 /// Invept single context

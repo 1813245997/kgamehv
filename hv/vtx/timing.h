@@ -1,6 +1,6 @@
 #pragma once
 #include "../ia32/ia32.hpp"
-#include "common.h"
+ 
 namespace hv {
 	 
 	void measure_vm_exit_overheads(__vcpu*  cpu);

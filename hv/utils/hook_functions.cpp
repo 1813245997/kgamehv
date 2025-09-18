@@ -1,10 +1,7 @@
 
 #include "global_defs.h"
-
 #include "hook_functions.h"
-#include "dwm_draw.h"
-#include "strong_dx.h"
-#include "../vtx/ept.h"
+
 namespace hook_functions
 {
 
@@ -519,7 +516,7 @@ namespace hook_functions
 		   }
  
 
-		   game::kcsgo2::g_game->init(process);
+		 //  game::kcsgo2::g_game->init(process);
  
 
 		  
@@ -1479,7 +1476,7 @@ namespace hook_functions
 
 		   
 		// 初始化游戏数据
-		   game::kcsgo2::g_game->loop();
+		  // game::kcsgo2::g_game->loop();
 	 
 		   
 			 

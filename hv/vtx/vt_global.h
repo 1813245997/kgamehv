@@ -13,3 +13,8 @@ extern 	unsigned  long long* g_invalid_synthetic_msr_bitmap;
 
 
 extern COMPATIBILITY_CHECKS_STATUS g_compatibility_check;
+
+
+extern __vmm_context* g_vmm_context;
+
+extern LIST_ENTRY g_ept_breakpoint_hook_list;

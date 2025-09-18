@@ -1,18 +1,6 @@
 #pragma warning( disable : 4201 4244)
 #include "../utils/global_defs.h"
-#include "../ASM\vm_context.h"
-#include <ntddk.h>
-#include <intrin.h>
-#include <stdlib.h>
-#include "common.h"
-#include "msr.h"
-#include "vmcs_encodings.h"
 #include "ept.h"
- 
-#include "hypervisor_routines.h"
-#include "mtrr.h"
-#include "allocators.h"
-#include "spinlock.h"
 
 
 namespace ept

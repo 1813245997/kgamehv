@@ -1,9 +1,9 @@
 #include "global_defs.h"
 #include "strong_dx.h"
 #include  "../ia32/ia32.hpp"
-#include "dx_draw/LegacyRender.h"
+#include "LegacyRender.h"
 #include "dx11.h"
-#include "dx_draw/fontdata.h"
+#include "fontdata.h"
  
  
 
@@ -620,8 +620,10 @@ namespace utils
 
 		void draw_update_required_notice(ByteRender& rend)
 		{
-			if (!game::kcsgo2::g_game || !game::kcsgo2::g_game->m_cheat_update)
-				return;
+		/*	if (!game::kcsgo2::g_game || !game::kcsgo2::g_game->m_cheat_update)
+				return;*/
+
+			return;
 
 			const int screen_width = rend.GetScreenWidth();
 			const int screen_height = rend.GetScreenHeight();
@@ -674,479 +676,483 @@ namespace utils
 		{
 			 
 
-			utils::kvector< game::kcsgo2struct::CPlayer>list{};
+			//utils::kvector< game::kcsgo2struct::CPlayer>list{};
 
 
 
-			if (!game::kcsgo2::g_game->update_game_windows(utils::dwm_draw::g_game_utils_buffer))
-			{
-				return;
-			}
-			 
-			if (game::kcsgo2::g_game->isC4Planted)
-			{
-			 
-				const Vector3 c4ScreenPos = game::kcsgo2::g_game->world_to_screen(&game::kcsgo2::g_game->c4Origin);
-				if (c4ScreenPos.z >= 0.01f) {
-					float c4Distance = game::kcsgo2::g_game->localOrigin.calculate_distance(game::kcsgo2::g_game->c4Origin);
-					float c4RoundedDistance = utils::math:: round(c4Distance / 500.f);
+			//if (!game::kcsgo2::g_game->update_game_windows(utils::dwm_draw::g_game_utils_buffer))
+			//{
+			//	return;
+			//}
+			// 
+			//if (game::kcsgo2::g_game->isC4Planted)
+			//{
+			// 
+			//	const Vector3 c4ScreenPos = game::kcsgo2::g_game->world_to_screen(&game::kcsgo2::g_game->c4Origin);
+			//	if (c4ScreenPos.z >= 0.01f) {
+			//		float c4Distance = game::kcsgo2::g_game->localOrigin.calculate_distance(game::kcsgo2::g_game->c4Origin);
+			//		float c4RoundedDistance = utils::math:: round(c4Distance / 500.f);
 
-					float height = 10 - c4RoundedDistance;
-					float width = height * 1.4f;
+			//		float height = 10 - c4RoundedDistance;
+			//		float width = height * 1.4f;
 
-					rend.Rectangle(
+			//		rend.Rectangle(
 
-						c4ScreenPos.x - (width / 2),
-						c4ScreenPos.y - (height / 2),
-						width,
-						height,
-						FColor(config::esp_box_color_enemy.r, config::esp_box_color_enemy.g, config::esp_box_color_enemy.b)
-						
-					);
+			//			c4ScreenPos.x - (width / 2),
+			//			c4ScreenPos.y - (height / 2),
+			//			width,
+			//			height,
+			//			FColor(config::esp_box_color_enemy.r, config::esp_box_color_enemy.g, config::esp_box_color_enemy.b)
+			//			
+			//		);
 
-					rend.StringA(
-						g_Font,
-						c4ScreenPos.x + (width / 2 + 5),
-						c4ScreenPos.y,
-						"C4",
-						FColor(config::show_name.color[0], config::show_name.color[1], config::show_name.color[2])
-						 
-					);
-				}
-			}
-		 
+			//		rend.StringA(
+			//			g_Font,
+			//			c4ScreenPos.x + (width / 2 + 5),
+			//			c4ScreenPos.y,
+			//			"C4",
+			//			FColor(config::show_name.color[0], config::show_name.color[1], config::show_name.color[2])
+			//			 
+			//		);
+			//	}
+			//}
+		 //
 	
 
 
-			if (!game::kcsgo2:: g_game->get_player_data (&list))
-			{
-				return;
-			}
+			//if (!game::kcsgo2:: g_game->get_player_data (&list))
+			//{
+			//	return;
+			//}
 
 
 
-			 
-			 
-			for (auto it = list.begin(); it != list.end(); ++it)
-			{
-				  auto& player = *it;
-			 
-			  
-				const Vector3 screenPos = game::kcsgo2::g_game->world_to_screen(&player.origin);
-				const Vector3 screenHead = game::kcsgo2::g_game->world_to_screen(&player.head);
+			// 
+			// 
+			//for (auto it = list.begin(); it != list.end(); ++it)
+			//{
+			//	  auto& player = *it;
+			// 
+			//  
+			//	const Vector3 screenPos = game::kcsgo2::g_game->world_to_screen(&player.origin);
+			//	const Vector3 screenHead = game::kcsgo2::g_game->world_to_screen(&player.head);
 
-				if (screenPos.z < 0.01f ||!game::kcsgo2::g_game->is_in_bounds(screenPos))
-				{
-					continue;
+			//	if (screenPos.z < 0.01f ||!game::kcsgo2::g_game->is_in_bounds(screenPos))
+			//	{
+			//		continue;
 
-				}
-
-
-				const float height = screenPos.y - screenHead.y;
-				const float width = height / 2.4f;
-				float distance = game::kcsgo2::g_game->localOrigin.calculate_distance(player.origin);
-				int roundedDistance = utils::math::round (distance / 10.f);
-
-				int box_height = static_cast<int>(screenPos.y - screenHead.y);
-				int box_width = box_height / 2;
-				int box_x = static_cast<int>(screenHead.x - box_width / 2);
-				int box_y = static_cast<int>(screenHead.y);
-
-				// ==== Head Tracker (Circle) ====
-				if (config::show_head_tracker.enabled)
-				{
-					const auto& head_bone = player.bones.bone_positions[game::kcsgo2struct::BONE_HEAD];
-					
-						 
-						const float radius = width / 5.0f;
-
-						FColor color(config::show_head_tracker.color[0], config::show_head_tracker.color[1], config::show_head_tracker.color[2]);
-
-						rend.DrawCircle(
-							head_bone.x,
-							head_bone.y - (width / 12.0f),
-							radius,
-							color,
-							1.0f
-						);
-				
-
-				 
-			
-				}
-
-				// ==== Bone ESP ====
-				if (config::show_skeleton_esp.enabled)
-				{
-
-					FColor color(config::show_skeleton_esp.color[0], config::show_skeleton_esp.color[1], config::show_skeleton_esp.color[2]);
-					//if (game::kcsgo2::g_game->isC4Planted)
-					//{
-					// 
-					//	  
-					//	float distance_to_c4 = player.origin.calculate_distance(game::kcsgo2::g_game->c4Origin);
-
-					//	if (distance_to_c4 < 5.0f) // 根据需要调小或调大此阈值
-					//	{
-					//		color = FColor(255, 0, 0); // 红色
-					//	}
-					//}
-
-				 
-
-					for (size_t j = 0; j < BONE_CONNECTION_COUNT; ++j)
-					{
-						const auto& connection = game::kcsgo2struct::g_bone_connections[j];
-					  
-						const auto& from_pos = player.bones.bone_positions[connection.from];
-						const auto& to_pos = player.bones.bone_positions[connection.to];
-
-						// 骨骼坐标为 (0, 0, 0) 时通常表示无效
-						if ((from_pos.x != 0.f && from_pos.y != 0.f) &&
-							(to_pos.x != 0.f && to_pos.y != 0.f ))
-						{
-							Vector2 screen_from = { from_pos.x, from_pos.y };
-							Vector2 screen_to = { to_pos.x, to_pos.y };
-
-							rend.Line(screen_from, screen_to, color, 1);
-						}
-
-						 
-					}
-				}
+			//	}
 
 
-				// ==== Box ESP ====
-				if (config::show_box_esp.enabled)
-				{
-				
+			//	const float height = screenPos.y - screenHead.y;
+			//	const float width = height / 2.4f;
+			//	float distance = game::kcsgo2::g_game->localOrigin.calculate_distance(player.origin);
+			//	int roundedDistance = utils::math::round (distance / 10.f);
 
-					FColor color(config::show_box_esp.color[0], config::show_box_esp.color[1], config::show_box_esp.color[2]);
-					rend.Rectangle(box_x, box_y, static_cast<float>(box_width), static_cast<float>(box_height), color, 1);
-				}
+			//	int box_height = static_cast<int>(screenPos.y - screenHead.y);
+			//	int box_width = box_height / 2;
+			//	int box_x = static_cast<int>(screenHead.x - box_width / 2);
+			//	int box_y = static_cast<int>(screenHead.y);
 
-				//rend.Rectangle(
-				//	screenHead.x - (width / 2 + 10),
-				//	screenHead.y + (height * (100 - player.armor) / 100),
-				//	2,
-				//	height - (height * (100 - player.armor) / 100),
-				//	FColor(255, 185, 0)
-				//);
-				rend.Rectangle(
-					screenHead.x - (width / 2 + 10 + 6), // 左移6像素，放到血条左边
-					screenHead.y + (height * (100 - player.armor) / 100),
-					2,
-					height - (height * (100 - player.armor) / 100),
-					FColor(255, 185, 0)
-				);
+			//	// ==== Head Tracker (Circle) ====
+			//	if (config::show_head_tracker.enabled)
+			//	{
+			//		const auto& head_bone = player.bones.bone_positions[game::kcsgo2struct::BONE_HEAD];
+			//		
+			//			 
+			//			const float radius = width / 5.0f;
 
-				if (config::show_health_bar.enabled)
-				{
-					// ==== 血条绘制 ====
-					const int bar_width = 4;
-					const int bar_height = height;
+			//			FColor color(config::show_head_tracker.color[0], config::show_head_tracker.color[1], config::show_head_tracker.color[2]);
 
-					// ===== 背景（灰） =====
-					rend.Rectangle(
-						screenHead.x - (width / 2 + 4 + bar_width),  // 偏移与护甲相对对称
-						screenHead.y,
-						bar_width,
-						bar_height,
-						FColor(50, 50, 50), // 灰色背景
-						1.0f
-					);
+			//			rend.DrawCircle(
+			//				head_bone.x,
+			//				head_bone.y - (width / 12.0f),
+			//				radius,
+			//				color,
+			//				1.0f
+			//			);
+			//	
 
-					// ===== 颜色渐变（红->绿） =====
-					FColor health_color(
-						static_cast<uint8_t>(255 * (1.0f - player.health / 100.0f)),  // 红色
-						static_cast<uint8_t>(255 * (player.health / 100.0f)),         // 绿色
-						0
-					);
+			//	 
+			//
+			//	}
 
-					rend.Rectangle(
-						screenHead.x - (width / 2 + 4 + bar_width),
-						screenHead.y + bar_height * (1.0f - player.health / 100.0f),
-						bar_width,
-						bar_height * (player.health / 100.0f),
-						health_color,
-						1.0f
-					);
-				}
-				//rend.Rectangle(
-				//	 
-				//	screenHead.x - (width / 2 + 5),
-				//	screenHead.y + (height * (100 - player.health) / 100),
-				//	2,
-				//	height - (height * (100 - player.health) / 100),
-				//	FColor(
-				//		75,
-				//		(55 + player.health * 2),
-				//		(255 - player.health)
-				//	)
-				//);
+			//	// ==== Bone ESP ====
+			//	if (config::show_skeleton_esp.enabled)
+			//	{
 
-				//rend.StringA (
-				//	g_Font,
-				//	screenHead.x + (width / 2 + 5),
-				//	screenHead.y,
-				//	player.name,
-				//	FColor  (config::ShowName.color[0], config::ShowName.color[1], config::ShowName.color[2])
-				//	 //10
-				//);
+			//		FColor color(config::show_skeleton_esp.color[0], config::show_skeleton_esp.color[1], config::show_skeleton_esp.color[2]);
+			//		//if (game::kcsgo2::g_game->isC4Planted)
+			//		//{
+			//		// 
+			//		//	  
+			//		//	float distance_to_c4 = player.origin.calculate_distance(game::kcsgo2::g_game->c4Origin);
 
-				/**
-				* I know is not the best way but a simple way to not saturate the screen with a ton of information
-				*/
-				if (roundedDistance > config::flag_render_distance)
-					continue;
+			//		//	if (distance_to_c4 < 5.0f) // 根据需要调小或调大此阈值
+			//		//	{
+			//		//		color = FColor(255, 0, 0); // 红色
+			//		//	}
+			//		//}
+
+			//	 
+
+			//		for (size_t j = 0; j < BONE_CONNECTION_COUNT; ++j)
+			//		{
+			//			const auto& connection = game::kcsgo2struct::g_bone_connections[j];
+			//		  
+			//			const auto& from_pos = player.bones.bone_positions[connection.from];
+			//			const auto& to_pos = player.bones.bone_positions[connection.to];
+
+			//			// 骨骼坐标为 (0, 0, 0) 时通常表示无效
+			//			if ((from_pos.x != 0.f && from_pos.y != 0.f) &&
+			//				(to_pos.x != 0.f && to_pos.y != 0.f ))
+			//			{
+			//				Vector2 screen_from = { from_pos.x, from_pos.y };
+			//				Vector2 screen_to = { to_pos.x, to_pos.y };
+
+			//				rend.Line(screen_from, screen_to, color, 1);
+			//			}
+
+			//			 
+			//		}
+			//	}
 
 
-			
+			//	// ==== Box ESP ====
+			//	if (config::show_box_esp.enabled)
+			//	{
+			//	
 
-				/*	char health_str[32] = { 0 };
-					if (!utils::string_utils::int_to_string(player.health, health_str, sizeof(health_str)))
-					{
-						return;
-					}
+			//		FColor color(config::show_box_esp.color[0], config::show_box_esp.color[1], config::show_box_esp.color[2]);
+			//		rend.Rectangle(box_x, box_y, static_cast<float>(box_width), static_cast<float>(box_height), color, 1);
+			//	}
+
+			//	//rend.Rectangle(
+			//	//	screenHead.x - (width / 2 + 10),
+			//	//	screenHead.y + (height * (100 - player.armor) / 100),
+			//	//	2,
+			//	//	height - (height * (100 - player.armor) / 100),
+			//	//	FColor(255, 185, 0)
+			//	//);
+			//	rend.Rectangle(
+			//		screenHead.x - (width / 2 + 10 + 6), // 左移6像素，放到血条左边
+			//		screenHead.y + (height * (100 - player.armor) / 100),
+			//		2,
+			//		height - (height * (100 - player.armor) / 100),
+			//		FColor(255, 185, 0)
+			//	);
+
+			//	if (config::show_health_bar.enabled)
+			//	{
+			//		// ==== 血条绘制 ====
+			//		const int bar_width = 4;
+			//		const int bar_height = height;
+
+			//		// ===== 背景（灰） =====
+			//		rend.Rectangle(
+			//			screenHead.x - (width / 2 + 4 + bar_width),  // 偏移与护甲相对对称
+			//			screenHead.y,
+			//			bar_width,
+			//			bar_height,
+			//			FColor(50, 50, 50), // 灰色背景
+			//			1.0f
+			//		);
+
+			//		// ===== 颜色渐变（红->绿） =====
+			//		FColor health_color(
+			//			static_cast<uint8_t>(255 * (1.0f - player.health / 100.0f)),  // 红色
+			//			static_cast<uint8_t>(255 * (player.health / 100.0f)),         // 绿色
+			//			0
+			//		);
+
+			//		rend.Rectangle(
+			//			screenHead.x - (width / 2 + 4 + bar_width),
+			//			screenHead.y + bar_height * (1.0f - player.health / 100.0f),
+			//			bar_width,
+			//			bar_height * (player.health / 100.0f),
+			//			health_color,
+			//			1.0f
+			//		);
+			//	}
+			//	//rend.Rectangle(
+			//	//	 
+			//	//	screenHead.x - (width / 2 + 5),
+			//	//	screenHead.y + (height * (100 - player.health) / 100),
+			//	//	2,
+			//	//	height - (height * (100 - player.health) / 100),
+			//	//	FColor(
+			//	//		75,
+			//	//		(55 + player.health * 2),
+			//	//		(255 - player.health)
+			//	//	)
+			//	//);
+
+			//	//rend.StringA (
+			//	//	g_Font,
+			//	//	screenHead.x + (width / 2 + 5),
+			//	//	screenHead.y,
+			//	//	player.name,
+			//	//	FColor  (config::ShowName.color[0], config::ShowName.color[1], config::ShowName.color[2])
+			//	//	 //10
+			//	//);
+
+			//	/**
+			//	* I know is not the best way but a simple way to not saturate the screen with a ton of information
+			//	*/
+			//	if (roundedDistance > config::flag_render_distance)
+			//		continue;
 
 
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 10,
-							utils::string_utils::concat_strings_no_alloc(health_str, "hp", sizeof(health_str)),
-							FColor(
-								(255 - player.health),
-								(55 + player.health * 2),
-								75)
-						);
+			//
+
+			//	/*	char health_str[32] = { 0 };
+			//		if (!utils::string_utils::int_to_string(player.health, health_str, sizeof(health_str)))
+			//		{
+			//			return;
+			//		}
+
+
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 10,
+			//				utils::string_utils::concat_strings_no_alloc(health_str, "hp", sizeof(health_str)),
+			//				FColor(
+			//					(255 - player.health),
+			//					(55 + player.health * 2),
+			//					75)
+			//			);
 
 
 
-					char armor_str[32] = { 0 };
+			//		char armor_str[32] = { 0 };
 
-					if (!utils::string_utils::int_to_string(player.armor, armor_str, sizeof(armor_str)))
-					{
-						return;
-					}
+			//		if (!utils::string_utils::int_to_string(player.armor, armor_str, sizeof(armor_str)))
+			//		{
+			//			return;
+			//		}
 
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 20,
-							utils::string_utils::concat_strings_no_alloc(armor_str, "armor", sizeof(armor_str)),
-							FColor(
-								75,
-								(55 + player.armor * 2),
-								(255 - player.armor)
-							)
-						);*/
-					 
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 20,
+			//				utils::string_utils::concat_strings_no_alloc(armor_str, "armor", sizeof(armor_str)),
+			//				FColor(
+			//					75,
+			//					(55 + player.armor * 2),
+			//					(255 - player.armor)
+			//				)
+			//			);*/
+			//		 
 
-				if (config::show_extra_flags.enabled)
-				{
-
-
-					rend.StringA(
-						g_Font,
-						screenHead.x + (width / 2 + 5),
-						screenHead.y + 30,
-						player.weapon,
-						FColor(config::show_extra_flags.color[0], config::show_extra_flags.color[1], config::show_extra_flags.color[2])
-						 //10
-						 
-					);
+			//	if (config::show_extra_flags.enabled)
+			//	{
 
 
-					char  dist_str[32] = { 0 };
+			//		rend.StringA(
+			//			g_Font,
+			//			screenHead.x + (width / 2 + 5),
+			//			screenHead.y + 30,
+			//			player.weapon,
+			//			FColor(config::show_extra_flags.color[0], config::show_extra_flags.color[1], config::show_extra_flags.color[2])
+			//			 //10
+			//			 
+			//		);
 
-					if (!utils::string_utils::int_to_string(roundedDistance, dist_str, sizeof(dist_str)))
-					{
-						return;
-					}
-					 
 
-				 
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 40,
-							utils::string_utils::concat_strings_no_alloc(dist_str, "m away", sizeof(dist_str)),
-							FColor(
-								config::show_extra_flags.color[0],
-								config::show_extra_flags.color[1],
-								config::show_extra_flags.color[2]
-							)
-						);
+			//		char  dist_str[32] = { 0 };
+
+			//		if (!utils::string_utils::int_to_string(roundedDistance, dist_str, sizeof(dist_str)))
+			//		{
+			//			return;
+			//		}
+			//		 
+
+			//	 
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 40,
+			//				utils::string_utils::concat_strings_no_alloc(dist_str, "m away", sizeof(dist_str)),
+			//				FColor(
+			//					config::show_extra_flags.color[0],
+			//					config::show_extra_flags.color[1],
+			//					config::show_extra_flags.color[2]
+			//				)
+			//			);
  
 
 
-					char* money_str = utils::string_utils::int_to_string_alloc(player.money);
-					if (!money_str) return;
+			//		char* money_str = utils::string_utils::int_to_string_alloc(player.money);
+			//		if (!money_str) return;
 
-					char* money_display_str = utils::string_utils::concat_strings_alloc("$", money_str);
+			//		char* money_display_str = utils::string_utils::concat_strings_alloc("$", money_str);
 
-					if (money_display_str)
-					{
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 50,
-							money_display_str,
-							FColor(0, 125, 0)
-						);
+			//		if (money_display_str)
+			//		{
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 50,
+			//				money_display_str,
+			//				FColor(0, 125, 0)
+			//			);
 
-						utils::internal_functions::pfn_ex_free_pool_with_tag(money_display_str, 0);
-					}
+			//			utils::internal_functions::pfn_ex_free_pool_with_tag(money_display_str, 0);
+			//		}
 
-					utils::internal_functions::pfn_ex_free_pool_with_tag(money_str, 0);
-
-
-					if (player.flashAlpha > 100)
-					{
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 60,
-							"Player is flashed",
-							FColor(
-								config::show_extra_flags.color[0],
-								config::show_extra_flags.color[1],
-								config::show_extra_flags.color[2]
-							)
-							//10
-						);
-					}
-
-					if (player.is_defusing)
-					{
-						const char * defuText = "Player is defusing";
-						rend.StringA(
-							g_Font,
-							screenHead.x + (width / 2 + 5),
-							screenHead.y + 60,
-							defuText,
-							FColor(
-								config::show_extra_flags.color[0],
-								config::show_extra_flags.color[1],
-								config::show_extra_flags.color[2]
-							)
-							//10
-						);
-					}
+			//		utils::internal_functions::pfn_ex_free_pool_with_tag(money_str, 0);
 
 
+			//		if (player.flashAlpha > 100)
+			//		{
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 60,
+			//				"Player is flashed",
+			//				FColor(
+			//					config::show_extra_flags.color[0],
+			//					config::show_extra_flags.color[1],
+			//					config::show_extra_flags.color[2]
+			//				)
+			//				//10
+			//			);
+			//		}
 
-				}
+			//		if (player.is_defusing)
+			//		{
+			//			const char * defuText = "Player is defusing";
+			//			rend.StringA(
+			//				g_Font,
+			//				screenHead.x + (width / 2 + 5),
+			//				screenHead.y + 60,
+			//				defuText,
+			//				FColor(
+			//					config::show_extra_flags.color[0],
+			//					config::show_extra_flags.color[1],
+			//					config::show_extra_flags.color[2]
+			//				)
+			//				//10
+			//			);
+			//		}
+
+
+
+			//	}
 
 
 
 			}
-		}
-		PULONG64 get_user_rsp_ptr()
-		{
-			const ULONG64 syscall_address = __readmsr(IA32_LSTAR);
-			if (syscall_address == 0)
-				return nullptr;
 
-			const auto offset_ptr = reinterpret_cast<const ULONG*>(syscall_address + 8);
-			if (!offset_ptr)
-				return nullptr;
-
-			const ULONG offset = *offset_ptr;
-			const auto rsp_ptr = reinterpret_cast<PULONG64>(__readgsqword(offset));
-			return rsp_ptr;
-		}
-
-		bool is_user_rsp_ptr()
-		{
-			PULONG64 user_rsp_ptr = get_user_rsp_ptr();
-			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(user_rsp_ptr))
+			PULONG64 get_user_rsp_ptr()
 			{
-				return false;
-			}
-			
-			unsigned long long  user_rsp = *user_rsp_ptr;
+				const ULONG64 syscall_address = __readmsr(IA32_LSTAR);
+				if (syscall_address == 0)
+					return nullptr;
 
-			if (user_rsp>MmUserProbeAddress)
-			{
-				return false;
-			}
-			return true;
-			
-		}
+				const auto offset_ptr = reinterpret_cast<const ULONG*>(syscall_address + 8);
+				if (!offset_ptr)
+					return nullptr;
 
-		bool is_user_stack_in_dxgi_range()
-		{
-			PULONG64 user_rsp_ptr = get_user_rsp_ptr();
-			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(user_rsp_ptr))
-			{
-				return false;
+				const ULONG offset = *offset_ptr;
+				const auto rsp_ptr = reinterpret_cast<PULONG64>(__readgsqword(offset));
+				return rsp_ptr;
 			}
 
-			unsigned long long user_rsp = *user_rsp_ptr;
-
-			// 判断 user_rsp 是否在 g_dxgi_base 范围内
-			if (utils::dwm_draw::g_dxgi_base && utils::dwm_draw::g_dxgi_size)
+			bool is_user_rsp_ptr()
 			{
-				unsigned long long base =  utils::dwm_draw::g_dxgi_base ;
-				unsigned long long limit = base + utils::dwm_draw::g_dxgi_size;
-
-				if (user_rsp >= base && user_rsp < limit)
+				PULONG64 user_rsp_ptr = get_user_rsp_ptr();
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(user_rsp_ptr))
 				{
-					return true;
+					return false;
 				}
+
+				unsigned long long  user_rsp = *user_rsp_ptr;
+
+				if (user_rsp > MmUserProbeAddress)
+				{
+					return false;
+				}
+				return true;
+
 			}
 
-			return false;
+			bool is_user_stack_in_dxgi_range()
+			{
+				PULONG64 user_rsp_ptr = get_user_rsp_ptr();
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(user_rsp_ptr))
+				{
+					return false;
+				}
+
+				unsigned long long user_rsp = *user_rsp_ptr;
+
+				// 判断 user_rsp 是否在 g_dxgi_base 范围内
+				if (utils::dwm_draw::g_dxgi_base && utils::dwm_draw::g_dxgi_size)
+				{
+					unsigned long long base = utils::dwm_draw::g_dxgi_base;
+					unsigned long long limit = base + utils::dwm_draw::g_dxgi_size;
+
+					if (user_rsp >= base && user_rsp < limit)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			void draw_utils()
+			{
+
+				static bool  has_hooked_get_buffer = false;
+
+				/*	if (g_should_hide_overlay)
+					{
+
+						return;
+					}*/
+
+				;
+
+
+
+				/*	if (!has_hooked_get_buffer)
+					{
+						utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
+						has_hooked_get_buffer = true;
+					}*/
+
+
+					/*	if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
+						{
+							render_overlay_frame_win1124h2(draw_overlay_elements);
+						}
+						else
+						{
+							render_overlay_frame(draw_overlay_elements);
+						} */
+
+
+
+
+
+
+
+
+
+
+			}
+
+
 		}
-
-		void draw_utils( )
-		{
-			 
-			static bool  has_hooked_get_buffer = false;
-
-			if (g_should_hide_overlay)
-			{
-
-				return;
-			}
-
-		;
-
-
-
-		/*	if (!has_hooked_get_buffer)
-			{
-				utils::dwm_draw::hook_get_buffer(utils::dwm_draw::g_dwm_process);
-				has_hooked_get_buffer = true;
-			}*/
-			 
-		 
-			if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
-			{
-				render_overlay_frame_win1124h2(draw_overlay_elements);
-			}
-			else
-			{
-				render_overlay_frame(draw_overlay_elements);
-			} 
-			
 		
-
-
-		 
-			
-
-		 
-		 
-		
-		}
 
 		 
 
 		 
 
 	}
-}
+ 
 

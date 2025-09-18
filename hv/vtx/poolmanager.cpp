@@ -1,11 +1,7 @@
 #pragma warning( disable : 4201)
 #include "..\utils/global_defs.h"
-#include <intrin.h>
 #include "poolmanager.h"
-#include "common.h"
  
-#include "allocators.h"
-#include "spinlock.h"
 
 namespace pool_manager 
 {

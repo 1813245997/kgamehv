@@ -1,29 +1,11 @@
 #pragma warning( disable : 4201 4244 4065)
-#include "common.h"
+ 
+#include "../utils/global_defs.h"
 #include "vmcall_handler.h"
-#include <ntddk.h>
-#include <intrin.h>
-#include "hypervisor_routines.h"
-#include "vmexit_handler.h"
-#include "cpuid.h"
-#include "vmcs_encodings.h"
-#include "msr.h"
-#include "interrupt.h"
-#include "../asm\vm_intrin.h"
-#include "cr.h"
-#include "invalidators.h"
-#include "xsave.h"
-#include "segment.h"
-#include "vmcs.h"
-#include "../utils/log_utils.h"
-#include "vmm.h"
-#include "../utils/macros.h"
-#include "../utils/global_initializer.h"
-#include "bit_wise.h"
-#include "CompatibilityChecks.h"
-#include "vt_global.h"
-#include "../utils/hook_utils.h"
+ 
 
+  
+  
 void vmexit_ept_violation_handler(__vcpu* vcpu);
 void vmexit_unimplemented(__vcpu* vcpu);
 void vmexit_exception_handler(__vcpu* vcpu);
@@ -419,14 +401,14 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
 		{
 
-			if (msr_index <= 0xfff && TestBit(msr_index, (unsigned long*) g_invalid_msr_bitmap) != NULL64_ZERO)
+			if (msr_index <= 0xfff && hv::bit_test (msr_index, (unsigned long*) g_invalid_msr_bitmap) != NULL64_ZERO)
 			{
 				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 				return;
 			}
 
 			if ((msr_index >= 0x40000000 && msr_index <= 0x400000FF) &&
-				TestBit(msr_index - 0x40000000, (unsigned long*) g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
+				hv::bit_test(msr_index - 0x40000000, (unsigned long*) g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
 			{
 				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 				return;
@@ -737,7 +719,8 @@ void vmexit_invpcid_handler(__vcpu* vcpu)
 		return;
 	}
 
-	__cr4 cr4 = { __readcr4() };
+	cr4 cr4 ;
+	cr4.flags = __readcr4();
 
 	if ((*type == invpcid_individual_address || *type == invpcid_single_context) && descriptor.pcid != 0 && cr4.pcid_enable == false)
 	{
@@ -806,8 +789,8 @@ void vmexit_mov_dr_handler(__vcpu* vcpu)
 	//
 	if (operation.debug_register_number == 4 || operation.debug_register_number == 5) 
 	{
-		__cr4 cr4;
-		cr4.all = hv::vmread(GUEST_CR4);
+		cr4 cr4;
+		cr4.flags = hv::vmread(GUEST_CR4);
 
 		if (cr4.debugging_extensions == true) 
 		{
@@ -1211,8 +1194,8 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 	}
 
 
-	__xcr0 new_xcr0;
-	new_xcr0.all =  vcpu->vmexit_info.guest_registers->rdx << 32 | MASK_GET_LOWER_32BITS(vcpu->vmexit_info.guest_registers->rax);
+	xcr0 new_xcr0;
+	new_xcr0.flags =  vcpu->vmexit_info.guest_registers->rdx << 32 | MASK_GET_LOWER_32BITS(vcpu->vmexit_info.guest_registers->rax);
 	UINT32 xcr_numbe = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
 	// only XCR0 is supported
 	if (xcr_numbe!=0) {
@@ -1221,7 +1204,7 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 	}
 
 	// #GP(0) if trying to set an unsupported bit
-	if (new_xcr0.all & vcpu->cached.xcr0_unsupported_mask) {
+	if (new_xcr0.flags & vcpu->cached.xcr0_unsupported_mask) {
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
@@ -1239,7 +1222,7 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 	}
 
 	// #GP(0) if XCR0.AVX is clear and XCR0.opmask, XCR0.ZMM_Hi256, or XCR0.Hi16_ZMM is set
-	if (!new_xcr0.avx && (new_xcr0.opmask || new_xcr0.zmm_hi256 || new_xcr0.hi16_zmm)) {
+	if (!new_xcr0.avx && (new_xcr0.opmask || new_xcr0.zmm_hi256 || new_xcr0.zmm_hi16)) {
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
@@ -1251,7 +1234,7 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 	}
 
 	// #GP(0) if setting XCR0.opmask, XCR0.ZMM_Hi256, or XCR0.Hi16_ZMM while not setting all of them
-	if (new_xcr0.opmask != new_xcr0.zmm_hi256 || new_xcr0.zmm_hi256 != new_xcr0.hi16_zmm) {
+	if (new_xcr0.opmask != new_xcr0.zmm_hi256 || new_xcr0.zmm_hi256 != new_xcr0.zmm_hi16) {
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
@@ -1259,7 +1242,7 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 	 
 
 	 
-	_xsetbv(xcr_numbe, new_xcr0.all);
+	_xsetbv(xcr_numbe, new_xcr0.flags);
 	vcpu->hide_vm_exit_overhead = true;
 	adjust_rip(vcpu);
 }
@@ -1562,25 +1545,15 @@ void emulate_mov_to_cr4(__vcpu* vcpu, unsigned  long long vlaue)
 }
 void emulate_mov_from_cr3(__vcpu* vcpu, uint64_t const gpr)
 {
+	 
+	vmx_exit_qualification_mov_cr qualification;
+	qualification.flags = vcpu->vmexit_info.qualification;
 
-	__cr0 guest_cr0;
-	__cr3 guest_cr3;
-	__cr_access_qualification operation;
-	operation.all = vcpu->vmexit_info.qualification;
+	unsigned __int64* register_pointer = &vcpu->vmexit_info.guest_registers->rax - qualification.general_purpose_register;
 
-	unsigned __int64* register_pointer = &vcpu->vmexit_info.guest_registers->rax - operation.register_type;
-
-	union
-	{
-		__cr0 cr0;
-		__cr3 cr3;
-		__cr4 cr4;
-		unsigned __int64 all;
-	}cr_registers;
-
-		cr_registers.all = *register_pointer;
  
-		switch (operation.cr_number)
+ 
+		switch (qualification.control_register)
 		{
 		case 0:
 		{
@@ -1684,31 +1657,20 @@ void vmexit_cr_handler(__vcpu* vcpu)
 	 
 	unsigned __int64* register_pointer = get_register_pointer( vcpu->vmexit_info.guest_registers, qualification.general_purpose_register);
 	 
-	union
-	{
-		__cr0 cr0;
-		__cr3 cr3;
-		__cr4 cr4;
-		unsigned __int64 all;
-	}cr_registers;
-
-	cr_registers.all = *register_pointer;
-
-
-
+  
 	switch (qualification.access_type) {
 		 
 	// MOV CRn, XXX → 把通用寄存器的值写入 CRn
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_TO_CR:
 		switch (qualification.control_register) {
 		case VMX_EXIT_QUALIFICATION_REGISTER_CR0:
-			emulate_mov_to_cr0(vcpu, cr_registers.all);
+			emulate_mov_to_cr0(vcpu, *register_pointer);
 			break;
 		case VMX_EXIT_QUALIFICATION_REGISTER_CR3:
-			emulate_mov_to_cr3(vcpu, cr_registers.all);
+			emulate_mov_to_cr3(vcpu, *register_pointer);
 			break;
 		case VMX_EXIT_QUALIFICATION_REGISTER_CR4:
-			emulate_mov_to_cr4(vcpu, cr_registers.all);
+			emulate_mov_to_cr4(vcpu, *register_pointer);
 			break;
 		}
 		break;
@@ -2087,6 +2049,17 @@ void vmexit_nmi_window(__vcpu* vcpu)
 	}
 }
 
+void inject_nmi()
+{
+	vmentry_interrupt_information interrupt_info;
+	interrupt_info.flags = 0;
+	interrupt_info.vector = nmi;
+	interrupt_info.interruption_type = non_maskable_interrupt;
+	interrupt_info.deliver_error_code = 0;
+	interrupt_info.valid = 1;
+	hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt_info.flags);
+}
+
 void vmexit_vmxon_handler(__vcpu* vcpu)
 {
 	// usually a #UD doesn't trigger a vm-exit, but in this case it is possible
@@ -2104,4 +2077,57 @@ void vmexit_vmxon_handler(__vcpu* vcpu)
 void vmexit_getsec_handler(__vcpu* vcpu)
 {
 	hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+}
+
+namespace hv
+{
+
+	// called for every host interrupt
+	void handle_host_interrupt(trap_frame* const frame) {
+		switch (frame->vector) {
+			// host NMIs
+		case nmi: {
+			auto ctrl = read_ctrl_proc_based();
+			ctrl.nmi_window_exiting = 1;
+			write_ctrl_proc_based(ctrl);
+
+			auto const cpu = reinterpret_cast<__vcpu*>(_readfsbase_u64());
+			++cpu->queued_nmis;
+
+			break;
+		}
+				// host exceptions
+		default: {
+			// no registered exception handler
+			if (!frame->r10 || !frame->r11) {
+				/*	HV_LOG_ERROR("Unhandled exception. RIP=hv.sys+%p. Vector=%u.",
+						frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
+
+				// ensure a triple-fault
+				segment_descriptor_register_64 idtr;
+				idtr.base_address = frame->rsp;
+				idtr.limit = 0xFFF;
+				__lidt(&idtr);
+
+				break;
+			}
+
+			/*		HV_LOG_HOST_EXCEPTION("Handling host exception. RIP=hv.sys+%p. Vector=%u",
+						frame->rip - reinterpret_cast<UINT64>(&__ImageBase), frame->vector);*/
+
+			// jump to the exception handler
+			frame->rip = frame->r10;
+
+			auto const e = reinterpret_cast<host_exception_info*>(frame->r11);
+
+			e->exception_occurred = true;
+			e->vector = frame->vector;
+			e->error = frame->error;
+
+			// slightly helps prevent infinite exceptions
+			frame->r10 = 0;
+			frame->r11 = 0;
+		}
+		}
+	}
 }

@@ -1,14 +1,9 @@
 #pragma warning( disable : 4201)
 #include "../utils/global_defs.h"
-
-#include <ntddk.h>
-#include <intrin.h>
+#include "hypervisor_gateway.h"
+   
  
-#include "../asm\vm_intrin.h"
-#include "vmcall_reason.h"
-#include "hv_dpc_vm_call.h"
-#include "CompatibilityChecks.h"
-#include "vt_global.h"
+
  
 
 #define IOCTL_POOL_MANAGER_ALLOCATE CTL_CODE(FILE_DEVICE_UNKNOWN, 0x900, METHOD_BUFFERED, FILE_SPECIAL_ACCESS)

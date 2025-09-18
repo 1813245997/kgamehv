@@ -1,7 +1,7 @@
 #include "../utils/global_defs.h"
 #include "hv_dpc_vm_call.h"
-#include "vmcall_reason.h"
-#include "../asm/vm_intrin.h"
+
+
 
 namespace hvgt
 {

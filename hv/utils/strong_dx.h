@@ -1,5 +1,5 @@
 #pragma once
-#include "dx_draw/LegacyRender.h"
+#include "LegacyRender.h"
 namespace utils
 {
 	namespace strong_dx

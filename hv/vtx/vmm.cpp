@@ -1,26 +1,9 @@
 #pragma warning( disable :  4201)
  
 #include "../utils/global_defs.h"
-#include <ntddk.h>
-#include <intrin.h>
-#include "common.h"
-#include "cpuid.h"
-#include "../asm\vm_context.h"
-#include "cr.h"
-#include "msr.h"
-#include "vmcs.h"
-#include "hypervisor_routines.h"
- 
-#include "vmcs_encodings.h"
-#include "allocators.h"
-#include "trap-frame.h"
-#include "bit_wise.h"
-#include "CompatibilityChecks.h"
-#include "vt_global.h"
 #include "vmm.h"
 
-__vmm_context* g_vmm_context{};
-LIST_ENTRY g_ept_breakpoint_hook_list{};
+
 void dpc_broadcast_initialize_guest(KDPC* Dpc, PVOID DeferredContext, PVOID SystemArgument1, PVOID SystemArgument2)
 {
 	UNREFERENCED_PARAMETER(DeferredContext);
@@ -130,10 +113,10 @@ void free_vmm_context()
 /// <returns> status </returns>
 bool init_vmcs(__vcpu* vcpu)
 {
-	__vmx_basic_msr vmx_basic = { 0 };
+	ia32_vmx_basic_register vmx_basic = { 0 };
 	PHYSICAL_ADDRESS physical_max;
 
-	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
+	vmx_basic.flags= __readmsr(IA32_VMX_BASIC);
 
 	physical_max.QuadPart = ~0ULL;
 	vcpu->vmcs = allocate_contignous_memory<__vmcs*>(PAGE_SIZE);
@@ -151,7 +134,7 @@ bool init_vmcs(__vcpu* vcpu)
 	}
 
 	RtlSecureZeroMemory(vcpu->vmcs, PAGE_SIZE);
-	vcpu->vmcs->header.revision_identifier = vmx_basic.vmcs_revision_identifier;
+	vcpu->vmcs->header.revision_identifier = vmx_basic.vmcs_revision_id;
 
 	// Indicates if it's shadow vmcs or not
 	vcpu->vmcs->header.shadow_vmcs_indicator = 0;
@@ -290,15 +273,15 @@ bool init_vcpu(__vcpu*& vcpu)
 /// <returns> status </returns>
 bool init_vmxon(__vcpu* vcpu)
 {
-	__vmx_basic_msr vmx_basic = { 0 };
+	ia32_vmx_basic_register vmx_basic = { 0 };
 
-	vmx_basic.all = __readmsr(IA32_VMX_BASIC);
+	vmx_basic.flags = __readmsr(IA32_VMX_BASIC);
 
-	if (vmx_basic.vmxon_region_size > PAGE_SIZE)
+	if (vmx_basic.vmcs_size_in_bytes > PAGE_SIZE)
 		vcpu->vmxon = allocate_contignous_memory<__vmcs*>(PAGE_SIZE);
 
 	else
-		vcpu->vmxon = allocate_contignous_memory<__vmcs*>(vmx_basic.vmxon_region_size);
+		vcpu->vmxon = allocate_contignous_memory<__vmcs*>(vmx_basic.vmcs_size_in_bytes);
 
 	if (vcpu->vmxon == nullptr)
 	{
@@ -314,34 +297,32 @@ bool init_vmxon(__vcpu* vcpu)
 	}
 
 	RtlSecureZeroMemory(vcpu->vmxon, PAGE_SIZE);
-	vcpu->vmxon->header.all = vmx_basic.vmcs_revision_identifier;
+	vcpu->vmxon->header.all = vmx_basic.vmcs_revision_id;
 	vcpu->vmxon->header.shadow_vmcs_indicator = 0;
 
 	return true;
 }
 bool enable_vmx_operation(__vcpu  *  vcpu)
 {
-	 
-	 
-	 
+	  
 	_disable();
-	__cr0 cr0{};
-	__cr4 cr4{};
-	cr0.all = __readcr0();
-	cr4 .all = __readcr4();
+	cr0 cr0{};
+	cr4 cr4{};
+	cr0.flags = __readcr0();
+	cr4 .flags = __readcr4();
 
 	// 3.23.7
-	cr4.all |= CR4_VMX_ENABLE_FLAG;
+	cr4.flags |= CR4_VMX_ENABLE_FLAG;
 
 	// 3.23.8
-	cr0.all |= vcpu->cached.vmx_cr0_fixed0;
-	cr0.all &= vcpu->cached.vmx_cr0_fixed1;
-	cr4.all |= vcpu->cached.vmx_cr4_fixed0;
-	cr4.all &= vcpu->cached.vmx_cr4_fixed1;
+	cr0.flags |= vcpu->cached.vmx_cr0_fixed0;
+	cr0.flags &= vcpu->cached.vmx_cr0_fixed1;
+	cr4.flags |= vcpu->cached.vmx_cr4_fixed0;
+	cr4.flags &= vcpu->cached.vmx_cr4_fixed1;
 
 	
-	__writecr0(cr0.all);
-	__writecr4(cr4.all);
+	__writecr0(cr0.flags);
+	__writecr4(cr4.flags);
 
 	_enable();
 
@@ -356,39 +337,7 @@ bool enable_vmx_operation(__vcpu  *  vcpu)
 
 	return true;
 }
-/// <summary>
-/// Adjust cr4 and cr0 for turning on vmx
-/// </summary>
-void adjust_control_registers()
-{
-	__cr4 cr4;
-	__cr0 cr0;
-	__cr_fixed cr_fixed;
-
-	cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED0);
-	cr0.all = __readcr0();
-	cr0.all |= cr_fixed.split.low;
-	cr_fixed.all = __readmsr(IA32_VMX_CR0_FIXED1);
-	cr0.all &= cr_fixed.split.low;
-	__writecr0(cr0.all);
-	cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED0);
-	cr4.all = __readcr4();
-	cr4.all |= cr_fixed.split.low;
-	cr_fixed.all = __readmsr(IA32_VMX_CR4_FIXED1);
-	cr4.all &= cr_fixed.split.low;
-	__writecr4(cr4.all);
-
-	__ia32_feature_control_msr feature_msr = { 0 };
-	feature_msr.all = __readmsr(IA32_FEATURE_CONTROL);
-
-	if (feature_msr.lock == 0) 
-	{
-		feature_msr.vmxon_outside_smx = 1;
-		feature_msr.lock = 1;
-
-		__writemsr(IA32_FEATURE_CONTROL, feature_msr.all);
-	}
-}
+ 
 
 
 /// <summary>
@@ -455,7 +404,7 @@ unsigned long long* allocate_invalid_msr_bitmap()
 		}
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
-			SetBit(i, (unsigned long*)invalid_msr_bitmap);
+			hv::bit_set(i, (unsigned long*)invalid_msr_bitmap);
 		}
 	}
 
@@ -484,7 +433,7 @@ unsigned long long* allocate_synthetic_msr_fault_bitmap()
 		__except (EXCEPTION_EXECUTE_HANDLER)
 		{
 			const UINT32 index = msr - msr_start;
-			SetBit(index, (unsigned long*)fault_bitmap);
+			hv::bit_set(index, (unsigned long*)fault_bitmap);
 		}
 	}
 
@@ -578,16 +527,7 @@ bool vmm_init()
 	  hv::vmwrite(VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS, value.flags);
   }
 
-  void inject_nmi()
-  {
-	  vmentry_interrupt_information interrupt_info;
-	  interrupt_info.flags = 0;
-	  interrupt_info.vector = nmi;
-	  interrupt_info.interruption_type = non_maskable_interrupt;
-	  interrupt_info.deliver_error_code = 0;
-	  interrupt_info.valid = 1;
-	  hv::vmwrite(VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD, interrupt_info.flags);
-  }
+
 
   bool vmx_get_current_execution_mode()
   {
