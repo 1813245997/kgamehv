@@ -22,7 +22,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by
 	* the TSC offset field (see Section 24.6.5 and Section 25.3).
 	*/
-	primary_controls.use_tsc_offsetting = true;
+	primary_controls.use_tsc_offsetting = false;
 
 	/**
 	* This control determines whether executions of HLT cause VM exits.
@@ -725,6 +725,8 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
  
 
 
+
+
 	 
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_STORE_COUNT, 0);
 	hv::vmwrite(VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT, 0);
@@ -769,7 +771,10 @@ void fill_vmcs(__vcpu* vcpu, void* guest_rsp)
 	__vmx_vmclear((unsigned __int64*)&vcpu->vmcs_physical);
 	__vmx_vmptrld((unsigned __int64*)&vcpu->vmcs_physical);
 
-	
+				
+
+
+
 
 
 	// Hypervisor features

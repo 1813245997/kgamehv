@@ -307,12 +307,13 @@ extern "C"
 		UNWIND_HISTORY_TABLE_ENTRY Entry[UNWIND_HISTORY_TABLE_SIZE];
 	} UNWIND_HISTORY_TABLE, * PUNWIND_HISTORY_TABLE;
 
-	typedef struct _MM_COPY_ADDRESS {
-		union {
-			PVOID VirtualAddress;
-			PHYSICAL_ADDRESS PhysicalAddress;
-		};
-	} MM_COPY_ADDRESS, * PMMCOPY_ADDRESS;
+
+	//typedef struct _MM_COPY_ADDRESS {
+	//	union {
+	//		PVOID VirtualAddress;
+	//		PHYSICAL_ADDRESS PhysicalAddress;
+	//	};
+	//} MM_COPY_ADDRESS, * PMMCOPY_ADDRESS;
 
 
 	typedef struct _MM_UNLOADED_DRIVER

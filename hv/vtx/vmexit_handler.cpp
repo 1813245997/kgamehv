@@ -1947,7 +1947,7 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-	 hide_vm_exit_overhead(vcpu);
+	// hide_vm_exit_overhead(vcpu);
 	vcpu->is_on_vmx_root_mode = false;
 	return true;
 }

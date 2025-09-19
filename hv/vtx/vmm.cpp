@@ -412,22 +412,18 @@ void init_logical_processor(void* guest_rsp)
 	__vcpu* vcpu = g_vmm_context->vcpu_table[processor_number];
 	cache_cpu_data(vcpu->cached);
 
-	////这个地方会被检测
-	//adjust_control_registers();
-	 
-
 	if (!enable_vmx_operation(vcpu)) {
-		LogDebug("Failed to enable VMX operation.\n");
+	
 		return;
 	}
 	if (__vmx_on(&vcpu->vmxon_physical)) 
 	{
-		LogError("Failed to put vcpu %d into VMX operation.\n", processor_number);
+		
 		return;
 	}
 
 	vcpu->vcpu_status.vmx_on = true;
-	LogInfo("vcpu %d is now in VMX operation.\n", processor_number);
+	
 	
 	 
 	fill_vmcs(vcpu, guest_rsp);
@@ -435,9 +431,8 @@ void init_logical_processor(void* guest_rsp)
 
 	__vmx_vmlaunch();
 
-	// We should never get here
+
 	
-	LogError("Vmlaunch failed");
 	ASSERT(FALSE);
 	vcpu->vcpu_status.vmm_launched = false;
 	vcpu->vcpu_status.vmx_on = false;
