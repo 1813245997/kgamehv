@@ -203,7 +203,8 @@ union __vmx_interruptibility_state
 // VMCS Ìî³ä
 void fill_vmcs(__vcpu* vcpu, void* guest_rsp);
 
- 
- 
+// Ìî³ä VMCS ÖÐµÄ Guest  
+void fill_vmcs_guest_fields(__vcpu* vcpu, void* guest_rsp);
 
- 
+// Ìî³ä host ¶Î¼Ä´æÆ÷
+void fill_vmcs_host_fields(__vcpu* vcpu);
