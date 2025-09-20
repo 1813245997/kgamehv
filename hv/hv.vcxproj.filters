@@ -331,6 +331,9 @@
     <ClInclude Include="vtx\vmcs_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vtx\segment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -523,6 +526,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\vmcs_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\segment.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

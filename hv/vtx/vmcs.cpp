@@ -848,10 +848,10 @@ void fill_vmcs_guest_fields(__vcpu* vcpu, void* guest_rsp)
 	__sidt(&idtr);
 
 	// Global descriptor table and local one
-	hv::vmwrite<unsigned __int64>(GUEST_GDTR_LIMIT, gdtr.limit);
-	hv::vmwrite<unsigned __int64>(GUEST_IDTR_LIMIT, idtr.limit);
-	hv::vmwrite<unsigned __int64>(GUEST_GDTR_BASE, gdtr.base_address);
-	hv::vmwrite<unsigned __int64>(GUEST_IDTR_BASE, idtr.base_address);
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_GDTR_LIMIT, gdtr.limit);
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_IDTR_LIMIT, idtr.limit);
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_GDTR_BASE, gdtr.base_address);
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_IDTR_BASE, idtr.base_address);
 
 	// Segments
 	fill_guest_selector_data((void*)gdtr.base_address, ES, __read_es());
@@ -862,31 +862,31 @@ void fill_vmcs_guest_fields(__vcpu* vcpu, void* guest_rsp)
 	fill_guest_selector_data((void*)gdtr.base_address, GS, __read_gs());
 	fill_guest_selector_data((void*)gdtr.base_address, LDTR, __read_ldtr());
 	fill_guest_selector_data((void*)gdtr.base_address, TR, __read_tr());
-	hv::vmwrite<unsigned __int64>(GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
-	hv::vmwrite<unsigned __int64>(GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_FS_BASE, __readmsr(IA32_FS_BASE));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_GS_BASE, __readmsr(IA32_GS_BASE));
 
 
-	hv::vmwrite<unsigned __int64>(GUEST_CR0, __readcr0());
-	hv::vmwrite<unsigned __int64>(GUEST_CR3, __readcr3());
-	hv::vmwrite<unsigned __int64>(GUEST_CR4, __readcr4());
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_CR0, __readcr0());
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_CR3, __readcr3());
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_CR4, __readcr4());
 
 
 	// Debug register
-	hv::vmwrite<unsigned __int64>(GUEST_DR7, __readdr(7));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_DR7, __readdr(7));
 
 	// RFLAGS
-	hv::vmwrite<unsigned __int64>(GUEST_RFLAGS, __readeflags());
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_RFLAGS, __readeflags());
 
 	// RSP and RIP
-	hv::vmwrite<void*>(GUEST_RSP, guest_rsp);
-	hv::vmwrite<void*>(GUEST_RIP, vmx_restore_state);
+	hv::vmwrite<void*>(VMCS_GUEST_RSP, guest_rsp);
+	hv::vmwrite<void*>(VMCS_GUEST_RIP, vmx_restore_state);
 
 
 	// MSRS Guest
-	hv::vmwrite<unsigned __int64>(GUEST_DEBUG_CONTROL, __readmsr(IA32_DEBUGCTL));
-	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
-	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
-	hv::vmwrite<unsigned __int64>(GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_DEBUGCTL, __readmsr(IA32_DEBUGCTL));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
+	hv::vmwrite<unsigned __int64>(VMCS_GUEST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
 
 }
 
@@ -901,30 +901,30 @@ void fill_vmcs_host_fields(__vcpu* vcpu)
 
 	// Cr registers
 
-	hv::vmwrite<unsigned __int64>(HOST_CS_SELECTOR, __read_cs() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_SS_SELECTOR, __read_ss() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_DS_SELECTOR, __read_ds() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_ES_SELECTOR, __read_es() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_FS_SELECTOR, __read_fs() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_GS_SELECTOR, __read_gs() & ~selector_mask);
-	hv::vmwrite<unsigned __int64>(HOST_TR_SELECTOR, __read_tr() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_CS_SELECTOR, __read_cs() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_SS_SELECTOR, __read_ss() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_DS_SELECTOR, __read_ds() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_ES_SELECTOR, __read_es() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_FS_SELECTOR, __read_fs() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_GS_SELECTOR, __read_gs() & ~selector_mask);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_TR_SELECTOR, __read_tr() & ~selector_mask);
 
 
-	hv::vmwrite<unsigned __int64>(HOST_FS_BASE, __readmsr(IA32_FS_BASE));
-	hv::vmwrite<unsigned __int64>(HOST_GS_BASE, __readmsr(IA32_GS_BASE));
-	hv::vmwrite<unsigned __int64>(HOST_TR_BASE, get_segment_base(__read_tr(), (unsigned char*)gdtr.base_address));
-	hv::vmwrite<unsigned __int64>(HOST_GDTR_BASE, gdtr.base_address);
-	hv::vmwrite<unsigned __int64>(HOST_IDTR_BASE, idtr.base_address);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_FS_BASE, __readmsr(IA32_FS_BASE));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_GS_BASE, __readmsr(IA32_GS_BASE));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_TR_BASE, get_segment_base(__read_tr(), (unsigned char*)gdtr.base_address));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_GDTR_BASE, gdtr.base_address);
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_IDTR_BASE, idtr.base_address);
 
-	hv::vmwrite<unsigned __int64>(HOST_CR0, __readcr0());
-	hv::vmwrite<unsigned __int64>(HOST_CR3, hv::get_system_directory_table_base());
-	hv::vmwrite<unsigned __int64>(HOST_CR4, __readcr4());
-
-
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_CR0, __readcr0());
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_CR3, hv::get_system_directory_table_base());
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_CR4, __readcr4());
 
 
-	hv::vmwrite<unsigned __int64>(HOST_RSP, (unsigned __int64)vcpu->vmm_stack + VMM_STACK_SIZE);
-	hv::vmwrite<void*>(HOST_RIP, vmm_entrypoint);
+
+
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_RSP, (unsigned __int64)vcpu->vmm_stack + VMM_STACK_SIZE);
+	hv::vmwrite<void*>(VMCS_HOST_RIP, vmm_entrypoint);
 
 
 
@@ -933,9 +933,9 @@ void fill_vmcs_host_fields(__vcpu* vcpu)
 
 
 	// MSRS Host
-	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
-	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
-	hv::vmwrite<unsigned __int64>(HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_SYSENTER_CS, __readmsr(IA32_SYSENTER_CS));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_SYSENTER_ESP, __readmsr(IA32_SYSENTER_ESP));
+	hv::vmwrite<unsigned __int64>(VMCS_HOST_SYSENTER_EIP, __readmsr(IA32_SYSENTER_EIP));
 
 	//个别机器会卡死
 	/*ia32_pat_register host_pat;

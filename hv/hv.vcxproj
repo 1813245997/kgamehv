@@ -127,6 +127,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vtx\segment.h" />
     <ClInclude Include="vtx\vmcs_utils.h" />
     <ClInclude Include="vtx\vm_context.h" />
     <ClInclude Include="vtx\vm_intrin.h" />
@@ -287,6 +288,7 @@
     <ClCompile Include="vtx\invalidators.cpp" />
     <ClCompile Include="vtx\page-tables.cpp" />
     <ClCompile Include="vtx\poolmanager.cpp" />
+    <ClCompile Include="vtx\segment.cpp" />
     <ClCompile Include="vtx\spinlock.cpp" />
     <ClCompile Include="vtx\timing.cpp" />
     <ClCompile Include="vtx\vmcall_handler.cpp" />
