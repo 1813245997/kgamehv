@@ -22,7 +22,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* of RDMSR that read from the IA32_TIME_STAMP_COUNTER MSR return a value modified by
 	* the TSC offset field (see Section 24.6.5 and Section 25.3).
 	*/
-	primary_controls.use_tsc_offsetting = false;
+	primary_controls.use_tsc_offsetting = true;
 
 	/**
 	* This control determines whether executions of HLT cause VM exits.
@@ -538,7 +538,7 @@ void set_pinbased_control_msr(__vmx_pinbased_control_msr& pinbased_controls)
 	* If this control is 1, the VMX-preemption timer counts down in VMX non-root operation; see
 	* Section 25.5.1. A VM exit occurs when the timer counts down to zero; see Section 25.2.
 	*/
-	pinbased_controls.vmx_preemption_timer = false;
+	pinbased_controls.vmx_preemption_timer = true;
 
 	/**
 	* If this control is 1, the processor treats interrupts with the posted-interrupt notification vector

@@ -1849,6 +1849,7 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 	vcpu->vmexit_info.guest_registers = guest_registers;
 	vcpu->hide_vm_exit_overhead = false;
 	vcpu->is_on_vmx_root_mode = true;
+ 
 	//
 	//  Instructions That Cause VM Exits Unconditionally
 	//  The following instructions cause VM exits when they are executed in VMX non - root operation : CPUID, GETSEC,
@@ -1862,7 +1863,11 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		vcpu->vcpu_status.vmm_launched = 0;
 		return false;
 	}
-	// hide_vm_exit_overhead(vcpu);
+
+	 hide_vm_exit_overhead(vcpu);
+	 hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
+	 hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+
 	vcpu->is_on_vmx_root_mode = false;
 	return true;
 }
@@ -1926,19 +1931,18 @@ void hide_vm_exit_overhead(__vcpu* vcpu)
 		vcpu->tsc_offset = 0;
 
 		// soft disable the VMX preemption timer
-	//	vcpu->preemption_timer = ~0ull;
+	 	vcpu->preemption_timer = ~0ull;
 
 		return;
 	}
 
 	// set the preemption timer to cause an exit after 10000 guest TSC ticks have passed
-	/*vcpu->preemption_timer = max(2,
-		10000 >> vcpu->cached.vmx_misc.preemption_timer_tsc_relationship);*/
+	vcpu->preemption_timer = max(2,
+		10000 >> vcpu->cached.vmx_misc.preemption_timer_tsc_relationship);
 
 	// use TSC offsetting to hide from timing attacks that use the TSC
 	vcpu->tsc_offset -= vcpu->vm_exit_tsc_overhead;
-	hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
-	//hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+
 }
 
 void vmexit_nmi_window(__vcpu* vcpu)
