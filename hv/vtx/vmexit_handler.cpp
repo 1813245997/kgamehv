@@ -1430,7 +1430,7 @@ void emulate_mov_to_cr0(__vcpu* const vcpu, unsigned  long long vlaue)
 
 void emulate_mov_to_cr3(__vcpu* vcpu, unsigned  long long vlaue)
 {
-    constexpr uint16_t guest_vpid = 1;
+   
 	cr3 new_cr3;
 	new_cr3.flags = vlaue;
 

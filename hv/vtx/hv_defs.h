@@ -47,3 +47,7 @@
 
 #define NON_CANONICIAL_ADDRESS_END 0xFFFF800000000000
 #define NON_CANONICIAL_ADDRESS_START 0x0000800000000000
+
+
+ // guest virtual-processor identifier
+inline constexpr uint16_t guest_vpid = 1;
