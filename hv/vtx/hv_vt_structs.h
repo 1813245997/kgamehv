@@ -133,6 +133,15 @@ struct __vcpu
 		vmx_msr_entry mperf;
 	} msr_entry_load;
 
+	// host task state segment
+	alignas(0x1000) task_state_segment_64 host_tss;
+
+	// host interrupt descriptor table
+	alignas(0x1000) segment_descriptor_interrupt_gate_64 host_idt[HOST_GDT_DESCRIPTOR_COUNT];
+
+	// host global descriptor table
+	alignas(0x1000) segment_descriptor_32 host_gdt[HOST_IDT_DESCRIPTOR_COUNT];
+
 	__ept_state* ept_state;
 	// cached values that are assumed to NEVER change
 	vcpu_cached_data cached;

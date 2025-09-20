@@ -200,7 +200,6 @@
     <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vtx\allocators.h" />
-    <ClInclude Include="vtx\bit_wise.h" />
     <ClInclude Include="vtx\compatibility_checks.h" />
     <ClInclude Include="vtx\exception-routines.h" />
     <ClInclude Include="vtx\gdt.h" />
@@ -277,7 +276,6 @@
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
     <ClCompile Include="utils\window_utils.cpp" />
-    <ClCompile Include="vtx\bit_wise.cpp" />
     <ClCompile Include="vtx\compatibility_checks.cpp" />
     <ClCompile Include="vtx\gdt.cpp" />
     <ClCompile Include="vtx\hv_dpc_vm_call.cpp" />

@@ -175,15 +175,7 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 			adjust_rip(vcpu);
 			break;
 		}
-
-		case  VMCALL_SET_MSR_FAULT_BITMAPS:
-		{
-		 	set_invalid_msr_bitmaps(vmcall_parameter1, vmcall_parameter2);
-			adjust_rip(vcpu);
-			break;
-		}
-
-		 
+		  
 		 
 
 		default:
@@ -197,9 +189,4 @@ void vmexit_vmcall_handler(__vcpu* vcpu)
 }
 
 
-
-void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap)
-{
-	g_invalid_msr_bitmap = reinterpret_cast<unsigned  long long*>(msr_bitmap);
-	g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(synthetic_msr_bitmap);
-}
+ 

@@ -250,9 +250,6 @@
     <ClInclude Include="vtx\vm_context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\bit_wise.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vtx\compatibility_checks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -487,9 +484,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\hv_dpc_vm_call.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vtx\bit_wise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\compatibility_checks.cpp">

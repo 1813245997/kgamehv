@@ -60,11 +60,7 @@ namespace hvgt
 			__vm_call(VMCALL_HIDE_HV_PRESENCE, 0, 0, 0);
 	}
 
-	void set_invalid_msr_bitmaps(UINT64 msr_bitmap, UINT64 synthetic_msr_bitmap)
-	{
-		 g_invalid_msr_bitmap = reinterpret_cast<unsigned  long long*>( msr_bitmap);
-		 g_invalid_synthetic_msr_bitmap = reinterpret_cast<unsigned  long long*>(synthetic_msr_bitmap);
-	}
+ 
 
  
 }

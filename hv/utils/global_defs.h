@@ -96,7 +96,6 @@
 #include "../vtx/vm_context.h"
 #include "../vtx/compatibility_checks.h"
 #include "../vtx/vt_global.h"
-#include "../vtx/bit_wise.h"
 #include "../vtx/invalidators.h"
 #include "../vtx/exception-routines.h"
 #include "../vtx/gdt.h"

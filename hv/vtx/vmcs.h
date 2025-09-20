@@ -199,12 +199,23 @@ union __vmx_interruptibility_state
     };
 };
 
- 
-// VMCS 填充
+// VMCS 填充总入口
 void fill_vmcs(__vcpu* vcpu, void* guest_rsp);
 
-// 填充 VMCS 中的 Guest  
+// 填充 VMCS 控制字段 (entry/exit/pin/proc-based/exception bitmap等)
+void fill_vmcs_control_fields(__vcpu* vcpu);
+ 
+// 填充 VMCS 其它控制（TSC offset、PF mask、MSR load/store等）
+void fill_vmcs_misc_fields(__vcpu* vcpu);
+
+// 准备外部依赖 (IDT/GDT/TSS)
+void fill_host_structures(__vcpu* vcpu);
+
+// 填充 Guest 字段
 void fill_vmcs_guest_fields(__vcpu* vcpu, void* guest_rsp);
 
-// 填充 host 段寄存器
+// 填充 Host 字段
 void fill_vmcs_host_fields(__vcpu* vcpu);
+
+
+

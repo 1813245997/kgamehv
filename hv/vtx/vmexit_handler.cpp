@@ -313,10 +313,8 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 
   
 
-	__msr msr{};
 	
-
-
+	 
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
 	//告诉主机电脑主板bios没开启VTX
 	if (msr_index == IA32_FEATURE_CONTROL)
@@ -330,109 +328,26 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 		return;
 	}
 
+	__msr msr{};
+	hv::host_exception_info e{};
 
-	if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
-		(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
-	{
-		 
-		 
-		
+	// the guest could be reading from MSRs that are outside of the MSR bitmap
+	// range. refer to https://www.unknowncheats.me/forum/3425463-post15.html
+	msr.all = rdmsr_safe(e, msr_index);
 
-			 
-		 
-	
-
-		switch (msr_index)
-		{
-		case IA32_SYSENTER_CS:
-			msr.all = hv::vmread(GUEST_SYSENTER_CS);
-			break;
-
-		case IA32_SYSENTER_ESP:
-			msr.all = hv::vmread(GUEST_SYSENTER_ESP);
-			break;
-
-		case IA32_SYSENTER_EIP:
-			msr.all = hv::vmread(GUEST_SYSENTER_EIP);
-			break;
-
-		case IA32_GS_BASE:
-			msr.all = hv::vmread(GUEST_GS_BASE);
-			break;
-
-		case IA32_FS_BASE:
-			msr.all = hv::vmread(GUEST_FS_BASE);
-			break;
-
-		case IA32_INTERRUPT_SSP_TABLE_ADDR:
-			msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
-			break;
-
-
-		case IA32_S_CET:
-			msr.all = hv::vmread(GUEST_S_CET);
-			break;
-
-		case IA32_PERF_GLOBAL_CTRL:
-			msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
-			break;
-
-		case IA32_PKRS:
-			msr.all = hv::vmread(GUEST_PKRS);
-			break;
-
-		case IA32_RTIT_CTL:
-			msr.all = hv::vmread(GUEST_RTIT_CTL);
-			break;
-
-		case IA32_BNDCFGS:
-			msr.all = hv::vmread(GUEST_BNDCFGS);
-			break;
-
-		case IA32_PAT:
-			msr.all = hv::vmread(GUEST_PAT);
-			break;
-
-		case IA32_EFER:
-			msr.all = hv::vmread(GUEST_EFER);
-			break;
-	 
-		default:
-
-		{
-
-			if (msr_index <= 0xfff && hv::bit_test (msr_index, (unsigned long*) g_invalid_msr_bitmap) != NULL64_ZERO)
-			{
-				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-				return;
-			}
-
-			if ((msr_index >= 0x40000000 && msr_index <= 0x400000FF) &&
-				hv::bit_test(msr_index - 0x40000000, (unsigned long*) g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
-			{
-				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
-				return;
-			}
-
-			msr.all = __readmsr(msr_index);
-
-			 
-		}
-		break;
-		}
-
-		vcpu->vmexit_info.guest_registers->rdx = msr.high;
-		vcpu->vmexit_info.guest_registers->rax = msr.low;
-		vcpu->hide_vm_exit_overhead = true;
-		adjust_rip(vcpu);
-
-	}
-	else
-	{
+	if (e.exception_occurred) {
+		// reflect the exception back into the guest
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
-	
+
+	vcpu->vmexit_info.guest_registers->rdx = msr.high;
+	vcpu->vmexit_info.guest_registers->rax = msr.low;
+	vcpu->hide_vm_exit_overhead = true;
+	adjust_rip(vcpu);
+
+
+	 
 	
 	  
 }
@@ -1469,12 +1384,12 @@ void emulate_mov_to_cr3(__vcpu* vcpu, unsigned  long long vlaue)
 
 void emulate_mov_to_cr4(__vcpu* vcpu, unsigned  long long vlaue)
 {
-	constexpr uint16_t guest_vpid = 1;
+ 
 	// 2.4.3
- // 2.6.2.1
- // 3.2.5
- // 3.4.10.1
- // 3.4.10.4.1
+	// 2.6.2.1
+	// 3.2.5
+	// 3.4.10.1
+	// 3.4.10.4.1
 
 	cr4 new_cr4;
 	new_cr4.flags = vlaue;
@@ -2084,6 +1999,11 @@ namespace hv
 
 	// called for every host interrupt
 	void handle_host_interrupt(trap_frame* const frame) {
+
+		// we only care about NMIs and exceptions	
+		ULONG  processor_number = KeGetCurrentProcessorNumberEx(NULL);
+		__vcpu* vcpu = g_vmm_context->vcpu_table[processor_number];
+		
 		switch (frame->vector) {
 			// host NMIs
 		case nmi: {
@@ -2091,8 +2011,8 @@ namespace hv
 			ctrl.nmi_window_exiting = 1;
 			write_ctrl_proc_based(ctrl);
 
-			auto const cpu = reinterpret_cast<__vcpu*>(_readfsbase_u64());
-			++cpu->queued_nmis;
+			 
+			++vcpu->queued_nmis;
 
 			break;
 		}
