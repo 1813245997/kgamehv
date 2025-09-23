@@ -271,7 +271,7 @@ void vmexit_ldtr_access_handler(__vcpu* vcpu)
 		// STR
 		case 1:
 		{
-			//���� ���޸�
+			 
 			*linear_address = hv::vmread(GUEST_TR_SELECTOR);
 
 			break;
@@ -316,7 +316,7 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 	
 	 
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
-	//����������������biosû����VTX
+	 
 	if (msr_index == IA32_FEATURE_CONTROL)
 	{
 		 
@@ -579,13 +579,7 @@ void vmexit_cpuid_handler(__vcpu* vcpu)
 	int regs[4];
 	auto const ctx = vcpu->vmexit_info.guest_registers;
 	__cpuidex(regs, ctx->rax, ctx->rcx);
-	//if (ctx->rax == 6) {
-	//	cpuid_eax_06 cpuid_06{};
-	//	cpuid_06.ecx.flags = regs[2];
-	//	cpuid_06 .ecx.hardware_coordination_feedback_capability = 0; // ��� HCF ֧��λ�������� MPERF/APERF ֧�֣�
-	//	regs[2] = cpuid_06.ecx.flags;
-	//}
-
+ 
 	ctx->rax = regs[0];
 	ctx->rbx = regs[1];
 	ctx->rcx = regs[2];
@@ -1593,15 +1587,13 @@ void vmexit_cr_handler(__vcpu* vcpu)
 
  
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_FROM_CR:
-		// TODO: assert that we're accessing CR3 (and not CR8)
-		 emulate_mov_from_cr3(vcpu, qualification.control_register);
-		 
+		emulate_mov_from_cr3(vcpu, qualification.control_register);
 		break;
-		// CLTS
+		 
 	case VMX_EXIT_QUALIFICATION_ACCESS_CLTS:
 		emulate_clts(vcpu);
 		break;
-		// LMSW XXX
+		 
 	case VMX_EXIT_QUALIFICATION_ACCESS_LMSW:
 		emulate_lmsw(vcpu, qualification.lmsw_source_data);
 		break;
