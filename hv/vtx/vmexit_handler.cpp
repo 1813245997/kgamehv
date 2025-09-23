@@ -57,7 +57,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_unimplemented,							// 15 EXIT_REASON_RDPMC
 	vmexit_rdtsc_handler,							// 16 EXIT_REASON_RDTSC
 	vmexit_unimplemented,							// 17 EXIT_REASON_RSM
-	vmexit_vmcall_handler,							// 18 EXIT_REASON_VMCALL
+	hv::vmexit_vmcall_handler,							// 18 EXIT_REASON_VMCALL
 	vmexit_vm_instruction,							// 19 EXIT_REASON_VMCLEAR
 	vmexit_vm_instruction,							// 20 EXIT_REASON_VMLAUNCH
 	vmexit_vm_instruction,							// 21 EXIT_REASON_VMPTRLD
@@ -271,7 +271,7 @@ void vmexit_ldtr_access_handler(__vcpu* vcpu)
 		// STR
 		case 1:
 		{
-			//À¶ÆÁ ´ýÐÞ¸´
+			//ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Þ¸ï¿½
 			*linear_address = hv::vmread(GUEST_TR_SELECTOR);
 
 			break;
@@ -316,7 +316,7 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 	
 	 
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
-	//¸æËßÖ÷»úµçÄÔÖ÷°åbiosÃ»¿ªÆôVTX
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½biosÃ»ï¿½ï¿½ï¿½ï¿½VTX
 	if (msr_index == IA32_FEATURE_CONTROL)
 	{
 		 
@@ -582,7 +582,7 @@ void vmexit_cpuid_handler(__vcpu* vcpu)
 	//if (ctx->rax == 6) {
 	//	cpuid_eax_06 cpuid_06{};
 	//	cpuid_06.ecx.flags = regs[2];
-	//	cpuid_06 .ecx.hardware_coordination_feedback_capability = 0; // Çå³ý HCF Ö§³ÖÎ»£¨¼´½ûÓÃ MPERF/APERF Ö§³Ö£©
+	//	cpuid_06 .ecx.hardware_coordination_feedback_capability = 0; // ï¿½ï¿½ï¿½ HCF Ö§ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ MPERF/APERF Ö§ï¿½Ö£ï¿½
 	//	regs[2] = cpuid_06.ecx.flags;
 	//}
 
@@ -680,7 +680,7 @@ void vmexit_mov_dr_handler(__vcpu* vcpu)
 	//
 	// Moves the contents of a debug register (DR0, DR1, DR2, DR3, DR4, DR5, DR6, or DR7) to a general-purpose register or vice versa.
 	// The operand size for these instructions is always 32 bits in non-64-bit modes, regardless of the operand-size attribute. 
-	// (See Section 17.2, “Debug Registers? of the Intel?64 and IA-32 Architectures Software Developer’s Manual, Volume 3A, 
+	// (See Section 17.2, ï¿½Debug Registers? of the Intel?64 and IA-32 Architectures Software Developerï¿½s Manual, Volume 3A, 
 	// for a detailed description of the flags and fields in the debug registers.)
 	//
 
@@ -1001,7 +1001,7 @@ void vmexit_rdrand_handler(__vcpu* vcpu)
 	// will be returned as zeros for the specified width. All other flags are forced to 0 in either situation. 
 	// Software must check the state of CF=1 for determining if a valid random value has been returned, 
 	// otherwise it is expected to loop and retry execution of RDRAND 
-	// (see Intel?64 and IA-32 Architectures Software Developer’s Manual, Volume 1, Section 7.3.17, “Random Number Generator Instructions?.
+	// (see Intel?64 and IA-32 Architectures Software Developerï¿½s Manual, Volume 1, Section 7.3.17, ï¿½Random Number Generator Instructions?.
 	// This instruction is available at all privilege levels.
 	//
 	switch (instruction_information.operand_size)
@@ -1169,7 +1169,7 @@ void vmexit_xsetbv_handler(__vcpu* vcpu)
 void vmexit_invd_handler(__vcpu* vcpu)
 {
 	//
-	// Invalidates (flushes) the processor’s internal caches and issues a special-function bus cycle that directs 
+	// Invalidates (flushes) the processorï¿½s internal caches and issues a special-function bus cycle that directs 
 	// external caches to also flush themselves. Data held in internal caches is not written back to main memory.
 	// After executing this instruction, the processor does not wait for the external caches to complete their flushing operation before 
 	// proceeding with instruction execution.It is the responsibility of hardware to respond to the cache flush signal.
@@ -1197,7 +1197,7 @@ void vmexit_invd_handler(__vcpu* vcpu)
 void vmexit_rdtscp_handler(__vcpu* vcpu)
 {
 	//
-	// Reads the current value of the processor’s time-stamp counter (a 64-bit MSR) into the EDX:EAX registers
+	// Reads the current value of the processorï¿½s time-stamp counter (a 64-bit MSR) into the EDX:EAX registers
 	// and also reads the value of the IA32_TSC_AUX MSR (address C0000103H) into the ECX register.
 	// The EDX register is loaded with the high-order 32 bits of the IA32_TSC MSR; 
 	// the EAX register is loaded with the low-order 32 bits of the IA32_TSC MSR; 
@@ -1243,7 +1243,7 @@ void vmexit_triple_fault_handler(__vcpu* vcpu)
 	// Dump whole vmcs state before hard reset
 	//
 	UNREFERENCED_PARAMETER(vcpu);
-	hv::dump_vmcs();
+	hv:: dump_vmcs();
 	ASSERT(FALSE);
 	hv::hard_reset();
 }
@@ -1575,7 +1575,7 @@ void vmexit_cr_handler(__vcpu* vcpu)
   
 	switch (qualification.access_type) {
 		 
-	// MOV CRn, XXX ¡ú °ÑÍ¨ÓÃ¼Ä´æÆ÷µÄÖµÐ´Èë CRn
+	 
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_TO_CR:
 		switch (qualification.control_register) {
 		case VMX_EXIT_QUALIFICATION_REGISTER_CR0:
@@ -1591,7 +1591,7 @@ void vmexit_cr_handler(__vcpu* vcpu)
 		break;
 		 
 
-	//   MOV XXX, CRn ¡ú ´Ó CRn ¶ÁÈ¡Öµµ½Í¨ÓÃ¼Ä´æÆ÷
+ 
 	case VMX_EXIT_QUALIFICATION_ACCESS_MOV_FROM_CR:
 		// TODO: assert that we're accessing CR3 (and not CR8)
 		 emulate_mov_from_cr3(vcpu, qualification.control_register);

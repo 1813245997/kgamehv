@@ -312,9 +312,7 @@ namespace hv
 		__writecr4(cr4.flags);
 	}
 
-	/// <summary>
-	/// Dump whole vmcs structure
-	/// </summary>
+ 
 	void dump_vmcs()
 	{
 		spinlock dump_lock(&vmcs_dump_lock);
@@ -517,5 +515,7 @@ namespace hv
 		LogDump("VM_EXIT_INSTRUCTION_INFORMATION: 0x%llX", vmread(VM_EXIT_INSTRUCTION_INFORMATION));
 
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "-----------------------------------VMCS CORE %u DUMP-----------------------------------\r\n", KeGetCurrentProcessorIndex());
+
+
 	}
 }

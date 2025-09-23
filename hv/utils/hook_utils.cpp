@@ -594,7 +594,7 @@ namespace utils
 				goto clear;
 			}
 
-		//	prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
+		   hv::prevmcall::install_ept_hook(hooked_page_info->pfn_of_hooked_page, hooked_page_info->pfn_of_fake_page_contents);
 
 
 			InitializeListHead(&hooked_page_info->hooked_functions_list);

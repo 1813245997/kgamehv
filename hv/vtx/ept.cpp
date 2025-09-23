@@ -457,18 +457,18 @@ namespace ept
 
 	bool hook_page_pfn_ept(
 		__ept_state& ept_state,
-		unsigned __int64 pfn_of_target_page,
-		unsigned __int64 pfn_of_fake_page
+		unsigned __int64 orig_page_pfn,
+		unsigned __int64 exec_page_pfn
 	)
 	{
-		if (pfn_of_target_page == 0 || pfn_of_fake_page == 0)
+		if (orig_page_pfn == 0 || exec_page_pfn == 0)
 		{
 			LogError("Invalid PFN parameters");
 			return false;
 		}
 
 		// 计算目标页面的物理地址
-		unsigned __int64 target_physical_address = pfn_of_target_page << PAGE_SHIFT;
+		unsigned __int64 target_physical_address = orig_page_pfn << PAGE_SHIFT;
 
 		// 如果没有 split，则执行 PML2 拆页
 
@@ -508,8 +508,8 @@ namespace ept
 		}
 
 		// 填充 hook 信息
-		hook_info->pfn_of_hooked_page = pfn_of_target_page;
-		hook_info->pfn_of_fake_page = pfn_of_fake_page;
+		hook_info->pfn_of_hooked_page = orig_page_pfn;
+		hook_info->pfn_of_fake_page = exec_page_pfn;
 		hook_info->entry_address = target_page;
 	
 	 
@@ -525,24 +525,21 @@ namespace ept
 		hook_info->changed_entry.write = 0;
 		hook_info->changed_entry.execute = 1;
 		 
-		hook_info->changed_entry.physical_address = pfn_of_fake_page;
+		hook_info->changed_entry.physical_address = exec_page_pfn;
 		 
-
-		// 修改 EPT 映射并刷新 TLB
-		
+		 
 		// 插入到 hook 链表中
 		InsertHeadList(&ept_state.hooked_page_list, &hook_info->hooked_page_list);
-	    // swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->changed_entry, invept_type::invept_single_context);
-		 invept_single_context_address(ept_state.ept_pointer->all);
+		invept_single_context_address(ept_state.ept_pointer->all);
 
 		invept_all_contexts();
 		return true;
 	}
   
 
-	bool unhook_page_pfn_ept(__ept_state& ept_state, unsigned __int64 pfn_of_target_page)
+	bool unhook_page_pfn_ept(__ept_state& ept_state, unsigned __int64 orig_page_pfn)
 	{
-		if (pfn_of_target_page == 0)
+		if (orig_page_pfn == 0)
 		{
 			return false;
 		}
@@ -552,18 +549,18 @@ namespace ept
 		{
 			auto* hook_info = CONTAINING_RECORD(entry, __ept_hooked_page_info, hooked_page_list);
 
-			if (hook_info->pfn_of_hooked_page != pfn_of_target_page)
+			if (hook_info->pfn_of_hooked_page != orig_page_pfn)
 			{
 				continue;
 
 			}
-
 			 
 			 hook_info->original_entry.read = 1;
 			 hook_info->original_entry.write = 1;
 			 hook_info->original_entry.execute = 1;
-		 
-			 swap_pml1_and_invalidate_tlb(ept_state, hook_info->entry_address, hook_info->original_entry, invept_type::invept_all_context);
+			 hook_info->entry_address->all = hook_info->original_entry.all;
+
+			 invept_all_contexts();
 			 
 			RemoveEntryList(entry);
 			pool_manager::release_pool(hook_info);

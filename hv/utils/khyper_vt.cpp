@@ -1,11 +1,6 @@
 #include "global_defs.h"
 #include "khyper_vt.h"
-#include "../vtx/vmm.h"
-#include "../vtx/hypervisor_routines.h"
-#include "../vtx/timing.h"
-#include "../vtx/hv_dpc_vm_call.h"
-#include "../vtx/hypervisor_gateway.h"
-#include "../ia32/ia32.hpp"
+ 
  
 namespace utils
 {
@@ -230,8 +225,8 @@ namespace utils
 				LogError("Vmm initialization failed");
 				return STATUS_FAILED_DRIVER_ENTRY;
 			}
-
-			if (hvgt::test_vmcall())
+			 
+			if (hv ::prevmcall:: test_vmcall())
 			{
 				LogInfo("Successfully pinged the hypervisor.\n");
 			}

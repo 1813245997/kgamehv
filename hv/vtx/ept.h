@@ -438,13 +438,13 @@ namespace ept
 
 	bool hook_page_pfn_ept(
 		__ept_state& ept_state,
-		unsigned __int64 pfn_of_target_page,
-		unsigned __int64 pfn_of_fake_page
+		unsigned __int64 orig_page_pfn,
+		unsigned __int64 exec_page_pfn
 	);
 
 
 	bool unhook_page_pfn_ept(__ept_state& ept_state,
-		unsigned __int64 pfn_of_target_page);
+		unsigned __int64 orig_page_pfn);
 
 
 	/// <summary>

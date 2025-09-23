@@ -325,13 +325,13 @@ namespace utils
 			 unsigned long long previous_mode_offset{};
 			 unsigned char* func_ptr = reinterpret_cast<unsigned char*>(ExGetPreviousMode);
 
-			 // 遍历函数，找到最后一个 C3（RET）指令
+			 
 			 unsigned char* ret_ptr = func_ptr;
 			 while (*ret_ptr != 0xC3) {
 				 ++ret_ptr;
 			 }
 
-			 // 在 RET 前 4 个字节读取偏移
+			 
 			 previous_mode_offset = *reinterpret_cast<ULONG*>(ret_ptr - 4);
 
 			 return previous_mode_offset;
@@ -399,5 +399,26 @@ namespace utils
 
 			 return win32_start_address_offset;
 		 }
+
+
+		 unsigned long long find_eprocess_unique_process_id_offset()
+		 {
+						
+				unsigned long long eprocess_unique_process_id_offset{};
+				auto const ps_get_process_id = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ps_get_process_id);
+     
+				if (ps_get_process_id[0] != 0x48 ||
+					ps_get_process_id[1] != 0x8B ||
+					ps_get_process_id[2] != 0x81 ||
+					ps_get_process_id[7] != 0xC3) {
+				  
+				  return 0;
+				}
+
+				eprocess_unique_process_id_offset = *reinterpret_cast<ULONG*>(ps_get_process_id + 3);
+				return eprocess_unique_process_id_offset;
+ 
+		 }
+
 	}
 }

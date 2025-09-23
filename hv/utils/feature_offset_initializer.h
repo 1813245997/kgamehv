@@ -20,6 +20,8 @@ namespace utils
 
 		extern unsigned long long g_win32_start_address_offset;
 
+		extern unsigned long long g_eprocess_unique_process_id_offset;
+
 		NTSTATUS initialize();
 	}
 }

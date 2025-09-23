@@ -38,13 +38,13 @@ namespace hv
 			auto const timing_overhead = (end - start);
 
 			 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			hv::prevmcall::test_vmcall();
 
 			_mm_lfence();
 			start = __rdtsc();
 			_mm_lfence();
 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			hv::prevmcall::test_vmcall();
 
 			_mm_lfence();
 			end = __rdtsc();
@@ -103,13 +103,13 @@ namespace hv
 
 			auto const timing_overhead = (end - start);
 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			hv::prevmcall::test_vmcall();
 
 			_mm_lfence();
 			start = __readmsr(IA32_FIXED_CTR2);
 			_mm_lfence();
 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			hv::prevmcall::test_vmcall();
 
 			_mm_lfence();
 			end = __readmsr(IA32_FIXED_CTR2);
@@ -152,14 +152,15 @@ namespace hv
 
 			auto const timing_overhead = (end - start);
 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			hv::prevmcall::test_vmcall();
 		 
 
 			_mm_lfence();
 			start = __readmsr(IA32_MPERF);
 			_mm_lfence();
 
-			__vm_call(VMCALL_TEST, 0, 0, 0);
+			
+			hv::prevmcall::test_vmcall();
 
 			_mm_lfence();
 			end = __readmsr(IA32_MPERF);

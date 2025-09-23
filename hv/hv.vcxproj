@@ -127,6 +127,10 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vtx\hv_pre_vmcall.h" />
+    <ClInclude Include="vtx\hypercalls.h" />
+    <ClInclude Include="vtx\mm.h" />
+    <ClInclude Include="vtx\processor_affinity.h" />
     <ClInclude Include="vtx\segment.h" />
     <ClInclude Include="vtx\vmcs_utils.h" />
     <ClInclude Include="vtx\vm_context.h" />
@@ -204,12 +208,10 @@
     <ClInclude Include="vtx\exception-routines.h" />
     <ClInclude Include="vtx\gdt.h" />
     <ClInclude Include="vtx\hv_defs.h" />
-    <ClInclude Include="vtx\hv_dpc_vm_call.h" />
     <ClInclude Include="vtx\cpuid.h" />
     <ClInclude Include="vtx\ept.h" />
     <ClInclude Include="vtx\exception.h" />
     <ClInclude Include="vtx\hv_vt_structs.h" />
-    <ClInclude Include="vtx\hypervisor_gateway.h" />
     <ClInclude Include="vtx\hypervisor_routines.h" />
     <ClInclude Include="vtx\idt.h" />
     <ClInclude Include="vtx\interrupt-handlers.h" />
@@ -222,7 +224,6 @@
     <ClInclude Include="vtx\spinlock.h" />
     <ClInclude Include="vtx\timing.h" />
     <ClInclude Include="vtx\vmcall_handler.h" />
-    <ClInclude Include="vtx\vmcall_reason.h" />
     <ClInclude Include="vtx\vmcs.h" />
     <ClInclude Include="vtx\vmcs_encodings.h" />
     <ClInclude Include="vtx\vmexit_handler.h" />
@@ -278,14 +279,16 @@
     <ClCompile Include="utils\window_utils.cpp" />
     <ClCompile Include="vtx\compatibility_checks.cpp" />
     <ClCompile Include="vtx\gdt.cpp" />
-    <ClCompile Include="vtx\hv_dpc_vm_call.cpp" />
     <ClCompile Include="vtx\ept.cpp" />
-    <ClCompile Include="vtx\hypervisor_gateway.cpp" />
+    <ClCompile Include="vtx\hv_pre_vmcall.cpp" />
+    <ClCompile Include="vtx\hypercalls.cpp" />
     <ClCompile Include="vtx\hypervisor_routines.cpp" />
     <ClCompile Include="vtx\idt.cpp" />
     <ClCompile Include="vtx\invalidators.cpp" />
+    <ClCompile Include="vtx\mm.cpp" />
     <ClCompile Include="vtx\page-tables.cpp" />
     <ClCompile Include="vtx\poolmanager.cpp" />
+    <ClCompile Include="vtx\processor_affinity.cpp" />
     <ClCompile Include="vtx\segment.cpp" />
     <ClCompile Include="vtx\spinlock.cpp" />
     <ClCompile Include="vtx\timing.cpp" />

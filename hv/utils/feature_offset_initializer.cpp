@@ -20,6 +20,7 @@ namespace utils
 
 		unsigned long long g_win32_start_address_offset;
 
+		unsigned long long g_eprocess_unique_process_id_offset;
 
 		NTSTATUS initialize()
 		{
@@ -31,6 +32,7 @@ namespace utils
 			g_process_peb_offset = scanner_offset::find_process_peb_offset();
 			g_start_address_offset = scanner_offset::find_start_address_offset();
 			g_win32_start_address_offset = scanner_offset::find_win32_start_address_offset();
+			g_eprocess_unique_process_id_offset = scanner_offset::find_eprocess_unique_process_id_offset();
 
 			LogInfo("process_exit_time_offset       = 0x%llx\n", g_process_exit_time_offset);
 			LogInfo("dxgprocess_offset              = 0x%llx\n", g_dxgprocess_offset);
@@ -38,13 +40,15 @@ namespace utils
 			LogInfo("process_peb_offset            = 0x%llx\n", g_process_peb_offset);
 			LogInfo("start_address_offset          = 0x%llx\n", g_start_address_offset);
 			LogInfo("win32_start_address_offset    = 0x%llx\n", g_win32_start_address_offset);
+			LogInfo("eprocess_unique_process_id_offset = 0x%llx\n", g_eprocess_unique_process_id_offset);
 
 			if (!g_process_exit_time_offset ||
 				!g_dxgprocess_offset ||
 				!g_process_wow64_process_offset ||
 				!g_process_peb_offset||
 				!g_start_address_offset||
-				!g_win32_start_address_offset)
+				!g_win32_start_address_offset||
+				!g_eprocess_unique_process_id_offset)
 			{
 				LogError(
 					"Failed to initialize one or more required process offsets\n");

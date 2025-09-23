@@ -63,46 +63,24 @@ no_error:
     ret
 __load_ar endp
 
-__vm_call proc
-    mov rax,0CDAEFAEDBBAEBEEFh
-    vmcall
-    ret
-__vm_call endp
+ 
 
-__vm_call_ex proc
-        mov  rax,0CDAEFAEDBBAEBEEFh ; Our vmcall indentitifer
+?vmx_vmcall@hv@@YA_KAEAUhypercall_input@1@@Z proc
+  ; move input into registers
+  mov rax, [rcx]       ; code
+  mov rdx, [rcx + 10h] ; args[1]
+  mov r8,  [rcx + 18h] ; args[2]
+  mov r9,  [rcx + 20h] ; args[3]
+  mov r10, [rcx + 28h] ; args[4]
+  mov r11, [rcx + 30h] ; args[5]
+  mov rcx, [rcx + 08h] ; args[0]
 
-        sub rsp, 30h
-        mov qword ptr [rsp],       r10
-        mov qword ptr [rsp + 8h],  r11
-        mov qword ptr [rsp + 10h], r12
-        mov qword ptr [rsp + 18h], r13
-        mov qword ptr [rsp + 20h], r14
-        mov qword ptr [rsp + 28h], r15
+  vmcall
 
-        mov r10, qword ptr [rsp + 58h]
-        mov r11, qword ptr [rsp + 60h]
-        mov r12, qword ptr [rsp + 68h]
-        mov r13, qword ptr [rsp + 70h]
-        mov r14, qword ptr [rsp + 78h]
-        mov r15, qword ptr [rsp + 80h]
+  ret
+?vmx_vmcall@hv@@YA_KAEAUhypercall_input@1@@Z endp
 
-        vmcall
-        mov r10, qword ptr [rsp]
-        mov r11, qword ptr [rsp + 8h]
-        mov r12, qword ptr [rsp + 10h]
-        mov r13, qword ptr [rsp + 18h]
-        mov r14, qword ptr [rsp + 20h]
-        mov r15, qword ptr [rsp + 28h]
-        add rsp, 30h
-
-        ret
-__vm_call_ex endp
-
-__hyperv_vm_call proc
-    vmcall
-    ret
-__hyperv_vm_call endp
+ 
 
 __reload_gdtr PROC
 	push rcx

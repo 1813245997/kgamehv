@@ -123,15 +123,7 @@ exit:
 	ret
 ?vmx_restore_state@@YAXXZ ENDP
 
-_setac proc
-stac
-ret
-_setac endp
-
-_clearac proc
-clac
-ret
-_clearac endp
+ 
 
 END
 

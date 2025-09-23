@@ -23,7 +23,7 @@
 #define LARGE_PAGE_SIZE 0x200000
 #define GET_PFN(_VAR_) (_VAR_ >> PAGE_SHIFT)
 
-#define VMCALL_IDENTIFIER 0xCDAEFAEDBBAEBEEF
+ 
 
 #define VMM_TAG 'vhra'
 #define VMM_STACK_SIZE 0x6000

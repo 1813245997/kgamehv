@@ -400,13 +400,13 @@ namespace hv {
 
 } // namespace hv
 
-
+bool vmexit_handler(__vmexit_guest_registers* guest_registers);
 
 unsigned __int64 return_rsp_for_vmxoff();
 
 unsigned __int64 return_rip_for_vmxoff();
 
-bool vmexit_handler(__vmexit_guest_registers * guest_registers);
+unsigned __int64* get_register_pointer(__vmexit_guest_registers* regs, UINT32 reg);
 
 void adjust_rip(__vcpu* vcpu);
 
@@ -425,9 +425,11 @@ void emulate_lmsw(__vcpu* const cpu, uint16_t const value);
 
 void hide_vm_exit_overhead(__vcpu* vcpu);
 
-unsigned __int64* get_register_pointer(__vmexit_guest_registers* regs, UINT32 reg);
-
 void inject_nmi();
+
+
+
+
 
 namespace hv
 {

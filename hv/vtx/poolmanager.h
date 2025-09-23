@@ -41,10 +41,7 @@ namespace pool_manager
         bool recycled;
     };
 
-    /// <summary>
-    /// Writes all information about allocated pools
-    /// </summary>
-    void dump_pools_info();
+
 
     /// <summary>
     /// Request allocation
@@ -123,6 +120,8 @@ namespace pool_manager
         return (T)address;
     }
 
+
+    const char* intention_to_string(allocation_intention intention);
  
  
 }
