@@ -508,8 +508,8 @@ namespace ept
 		}
 
 		// Ìî³ä hook ÐÅÏ¢
-		hook_info->pfn_of_hooked_page = orig_page_pfn;
-		hook_info->pfn_of_fake_page = exec_page_pfn;
+		hook_info->orig_page_pfn = orig_page_pfn;
+		hook_info->exec_page_pfn = exec_page_pfn;
 		hook_info->entry_address = target_page;
 	
 	 
@@ -549,7 +549,7 @@ namespace ept
 		{
 			auto* hook_info = CONTAINING_RECORD(entry, __ept_hooked_page_info, hooked_page_list);
 
-			if (hook_info->pfn_of_hooked_page != orig_page_pfn)
+			if (hook_info->orig_page_pfn != orig_page_pfn)
 			{
 				continue;
 

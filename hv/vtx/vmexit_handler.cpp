@@ -487,7 +487,7 @@ void vmexit_ept_violation_handler(__vcpu* vcpu)
 	{
 		current = current->Flink;
 		__ept_hooked_page_info* hooked_entry = CONTAINING_RECORD(current, __ept_hooked_page_info, hooked_page_list);
-		if (hooked_entry->pfn_of_hooked_page == GET_PFN(guest_physical_adddress))
+		if (hooked_entry->orig_page_pfn == GET_PFN(guest_physical_adddress))
 		{
 			if ((ept_violation.read_access || ept_violation.write_access) && (!ept_violation.ept_readable || !ept_violation.ept_writeable))
 			{
@@ -495,7 +495,7 @@ void vmexit_ept_violation_handler(__vcpu* vcpu)
 				const auto rip_physical_address = MmGetPhysicalAddress((PVOID)vcpu->vmexit_info.guest_rip).QuadPart;
 				const auto rip_physical_pnf = GET_PFN(rip_physical_address);
 				hv::restore_context(old_cr3);
-				if (static_cast<unsigned __int64>(rip_physical_pnf) == hooked_entry->pfn_of_hooked_page)
+				if (static_cast<unsigned __int64>(rip_physical_pnf) == hooked_entry->orig_page_pfn)
 				{
 					hv::set_mtf(true);
 					hooked_entry->original_entry.execute = true;
@@ -536,10 +536,10 @@ void vmexit_exception_handler(__vcpu* vcpu)
 	}
 	else if (interrupt_info.vector == EXCEPTION_VECTOR_SINGLE_STEP && vcpu->vmexit_info.guest_rflags.trap_flag == false)
 	{
-		hooked_function_info  matched_hook_info  ;
-		if (utils::hook_utils:: find_hook_info_by_rip(   reinterpret_cast<void*>(vcpu->vmexit_info.guest_rip), &matched_hook_info))
+		kernel_hook_function_info  matched_hook_info  ;
+		if (utils::hook_utils:: find_kernel_hook_info_by_rip(   reinterpret_cast<void*>(vcpu->vmexit_info.guest_rip), &matched_hook_info))
 		{
-			hv::vmwrite(VMCS_GUEST_RIP, matched_hook_info.new_handler_va);
+			hv::vmwrite(VMCS_GUEST_RIP, matched_hook_info.handler_va);
 			return;
 		}
 		 

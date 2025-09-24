@@ -258,7 +258,7 @@ bool allocate_vmm_context()
 /// <returns> Pointer to vcpu </returns>
 bool init_vcpu(__vcpu*& vcpu)
 {
-	InitializeListHead(&g_ept_breakpoint_hook_list);
+	 
 	vcpu = allocate_pool<__vcpu>();
 	if (vcpu == nullptr)
 	{

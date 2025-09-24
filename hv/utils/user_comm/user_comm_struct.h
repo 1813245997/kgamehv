@@ -4,7 +4,6 @@ enum user_comm_op : uint64_t {
 	user_comm_validate_license_expire_time,
 	user_comm_file_delete_force ,
 	user_comm_get_module_info,
-	user_comm_user_hook,
 	user_comm_remote_inject,
 	user_comm_clear_unloaded_drivers,
 	user_comm_read_virt_mem,

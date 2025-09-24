@@ -1763,16 +1763,17 @@ namespace utils
 
 		 
 			
-			bool hook_result = hook_utils::hook_user_exception_handler(
+		/*	bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_dwm),
 				hook_functions::new_present_dwm,
 				true
 				 
-			);
+			);*/
 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
+			return true;
 		}
 
 		NTSTATUS hook_present_multiplane_overlay(IN PEPROCESS process)
@@ -1785,17 +1786,17 @@ namespace utils
 			 
 		 
 		   
-			bool hook_result = hook_utils::hook_user_exception_handler(
+		/*	bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swapchain_present_multiplane_overlay),
 				hook_functions::new_present_multiplane_overlay,
 				true
 			 
-			);
+			);*/
 			 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
-			 
+			return true;
 		}
 
 
@@ -1808,15 +1809,16 @@ namespace utils
 
 		 
 
-			bool hook_result = hook_utils::hook_user_exception_handler(
+			/*bool hook_result = hook_utils::hook_user_exception_handler(
 			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_pre_sub_graph),
 				hook_functions::new_cocclusion_context_pre_sub_graph,
 				true
 				 
-			);
+			);*/
 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			return true;
 		}
 		NTSTATUS  hook_cocclusion_context_post_sub_graph(IN PEPROCESS process)
 		{
@@ -1826,15 +1828,17 @@ namespace utils
 			}
  
 
-			bool hook_result = hook_utils::hook_user_exception_handler(
+			/*bool hook_result = hook_utils::hook_user_exception_handler(
 			    process,
 				reinterpret_cast<PVOID>(g_cocclusion_context_post_sub_graph),
 				hook_functions::new_cocclusion_context_post_sub_graph ,
 				true
 			    
-			);
+			);*/
 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+
+			return true;
 		}
 
 
@@ -1848,15 +1852,16 @@ namespace utils
 
 		 
 
-			bool hook_result = hook_utils::hook_user_exception_handler(
+		/*	bool hook_result = hook_utils::hook_user_exception_handler(
 				process,
 				reinterpret_cast<PVOID>(g_cdxgi_swap_chain_dwm_legacy_present_dwm),
 				hook_functions::new_cdxgi_swap_chain_dwm_legacy_present_dwm ,
 				true
 				 
-			);
+			);*/
 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			return true;
 		}
 
 		NTSTATUS hook_cddisplay_render_target_present(IN PEPROCESS process)
@@ -1868,15 +1873,16 @@ namespace utils
 
 	 
 
-			bool hook_result = hook_utils::hook_user_exception_handler(
-				process,
-				reinterpret_cast<PVOID>(g_cddisplay_render_target_present),
-				hook_functions::new_cddisplay_render_target_present,
-				true
+			//bool hook_result = hook_utils::hook_user_exception_handler(
+			//	process,
+			//	reinterpret_cast<PVOID>(g_cddisplay_render_target_present),
+			//	hook_functions::new_cddisplay_render_target_present,
+			//	true
 
-			);
+			//);
 
-			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			//return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			return true;
 		}
 
 		NTSTATUS hook_dxgk_get_device_state(IN PEPROCESS process)
@@ -1914,14 +1920,14 @@ namespace utils
 
 			unsigned  long long get_buffer_fun = reinterpret_cast<unsigned long long>  (utils::vfun_utils::get_vfunc(reinterpret_cast<PVOID>(utils::dwm_draw::g_pswap_chain), 9));
 		 
+			bool hook_result=false;
+			/*	bool hook_result = hook_utils::hook_user_exception_handler(
+					process,
+					reinterpret_cast<PVOID>(get_buffer_fun),
+					hook_functions::new_get_buffer,
+					true
 
-			bool hook_result = hook_utils::hook_user_exception_handler(
-				process,
-				reinterpret_cast<PVOID>(get_buffer_fun),
-				hook_functions::new_get_buffer,
-				true
-			 
-			);
+				);*/
 
 			return hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 		

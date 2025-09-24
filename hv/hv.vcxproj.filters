@@ -181,9 +181,6 @@
     <ClInclude Include="vtx\allocators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vtx\hypervisor_gateway.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="vtx\hypervisor_routines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -200,9 +197,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\vmcall_handler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\vmcall_reason.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\vmexit_handler.h">
@@ -236,12 +230,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\memory_pool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\vmcall_comm_args.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vtx\hv_dpc_vm_call.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\vm_intrin.h">
@@ -329,6 +317,21 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="vtx\segment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hv_pre_vmcall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\hypercalls.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\mm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vtx\processor_affinity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\shadow_break_point.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -450,9 +453,6 @@
     <ClCompile Include="vtx\ept.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="vtx\hypervisor_gateway.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="vtx\hypervisor_routines.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -481,9 +481,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\memory_pool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="vtx\hv_dpc_vm_call.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\compatibility_checks.cpp">
@@ -523,6 +520,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="vtx\segment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\hv_pre_vmcall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\hypercalls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\mm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vtx\processor_affinity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\shadow_break_point.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

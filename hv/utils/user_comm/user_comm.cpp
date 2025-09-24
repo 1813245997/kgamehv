@@ -50,13 +50,7 @@ namespace utils
 				 
 			}
 
-			case  user_comm_user_hook:
-			{
-			 
-				is_succeed = handle_hook_user_api(request);
-				break;
-			}
-
+	 
 			case  user_comm_remote_inject:
 			{
 				is_succeed = handle_remote_inject(request);
@@ -268,49 +262,7 @@ namespace utils
 			 
 		}
 
-		bool handle_hook_user_api(user_comm_request* request)
-		{
-			if (!request || !request->input_buffer)
-			{
-				return false;
-			}
-		 
-			p_user_comm_hook_params params =
-				reinterpret_cast<p_user_comm_hook_params>(request->input_buffer);
-
-			HANDLE process_id = reinterpret_cast<HANDLE>(params->process_id);
-			void* target_api = reinterpret_cast<void*>(params->target_api);
-			void* new_api = reinterpret_cast<void*>(params->new_api);
-			void** origin_function = reinterpret_cast<void**>(params->origin_function);
-
-			PEPROCESS process = nullptr;
-			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
-			if (!NT_SUCCESS(status))
-			{
-				
-				request->status = status;
-				return false;
-			}
-
-			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
-			{
-				utils::internal_functions::pfn_ob_dereference_object(process);
-				request->status = STATUS_PROCESS_IS_TERMINATING;
-				return false;
-			}
-
-			bool hook_result = utils::hook_utils::hook_user_hook_handler(
-				process,
-				target_api,
-				new_api,
-				origin_function
-			);
-			utils::internal_functions::pfn_ob_dereference_object(process);
-			request->status = hook_result ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
-			return hook_result;
-
-
-		}
+	 
 
 		bool handle_remote_inject(user_comm_request* request)
 		{
