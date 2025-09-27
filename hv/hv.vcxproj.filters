@@ -334,6 +334,15 @@
     <ClInclude Include="utils\shadow_break_point.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\hook_mem_protection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\hook_process_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\hook_user_comm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -535,6 +544,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\shadow_break_point.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_mem_protection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_process_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_user_comm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

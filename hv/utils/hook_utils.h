@@ -40,7 +40,8 @@ namespace utils
 		extern LIST_ENTRY g_kernel_hook_page_list_head ;
 
 
-		void initialize_hook_page_lists();
+
+		NTSTATUS initialize_hook_page_lists();
 
 		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
 

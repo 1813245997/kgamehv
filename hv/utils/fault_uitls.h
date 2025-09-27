@@ -9,7 +9,7 @@ namespace utils
 			_Inout_ PCONTEXT ContextRecord,
 			_In_ KPROCESSOR_MODE PreviousMode);
 
-		// 处理页面异常（如 STATUS_GUARD_PAGE_VIOLATION 等）
+		 
 		BOOLEAN  handle_page_fault_exception(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,

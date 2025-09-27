@@ -127,6 +127,9 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="utils\hook_mem_protection.h" />
+    <ClInclude Include="utils\hook_process_manager.h" />
+    <ClInclude Include="utils\hook_user_comm.h" />
     <ClInclude Include="utils\shadow_break_point.h" />
     <ClInclude Include="vtx\hv_pre_vmcall.h" />
     <ClInclude Include="vtx\hypercalls.h" />
@@ -234,6 +237,9 @@
   <ItemGroup>
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth.cpp" />
+    <ClCompile Include="utils\hook_mem_protection.cpp" />
+    <ClCompile Include="utils\hook_process_manager.cpp" />
+    <ClCompile Include="utils\hook_user_comm.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />

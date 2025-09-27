@@ -14,10 +14,15 @@ namespace utils
 
 		void hook_write_absolute_jump(unsigned __int8* target_buffer, unsigned __int64 destination_address);
 
-		  void initialize_hook_page_lists()
+		  NTSTATUS initialize_hook_page_lists()
 		  {
+			  NTSTATUS status = STATUS_SUCCESS;
 			  InitializeListHead(&g_kernel_hook_page_list_head);
-			   
+
+	
+			  return status;
+
+		 
 		  }
 		   
 		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function)
@@ -104,7 +109,7 @@ namespace utils
 			auto* hooked_page_info = pool_manager::request_pool<kernel_hook_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(kernel_hook_page_info));   
 			if (!hooked_page_info)
 			{
-				return false;
+				goto clear;
 			}
 
 			hooked_page_info->fake_page_contents = pool_manager::request_pool<uint8_t*>(pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE,PAGE_SIZE);    
@@ -120,7 +125,7 @@ namespace utils
 				pool_manager::release_pool(hooked_page_info->fake_page_contents);
 				pool_manager::release_pool(hooked_page_info);
 
-				return false;
+				goto clear;
 
 			}
 		
@@ -129,14 +134,14 @@ namespace utils
 			{
 				pool_manager::release_pool(hooked_page_info->fake_page_contents);
 				pool_manager::release_pool(hooked_page_info);
-				return false;
+				goto clear;
 			}
 
 			hook_info->trampoline_va = pool_manager::request_pool<unsigned __int8*>(pool_manager::INTENTION_EXEC_TRAMPOLINE, TRUE, 100);
 			if (!hook_info->trampoline_va)
 			{
 				pool_manager::release_pool(hook_info);
-				return false;
+				goto clear;
 
 			}
 			hook_info->original_code_backup = pool_manager::request_pool<unsigned __int8*>(pool_manager:: INTENTION_BACKUP_INSTRUCTION, TRUE, 100);
@@ -146,7 +151,7 @@ namespace utils
 				pool_manager::release_pool(hook_info);
 				 
 				LogError("There is no pre-allocated pool for trampoline");
-				return false;
+				goto clear;
 			}
  
 			void* aligned_target = PAGE_ALIGN(target_api);
@@ -171,7 +176,7 @@ namespace utils
 			InsertHeadList(&hooked_page_info->function_list, &hook_info->list_entry);
 			InsertHeadList(&g_kernel_hook_page_list_head, &hooked_page_info->page_list);
 			 hv::prevmcall::install_ept_hook(hooked_page_info->orig_page_pfn, hooked_page_info->exec_page_pfn);
-			 
+			 succeed = true;
 		 clear:
 
 			 if (succeed && hook_info)  

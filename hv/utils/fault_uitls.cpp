@@ -5,7 +5,7 @@ namespace utils
 {
 	namespace falt_utils
 	{
-		// 处理页面异常（如 STATUS_GUARD_PAGE_VIOLATION 等）
+		 
 		BOOLEAN   handle_page_fault_exception(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,
@@ -13,9 +13,9 @@ namespace utils
 		{
 			UNREFERENCED_PARAMETER(ExceptionRecord);
 			UNREFERENCED_PARAMETER(ContextRecord);
-			////还要处理页面异常  处理注入DWM绘制截图相关事宜
-	  //      //https://github.com/lainswork/dwm-screen-shot 是通过页面异常hook  游戏反作弊也极有可能通过VEH这类hook   要处理几个可能会被拿到swap指针的函数
-			////不可以dprinftf 输出 因为是触发异常输出的
+		 
+	         //https://github.com/lainswork/dwm-screen-shot  
+		 
 		/*	if (PreviousMode != MODE::UserMode)
 			{
 
@@ -46,96 +46,74 @@ namespace utils
 		}
 
 		 
-		BOOLEAN  handle_int3_exception(
+		BOOLEAN handle_int3_exception(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
-		
-
-			 //不可以dprinftf 输出 因为是触发异常输出的
-		
+			breakpoint_function_info* bp_info = nullptr;
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
- 
-			if (PreviousMode != MODE::UserMode) 
+
+			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_address(
+				process_id, ExceptionRecord->ExceptionAddress, &bp_info);
+
+			if (!found)
 			{
 				return FALSE;
 			}
-			 
-			kernel_hook_function_info matched_hook_info{};
-			 
+
 		 
+			bp_info->hit_count++;
 
-			//BOOLEAN found = utils::hook_utils::find_user_exception_info_by_rip(
-			//	process_id, ExceptionRecord->ExceptionAddress, &matched_hook_info);
+			using handler_fn_t = NTSTATUS(__fastcall*)(_Inout_ PCONTEXT ContextRecord);
+			auto handler_func = reinterpret_cast<handler_fn_t>(bp_info->handler_va);
 
-			//// 使用你封装的日志输出
-			///*if (found)
-			//{
-			//	LogInfo("INT3 exception at VA %p matched a hooked function for PID %p",
-			//		ExceptionRecord->ExceptionAddress, process_id);
-			//}
-			//else
-			//{
-			//	LogInfo("INT3 exception at VA %p NOT matched any hooked function for PID %p",
-			//		ExceptionRecord->ExceptionAddress, process_id);
-			//}*/
+			NTSTATUS status = handler_func(ContextRecord);
+			if (!NT_SUCCESS(status))
+			{
+				//LogError("Handler failed with status: 0x%X", status);
+			}
 
-			//if (!found)
-			//{
-			//	return FALSE;
-			//}
- 
-			// 
-			//using handler_fn_t = BOOLEAN(__fastcall*)(PEXCEPTION_RECORD, PCONTEXT, kernel_hook_function_info*);
-			//auto handler = reinterpret_cast<handler_fn_t>(matched_hook_info.handler_va);
+			// Restore original byte
+			*(PUINT8)ExceptionRecord->ExceptionAddress = bp_info->original_byte;
 
-			//if (handler(ExceptionRecord, ContextRecord, &matched_hook_info))
-			//{
-			//	return TRUE;  // 已处理
-			//}
+			// Enable single step for next instruction
+			ContextRecord->EFlags |= 0x100;
 
-
-			return FALSE;
-
-
+			return TRUE;
 		}
 
 	
 			 
 
-		BOOLEAN 	handle_single_step_exception(
+		BOOLEAN handle_single_step_exception(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
-			UNREFERENCED_PARAMETER(ExceptionRecord);
-			UNREFERENCED_PARAMETER(ContextRecord);
-		/*	if (PreviousMode != MODE::UserMode)
+			 
+			UNREFERENCED_PARAMETER(PreviousMode);
+
+			 
+			breakpoint_function_info* bp_info = nullptr;
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
+
+			// Find breakpoint info for current RIP (single step happens at next instruction)
+			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_address(
+				process_id, reinterpret_cast<PVOID>(ExceptionRecord->ExceptionAddress), &bp_info);
+
+			if (!found)
 			{
 				return FALSE;
 			}
 
-			if (dwm_draw::g_dwm_process != internal_functions::pfn_ps_get_current_process())
-			{
+			// Restore INT3 instruction at the breakpoint address
+			*(PUINT8)bp_info->breakpoint_va = 0xCC;
 
-				return FALSE;
-			}
+			// Clear single step flag
+			ContextRecord->EFlags &= ~0x100;
 
-
-			utils::strong_dx::g_should_hide_overlay = true;*/
-
-			//PVOID page_base = PAGE_ALIGN(ExceptionRecord->ExceptionAddress);
-			////SIZE_T region_size = PAGE_SIZE;
-		 //
-
-			//DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-			//	"[SINGLE_STEP_HOOK] Address: 0x%p  PageBase: 0x%p  \n",
-			//	ExceptionRecord->ExceptionAddress, page_base );
-
-			// 可选恢复页权限逻辑...
-
-			return FALSE;
+			return TRUE;
 		}
 	 }
 }

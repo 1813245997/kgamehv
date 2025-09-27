@@ -1,4 +1,3 @@
-
 #include "global_defs.h"
 #include "hook_functions.h"
 
@@ -23,36 +22,33 @@ namespace hook_functions
 
 		BOOLEAN is_succeed = FALSE;
 
-		if (ExceptionRecord->ExceptionCode == STATUS_BREAKPOINT)
+ 
+
+		switch (ExceptionRecord->ExceptionCode)
+		{
+
+		case   STATUS_GUARD_PAGE_VIOLATION:
+		{
+			is_succeed = utils::falt_utils::handle_page_fault_exception(ExceptionRecord, ContextRecord, PreviousMode);
+
+			break;
+		}
+		case STATUS_BREAKPOINT:
 		{
 			is_succeed = utils::falt_utils::handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
+			break;
 		}
 
-		/*	switch (ExceptionRecord->ExceptionCode)
-			{
-
-			case   STATUS_GUARD_PAGE_VIOLATION:
-			{
-				is_succeed = utils::falt_utils::handle_page_fault_exception(ExceptionRecord, ContextRecord, PreviousMode);
-
-				break;
-			}
-			case STATUS_BREAKPOINT:
-			{
-				is_succeed = utils::falt_utils:: handle_int3_exception(ExceptionRecord, ContextRecord, PreviousMode);
-				break;
-			}
-
-			case   STATUS_SINGLE_STEP:
-			{
-				is_succeed = utils::falt_utils::handle_single_step_exception (ExceptionRecord, ContextRecord, PreviousMode);
-				break;
-			}
+		case   STATUS_SINGLE_STEP:
+		{
+			is_succeed = utils::falt_utils::handle_single_step_exception(ExceptionRecord, ContextRecord, PreviousMode);
+			break;
+		}
 
 
-			default:
-				break;
-			}*/
+		default:
+			break;
+		}
 
 		if (!is_succeed)
 		{
@@ -66,250 +62,7 @@ namespace hook_functions
 
 		 
 	}
-
-
-	 BOOLEAN(__fastcall* original_mm_is_address_valid)(
-		_In_ PVOID VirtualAddress
-		);
-
-	BOOLEAN  __fastcall hook_mm_is_address_valid(
-		_In_ PVOID VirtualAddress
-	)
-	{
-
-	  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
-
-	   if (utils::hidden_modules::is_address_hidden(VirtualAddress))
-	   {
-		   return FALSE;
-	   }
-
-	   if (utils::hidden_user_memory::is_pid_hidden(process_id))
-	   {
-		   if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(VirtualAddress)))
-		   {
-			   return FALSE;
-		   }
-	   }
 	 
-
-		return   original_mm_is_address_valid(VirtualAddress);
-	}
-
-
-	  NTSTATUS(__fastcall* original_mm_copy_memory)(
-		  _In_ PVOID target_address,
-		  _In_ MM_COPY_ADDRESS source_address,
-		  _In_ SIZE_T number_of_bytes,
-		  _In_ ULONG flags,
-		  _Out_ PSIZE_T number_of_bytes_transferred
-		);
-
-
-	  NTSTATUS __fastcall hook_mm_copy_memory(
-		  _In_ PVOID target_address,
-		  _In_ MM_COPY_ADDRESS source_address,
-		  _In_ SIZE_T number_of_bytes,
-		  _In_ ULONG flags,
-		  _Out_ PSIZE_T number_of_bytes_transferred
-	  )
-	  {
-		  
-		  if (target_address == nullptr )
-		  {
-			  return original_mm_copy_memory(
-				  target_address,
-				  source_address,
-				  number_of_bytes,
-				  flags,
-				  number_of_bytes_transferred
-			  );
-		  }
-
-		  if (number_of_bytes == 0)
-		  {
-			  return original_mm_copy_memory(
-				  target_address,
-				  source_address,
-				  number_of_bytes,
-				  flags,
-				  number_of_bytes_transferred
-			  );
-		  }
-
-		  PVOID64 virtual_address = nullptr;
-		   HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
-		  if (flags == MM_COPY_MEMORY_PHYSICAL)
-		  {
-			  virtual_address = utils::internal_functions::pfn_mm_get_virtual_for_physical (source_address.PhysicalAddress);
-		  }
-		  else
-		  {
-			  virtual_address = source_address.VirtualAddress;
-		  }
-
-		  
-		  if (utils::hidden_modules::is_address_hidden(virtual_address))
-		  {
-			  *number_of_bytes_transferred = 0;
-			  return STATUS_CONFLICTING_ADDRESSES;
-		  }
-
-
-		  if (utils::hidden_user_memory::is_pid_hidden(process_id))
-		  {
-			  if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
-			  {
-				  *number_of_bytes_transferred = 0;
-				  return STATUS_CONFLICTING_ADDRESSES;
-			  }
-		  }
-
-	
-		 
-		  return original_mm_copy_memory(
-			  target_address,
-			  source_address,
-			  number_of_bytes,
-			  flags,
-			  number_of_bytes_transferred
-		  );
-	  }
-
-	  
-
-	 ULONG(NTAPI* original_rtl_walk_frame_chain)(
-		 _Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
-		 _In_ ULONG count,
-		 _In_ ULONG flags
-		 );
-
-	 ULONG NTAPI hook_rtl_walk_frame_chain(
-		 _Out_writes_(count - (flags >> RTL_STACK_WALKING_MODE_FRAMES_TO_SKIP_SHIFT)) PVOID* callers,
-		 _In_ ULONG count,
-		 _In_ ULONG flags
-	 )
-	 {
-		 
-
-		  HANDLE process_id =  utils::internal_functions::pfn_ps_get_current_process_id() ;
-
-		 ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
-
-		 for (ULONG i = 0; i < frames_captured; ++i)
-		 {
-			 PVOID addr = callers[i];
-
- 
-
-			 if (!utils::hidden_user_memory::is_pid_hidden(process_id) && utils::memory::is_user_address(addr))
-			 {
-				 continue;
-
-			 }
-
-			 if (!utils::internal_functions::pfn_mm_is_address_valid_ex(addr))
-			 {
-				 continue;
-			 }
-
-		 
-			
-			 if (utils::hidden_modules::is_address_hidden(addr) || 
-				 utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<ULONG64>(addr)))
-			 {
-				 // ÏòÇ°¸²¸Ç¸ÃÖ¡
-				 for (ULONG j = i + 1; j < frames_captured; ++j)
-				 {
-					 callers[j - 1] = callers[j];
-				 }
-
-				 frames_captured--;
-				 i--; // ÖØÐÂ¼ì²éµ±Ç°Î»ÖÃµÄÐÂÖµ
-			 }
-		 }
-
-		 return frames_captured;
-	 }
-
-
-	 PRUNTIME_FUNCTION(NTAPI* original_rtl_lookup_function_entry)(
-		 _In_ DWORD64 control_pc,
-		 _Out_ PDWORD64 image_base,
-		 _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
-		 );
-
-	 PRUNTIME_FUNCTION NTAPI hook_rtl_lookup_function_entry(
-		 _In_ DWORD64 control_pc,
-		 _Out_ PDWORD64 image_base,
-		 _Inout_opt_ PUNWIND_HISTORY_TABLE history_table
-	 )
-	 {
-		  
-
-		 HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id() ;
-
-		 // ÅÐ¶ÏÊÇ·ñÊÇÒþ²ØÄ£¿éµØÖ·
-		 if (utils::hidden_modules::is_address_hidden(reinterpret_cast<PVOID>(control_pc)))
-		 {
-			 if (image_base)
-			 {
-				 *image_base = 0;
-			 }
-			 return nullptr;
-		 }
-
-
-		 if (utils::hidden_user_memory::is_pid_hidden(process_id))
-		 {
-			 if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, control_pc))
-			 {
-				 if (image_base)
-				 {
-					 *image_base = 0;
-				 }
-				 return nullptr;
-			 }
-		 }
-		 
-
-		 return original_rtl_lookup_function_entry(control_pc, image_base, history_table);
-	 }
-
-
-	   void(__fastcall* original_psp_exit_process)(
-		 IN BOOLEAN trim_address_space,
-		 IN PEPROCESS process
-		 );
-
-	   void __fastcall hook_psp_exit_process(
-		   IN BOOLEAN trim_address_space,
-		   IN PEPROCESS process
-	   )
-	   {
-		   
-		  
-		   if (trim_address_space && process)
-		   {
-			   
-			  /* if (game::kcsgo2::g_game->m_game_process!=0&& game::kcsgo2::g_game->m_game_process == process)
-
-			   {
-				 
-				   utils::hook_utils::remove_user_exception_handler(process);
-				   game::kcsgo2::g_game->clear();
-			   }*/
-			    
-			    
-			     
-		   }
-		  
-		  
-			  
-		   return original_psp_exit_process(trim_address_space, process);
-
-	 }
-
 	   void(__fastcall* original_create_process_notify_routine_t)(
 		   _In_ HANDLE ParentId,
 		   _In_ HANDLE ProcessId,
@@ -341,484 +94,8 @@ namespace hook_functions
 	   }
 
 	 
-
-
-	   NTSTATUS(NTAPI* original_nt_create_section)(
-		   _Out_ PHANDLE section_handle,
-		   _In_ ACCESS_MASK desired_access,
-		   _In_opt_ POBJECT_ATTRIBUTES object_attributes,
-		   _In_opt_ PLARGE_INTEGER maximum_size,
-		   _In_ ULONG section_page_protection,
-		   _In_ ULONG allocation_attributes,
-		   _In_opt_ HANDLE file_handle
-		   );
-
-
-	   NTSTATUS NTAPI hook_nt_create_section(
-		   _Out_ PHANDLE section_handle,
-		   _In_ ACCESS_MASK desired_access,
-		   _In_opt_ POBJECT_ATTRIBUTES object_attributes,
-		   _In_opt_ PLARGE_INTEGER maximum_size,
-		   _In_ ULONG section_page_protection,
-		   _In_ ULONG allocation_attributes,
-		   _In_opt_ HANDLE file_handle
-	   )
-	   {
-
-		   
-		   NTSTATUS status{};
-		   PFILE_OBJECT pfile_object{};
-		   PEPROCESS  process{};
-		   POBJECT_NAME_INFORMATION ObjectNameInformation{};
-		   HANDLE  process_id{};
-		   process = utils::internal_functions::pfn_ps_get_current_process();
-		   process_id = utils::internal_functions::pfn_ps_get_process_id(process);
-
-		   if (!file_handle)
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-
-		   if (allocation_attributes != 0X1000000)
-		   {
-
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-
-		   if (section_page_protection != PAGE_EXECUTE)
-		   {
-
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-		   status = utils::internal_functions::pfn_ob_reference_object_by_handle(
-			   file_handle,
-			   0,
-			   0,
-			   KernelMode,
-			   (PVOID*)&pfile_object,
-			   NULL
-		   );
-
-		   if (!NT_SUCCESS(status))
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-
-		   status = utils::internal_functions::pfn_io_query_file_dos_device_name(pfile_object, &ObjectNameInformation);
-		   if (!NT_SUCCESS(status))
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-
-		   utils::internal_functions::pfn_ob_dereference_object(pfile_object);
-
-
-		   if (!ObjectNameInformation)
-		   {
-
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-		   if (!utils::internal_functions::pfn_mm_is_address_valid_ex(ObjectNameInformation->Name.Buffer)
-			   )
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-		   }
-
-
-		   if ( !utils::process_utils::is_process_name_match_wstr(process,(PWCHAR) L"cs2.exe" ,TRUE))
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-
-		   }
-		    
-		   if (!utils::string_utils::contains_substring_wchar(ObjectNameInformation->Name.Buffer,L"gpapi.dll", TRUE))
-		   {
-			   return original_nt_create_section(
-				   section_handle,
-				   desired_access,
-				   object_attributes,
-				   maximum_size,
-				   section_page_protection,
-				   allocation_attributes,
-				   file_handle
-			   );
-			  
-		   }
- 
-
-		 //  game::kcsgo2::g_game->init(process);
- 
-
-		  
-		  
-	     
-
-		  return original_nt_create_section(
-			  section_handle,
-			  desired_access,
-			  object_attributes,
-			  maximum_size,
-			  section_page_protection,
-			  allocation_attributes,
-			  file_handle
-		  );
-
-	   } 
-
-	   NTSTATUS(NTAPI* original_nt_query_virtual_memory) (
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
-		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
-		   _In_ SIZE_T MemoryInformationLength,
-		   _Out_opt_ PSIZE_T ReturnLength
-		   ) = nullptr;
-
-	   NTSTATUS NTAPI  new_nt_query_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _In_ MEMORY_INFORMATION_CLASS MemoryInformationClass,
-		   _Out_writes_bytes_(MemoryInformationLength) PVOID MemoryInformation,
-		   _In_ SIZE_T MemoryInformationLength,
-		   _Out_opt_ PSIZE_T ReturnLength
-	   )
-	   {
-
-		   if (MemoryInformationClass != MemoryBasicInformation &&
-			   MemoryInformationClass != 2)
-		   {
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
-			   ProcessHandle,
-			   ProcessBasicInformation,
-			   (PVOID)&ProcessBasicInfo,
-			   sizeof(ProcessBasicInfo),
-			   NULL
-		   );
-
-		   if (!NT_SUCCESS(QueryStatus)) {
-
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-
-		   if (!utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
-			   return original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   }
-
-
-
-		   NTSTATUS  Status = original_nt_query_virtual_memory(ProcessHandle, BaseAddress, MemoryInformationClass, MemoryInformation, MemoryInformationLength, ReturnLength);
-		   if (!NT_SUCCESS(Status))
-		   {
-			   return Status;
-		   }
-		   PMEMORY_BASIC_INFORMATION pMBI = static_cast<PMEMORY_BASIC_INFORMATION>(
-			   MemoryInformation);
-
-		   PVOID NextBase = reinterpret_cast<PUCHAR>(pMBI->BaseAddress) +
-			   pMBI->RegionSize;
-
-		   MEMORY_BASIC_INFORMATION NextBlock;
-		   SIZE_T NextLength = 0;
-		   Status = original_nt_query_virtual_memory(ProcessHandle, NextBase,
-			   MemoryInformationClass, &NextBlock, sizeof(NextBlock), &NextLength);
-
-
-		   pMBI->AllocationBase = 0;
-		   pMBI->AllocationProtect = 0;
-		   pMBI->State = MEM_FREE;
-		   pMBI->Protect = PAGE_NOACCESS;
-		   pMBI->Type = 0;
-
-		   // If next block is free too, add it to the region size
-		   if (NextBlock.State == MEM_FREE)
-			   pMBI->RegionSize += NextBlock.RegionSize;
-
-
-		   // Clear the output buffer if the address is hidden
-
-
-		   return Status;
-
-
-	   }
-
-	   extern NTSTATUS(NTAPI* original_nt_read_virtual_memory)(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
-		   _In_ SIZE_T NumberOfBytesToRead,
-		   _Out_opt_ PSIZE_T NumberOfBytesRead
-		   ) = nullptr;
-
-
-	   NTSTATUS NTAPI new_nt_read_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _In_opt_ PVOID BaseAddress,
-		   _Out_writes_bytes_(NumberOfBytesToRead) PVOID Buffer,
-		   _In_ SIZE_T NumberOfBytesToRead,
-		   _Out_opt_ PSIZE_T NumberOfBytesRead
-	   )
-	   {
-		   PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-		   NTSTATUS QueryStatus = utils::internal_functions::pfn_zw_query_information_process(
-			   ProcessHandle,
-			   ProcessBasicInformation,
-			   (PVOID)&ProcessBasicInfo,
-			   sizeof(ProcessBasicInfo),
-			   NULL
-		   );
-
-		   if (!NT_SUCCESS(QueryStatus)) {
-
-			   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
-		   }
-
-		   if (utils::hidden_user_memory::is_address_hidden_for_pid((HANDLE)ProcessBasicInfo.UniqueProcessId, reinterpret_cast<unsigned long long> (BaseAddress))) {
-
-
-			   return STATUS_ACCESS_VIOLATION;
-		   }
-
-
-		   return original_nt_read_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToRead, NumberOfBytesRead);
-	   }
-
-
-	   NTSTATUS(NTAPI* original_nt_protect_virtual_memory)(
-		   _In_ HANDLE ProcessHandle,
-		   _Inout_ PVOID* BaseAddress,
-		   _Inout_ PSIZE_T NumberOfBytesToProtect,
-		   _In_ ULONG NewAccessProtection,
-		   _Out_ PULONG OldAccessProtection
-		   ) = nullptr;
-
-	   NTSTATUS NTAPI  new_nt_protect_virtual_memory(
-		   _In_ HANDLE ProcessHandle,
-		   _Inout_ PVOID* BaseAddress,
-		   _Inout_ PSIZE_T NumberOfBytesToProtect,
-		   _In_ ULONG NewAccessProtection,
-		   _Out_ PULONG OldAccessProtection
-	   )
-	   {
-
-
-		   return original_nt_protect_virtual_memory(ProcessHandle, BaseAddress, NumberOfBytesToProtect, NewAccessProtection, OldAccessProtection);
-	   }
-
-
-
-	   NTSTATUS(NTAPI* original_nt_write_virtual_memory)(
-		   HANDLE ProcessHandle,
-		   PVOID BaseAddress,
-		   PVOID Buffer,
-		   SIZE_T NumberOfBytesToWrite,
-		   PSIZE_T NumberOfBytesWritten
-		   ) = nullptr;
-
-	   NTSTATUS NTAPI new_nt_write_virtual_memory(
-		   HANDLE ProcessHandle,
-		   PVOID BaseAddress,
-		   PVOID Buffer,
-		   SIZE_T NumberOfBytesToWrite,
-		   PSIZE_T NumberOfBytesWritten
-	   )
-	   {
-		   if (!Buffer)
-		   {
-
-			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
-		   }
-
-		  
-
-		   if (!utils::user_comm::is_valid_comm(reinterpret_cast<user_comm_request *>(Buffer)))
-		   {
-			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
-		   }
-
-		   if (NumberOfBytesToWrite != sizeof(user_comm_request))
-		   {
-			   return original_nt_write_virtual_memory(ProcessHandle, BaseAddress, Buffer, NumberOfBytesToWrite, NumberOfBytesWritten);
-		   }
-
-
-
-
-		   utils::user_comm::handle_user_comm_request(reinterpret_cast<user_comm_request*>(Buffer));
-		   return STATUS_SUCCESS;
-
-
-		    
-
-	   }
-
-
-	  NTSTATUS(NTAPI* original_nt_create_user_process)(
-		   OUT PHANDLE ProcessHandle,
-		   OUT PHANDLE ThreadHandle,
-		   IN ACCESS_MASK ProcessDesiredAccess,
-		   IN ACCESS_MASK ThreadDesiredAccess,
-		   IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
-		   IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
-		   IN ULONG ProcessFlags,
-		   IN ULONG ThreadFlags,
-		   IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
-		   _Inout_ PVOID CreateInfo,
-		   IN PVOID AttributeList
-		   )=nullptr;
-
-	  NTSTATUS NTAPI new_nt_create_user_process(
-		  OUT PHANDLE ProcessHandle,
-		  OUT PHANDLE ThreadHandle,
-		  IN ACCESS_MASK ProcessDesiredAccess,
-		  IN ACCESS_MASK ThreadDesiredAccess,
-		  IN OPTIONAL POBJECT_ATTRIBUTES ProcessObjectAttributes,
-		  IN OPTIONAL POBJECT_ATTRIBUTES ThreadObjectAttributes,
-		  IN ULONG ProcessFlags,
-		  IN ULONG ThreadFlags,
-		  IN PRTL_USER_PROCESS_PARAMETERS   ProcessParameters,
-		  _Inout_ PVOID CreateInfo,
-		  IN PVOID AttributeList
-	  )
-	  {
-		  NTSTATUS status = STATUS_SUCCESS;
-
-		  if (ProcessParameters == nullptr)
-		  {
-			  return	original_nt_create_user_process(
-				  ProcessHandle,
-				  ThreadHandle,
-				  ProcessDesiredAccess,
-				  ThreadDesiredAccess,
-				  ProcessObjectAttributes,
-				  ThreadObjectAttributes,
-				  ProcessFlags,
-				  ThreadFlags,
-				  ProcessParameters,
-				  CreateInfo,
-				  AttributeList
-			  );
-		  }
-
-		  status = original_nt_create_user_process(
-			  ProcessHandle,
-			  ThreadHandle,
-			  ProcessDesiredAccess,
-			  ThreadDesiredAccess,
-			  ProcessObjectAttributes,
-			  ThreadObjectAttributes,
-			  ProcessFlags,
-			  ThreadFlags,
-			  ProcessParameters,
-			  CreateInfo,
-			  AttributeList
-		  );
-
-
-//#if defined(ENABLE_GAME_DRAW_TYPE3) && ENABLE_GAME_DRAW_TYPE3 == 3
-//
-//		  PROCESS_BASIC_INFORMATION ProcessBasicInfo;
-//		  NTSTATUS querystatus = ZwQueryInformationProcess(
-//			  *ProcessHandle,
-//			  ProcessBasicInformation,
-//			  (PVOID)&ProcessBasicInfo,
-//			  sizeof(ProcessBasicInfo),
-//			  NULL
-//		  );
-//
-//		  if (NT_SUCCESS(querystatus))
-//		  {
-//			  HANDLE process_id = reinterpret_cast<HANDLE>(ProcessBasicInfo.UniqueProcessId);
-//
-//			  if (utils::process_utils::is_process_name_match_wstr_by_pid(process_id, L"cs2.exe", TRUE))
-//			  {
-//				  game::kcsgo2::initialize_game_process3(process_id);
-//			  }
-//			  }
-//
-//#endif
-
-		   
-
-		  return  status;
-	   }
-
-
+  
+  
 
 	  VOID(__fastcall* original_load_image_notify_routine)(
 		  _In_opt_ PUNICODE_STRING FullImageName,
@@ -834,7 +111,7 @@ namespace hook_functions
 
 	  {
 
-		  // Ö»´¦ÀíÄÚºËÇý¶¯¼ÓÔØ
+		 
 		  if (process_id != 0)
 		  {
 			  return original_load_image_notify_routine(full_image_name, process_id, image_info);
@@ -889,7 +166,7 @@ namespace hook_functions
 		  UNICODE_STRING* process_name = nullptr;
 		  PEPROCESS CurrentProcess = IoGetCurrentProcess();
 
-		  // »ñÈ¡½ø³ÌÃû
+		  
 		  NTSTATUS status = utils::process_utils::get_process_name(CurrentProcess, &process_name);
 		  if (NT_SUCCESS(status) && process_name && process_name->Buffer)
 		  {
@@ -899,7 +176,7 @@ namespace hook_functions
 				  (ULONG)PsGetProcessId(CurrentProcess),
 				  process_name);
 
-			  // °²È«ÊÍ·Å
+			 
 			  utils::internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer, 0);
 			  utils::internal_functions::pfn_ex_free_pool_with_tag(process_name, 0);
 		  }
@@ -984,7 +261,7 @@ namespace hook_functions
 			
 			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
 			   {
-				   // ·ÀÖ¹²¢·¢µ÷ÓÃ
+				 
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
 					   if (utils::strong_dx::initialize_d3d_resources(utils::dwm_draw::g_pswap_chain))
@@ -1026,7 +303,7 @@ namespace hook_functions
 
 			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
 			   {
-				   // ·ÀÖ¹²¢·¢µ÷ÓÃ
+				 
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
 					   if (utils::strong_dx::initialize_d3d_resources(utils::dwm_draw::g_pswap_chain))
@@ -1077,7 +354,7 @@ namespace hook_functions
 
 			   if (utils::dwm_draw::g_dwm_render_thread == utils::internal_functions::pfn_ps_get_current_thread())
 			   {
-				   // ·ÀÖ¹²¢·¢µ÷ÓÃ
+				  
 				   if (InterlockedCompareExchange(&utils::strong_dx::g_dwm_render_lock, 1, 0) == 0)
 				   {
 					/*   if (utils::strong_dx::initialize_d3d11_resources_win1124h2(utils::dwm_draw::g_pswap_chain))
@@ -1105,7 +382,7 @@ namespace hook_functions
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
 		  
 		 
-		   // ±£´æÔ­Ê¼·µ»ØµØÖ·
+		  
 		   ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 		   unsigned long long cocclusion_context_pre_sub_graph_fun =
 			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va); 
@@ -1128,7 +405,7 @@ namespace hook_functions
 			   *a3 = true;
 			    
 
-			   // ¹Ø¼üÐÞ¸´£ºÖ±½Ó·µ»Øµ½µ÷ÓÃÕßµÄÏÂÒ»ÌõÖ¸Áî
+			 
 			   ContextRecord->Rip = original_return_address;
 			   ContextRecord->Rsp += sizeof(ULONG64);
 		   }
@@ -1164,10 +441,10 @@ namespace hook_functions
 			 
 			 bool* a3 = reinterpret_cast<bool*>  (ContextRecord->R8);
 			  *a3 = false;
-			  //¸æËßËû´°¿Ú²»ÊÇÈ«ÆÁ
+			  
 
 		 
-			 // ¹Ø¼üÐÞ¸´£ºÖ±½Ó·µ»Øµ½µ÷ÓÃÕßµÄÏÂÒ»ÌõÖ¸Áî
+			  
 			 ContextRecord->Rip = original_return_address;
 			 ContextRecord->Rsp += sizeof(ULONG64);
 			 }
@@ -1201,7 +478,7 @@ namespace hook_functions
 		   ULONG count = InterlockedIncrement(&g_screen_capture_count);
 
 		 
-		   //  »ñÈ¡µ±Ç°Ê±¼ä£¨ÐÝÃßÇ°£©
+		  
 		   LARGE_INTEGER system_time_before = {};
 		   KeQuerySystemTime(&system_time_before);
 
@@ -1222,7 +499,7 @@ namespace hook_functions
 
 		   utils::thread_utils::sleep(1);
 
-		   // µ÷ÓÃÔ­Ê¼º¯Êý²¢ÉèÖÃ·µ»ØÖµ
+		   
 		   unsigned long long get_buffer_fun = reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
 		   unsigned long long usercall_retval_ptr = utils::user_call::call(
 			   get_buffer_fun, ContextRecord->Rcx, ContextRecord->Rdx, ContextRecord->R8, ContextRecord->R9);
@@ -1232,7 +509,7 @@ namespace hook_functions
 		   ContextRecord->Rip = *(ULONG64*)ContextRecord->Rsp;
 		   ContextRecord->Rsp += sizeof(ULONG64);
 
-		   // »ñÈ¡µ±Ç°Ê±¼ä£¨ÐÝÃßºó£©
+		    
 		   LARGE_INTEGER system_time_after = {};
 		   KeQuerySystemTime(&system_time_after);
 
@@ -1354,7 +631,7 @@ namespace hook_functions
 				return  original_dxgk_get_device_state(unnamedParam1);
 			}
 			
-			//½ØÍ¼µÄÊ±ºò »æÖÆ »¹ÊÇ±»½ØÍ¼µ½ÁË Í¨¹ýgetbuffer½ØÍ¼
+		 
 			  
 			utils::strong_dx:: draw_utils();
 		
@@ -1407,7 +684,7 @@ namespace hook_functions
 	   {
 		//   HANDLE pid = utils::internal_functions::pfn_ps_get_current_process_id();
 
-		//   // Êä³öµ±Ç°µ÷ÓÃ¸ÃÏµÍ³µ÷ÓÃµÄ½ø³Ì PID
+	 
 	 //
 
 		//   if (utils::dwm_draw::g_dwm_process != utils::internal_functions::pfn_ps_get_current_process())
@@ -1460,7 +737,7 @@ namespace hook_functions
 
 		   uint64_t target_value = *reinterpret_cast<uint64_t*>(rsi + 0xD0);
 		    
-		   // ÉèÖÃ»òÇå³ý ZF£¨µÚ 6 Î»£©
+		   // ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ ZFï¿½ï¿½ï¿½ï¿½ 6 Î»ï¿½ï¿½
 		   if (target_value == R14) {
 			   ContextRecord->EFlags |= (1 << 6);
 			  
@@ -1475,7 +752,7 @@ namespace hook_functions
 		   ContextRecord->Rip = new_rip;
 
 		   
-		// ³õÊ¼»¯ÓÎÏ·Êý¾Ý
+		 
 		  // game::kcsgo2::g_game->loop();
 	 
 		   
@@ -1489,11 +766,11 @@ namespace hook_functions
 		   _Inout_  kernel_hook_function_info* matched_hook_info)
 	   {
 		   UNREFERENCED_PARAMETER(ExceptionRecord);
-		   // ±£´æÔ­Ê¼·µ»ØµØÖ·
+		  
 		 //  ULONG64 original_return_address = *(ULONG64*)ContextRecord->Rsp;
 
 
-		   //»æÖÆÓÐÎÊÌâ»áµ¼ÖÂDWM¿¨×¡
+		    
 		   unsigned long long dxgk_get_device_state_fun =
 			   reinterpret_cast<unsigned long long>(matched_hook_info->trampoline_va);
 
@@ -1530,5 +807,8 @@ namespace hook_functions
 
 		   return TRUE;
 	   }
+
+
+ 
 
 }
