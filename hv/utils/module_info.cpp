@@ -11,6 +11,31 @@ namespace utils
 		PVOID g_ci_base{};
 		ULONG64 g_ci_size{};
 
+		// Common user module global variable definitions
+		PVOID ntdll_base{};
+		ULONG64 ntdll_size{};
+		
+		PVOID kernel32_base{};
+		ULONG64 kernel32_size{};
+		
+		PVOID user32_base{};
+		ULONG64 user32_size{};
+		
+		PVOID gdi32_base{};
+		ULONG64 gdi32_size{};
+		
+		PVOID dwmcore_base{};
+		ULONG64 dwmcore_size{};
+		
+		PVOID dwmapi_base{};
+		ULONG64 dwmapi_size{};
+		
+		PVOID dxgi_base{};
+		ULONG64 dxgi_size{};
+		
+		PVOID d3dcompiler_47_base{};
+		ULONG64 d3dcompiler_47_size{};
+
 		BOOLEAN  get_driver_module_info(const char* module_name, ULONG64& module_size, PVOID& module_base_address)
 		{
 			ULONG required_bytes{};
@@ -69,7 +94,7 @@ namespace utils
 			{
 				return FALSE;
 			}
-			// »ñÈ¡ ci.dll
+			// ï¿½ï¿½È¡ ci.dll
 			if (get_driver_module_info("ci.dll", size, base_address)) {
 				g_ci_base = base_address;
 				g_ci_size = size;
@@ -293,7 +318,101 @@ namespace utils
 		}
 
 
+		NTSTATUS initialize_all_user_modules()
+		{
+			PEPROCESS process{};
+			NTSTATUS status = STATUS_SUCCESS;
+			
+			// Try to get module information from dwm.exe process
+			if (!process_utils::get_process_by_name(L"dwm.exe", &process))
+			{
+				LogError("Failed to find dwm.exe process");
+				return STATUS_NOT_FOUND;
+			}
 
-	 
+			LogInfo("Initializing common user modules from process PID: %d", 
+				PsGetProcessId(process));
+
+			// Initialize ntdll.dll
+			status = get_process_module_info(process, L"ntdll.dll", 
+				reinterpret_cast<unsigned long long*>(&ntdll_base), &ntdll_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("ntdll.dll: Base=0x%p, Size=0x%llX", ntdll_base, ntdll_size);
+			} else {
+				LogError("Failed to get ntdll.dll module info (0x%X)", status);
+			}
+
+			// Initialize kernel32.dll
+			status = get_process_module_info(process, L"kernel32.dll", 
+				reinterpret_cast<unsigned long long*>(&kernel32_base), &kernel32_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("kernel32.dll: Base=0x%p, Size=0x%llX", kernel32_base, kernel32_size);
+			} else {
+				LogError("Failed to get kernel32.dll module info (0x%X)", status);
+			}
+
+			// Initialize user32.dll
+			status = get_process_module_info(process, L"user32.dll", 
+				reinterpret_cast<unsigned long long*>(&user32_base), &user32_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("user32.dll: Base=0x%p, Size=0x%llX", user32_base, user32_size);
+			} else {
+				LogError("Failed to get user32.dll module info (0x%X)", status);
+			}
+
+			// Initialize gdi32.dll
+			status = get_process_module_info(process, L"gdi32.dll", 
+				reinterpret_cast<unsigned long long*>(&gdi32_base), &gdi32_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("gdi32.dll: Base=0x%p, Size=0x%llX", gdi32_base, gdi32_size);
+			} else {
+				LogError("Failed to get gdi32.dll module info (0x%X)", status);
+			}
+
+			// Initialize dwmcore.dll (DWM core module)
+			status = get_process_module_info(process, L"dwmcore.dll", 
+				reinterpret_cast<unsigned long long*>(&dwmcore_base), &dwmcore_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("dwmcore.dll: Base=0x%p, Size=0x%llX", dwmcore_base, dwmcore_size);
+			} else {
+				LogError("Failed to get dwmcore.dll module info (0x%X)", status);
+			}
+
+			// Initialize dwmapi.dll
+			status = get_process_module_info(process, L"dwmapi.dll", 
+				reinterpret_cast<unsigned long long*>(&dwmapi_base), &dwmapi_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("dwmapi.dll: Base=0x%p, Size=0x%llX", dwmapi_base, dwmapi_size);
+			} else {
+				LogError("Failed to get dwmapi.dll module info (0x%X)", status);
+			}
+
+			// Initialize dxgi.dll
+			status = get_process_module_info(process, L"dxgi.dll", 
+				reinterpret_cast<unsigned long long*>(&dxgi_base), &dxgi_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("dxgi.dll: Base=0x%p, Size=0x%llX", dxgi_base, dxgi_size);
+			} else {
+				LogError("Failed to get dxgi.dll module info (0x%X)", status);
+			}
+
+ 
+			// Initialize D3DCompiler_47.dll
+			status = get_process_module_info(process, L"d3dcompiler_47.dll", 
+				reinterpret_cast<unsigned long long*>(&d3dcompiler_47_base), &d3dcompiler_47_size);
+			if (NT_SUCCESS(status)) {
+				LogInfo("d3dcompiler_47.dll: Base=0x%p, Size=0x%llX", d3dcompiler_47_base, d3dcompiler_47_size);
+			} else {
+				LogError("Failed to get d3dcompiler_47.dll module info (0x%X)", status);
+			}
+
+			// Clean up process reference
+			if (process) {
+				internal_functions::pfn_ob_dereference_object(process);
+			}
+
+			LogInfo("User modules initialization completed");
+			return STATUS_SUCCESS;
+		}
 	}
 }

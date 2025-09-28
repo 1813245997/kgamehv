@@ -10,6 +10,7 @@ typedef struct _breakpoint_function_info
 	unsigned long long original_pa;
 	unsigned long long handler_pa;
 	unsigned __int8    original_byte;
+	unsigned __int8    instruction_size;
 	unsigned long long hit_count;
 	bool is_active;
  
@@ -49,6 +50,11 @@ namespace utils {
 		bool shadowbp_set_active(HANDLE process_id, void* target_address, bool enable);
 
 		bool shadowbp_find_address(
+			HANDLE process_id,
+			void* target_address,
+			breakpoint_function_info** out_bp_info);
+
+		bool shadowbp_find_tf_address(
 			HANDLE process_id,
 			void* target_address,
 			breakpoint_function_info** out_bp_info);

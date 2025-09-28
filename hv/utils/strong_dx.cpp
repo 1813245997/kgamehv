@@ -1078,30 +1078,7 @@ namespace utils
 
 			}
 
-			bool is_user_stack_in_dxgi_range()
-			{
-				PULONG64 user_rsp_ptr = get_user_rsp_ptr();
-				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(user_rsp_ptr))
-				{
-					return false;
-				}
-
-				unsigned long long user_rsp = *user_rsp_ptr;
-
-				// ÅĞ¶Ï user_rsp ÊÇ·ñÔÚ g_dxgi_base ·¶Î§ÄÚ
-				if (utils::dwm_draw::g_dxgi_base && utils::dwm_draw::g_dxgi_size)
-				{
-					unsigned long long base = utils::dwm_draw::g_dxgi_base;
-					unsigned long long limit = base + utils::dwm_draw::g_dxgi_size;
-
-					if (user_rsp >= base && user_rsp < limit)
-					{
-						return true;
-					}
-				}
-
-				return false;
-			}
+		 
 
 			void draw_utils()
 			{

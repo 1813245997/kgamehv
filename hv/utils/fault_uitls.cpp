@@ -62,7 +62,7 @@ namespace utils
 				return FALSE;
 			}
 
-		 
+			 
 			bp_info->hit_count++;
 
 			using handler_fn_t = NTSTATUS(__fastcall*)(_Inout_ PCONTEXT ContextRecord);
@@ -75,7 +75,7 @@ namespace utils
 			}
 
 			// Restore original byte
-			*(PUINT8)ExceptionRecord->ExceptionAddress = bp_info->original_byte;
+			*(PUINT8)bp_info->breakpoint_va = bp_info->original_byte;
 
 			// Enable single step for next instruction
 			ContextRecord->EFlags |= 0x100;
@@ -94,19 +94,19 @@ namespace utils
 			 
 			UNREFERENCED_PARAMETER(PreviousMode);
 
-			 
+			
 			breakpoint_function_info* bp_info = nullptr;
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
-
+			
 			// Find breakpoint info for current RIP (single step happens at next instruction)
-			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_address(
+			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_tf_address(
 				process_id, reinterpret_cast<PVOID>(ExceptionRecord->ExceptionAddress), &bp_info);
 
 			if (!found)
 			{
 				return FALSE;
 			}
-
+		 
 			// Restore INT3 instruction at the breakpoint address
 			*(PUINT8)bp_info->breakpoint_va = 0xCC;
 

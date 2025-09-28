@@ -94,9 +94,6 @@
     <ClInclude Include="utils\scanner_offset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\dwm_draw.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\strong_dx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -143,9 +140,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\ark_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="utils\window_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils\imgui_utils.h">
@@ -343,6 +337,9 @@
     <ClInclude Include="utils\hook_user_comm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\hook_dwm_drawing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -402,9 +399,6 @@
     <ClCompile Include="utils\scanner_offset.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\dwm_draw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="utils\strong_dx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -430,9 +424,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\ark_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils\window_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\imgui_utils.cpp">
@@ -553,6 +544,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\hook_user_comm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_dwm_drawing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

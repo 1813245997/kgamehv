@@ -127,6 +127,7 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="utils\hook_dwm_drawing.h" />
     <ClInclude Include="utils\hook_mem_protection.h" />
     <ClInclude Include="utils\hook_process_manager.h" />
     <ClInclude Include="utils\hook_user_comm.h" />
@@ -147,7 +148,6 @@
     <ClInclude Include="utils\call_back_utils.h" />
     <ClInclude Include="utils\cpu_registers.h" />
     <ClInclude Include="utils\data_types.h" />
-    <ClInclude Include="utils\dwm_draw.h" />
     <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\ark_utils.h" />
     <ClInclude Include="utils\font.h" />
@@ -204,7 +204,6 @@
     <ClInclude Include="utils\vfun_utils.h" />
     <ClInclude Include="utils\VMProtectDDK.h" />
     <ClInclude Include="utils\windows_version_enum.h" />
-    <ClInclude Include="utils\window_utils.h" />
     <ClInclude Include="utils\xor_crypt.h" />
     <ClInclude Include="vtx\allocators.h" />
     <ClInclude Include="vtx\compatibility_checks.h" />
@@ -237,13 +236,13 @@
   <ItemGroup>
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth.cpp" />
+    <ClCompile Include="utils\hook_dwm_drawing.cpp" />
     <ClCompile Include="utils\hook_mem_protection.cpp" />
     <ClCompile Include="utils\hook_process_manager.cpp" />
     <ClCompile Include="utils\hook_user_comm.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />
     <ClCompile Include="utils\driver_feature_init.cpp" />
-    <ClCompile Include="utils\dwm_draw.cpp" />
     <ClCompile Include="utils\imgui_utils.cpp" />
     <ClCompile Include="utils\LegacyRender.cpp" />
     <ClCompile Include="utils\fault_uitls.cpp" />
@@ -283,7 +282,6 @@
     <ClCompile Include="utils\user_call_utils.cpp" />
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
-    <ClCompile Include="utils\window_utils.cpp" />
     <ClCompile Include="vtx\compatibility_checks.cpp" />
     <ClCompile Include="vtx\gdt.cpp" />
     <ClCompile Include="vtx\ept.cpp" />

@@ -211,7 +211,7 @@ namespace utils
 			IN PEPROCESS process
 		)
 		{
-			DbgBreakPoint();
+			 
 			if (trim_address_space && process)
 			{
 				// TODO: Add cleanup logic here

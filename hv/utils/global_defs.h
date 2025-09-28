@@ -44,7 +44,7 @@
 #include "memory_utils.h"
 #include "process_utils.h"
 #include "feature_offset_initializer.h"
-#include "dwm_draw.h"
+ 
  
 #include "time_utils.h"
 #include "cpu_registers.h"
@@ -55,7 +55,6 @@
 #include "sstd_utils.h"
 #include "hidden_user_memory_list.h"
 #include "fault_uitls.h"
-#include "window_utils.h"
 #include "user_comm\user_comm_struct.h"
 #include "user_comm\user_comm.h"
 #include "auth.h"
@@ -69,6 +68,7 @@
 #include "hook_mem_protection.h"
 #include "hook_process_manager.h"
 #include "hook_user_comm.h"
+#include "hook_dwm_drawing.h"
 #include "memory_pool.h"
 #include "call_back_utils.h"
 #include "kernel_hide_utils.h"

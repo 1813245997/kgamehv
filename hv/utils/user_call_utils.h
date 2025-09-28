@@ -3,6 +3,14 @@ namespace utils
 {
 	namespace user_call
 	{
+
+
+		NTSTATUS initialize_user_call_utils();
+
+		NTSTATUS get_stack_offset();
+
+		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long* ki_call_user_mode2);
+		
 		unsigned long long call(
 			unsigned long long func_ptr,
 			unsigned long long arg1,
@@ -55,6 +63,20 @@ namespace utils
 			HMODULE module,
 			const char* func_name,
 			PVOID user_buffer);
+
+		NTSTATUS initialize_ki_call_user_mode2_callbacks();
+
+		NTSTATUS find_precall_address(
+			IN PEPROCESS process,
+			IN ULONG_PTR ntdll_base,
+			OUT ULONG_PTR* precall_addr_out);
+
+		NTSTATUS find_postcall_address(
+			IN PEPROCESS process,
+			IN ULONG_PTR user32_base,
+			OUT ULONG_PTR* postcall_addr_out);
+
+ 
 	 }
 
 }

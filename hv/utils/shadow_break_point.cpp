@@ -125,11 +125,14 @@ namespace utils {
 						 return false;
 
 					 }
+					 
 
+		
 					 func_info->handler_va = handler;
 					 func_info->original_va = target_address;
 					 func_info->original_pa = target_pa;
 					 func_info->breakpoint_va = &page_info->page_contents[page_offset];
+					 func_info->instruction_size = LDE(target_address, 64);
 					 func_info->is_active = true;
 					 RtlCopyMemory(&func_info->original_byte, target_address, 1);
 					 *reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC;// INT3
@@ -187,6 +190,7 @@ namespace utils {
 			 func_info->original_va = target_address;
 			 func_info->original_pa = target_pa;
 			 func_info->breakpoint_va = &page_info->page_contents[page_offset];
+			 func_info->instruction_size = LDE(target_address, 64);
 			 func_info->is_active = true;
 			 RtlCopyMemory(&func_info->original_byte, target_address, 1);
 			 *reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC;// INT3
@@ -545,7 +549,7 @@ namespace utils {
 			 void* target_address ,
 			 breakpoint_function_info** out_bp_info)
 		 {
-			 //ExAcquireFastMutex(&g_breakpoint_list_lock);
+			 
 
 			 LIST_ENTRY* page_list = &g_breakpoint_list;
 			 for (PLIST_ENTRY page_entry = page_list->Flink;
@@ -568,17 +572,55 @@ namespace utils {
 					 if (reinterpret_cast<void*>(target_address) == bp_info->original_va &&bp_info->is_active)
 					 {
 						 *out_bp_info = bp_info;   
-					//	 ExReleaseFastMutex(&g_breakpoint_list_lock);
+					 
 						 return true;
 					 }
 				 }
 			 }
 
-			// ExReleaseFastMutex(&g_breakpoint_list_lock);
+		 
 			 return false;
 		 }
 
- 	 
+		 bool shadowbp_find_tf_address(
+			 HANDLE process_id,
+			 void* target_address,
+			 breakpoint_function_info** out_bp_info)
+		 {
+			 
+
+
+			 LIST_ENTRY* page_list = &g_breakpoint_list;
+			 for (PLIST_ENTRY page_entry = page_list->Flink;
+				 page_entry != page_list;
+				 page_entry = page_entry->Flink)
+			 {
+				 auto* bp_page = CONTAINING_RECORD(page_entry, breakpoint_page_info, page_list);
+
+				 if (bp_page->process_id != process_id)
+				 {
+					 continue;
+				 }
+
+				 for (PLIST_ENTRY func_entry = bp_page->breakpoint_list.Flink;
+					 func_entry != &bp_page->breakpoint_list;
+					 func_entry = func_entry->Flink)
+				 {
+					 auto* bp_info = CONTAINING_RECORD(func_entry, breakpoint_function_info, list_entry);
+                    
+					  void* tf_address = reinterpret_cast<void*>(reinterpret_cast<uint64_t>(target_address) - bp_info->instruction_size);
+					 if (reinterpret_cast<void*>(tf_address) == bp_info->original_va &&bp_info->is_active)
+					 {
+						 *out_bp_info = bp_info;   
+					 
+						 return true;
+					 }
+				 }
+			 }
+
+			 
+			 return false;
+		 }
 
 
 

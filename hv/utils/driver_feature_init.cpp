@@ -17,13 +17,11 @@ namespace utils
 			SIZE_T image_size = {};
 
 			 
-			 
-			// 初始化日志系统
-			// 参数依次：日志目录，单文件最大大小（字节），最大日志文件数量
+		 
 			NTSTATUS status = logger::init_log_system(
-				L"\\SystemRoot\\Logs\\DriverLogs",  // 使用 SystemRoot
+				L"\\SystemRoot\\Logs\\DriverLogs",   
 				L"MyDriver",
-				1024 * 1024,  // 1MB
+				1024 * 1024*1,  
 				5
 			);
 			if (!NT_SUCCESS(status)) {
@@ -115,6 +113,24 @@ namespace utils
 
 			utils::hidden_user_memory::initialize_hidden_user_memory();
 
+			status = utils::module_info::initialize_all_user_modules();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize user modules (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("User modules initialized successfully.");
+
+			LogInfo("Initializing user call utils...");
+			status = utils::user_call::initialize_user_call_utils();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize user call utils (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("User call utils initialized successfully.");
 
 			LogInfo("Initializing hooks...");
 			status = hook_manager::initialize_all_hooks();
@@ -125,6 +141,16 @@ namespace utils
 				return status;
 			}
 			LogInfo("Hooks initialized successfully.");
+
+			LogInfo("Initializing dwm drawing...");
+			status = utils::hook_dwm_drawing::initialize_dwm_drawing();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize dwm drawing (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("Dwm drawing initialized successfully.");
 			    
 			LogInfo("Driver initialization complete.");
 			 	 
@@ -141,7 +167,7 @@ namespace utils
 		bool get_module_info_from_context(PVOID context, PVOID& module_base, SIZE_T& image_size)
 		{
 #if USE_MANUAL_MAP_MODE == 1
-			// 手动映射模式
+		 
 			module_base = context;
 
 			auto dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>(module_base);
@@ -156,7 +182,7 @@ namespace utils
 
 			image_size = nt_headers->OptionalHeader.SizeOfImage;
 #else
-			// 常规驱动对象模式
+			 
 			auto driver_object = static_cast<PDRIVER_OBJECT>(context);
 			module_base = driver_object->DriverStart;
 			image_size = driver_object->DriverSize;
