@@ -18,6 +18,7 @@ private:
 	ULONG g_MaxSize = 0;
 	CFontInfo g_FontList[MAX_CHAR_COUNT];
 	USHORT g_FontIdxList[MAX_CHAR_VALUE];
+	float g_ScaleFactor = 1.0f;  // 字体缩放因子
 public:
 	BOOL InitFont(const BYTE* file_base, ULONG file_size) {
 		UNREFERENCED_PARAMETER(file_size);
@@ -86,6 +87,45 @@ public:
 
 		if (idx != 0)
 			return &g_FontList[idx];
+		return 0;
+	}
+
+	// 设置字体缩放因子 (1.0f = 原始大小, 2.0f = 2倍大小, 0.5f = 一半大小)
+	void SetScale(float scale) {
+		if (scale > 0.1f && scale <= 5.0f) {  // 限制缩放范围，避免过小导致不清晰
+			g_ScaleFactor = scale;
+		} else if (scale <= 0.1f) {
+			g_ScaleFactor = 0.1f;  // 最小缩放限制
+		} else if (scale > 5.0f) {
+			g_ScaleFactor = 5.0f;  // 最大缩放限制
+		}
+	}
+
+	// 获取当前缩放因子
+	float GetScale() const {
+		return g_ScaleFactor;
+	}
+
+	// 获取缩放后的字体大小
+	int GetScaledSize() const {
+		return static_cast<int>(g_MaxSize * g_ScaleFactor);
+	}
+
+	// 获取缩放后的字符宽度
+	int GetScaledCharWidth(USHORT ch) const {
+		CFontInfo* chfont = const_cast<Font*>(this)->GetChar(ch);
+		if (chfont) {
+			return static_cast<int>((chfont->Width + chfont->Left) * g_ScaleFactor);
+		}
+		return 0;
+	}
+
+	// 获取缩放后的字符高度
+	int GetScaledCharHeight(USHORT ch) const {
+		CFontInfo* chfont = const_cast<Font*>(this)->GetChar(ch);
+		if (chfont) {
+			return static_cast<int>(chfont->Height * g_ScaleFactor);
+		}
 		return 0;
 	}
 };

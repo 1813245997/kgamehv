@@ -5,23 +5,7 @@
 bool g_pagehit[0x10000] = { };
 bool g_pagevaild[0x10000] = { };
 
-float roundf(float a) {
-	int ia = (int)a;
-	float xs = a - (float)ia;
-	if (xs >= .5f) {
-		return a + 1.f;
-	}
-	return a;
-}
-
-float myfloorf(float a) {
-	int ia = (int)a;
-	float xs = a - (float)ia;
-	if (xs > 0.f) {
-		return a + 1.f;
-	}
-	return a;
-}
+ 
 
 __forceinline FColor::FColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A)
 {
@@ -78,9 +62,9 @@ FColor  ByteRender::ColorBlend(FColor prev, FColor cur)
 	//mix colors
 	float mix[4];
 	mix[3] = 1 - (1 - added[3]) * (1 - base[3]); // alpha
-	mix[0] = roundf((added[0] * added[3] / mix[3]) + (base[0] * base[3] * (1 - added[3]) / mix[3])); // red
-	mix[1] = roundf((added[1] * added[3] / mix[3]) + (base[1] * base[3] * (1 - added[3]) / mix[3])); // green
-	mix[2] = roundf((added[2] * added[3] / mix[3]) + (base[2] * base[3] * (1 - added[3]) / mix[3])); // blue
+	mix[0] = utils::math::roundf((added[0] * added[3] / mix[3]) + (base[0] * base[3] * (1 - added[3]) / mix[3])); // red
+	mix[1] = utils::math::roundf((added[1] * added[3] / mix[3]) + (base[1] * base[3] * (1 - added[3]) / mix[3])); // green
+	mix[2] = utils::math::roundf((added[2] * added[3] / mix[3]) + (base[2] * base[3] * (1 - added[3]) / mix[3])); // blue
 
 	//set new pixel color
 	return FColor(mix[0], mix[1], mix[2], (mix[3] * 255.f));
@@ -167,7 +151,7 @@ void ByteRender::SetPixel(int x, int y, FColor color, int br  )
 	dx *= 255 / e2; dy *= 255 / e2; th = 255 * (th - 1);               /* scale values */
 
 	if (dx < dy) {                                               /* steep line */
-		x1 = (int)roundf((e2 + th / 2) / dy);                          /* start offset */
+		x1 = (int)utils::math::roundf((e2 + th / 2) / dy);                          /* start offset */
 		err = x1 * dy - th / 2;                  /* shift error value to offset width */
 		for (x0 -= x1 * sx; ; y0 += sy) {
 			SetPixel(x1 = x0, y0, clr, err);                  /* aliasing pre-pixel */
@@ -180,7 +164,7 @@ void ByteRender::SetPixel(int x, int y, FColor color, int br  )
 		}
 	}
 	else {                                                      /* flat line */
-		y1 = (int)roundf((e2 + th / 2) / dx);                          /* start offset */
+		y1 = (int)utils::math::roundf((e2 + th / 2) / dx);                          /* start offset */
 		err = y1 * dx - th / 2;                  /* shift error value to offset width */
 		for (y0 -= y1 * sy; ; x0 += sx) {
 			SetPixel(x0, y1 = y0, clr, err);                  /* aliasing pre-pixel */
@@ -211,7 +195,7 @@ void  ByteRender::plotEllipseRectWidth(int x0, int y0, int x1, int y1, float th,
 	if (x0 > x1) { x0 = x1; x1 += a; }        /* if called with swapped points */
 	if (y0 > y1) y0 = y1;                                  /* .. exchange them */
 	if (b2 <= 0) th = a;                                     /* filled ellipse */
-	e2 = th - myfloorf(th); th = x0 + th - e2;
+	e2 = th - utils::math::myfloorf(th); th = x0 + th - e2;
 	dx2 = 4 * (a2 + 2 * e2 - 1) * b2 * b2; dy2 = 4 * (b1 - 1) * a2 * a2; e2 = dx2 * e2;
 	y0 += (b + 1) >> 1; y1 = y0 - b1;                              /* starting pixel */
 	a = 8 * a * a; b1 = 8 * b * b; a2 = 8 * a2 * a2; b2 = 8 * b2 * b2;
@@ -261,32 +245,84 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 
 	CFontInfo* chfont = f->GetChar(ch);
 	if (chfont) {
-	/*	int w = chfont->Width;
-		int h = chfont->Height;*/
 		int top = chfont->Top;
-		int sz = (float)chfont->Size / 1.3f;
+		float scale = f->GetScale();  // 获取当前缩放因子
+		int sz = static_cast<int>((float)chfont->Size / 1.3f * scale);  // 应用缩放
+		
 		unsigned char* pstroke = chfont->bitmap + chfont->bitmap_sz * 3;
-		for (int i = 0; i < chfont->stroke_sz; i++) {
-			unsigned char* pc = (unsigned char*)pstroke + i * 3;
-			int x = pc[0];
-			int y = pc[1];
-			int a = pc[2];
-			FColor col = PM_BLACK;
-			col.RGBA[3] = static_cast<uint8_t>(a);
-			SetPixel(Start.x + x - 1, Start.y + y - top + sz - 1, col, 1);
+		
+		// 改进的缩放算法 - 支持亚像素渲染
+		if (scale >= 1.0f) {
+			// 放大：使用简单的像素复制
+			// 绘制描边 (stroke)
+			for (int i = 0; i < chfont->stroke_sz; i++) {
+				unsigned char* pc = (unsigned char*)pstroke + i * 3;
+				int x = static_cast<int>(pc[0] * scale);
+				int y = static_cast<int>(pc[1] * scale);
+				int a = pc[2];
+				FColor col = PM_BLACK;
+				col.RGBA[3] = static_cast<uint8_t>(a);
+				
+				// 绘制多个像素以实现平滑缩放
+				for (int dx = 0; dx < static_cast<int>(scale); dx++) {
+					for (int dy = 0; dy < static_cast<int>(scale); dy++) {
+						SetPixel(Start.x + x + dx - 1, Start.y + y + dy - top + sz - 1, col, 1);
+					}
+				}
+			}
+
+			// 绘制字符主体
+			for (int i = 0; i < chfont->bitmap_sz; i++) {
+				unsigned char* pc = (unsigned char*)chfont->bitmap + i * 3;
+				int x = static_cast<int>(pc[0] * scale);
+				int y = static_cast<int>(pc[1] * scale);
+				int a = pc[2];
+				FColor col = Color;
+				col.RGBA[3] = static_cast<uint8_t>(a);
+				
+				// 绘制多个像素以实现平滑缩放
+				for (int dx = 0; dx < static_cast<int>(scale); dx++) {
+					for (int dy = 0; dy < static_cast<int>(scale); dy++) {
+						SetPixel(Start.x + x + dx, Start.y + y + dy - top + sz, col, 1);
+					}
+				}
+			}
+		} else {
+			// 缩小：使用采样算法提高清晰度
+			// 绘制描边 (stroke) - 使用采样
+			for (int i = 0; i < chfont->stroke_sz; i++) {
+				unsigned char* pc = (unsigned char*)pstroke + i * 3;
+				float x = pc[0] * scale;
+				float y = pc[1] * scale;
+				int a = pc[2];
+				
+				// 使用四舍五入确保像素对齐
+				int pixel_x = static_cast<int>(x + 0.5f);
+				int pixel_y = static_cast<int>(y + 0.5f);
+				
+				FColor col = PM_BLACK;
+				col.RGBA[3] = static_cast<uint8_t>(a);
+				SetPixel(Start.x + pixel_x - 1, Start.y + pixel_y - top + sz - 1, col, 1);
+			}
+
+			// 绘制字符主体 - 使用采样
+			for (int i = 0; i < chfont->bitmap_sz; i++) {
+				unsigned char* pc = (unsigned char*)chfont->bitmap + i * 3;
+				float x = pc[0] * scale;
+				float y = pc[1] * scale;
+				int a = pc[2];
+				
+				// 使用四舍五入确保像素对齐
+				int pixel_x = static_cast<int>(x + 0.5f);
+				int pixel_y = static_cast<int>(y + 0.5f);
+				
+				FColor col = Color;
+				col.RGBA[3] = static_cast<uint8_t>(a);
+				SetPixel(Start.x + pixel_x, Start.y + pixel_y - top + sz, col, 1);
+			}
 		}
 
-		for (int i = 0; i < chfont->bitmap_sz; i++) {
-			unsigned char* pc = (unsigned char*)chfont->bitmap + i * 3;
-			int x = pc[0];
-			int y = pc[1];
-			int a = pc[2];
-			FColor col = Color;
-			col.RGBA[3] = static_cast<uint8_t>(a);
-			SetPixel(Start.x + x, Start.y + y - top + sz, col, 1);
-		}
-
-		return chfont->Width + chfont->Left;
+		return static_cast<int>((chfont->Width + chfont->Left) * scale);  // 返回缩放后的宽度
 	}
 	return 0;
 }
@@ -320,11 +356,11 @@ void ByteRender::String(class Font* f, const Vector2& Start, LPCWSTR str, const 
 void ByteRender::StringA(class Font* f, const Vector2& Start, LPCSTR str, const FColor& Color  ) {
 	if (!str) return;
 
-	// ���㳤�ȣ���� utf-8 ʵ��ת������жϣ�
+	 
 	size_t len = strlen(str);
 	if (len == 0) return;
 
-	// UTF-8 �� Unicode�����һ�� utf-8 �ַ�����ת��һ�� WCHAR�����ع��ƣ�
+	 
 	WCHAR* wstr = (WCHAR*)utils::internal_functions::pfn_ex_allocate_pool_with_tag (NonPagedPool, (len + 1) * sizeof(WCHAR), 'rtsW');   
 	if (!wstr) return;
 
@@ -406,7 +442,7 @@ int ByteRender::CharHeight(class Font* f) {
   }
 
   void ByteRender::DrawCircle(float center_x, float center_y, int radius, const FColor& color, int Thickness ) {
-	  // ���������뾶�ͺ������ȡ�����ڻ��Ʊ߽��
+	 
 	  float half_extent = (EvenNumber(radius) + Thickness) / 2;
 
 	  float left = center_x - half_extent;

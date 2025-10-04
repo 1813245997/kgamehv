@@ -96,9 +96,9 @@ namespace utils
 			   {
 				   memory::mem_copy(reinterpret_cast<PVOID>(g_user_buffer), (PVOID)&ID3D11DeviceVar, sizeof(ID3D11DeviceVar));
 
-				   PVOID get_device_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 7);
+				   auto  get_device_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 7);
 				   auto usercall_retval_ptr = user_call::call(
-					   reinterpret_cast<unsigned long long>(get_device_fun),
+					  get_device_fun ,
 					   reinterpret_cast<unsigned long long>(g_swap_chain),
 					   g_user_buffer,
 					   g_user_buffer + sizeof(ID3D11DeviceVar),
@@ -113,9 +113,9 @@ namespace utils
 
 			   if (!g_pd3dDeviceContext)
 			   {
-				   PVOID get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pd3dDevice, 40);
+				   auto  get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pd3dDevice, 40);
 				   user_call::call(
-					   reinterpret_cast<unsigned long long>(get_immediate_context_fun),
+					   get_immediate_context_fun ,
 					   reinterpret_cast<unsigned long long>(g_pd3dDevice),
 					   g_user_buffer,
 					   0,
@@ -128,9 +128,9 @@ namespace utils
 			   {
 				   memory::mem_copy((PVOID)g_user_buffer, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
 
-				   PVOID get_buffer_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 9);
+				   auto get_buffer_fun = utils::vfun_utils::get_vfunc(g_swap_chain, 9);
 				   auto usercall_retval_ptr = user_call::call(
-					   reinterpret_cast<unsigned long long>(get_buffer_fun),
+					    get_buffer_fun ,
 					   reinterpret_cast<unsigned long long>(g_swap_chain),
 					   0,
 					   g_user_buffer,
@@ -180,8 +180,8 @@ namespace utils
 						   g_Surface = *(PVOID*)(g_user_buffer + sizeof(ID3D11Texture2DVar));*/
 
 						   // 获取 Surface 描述
-			   auto get_desc_fun = reinterpret_cast<unsigned long long>(
-				   utils::vfun_utils::get_vfunc(g_Surface, 10));
+			   auto get_desc_fun =  
+				   utils::vfun_utils::get_vfunc(g_Surface, 10) ;
 
 			   user_call::call(
 				   get_desc_fun,
@@ -200,8 +200,8 @@ namespace utils
 			   memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
 
 			   // 创建 staging texture
-			   auto create_texture2D_fun = reinterpret_cast<unsigned long long>(
-				   utils::vfun_utils::get_vfunc(g_pd3dDevice, 5));
+			   auto create_texture2D_fun = 
+				   utils::vfun_utils::get_vfunc(g_pd3dDevice, 5) ;
 
 			   memory::mem_zero((PVOID)g_texture_buffer, 0x4000, 0);
 			   usercall_retval_ptr = user_call::call(
@@ -225,8 +225,8 @@ namespace utils
 			   }
 
 			   // 拷贝屏幕资源到 staging texture
-			   auto copy_resource_fun = reinterpret_cast<unsigned long long>(
-				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 47));
+			   auto copy_resource_fun =  
+				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 47) ;
 
 			   user_call::call(
 				   copy_resource_fun,
@@ -237,8 +237,8 @@ namespace utils
 			   );
 
 			   // Map staging texture 读写
-			   auto map_fun = reinterpret_cast<unsigned long long>(
-				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 14));
+			   auto map_fun =  
+				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 14) ;
 
 			   usercall_retval_ptr = user_call::call6(
 				   map_fun,
@@ -265,8 +265,8 @@ namespace utils
 			   }
 
 			   // Unmap
-			   auto unmap_fun = reinterpret_cast<unsigned long long>(
-				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 15));
+			   auto unmap_fun =  
+				   utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 15) ;
 
 			   user_call::call(
 				   unmap_fun,
@@ -338,9 +338,9 @@ namespace utils
 
 				if (!g_pd3dDeviceContext)
 				{
-					PVOID get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pd3dDevice, 40);
+					auto get_immediate_context_fun = utils::vfun_utils::get_vfunc(g_pd3dDevice, 40);
 					user_call::call(
-						reinterpret_cast<unsigned long long>(get_immediate_context_fun),
+						 get_immediate_context_fun ,
 						reinterpret_cast<unsigned long long>(g_pd3dDevice),
 						g_user_buffer,
 						0,
@@ -456,8 +456,8 @@ namespace utils
 
 
 			// 获取 Surface 描述
-			auto get_desc_fun = reinterpret_cast<unsigned long long>(
-				utils::vfun_utils::get_vfunc(g_Surface, 10));
+			auto get_desc_fun = 
+				utils::vfun_utils::get_vfunc(g_Surface, 10) ;
 
 			user_call::call(
 				get_desc_fun,
@@ -476,8 +476,8 @@ namespace utils
 			memory::mem_copy((PVOID)g_user_buffer, &SDesc, sizeof(SDesc));
 
 			// 创建 staging texture
-			auto create_texture2D_fun = reinterpret_cast<unsigned long long>(
-				utils::vfun_utils::get_vfunc(g_pd3dDevice, 5));
+			auto create_texture2D_fun =  
+				utils::vfun_utils::get_vfunc(g_pd3dDevice, 5) ;
 
 			memory::mem_zero((PVOID)g_texture_buffer, 0x4000, 0);
 			usercall_retval_ptr = user_call::call(
@@ -501,8 +501,8 @@ namespace utils
 			}
 
 			// 拷贝屏幕资源到 staging texture
-			auto copy_resource_fun = reinterpret_cast<unsigned long long>(
-				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 47));
+			auto copy_resource_fun =  
+				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 47) ;
 
 			user_call::call(
 				copy_resource_fun,
@@ -513,8 +513,8 @@ namespace utils
 			);
 
 			// Map staging texture 读写
-			auto map_fun = reinterpret_cast<unsigned long long>(
-				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 14));
+			auto map_fun =  
+				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 14) ;
 
 			usercall_retval_ptr = user_call::call6(
 				map_fun,
@@ -542,8 +542,8 @@ namespace utils
 			}
 
 			// Unmap
-			auto unmap_fun = reinterpret_cast<unsigned long long>(
-				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 15));
+			auto unmap_fun =  
+				utils::vfun_utils::get_vfunc(g_pd3dDeviceContext, 15) ;
 
 			user_call::call(
 				unmap_fun,

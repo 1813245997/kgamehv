@@ -1,21 +1,31 @@
 #include "../utils/global_defs.h"
 #include "hook_dwm_drawing.h"
 
+// Global variables
+bool g_dwm_hooks_initialized = false;
+bool g_kernel_dxresources_initialized = false;
+
+PEPROCESS g_dwm_process{};
+
+unsigned long long g_cocclusion_context_post_sub_graph{};
+unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
+unsigned long long g_cdxgi_swapchain_dwm_legacy_present_dwm{};
+unsigned long long g_cddisplay_render_target_present{};
+
+ 
+ 
+
 namespace utils
 {
     namespace hook_dwm_drawing
     {
      
 
-        // Global variables
-        static bool g_dwm_hooks_initialized = false;
-        static bool g_kernel_imgui_initialized = false;
- 
-        PEPROCESS g_dwm_process{};
-        unsigned long long g_cocclusion_context_post_sub_graph{};
-        unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
-        unsigned long long g_cdxgi_swapchain_dwm_legacy_present_dwm{};
-        unsigned long long g_cddisplay_render_target_present{};
+
+
+   
+
+
 
         NTSTATUS initialize_dwm_drawing()
         {
@@ -27,6 +37,14 @@ namespace utils
             // Since these are internal functions, need to use pattern scanning or other methods
 
             LogInfo("DWM hooks initialization started");
+        
+            status = utils::render::initialize_font();
+            if (!NT_SUCCESS(status))
+            {
+                LogError("Failed to initialize font (0x%X).", status);
+                return status;
+            }
+            LogInfo("Font initialized successfully.");
 
             status = get_dwm_process(&g_dwm_process);
             if (!NT_SUCCESS(status))
@@ -35,7 +53,9 @@ namespace utils
                 return status;
             }
             LogInfo("DWM process found successfully.");
-        
+            
+            
+
              status = find_hook_dwm_drawing();
             if (!NT_SUCCESS(status))
             {
@@ -55,6 +75,8 @@ namespace utils
 
             return STATUS_SUCCESS;
         }
+
+ 
 
         NTSTATUS find_hook_dwm_drawing()
         {
@@ -194,28 +216,66 @@ namespace utils
         NTSTATUS handle_cocclusion_context_post_sub_graph(_Inout_ PCONTEXT ContextRecord)
         {
 
-            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cocclusion_context_post_sub_graph\n");
+           // DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cocclusion_context_post_sub_graph\n");
             return STATUS_SUCCESS;
         }
 
         NTSTATUS handle_cdxgi_swapchain_present_multiplane_overlay(_Inout_ PCONTEXT ContextRecord)
         {
-            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cdxgi_swapchain_present_multiplane_overlay\n");
+           
+           // draw_every_thing(reinterpret_cast<PVOID>(ContextRecord->Rcx));
+           // DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cdxgi_swapchain_present_multiplane_overlay\n");
             return STATUS_SUCCESS;
         }   
 
         NTSTATUS handle_cdxgi_swapchain_dwm_legacy_present_dwm(_Inout_ PCONTEXT ContextRecord)
         {
-            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cdxgi_swapchain_dwm_legacy_present_dwm\n");
+            
+             draw_every_thing(reinterpret_cast<PVOID>(ContextRecord->Rcx));
+           // DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cdxgi_swapchain_dwm_legacy_present_dwm\n");
             return STATUS_SUCCESS;
         }
 
         NTSTATUS handle_cddisplay_render_target_present(_Inout_ PCONTEXT ContextRecord)
         {
-            DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cddisplay_render_target_present\n");
+            
+            //draw_every_thing(reinterpret_cast<PVOID>(ContextRecord->Rcx));
+            //DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cddisplay_render_target_present\n");
             return STATUS_SUCCESS;
         }
-        
-        
+     
+
+
+        NTSTATUS draw_every_thing(PVOID p_dxgi_swapchain  )
+        {
+           //存在切换分辨率失效的问题
+
+            if (!p_dxgi_swapchain)
+            {
+                return STATUS_INVALID_PARAMETER;
+            }
+            
+            
+            if (!g_kernel_dxresources_initialized)
+            {
+               
+            
+                if (!NT_SUCCESS(utils::render::initialize_dx_resources(p_dxgi_swapchain)))
+                {
+                    return STATUS_UNSUCCESSFUL;
+                }
+                g_kernel_dxresources_initialized = true;
+            }
+            else
+            {
+                utils::render::render_every_thing(p_dxgi_swapchain);
+
+            }
+
+            
+            return STATUS_SUCCESS;
+        }
+
+
     }
 }

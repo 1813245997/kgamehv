@@ -132,6 +132,16 @@ namespace utils
 			}
 			LogInfo("User call utils initialized successfully.");
 
+			LogInfo("Initializing game cheat...");
+			status = game::game_cheat::initialize_game_cheat(GameType::DeltaForce);
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize game cheat (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("Game cheat initialized successfully.");
+
 			LogInfo("Initializing hooks...");
 			status = hook_manager::initialize_all_hooks();
 			if (!NT_SUCCESS(status))

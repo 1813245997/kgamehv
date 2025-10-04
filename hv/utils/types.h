@@ -10,4 +10,5 @@ typedef unsigned char BYTE;
 typedef unsigned long DWORD;
 typedef unsigned __int64 DWORD64;
 
+typedef long  HRESULT;
  

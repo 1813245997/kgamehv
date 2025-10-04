@@ -11,6 +11,9 @@ namespace utils
 		unsigned long long g_ki_call_user_mode2{};
 		unsigned long long g_precall_addr{};
 		unsigned long long g_postcall_addr{};
+
+		unsigned long long g_d3dcompile_fun{};
+		unsigned long long g_gettickcount64_fun{};
 		NTSTATUS initialize_user_call_utils()
 		{
 			NTSTATUS status =STATUS_SUCCESS;
@@ -37,12 +40,72 @@ namespace utils
 			}
 			LogInfo("initialize_ki_call_user_mode2_callbacks SUCCESS");
 
+			status = initialize_all_user_functions();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("initialize_all_user_functions failed with status: 0x%X", status);
+				return status;
+			}
+			LogInfo("initialize_all_user_functions SUCCESS");
+
 			LogInfo("initialize_user_call_utils SUCCESS");
 
 		
 			return STATUS_SUCCESS;
 		}
 
+		NTSTATUS initialize_all_user_functions()
+		{
+			NTSTATUS status = STATUS_SUCCESS;
+			
+			PEPROCESS process{};
+			if (!process_utils::get_process_by_name(L"dwm.exe", &process))
+			{
+				LogError("Failed to find dwm.exe process");
+				return STATUS_NOT_FOUND;
+			}
+
+			KAPC_STATE apc_state{};
+			
+			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+
+
+			unsigned long long addr =scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(module_info::d3dcompiler_47_base),
+				"D3DCompile"
+			);
+
+			if (!addr)
+			{
+				LogError("Failed to find D3DCompile function");
+				goto exit;
+			}
+
+			g_d3dcompile_fun = addr;
+			LogInfo("D3DCompile function found successfully.0x%llX", addr);
+
+			addr =scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(module_info::kernel32_base),
+				"GetTickCount64"
+			);
+			if (!addr)
+			{
+				LogError("Failed to find GetTickCount64 function");
+				goto exit;
+			}
+
+			g_gettickcount64_fun = addr;
+			LogInfo("GetTickCount64 function found successfully.0x%llX", addr);
+
+
+			exit:
+			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
+			utils::internal_functions::pfn_ob_dereference_object(process);
+
+
+			 
+			return status;
+		}
   
 		NTSTATUS get_stack_offset()
 		{
@@ -228,7 +291,51 @@ namespace utils
 			return ret;
 		}
 
+		unsigned long long call4(unsigned long long func_ptr, unsigned long long arg1, unsigned long long arg2, unsigned long long arg3, unsigned long long arg4)
+		{
+ 
 
+			void* cdata[9]{};
+			auto new_user_rsp = thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
+
+			*(unsigned long long*)(new_user_rsp + 0x20 + (0 * 8)) = arg1;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (1 * 8)) = arg2;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (2 * 8)) = arg3;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (3 * 8)) = arg4;
+
+			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
+
+ 
+			return ret;
+		}
+
+		unsigned long long call5(
+			unsigned long long func_ptr,
+			unsigned long long arg1,
+			unsigned long long arg2,
+			unsigned long long arg3,
+			unsigned long long arg4,
+			unsigned long long arg5
+		)
+		{
+ 
+
+
+			void* cdata[9]{};
+			auto new_user_rsp = thread_utils::get_user_stack_ptr() - 0x98 & 0xFFFFFFFFFFFFFFF0;
+
+			*(unsigned long long*)(new_user_rsp + 0x20 + (0 * 8)) = arg1;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (1 * 8)) = arg2;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (2 * 8)) = arg3;
+			*(unsigned long long*)(new_user_rsp + 0x20 + (3 * 8)) = arg4;
+			*(unsigned long long*)(new_user_rsp + 0x70 + (0 * 8)) = arg5;
+			 
+
+			unsigned long long  ret = call2(func_ptr, reinterpret_cast<char*> (new_user_rsp), cdata);
+
+		 
+			return ret;
+		}
 		 
 
 

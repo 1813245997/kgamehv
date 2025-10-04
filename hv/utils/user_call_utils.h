@@ -5,11 +5,19 @@ namespace utils
 	{
 
 
+		extern unsigned long long g_d3dcompile_fun;
+		extern unsigned long long g_gettickcount64_fun;
+		 
+
 		NTSTATUS initialize_user_call_utils();
+
+		NTSTATUS initialize_all_user_functions();
 
 		NTSTATUS get_stack_offset();
 
 		NTSTATUS   initialize_ki_call_user_mode2(OUT unsigned long long* ki_call_user_mode2);
+
+
 		
 		unsigned long long call(
 			unsigned long long func_ptr,
@@ -17,6 +25,25 @@ namespace utils
 			unsigned long long arg2,
 			unsigned long long arg3,
 			unsigned long long arg4);
+
+		unsigned long long call4(
+			unsigned long long func_ptr,
+			unsigned long long arg1,
+			unsigned long long arg2,
+			unsigned long long arg3,
+			unsigned long long arg4
+			 
+		);
+
+
+		unsigned long long call5(
+			unsigned long long func_ptr,
+			unsigned long long arg1,
+			unsigned long long arg2,
+			unsigned long long arg3,
+			unsigned long long arg4,
+			unsigned long long arg5 
+			 );
 
 		unsigned long long call6(
 			unsigned long long func_ptr,

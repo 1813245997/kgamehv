@@ -142,9 +142,6 @@
     <ClInclude Include="utils\ark_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="utils\imgui_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="utils\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -340,6 +337,15 @@
     <ClInclude Include="utils\hook_dwm_drawing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\render.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game\game_cheat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="game\delta_force.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -424,9 +430,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\ark_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utils\imgui_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\LegacyRender.cpp">
@@ -547,6 +550,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\hook_dwm_drawing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\render.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game\game_cheat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game\delta_force.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

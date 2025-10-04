@@ -46,6 +46,7 @@
 #include "feature_offset_initializer.h"
  
  
+
 #include "time_utils.h"
 #include "cpu_registers.h"
 #include "strong_dx.h"
@@ -69,6 +70,7 @@
 #include "hook_process_manager.h"
 #include "hook_user_comm.h"
 #include "hook_dwm_drawing.h"
+#include "render.h"
 #include "memory_pool.h"
 #include "call_back_utils.h"
 #include "kernel_hide_utils.h"
@@ -76,9 +78,13 @@
 #include "font.h"
 #include "pmcol.h"
 #include "dx11.h"
+#include "fontdata.h"
 #include "LegacyRender.h"
+#include "../game/delta_force.h"
+#include "../game/game_cheat.h"
+ 
+ 
 #include "VMProtectDDK.h"
-
 #include "../LDE64.h"
 #include "../ia32/ia32.hpp"
 #include "../vtx/hv_defs.h"
