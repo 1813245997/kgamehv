@@ -246,15 +246,14 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 	CFontInfo* chfont = f->GetChar(ch);
 	if (chfont) {
 		int top = chfont->Top;
-		float scale = f->GetScale();  // 获取当前缩放因子
-		int sz = static_cast<int>((float)chfont->Size / 1.3f * scale);  // 应用缩放
+		float scale = f->GetScale();  
+		int sz = static_cast<int>((float)chfont->Size / 1.3f * scale);  
 		
 		unsigned char* pstroke = chfont->bitmap + chfont->bitmap_sz * 3;
 		
-		// 改进的缩放算法 - 支持亚像素渲染
+		 
 		if (scale >= 1.0f) {
-			// 放大：使用简单的像素复制
-			// 绘制描边 (stroke)
+			 
 			for (int i = 0; i < chfont->stroke_sz; i++) {
 				unsigned char* pc = (unsigned char*)pstroke + i * 3;
 				int x = static_cast<int>(pc[0] * scale);
@@ -263,7 +262,7 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 				FColor col = PM_BLACK;
 				col.RGBA[3] = static_cast<uint8_t>(a);
 				
-				// 绘制多个像素以实现平滑缩放
+				 
 				for (int dx = 0; dx < static_cast<int>(scale); dx++) {
 					for (int dy = 0; dy < static_cast<int>(scale); dy++) {
 						SetPixel(Start.x + x + dx - 1, Start.y + y + dy - top + sz - 1, col, 1);
@@ -271,7 +270,7 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 				}
 			}
 
-			// 绘制字符主体
+			 
 			for (int i = 0; i < chfont->bitmap_sz; i++) {
 				unsigned char* pc = (unsigned char*)chfont->bitmap + i * 3;
 				int x = static_cast<int>(pc[0] * scale);
@@ -280,7 +279,7 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 				FColor col = Color;
 				col.RGBA[3] = static_cast<uint8_t>(a);
 				
-				// 绘制多个像素以实现平滑缩放
+				 
 				for (int dx = 0; dx < static_cast<int>(scale); dx++) {
 					for (int dy = 0; dy < static_cast<int>(scale); dy++) {
 						SetPixel(Start.x + x + dx, Start.y + y + dy - top + sz, col, 1);
@@ -288,15 +287,14 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 				}
 			}
 		} else {
-			// 缩小：使用采样算法提高清晰度
-			// 绘制描边 (stroke) - 使用采样
+			 
 			for (int i = 0; i < chfont->stroke_sz; i++) {
 				unsigned char* pc = (unsigned char*)pstroke + i * 3;
 				float x = pc[0] * scale;
 				float y = pc[1] * scale;
 				int a = pc[2];
 				
-				// 使用四舍五入确保像素对齐
+				 
 				int pixel_x = static_cast<int>(x + 0.5f);
 				int pixel_y = static_cast<int>(y + 0.5f);
 				
@@ -305,14 +303,14 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 				SetPixel(Start.x + pixel_x - 1, Start.y + pixel_y - top + sz - 1, col, 1);
 			}
 
-			// 绘制字符主体 - 使用采样
+			 
 			for (int i = 0; i < chfont->bitmap_sz; i++) {
 				unsigned char* pc = (unsigned char*)chfont->bitmap + i * 3;
 				float x = pc[0] * scale;
 				float y = pc[1] * scale;
 				int a = pc[2];
 				
-				// 使用四舍五入确保像素对齐
+				 
 				int pixel_x = static_cast<int>(x + 0.5f);
 				int pixel_y = static_cast<int>(y + 0.5f);
 				
@@ -322,7 +320,7 @@ int  ByteRender::DrawChar(class Font* f, const Vector2& Start, wchar_t ch, const
 			}
 		}
 
-		return static_cast<int>((chfont->Width + chfont->Left) * scale);  // 返回缩放后的宽度
+		return static_cast<int>((chfont->Width + chfont->Left) * scale);   
 	}
 	return 0;
 }

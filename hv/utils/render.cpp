@@ -14,7 +14,7 @@ namespace utils
         PVOID g_pRasterizerState{};
         Font* g_Font = nullptr;
         
-        // 交换链变化检测
+       
         static PVOID g_last_swapchain = nullptr;
         static bool g_need_reinit = false;
 		HRESULT(__fastcall* pfn_get_dxgi_device)(PVOID p_dxgi_swapchain, _In_  REFIID riid, _Out_ void** ppDevice);
@@ -34,14 +34,14 @@ namespace utils
                 return STATUS_UNSUCCESSFUL;
             }
             
-            // 设置默认字体大小 (1.0f = 原始大小)
+           
             g_Font->SetScale(1.0f);
             
             
             return STATUS_SUCCESS;
         }
 
-        // 设置字体大小 (1.0f = 原始大小, 2.0f = 2倍大小, 0.5f = 一半大小)
+      
         NTSTATUS set_font_size(float scale)
         {
             if (!g_Font)
@@ -54,7 +54,7 @@ namespace utils
             return STATUS_SUCCESS;
         }
 
-        // 获取当前字体大小
+         
         float get_font_size()
         {
             if (!g_Font)
@@ -65,26 +65,26 @@ namespace utils
             return g_Font->GetScale();
         }
 
-        // 根据屏幕分辨率智能推荐字体大小
+      
         float get_recommended_font_size(int screen_width, int screen_height)
         {
-            // 基于屏幕分辨率的智能字体大小推荐
+            
             if (screen_width >= 3840) {
-                return 2.0f;  // 4K显示器
+                return 2.0f;   
             } else if (screen_width >= 2560) {
-                return 1.5f;  // 2K显示器
+                return 1.5f;  
             } else if (screen_width >= 1920) {
-                return 1.2f;  // 1080p显示器
+                return 1.2f;  
             } else if (screen_width >= 1366) {
-                return 1.0f;  // 标准笔记本分辨率
+                return 1.0f;  
             } else if (screen_width >= 1024) {
-                return 0.8f;  // 小屏幕
+                return 0.8f;   
             } else {
-                return 0.6f;  // 极小屏幕
+                return 0.6f;  
             }
         }
 
-        // 设置智能字体大小
+        
         NTSTATUS set_smart_font_size(int screen_width, int screen_height)
         {
             if (!g_Font)
@@ -98,7 +98,7 @@ namespace utils
             return STATUS_SUCCESS;
         }
 
-        // 检测交换链是否发生变化
+        
         bool check_swapchain_changed(PVOID p_dxgi_swapchain)
         {
             if (p_dxgi_swapchain != g_last_swapchain)
@@ -111,27 +111,26 @@ namespace utils
             return false;
         }
 
-        // 清理旧的DirectX资源
+        
         NTSTATUS cleanup_dx_resources()
         {
             LogInfo("Cleaning up DirectX resources...");
             
-            // 释放渲染目标视图
+            
             if (g_pRenderTargetView)
             {
                 utils::vfun_utils::release(g_pRenderTargetView);
                 g_pRenderTargetView = nullptr;
             }
             
-            // 释放表面
+             
             if (g_pSurface)
             {
                 utils::vfun_utils::release(g_pSurface);
                 g_pSurface = nullptr;
             }
             
-            // 注意：不要释放设备和上下文，它们可能被其他组件使用
-            // 只重置相关指针
+           
             g_pD3DXDeviceCtx = nullptr;
             g_pd3dDevice = nullptr;
             g_pSwapChain = nullptr;
@@ -140,7 +139,7 @@ namespace utils
             return STATUS_SUCCESS;
         }
 
-        // 重新初始化DirectX资源
+        
         NTSTATUS reinitialize_dx_resources(PVOID p_dxgi_swapchain)
         {
             if (!g_need_reinit)
@@ -150,10 +149,10 @@ namespace utils
             
             LogInfo("Reinitializing DirectX resources for new SwapChain...");
             
-            // 清理旧资源
+           
             cleanup_dx_resources();
             
-            // 重新初始化
+           
             NTSTATUS status = initialize_dx_resources(p_dxgi_swapchain);
             if (NT_SUCCESS(status))
             {
@@ -176,7 +175,7 @@ namespace utils
             static unsigned long long g_user_buffer = 0;
             if (!g_user_buffer)
             {
-                // Optimized buffer size: GUID(16)*2 + PVOID(8)*4 + padding = ~0x600 bytes (节省98%内存)
+                // Optimized buffer size: GUID(16)*2 + PVOID(8)*4 + padding = ~0x600 bytes  
                 NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x10000, PAGE_READWRITE, true, false);
                 if (!NT_SUCCESS(status))
                 {
@@ -260,10 +259,10 @@ namespace utils
 
         NTSTATUS render_every_thing(PVOID p_dxgi_swapchain)
         {
-            // 检测交换链是否发生变化
+             
             if (check_swapchain_changed(p_dxgi_swapchain))
             {
-                // 重新初始化DirectX资源
+                
                 NTSTATUS status = reinitialize_dx_resources(p_dxgi_swapchain);
                 if (!NT_SUCCESS(status))
                 {
@@ -282,7 +281,7 @@ namespace utils
             static unsigned long long g_user_buffer = 0;
             if (!g_user_buffer)
             {
-                // Optimized buffer size: SDesc(32) + texture_ptr(8) + MapRes(32) + padding = ~0x1000 bytes (节省93.75%内存)
+                // Optimized buffer size: SDesc(32) + texture_ptr(8) + MapRes(32) + padding = ~0x1000 bytes 
                 NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x10000, PAGE_READWRITE, true, false);
                 if (!NT_SUCCESS(status))
                 {

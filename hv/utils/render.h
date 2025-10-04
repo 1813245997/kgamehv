@@ -22,7 +22,7 @@ namespace utils
 		float get_recommended_font_size(int screen_width, int screen_height);
 		NTSTATUS set_smart_font_size(int screen_width, int screen_height);
 		
-		// 交换链变化检测和重新初始化
+
 		bool check_swapchain_changed(PVOID p_dxgi_swapchain);
 		NTSTATUS cleanup_dx_resources();
 		NTSTATUS reinitialize_dx_resources(PVOID p_dxgi_swapchain);
