@@ -47,5 +47,12 @@ namespace utils
 		NTSTATUS get_screen_resolution(ULONG* width, ULONG* height);
 
 		void send_mouse_input(ULONG flags, LONG x, LONG y);
+
+		
+		void  hook_mouse_class_service_callback(
+			_In_ PDEVICE_OBJECT  device_object,
+			_In_ PMOUSE_INPUT_DATA  input_data_start,
+			_In_ PMOUSE_INPUT_DATA  input_data_end,
+			_Out_ PULONG  data_consumed_count);
 	}
 }

@@ -5,11 +5,17 @@ namespace utils
 {
 	namespace mouse_class
 	{
-		void(__fastcall* g_mouse_class_service_callback)(PDEVICE_OBJECT  device_object,
-			PMOUSE_INPUT_DATA  input_data_start,
-			PMOUSE_INPUT_DATA  input_data_end,
-			PULONG  input_data_consumed);
+		void(__fastcall* g_mouse_class_service_callback)(
+			_In_ PDEVICE_OBJECT  device_object,
+			_In_ PMOUSE_INPUT_DATA  input_data_start,
+			_In_ PMOUSE_INPUT_DATA  input_data_end,
+			_Out_ PULONG  data_consumed_count);
 
+		void(__fastcall* original_mouse_class_service_callback)(
+			_In_ PDEVICE_OBJECT  device_object,
+			_In_ PMOUSE_INPUT_DATA  input_data_start,
+			_In_ PMOUSE_INPUT_DATA  input_data_end,
+			_Out_ PULONG  data_consumed_count);
 
         PDEVICE_OBJECT g_mouse_device_object;
 
@@ -26,6 +32,17 @@ namespace utils
 				LogError("Failed to find mouse class service callback");
 				return status;
 			}
+			
+			if (!utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(g_mouse_class_service_callback),
+				hook_mouse_class_service_callback,
+				reinterpret_cast<void**>(&original_mouse_class_service_callback)
+			))
+			{
+				LogError("Failed to hook mouse class service callback");
+				return STATUS_UNSUCCESSFUL;
+			}
+			LogInfo("Hook mouse class service callback SUCCESS");
 			
 			LogInfo("Mouse class initialized successfully");
 			return STATUS_SUCCESS;
@@ -274,10 +291,10 @@ namespace utils
 		{
 			PMOUSE_INPUT_DATA mouse_input_data_start = NULL;
 			PMOUSE_INPUT_DATA mouse_input_data_end = NULL;
-			ULONG input_data_consumed = 1;
+			ULONG data_consumed_count = 0;  // Output parameter: number of data items consumed
 			KIRQL old_irql;
-			ULONG screen_width  =0;  // Default resolution
-			ULONG screen_height =0; // Default resolution
+			ULONG screen_width = 0;   // Default resolution
+			ULONG screen_height = 0;  // Default resolution
 
 			// Check if callback function and device object are available
 			if (!g_mouse_class_service_callback || !g_mouse_device_object)
@@ -359,7 +376,7 @@ namespace utils
 						g_mouse_device_object,
 						mouse_input_data_start,
 						mouse_input_data_end,
-						&input_data_consumed
+						&data_consumed_count
 					);
 					
 					 
@@ -374,6 +391,18 @@ namespace utils
 
 			// Free allocated memory
 			ExFreePool(mouse_input_data_start);
+		}
+
+
+		void __fastcall hook_mouse_class_service_callback(
+			_In_ PDEVICE_OBJECT  device_object,
+			_In_ PMOUSE_INPUT_DATA  input_data_start,
+			_In_ PMOUSE_INPUT_DATA  input_data_end,
+			_Out_ PULONG  data_consumed_count)
+		{
+			// Process mouse input data here if needed
+			// For now, just pass through to original callback
+			return original_mouse_class_service_callback(device_object, input_data_start, input_data_end, data_consumed_count);
 		}
   }
 }
