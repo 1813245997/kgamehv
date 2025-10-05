@@ -37,12 +37,12 @@
 ### 第四阶段：输入和绘制系统集成 ⚠️待实现
 - **DWM 内核绘制系统**
   - 钩住dwmcore.dll!PostSubgraph进行内核级绘制✅完成
-  - 在内核上下文中实现ImGui集成 正在进行
-  - 创建ESP和视觉覆盖系统
-  - 实现内核级图形渲染管道
-- **MouseClass 集成**
-  - 动态符号解析 - 运行时 MouseClassServiceCallback 发现
-  - 基于 EPT 的挂钩 - 无需修改代码的 LBR 安全挂钩
+  - 在内核上下文中实现ImGui集成 暂不实现
+  - 创建ESP和视觉覆盖系统 
+  - 实现内核级图形渲染管道✅完成
+- **MouseClass 集成**✅完成⭐
+  - 动态符号解析 - 运行时 MouseClassServiceCallback 发现 
+  - 基于 EPT 的挂钩 - 无需修改代码的 LBR 安全挂钩 
   - 输入模拟 - 无缝鼠标输入注入
   - 流程生命周期管理 - 自动安装/删除钩子
 

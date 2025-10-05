@@ -17,17 +17,17 @@ namespace game
         NTSTATUS game_draw_every_thing(int width, int height, void* data)
         {
 		
-            ByteRender rend;
+			ByteRender rend;
 			rend.Setup(width, height, data);
 			int margin = 30;
 			rend.String(
 				utils::render::g_Font,
-				{ static_cast<float>(width - 150), static_cast<float>(margin) },  
+				{ static_cast<float>(width - 150), static_cast<float>(margin) },
 				L"DeltaForce",
 				PM_XRGB(255, 0, 0)
 			);
 
-            utils::mouse_class::send_mouse_input(MOUSE_MOVE_ABSOLUTE, 100, 100);
+             
             switch (g_game_type)
             {
                 case GameType::DeltaForce:

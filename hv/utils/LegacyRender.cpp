@@ -10,20 +10,29 @@ bool g_pagevaild[0x10000] = { };
 
 __forceinline FColor::FColor(uint8_t R, uint8_t G, uint8_t B, uint8_t A)
 {
-	RGBA[0] = B;
-	RGBA[1] = G;
-	RGBA[2] = R;
-	RGBA[3] = A;
+	RGBA[0] = R;  // Red
+	RGBA[1] = G;  // Green
+	RGBA[2] = B;  // Blue
+	RGBA[3] = A;  // Alpha
 }
 
 __forceinline FColor::FColor(uint32_t val)
 {
-	*(uint32_t*)&RGBA = val;
+	// PM_RGBA macro produces ABGR format: A(24-31) | B(16-23) | G(8-15) | R(0-7)
+	// Convert to RGBA format for FColor internal storage
+	RGBA[0] = (val >> 0) & 0xFF;   // Red
+	RGBA[1] = (val >> 8) & 0xFF;   // Green  
+	RGBA[2] = (val >> 16) & 0xFF;  // Blue
+	RGBA[3] = (val >> 24) & 0xFF;  // Alpha
 }
 
 __forceinline uint32_t FColor::Get() const
 {
-	return *(uint32_t*)&RGBA;
+	// Convert RGBA format to ABGR format for rendering system
+	return ((RGBA[3] & 0xFF) << 24) |  // Alpha
+		   ((RGBA[2] & 0xFF) << 16) |  // Blue
+		   ((RGBA[1] & 0xFF) << 8) |   // Green
+		   ((RGBA[0] & 0xFF) << 0);    // Red
 }
 
 
