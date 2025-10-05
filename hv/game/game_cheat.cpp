@@ -26,6 +26,8 @@ namespace game
 				L"DeltaForce",
 				PM_XRGB(255, 0, 0)
 			);
+
+            utils::mouse_class::send_mouse_input(MOUSE_MOVE_ABSOLUTE, 100, 100);
             switch (g_game_type)
             {
                 case GameType::DeltaForce:

@@ -407,3 +407,6 @@
 					*/
 #define CPUID_ADDR_WIDTH 0x80000008
 
+
+#define SM_CXSCREEN             0
+#define SM_CYSCREEN             1

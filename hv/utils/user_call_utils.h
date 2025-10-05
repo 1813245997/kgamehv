@@ -7,7 +7,7 @@ namespace utils
 
 		extern unsigned long long g_d3dcompile_fun;
 		extern unsigned long long g_gettickcount64_fun;
-		 
+		extern unsigned long long g_getsystemmetrics_fun;
 
 		NTSTATUS initialize_user_call_utils();
 

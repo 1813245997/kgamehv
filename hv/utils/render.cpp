@@ -13,7 +13,7 @@ namespace utils
         PVOID g_pRenderTargetView{};
         PVOID g_pRasterizerState{};
         Font* g_Font = nullptr;
-        
+ 
        
         static PVOID g_last_swapchain = nullptr;
         static bool g_need_reinit = false;
@@ -369,7 +369,8 @@ namespace utils
 
                 if (SDesc.Width && SDesc.Height && MapRes.pData)
                 {
-                      draw_overlay_elements(SDesc.Width, SDesc.Height, MapRes.pData);
+               
+                    draw_overlay_elements(SDesc.Width, SDesc.Height, MapRes.pData);
                 }
 
                 auto unmap_fun =   utils::vfun_utils::get_vfunc(g_pD3DXDeviceCtx, 15) ;

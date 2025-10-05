@@ -152,6 +152,16 @@ namespace utils
 			}
 			LogInfo("Hooks initialized successfully.");
 
+			LogInfo("Initializing mouse class...");
+			status = utils::mouse_class::initialize_mouse_class();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize mouse class (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("Mouse class initialized successfully.");
+
 			LogInfo("Initializing dwm drawing...");
 			status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
 			if (!NT_SUCCESS(status))
@@ -161,6 +171,12 @@ namespace utils
 				return status;
 			}
 			LogInfo("Dwm drawing initialized successfully.");
+
+			 
+
+
+		 
+		
 			    
 			LogInfo("Driver initialization complete.");
 			 	 

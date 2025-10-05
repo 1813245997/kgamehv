@@ -14,6 +14,7 @@ namespace utils
 
 		unsigned long long g_d3dcompile_fun{};
 		unsigned long long g_gettickcount64_fun{};
+		unsigned long long g_getsystemmetrics_fun{};
 		NTSTATUS initialize_user_call_utils()
 		{
 			NTSTATUS status =STATUS_SUCCESS;
@@ -97,6 +98,19 @@ namespace utils
 			g_gettickcount64_fun = addr;
 			LogInfo("GetTickCount64 function found successfully.0x%llX", addr);
 
+			addr =scanner_fun::find_module_export_by_name(
+				reinterpret_cast<void*>(module_info::user32_base),
+				"GetSystemMetrics"
+			);
+			if (!addr)
+			{
+				LogError("Failed to find GetSystemMetrics function");
+				goto exit;
+			}
+			g_getsystemmetrics_fun = addr;
+			LogInfo("GetSystemMetrics function found successfully.0x%llX", addr);
+
+	 
 
 			exit:
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
