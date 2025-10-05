@@ -1,11 +1,11 @@
 #include "global_defs.h"
 #include "render.h"
  
- 
+
 namespace utils
 {
-	namespace render
-	{
+    namespace render
+    {
         PVOID g_pSwapChain{};
         PVOID g_pd3dDevice{};
         PVOID g_pD3DXDeviceCtx{};
@@ -108,9 +108,9 @@ namespace utils
                 g_need_reinit = true;
                 return true;
             }
-            return false;
-        }
-
+                return false;
+            }
+            
         
         NTSTATUS cleanup_dx_resources()
         {
@@ -176,7 +176,7 @@ namespace utils
             if (!g_user_buffer)
             {
                 // Optimized buffer size: GUID(16)*2 + PVOID(8)*4 + padding = ~0x600 bytes  
-                NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x10000, PAGE_READWRITE, true, false);
+                NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x1000, PAGE_READWRITE, true, false);
                 if (!NT_SUCCESS(status))
                 {
                     return STATUS_UNSUCCESSFUL;
@@ -282,7 +282,7 @@ namespace utils
             if (!g_user_buffer)
             {
                 // Optimized buffer size: SDesc(32) + texture_ptr(8) + MapRes(32) + padding = ~0x1000 bytes 
-                NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x10000, PAGE_READWRITE, true, false);
+                NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x3000, PAGE_READWRITE, true, false);
                 if (!NT_SUCCESS(status))
                 {
                     return STATUS_UNSUCCESSFUL;
