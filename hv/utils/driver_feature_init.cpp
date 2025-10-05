@@ -133,7 +133,7 @@ namespace utils
 			LogInfo("User call utils initialized successfully.");
 
 			LogInfo("Initializing game cheat...");
-			status = game::game_cheat::initialize_game_cheat(GameType::DeltaForce);
+			status = game::game_cheat::initialize_game_cheat( GameType::DeltaForce);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize game cheat (0x%X).", status);
@@ -153,7 +153,7 @@ namespace utils
 			LogInfo("Hooks initialized successfully.");
 
 			LogInfo("Initializing dwm drawing...");
-			status = utils::hook_dwm_drawing::initialize_dwm_drawing();
+			status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to initialize dwm drawing (0x%X).", status);

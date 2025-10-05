@@ -1,28 +1,27 @@
 #include "../utils/global_defs.h"
-#include "hook_dwm_drawing.h"
+#include "kernel_dwm_drawing.h"
 
 // Global variables
-bool g_dwm_hooks_initialized = false;
-bool g_kernel_dxresources_initialized = false;
-
-PEPROCESS g_dwm_process{};
-
-unsigned long long g_cocclusion_context_post_sub_graph{};
-unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
-unsigned long long g_cdxgi_swapchain_dwm_legacy_present_dwm{};
-unsigned long long g_cddisplay_render_target_present{};
-
  
+
  
 
 namespace utils
 {
-    namespace hook_dwm_drawing
+    namespace kernel_dwm_drawing
     {
      
 
 
+		bool g_kernel_dxresources_initialized = false;
 
+		PEPROCESS g_dwm_process{};
+
+		unsigned long long g_cocclusion_context_post_sub_graph{};
+		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
+		unsigned long long g_cdxgi_swapchain_dwm_legacy_present_dwm{};
+		unsigned long long g_cddisplay_render_target_present{};
+		volatile LONG g_dwm_render_lock{};
    
 
 
@@ -31,21 +30,18 @@ namespace utils
         {
             NTSTATUS status = STATUS_SUCCESS;
 
-         
-            // TODO: Implement DWM function symbol resolution
-            // Need to dynamically resolve function addresses in dwmcore.dll
-            // Since these are internal functions, need to use pattern scanning or other methods
+            LogInfo("DWM drawing system initialization started");
 
-            LogInfo("DWM hooks initialization started");
-        
+            // Step 1: Initialize font system
             status = utils::render::initialize_font();
             if (!NT_SUCCESS(status))
             {
-                LogError("Failed to initialize font (0x%X).", status);
+                LogError("Failed to initialize font system: 0x%X", status);
                 return status;
             }
-            LogInfo("Font initialized successfully.");
+            LogInfo("Font system initialized successfully");
 
+            // Step 2: Get DWM process handle
             status = get_dwm_process(&g_dwm_process);
             if (!NT_SUCCESS(status))
             {
@@ -53,26 +49,25 @@ namespace utils
                 return status;
             }
             LogInfo("DWM process found successfully.");
-            
-            
-
-             status = find_hook_dwm_drawing();
+            // Step 3: Find DWM drawing hook points
+            status = find_hook_dwm_drawing();
             if (!NT_SUCCESS(status))
             {
-                LogError("Failed to find hook dwm drawing (0x%X).", status);
+                LogError("Failed to find DWM drawing hook points: 0x%X", status);
                 return status;
             }
-            LogInfo("Hook dwm drawing found successfully.");
+            LogInfo("DWM drawing hook points found successfully");
 
+            // Step 4: Initialize DWM drawing hooks
             status = initialize_hook_dwm_drawing();
             if (!NT_SUCCESS(status))
             {
-                LogError("Failed to initialize hook dwm drawing (0x%X).", status);
+                LogError("Failed to initialize DWM drawing hooks: 0x%X", status);
                 return status;
             }
-            LogInfo("Hook dwm drawing initialized successfully.");
+            LogInfo("DWM drawing hooks initialized successfully");
 
-
+            LogInfo("DWM drawing system initialization completed successfully");
             return STATUS_SUCCESS;
         }
 
@@ -80,25 +75,25 @@ namespace utils
 
         NTSTATUS find_hook_dwm_drawing()
         {
-
             NTSTATUS status = STATUS_SUCCESS;
+            unsigned long long addr = 0;
 
-
+            // Attach to DWM process for memory scanning
             KAPC_STATE apc_state{};
-			utils::internal_functions::pfn_ke_stack_attach_process(g_dwm_process, &apc_state);
-           
+            utils::internal_functions::pfn_ke_stack_attach_process(g_dwm_process, &apc_state);
 
-            unsigned long long addr = scanner_fun::find_cocclusion_context_post_sub_graph(  reinterpret_cast<unsigned long long>(utils::module_info::dwmcore_base) );
-
+            // Find CocclusionContext::PostSubGraph function
+            addr = scanner_fun::find_cocclusion_context_post_sub_graph(
+                reinterpret_cast<unsigned long long>(utils::module_info::dwmcore_base)
+            );
             if (addr == 0)
             {
-                LogError("Failed to find cocclusion context post subgraph (0x%X).", STATUS_NOT_FOUND);
+                LogError("Failed to find CocclusionContext::PostSubGraph function");
                 status = STATUS_NOT_FOUND;
                 goto clean_up;
             }
-            
             g_cocclusion_context_post_sub_graph = addr;
-            LogInfo("Cocclusion context post subgraph found successfully.0x%llX", addr);
+            LogInfo("CocclusionContext::PostSubGraph found at: 0x%llX", addr);
 
             addr = scanner_fun::find_cdxgi_swapchain_present_multiplane_overlay(reinterpret_cast<unsigned long long>(utils::module_info::dxgi_base));
             if (addr == 0)
@@ -246,34 +241,46 @@ namespace utils
      
 
 
-        NTSTATUS draw_every_thing(PVOID p_dxgi_swapchain  )
+        NTSTATUS draw_every_thing(PVOID p_dxgi_swapchain)
         {
-           //存在切换分辨率失效的问题
-
-            if (!p_dxgi_swapchain)
+            // Try to acquire render lock to prevent multi-threaded rendering
+            if (InterlockedCompareExchange(&g_dwm_render_lock, 1, 0) != 0)
             {
-                return STATUS_INVALID_PARAMETER;
+                // If lock acquisition fails, another thread is rendering, return directly
+                return STATUS_SUCCESS;
             }
-            
-            
+
+            NTSTATUS status = STATUS_SUCCESS;
+
+            // Check if DirectX resources are initialized
             if (!g_kernel_dxresources_initialized)
             {
-               
-            
-                if (!NT_SUCCESS(utils::render::initialize_dx_resources(p_dxgi_swapchain)))
+                // First render, need to initialize DirectX resources
+                status = utils::render::initialize_dx_resources(p_dxgi_swapchain);
+                if (NT_SUCCESS(status))
                 {
-                    return STATUS_UNSUCCESSFUL;
+                    g_kernel_dxresources_initialized = true;
+                    LogInfo("DirectX resources initialized successfully");
                 }
-                g_kernel_dxresources_initialized = true;
+                else
+                {
+                    LogError("Failed to initialize DirectX resources: 0x%X", status);
+                }
             }
             else
             {
-                utils::render::render_every_thing(p_dxgi_swapchain);
-
+                // Resources initialized, execute normal rendering flow
+                status = utils::render::render_every_thing(p_dxgi_swapchain);
+                if (!NT_SUCCESS(status))
+                {
+                    LogError("Render failed: 0x%X", status);
+                }
             }
 
-            
-            return STATUS_SUCCESS;
+            // Release render lock
+            InterlockedExchange(&g_dwm_render_lock, 0);
+
+            return status;
         }
 
 

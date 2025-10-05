@@ -10,7 +10,7 @@ typedef struct _breakpoint_function_info
 	unsigned long long original_pa;
 	unsigned long long handler_pa;
 	unsigned __int8    original_byte;
-	unsigned __int8    instruction_size;
+	size_t    instruction_size;
 	unsigned long long hit_count;
 	bool is_active;
  

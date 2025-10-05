@@ -129,7 +129,7 @@
   <ItemGroup>
     <ClInclude Include="game\delta_force.h" />
     <ClInclude Include="game\game_cheat.h" />
-    <ClInclude Include="utils\hook_dwm_drawing.h" />
+    <ClInclude Include="utils\kernel_dwm_drawing.h" />
     <ClInclude Include="utils\hook_mem_protection.h" />
     <ClInclude Include="utils\hook_process_manager.h" />
     <ClInclude Include="utils\hook_user_comm.h" />
@@ -153,7 +153,7 @@
     <ClInclude Include="utils\data_types.h" />
     <ClInclude Include="utils\dx11.h" />
     <ClInclude Include="utils\ark_utils.h" />
-    <ClInclude Include="utils\font.h" />
+    <ClInclude Include="utils\font_utils.h" />
     <ClInclude Include="utils\fontdata.h" />
     <ClInclude Include="utils\LegacyRender.h" />
     <ClInclude Include="utils\math.h" />
@@ -196,7 +196,6 @@
     <ClInclude Include="utils\signature_scanner.h" />
     <ClInclude Include="utils\sstd_utils.h" />
     <ClInclude Include="utils\string_utils.h" />
-    <ClInclude Include="utils\strong_dx.h" />
     <ClInclude Include="utils\thread_utils.h" />
     <ClInclude Include="utils\time_utils.h" />
     <ClInclude Include="utils\types.h" />
@@ -240,7 +239,8 @@
     <ClCompile Include="game\game_cheat.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth.cpp" />
-    <ClCompile Include="utils\hook_dwm_drawing.cpp" />
+    <ClCompile Include="utils\font_utils.cpp" />
+    <ClCompile Include="utils\kernel_dwm_drawing.cpp" />
     <ClCompile Include="utils\hook_mem_protection.cpp" />
     <ClCompile Include="utils\hook_process_manager.cpp" />
     <ClCompile Include="utils\hook_user_comm.cpp" />
@@ -280,7 +280,6 @@
     <ClCompile Include="utils\signature_scanner.cpp" />
     <ClCompile Include="utils\sstd_utils.cpp" />
     <ClCompile Include="utils\string_utils.cpp" />
-    <ClCompile Include="utils\strong_dx.cpp" />
     <ClCompile Include="utils\thread_utils.cpp" />
     <ClCompile Include="utils\time_utils.cpp" />
     <ClCompile Include="utils\user_call_utils.cpp" />

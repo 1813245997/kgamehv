@@ -1,5 +1,6 @@
 #include "global_defs.h"
 #include "LegacyRender.h"
+ 
 
 
 bool g_pagehit[0x10000] = { };
