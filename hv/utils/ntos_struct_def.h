@@ -798,5 +798,17 @@ extern "C"
 			_In_ PVOID SystemArgument2
 		);
 
+	  NTSTATUS  ObReferenceObjectByName(
+		IN PUNICODE_STRING ObjectName,
+		IN ULONG Attributes,
+		IN PACCESS_STATE PassedAccessState OPTIONAL,
+		IN ACCESS_MASK DesiredAccess OPTIONAL,
+		IN POBJECT_TYPE ObjectType,
+		IN KPROCESSOR_MODE AccessMode,
+		IN OUT PVOID ParseContext OPTIONAL,
+		OUT PVOID* Object
+	);
+
+	  extern POBJECT_TYPE* IoDriverObjectType;
 }
 

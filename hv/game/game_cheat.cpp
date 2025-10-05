@@ -16,9 +16,10 @@ namespace game
 
         NTSTATUS game_draw_every_thing(int width, int height, void* data)
         {
+		
             ByteRender rend;
 			rend.Setup(width, height, data);
-			int margin =30;
+			int margin = 30;
 			rend.String(
 				utils::render::g_Font,
 				{ static_cast<float>(width - 150), static_cast<float>(margin) },  

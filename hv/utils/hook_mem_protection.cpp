@@ -260,19 +260,41 @@ namespace utils
 			_In_ ULONG flags
 		)
 		{
+			// Validate input parameters
+			if (!callers || count == 0 )
+			{
+				 
+				return 0;
+			}
 
+			// Check if callers buffer is valid
+			if (!utils::internal_functions::pfn_mm_is_address_valid_ex(callers))
+			{
+				 
+				return 0;
+			}
 
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
 
+			// Call original function
 			ULONG frames_captured = original_rtl_walk_frame_chain(callers, count, flags);
 
+		 
+
+			// Process captured frames safely
 			for (ULONG i = 0; i < frames_captured; ++i)
 			{
+				// Check if we can safely access callers[i]
+				PVOID* caller_ptr = &callers[i];
+				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(caller_ptr))
+				{
+					 
+					continue;
+				}
+
 				PVOID addr = callers[i];
 
-
-
-
+				// Check if the address is valid before processing
 				if (!utils::internal_functions::pfn_mm_is_address_valid_ex(addr))
 				{
 					continue;
@@ -280,9 +302,23 @@ namespace utils
 
 				if (is_address_hidden(addr, process_id))
 				{
+					// Remove hidden address by shifting remaining frames
 					for (ULONG j = i + 1; j < frames_captured; ++j)
 					{
-						callers[j - 1] = callers[j];
+						// Check if we can safely access callers[j]
+						PVOID* src_ptr = &callers[j];
+						PVOID* dst_ptr = &callers[j - 1];
+						
+						if (utils::internal_functions::pfn_mm_is_address_valid_ex(src_ptr) &&
+							utils::internal_functions::pfn_mm_is_address_valid_ex(dst_ptr))
+						{
+							callers[j - 1] = callers[j];
+						}
+						else
+						{
+							 
+							break;
+						}
 					}
 
 					frames_captured--;

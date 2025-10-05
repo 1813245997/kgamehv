@@ -79,6 +79,7 @@
 #include "dx11.h"
 #include "fontdata.h"
 #include "LegacyRender.h"
+#include "mouse_class_utils.h"
 #include "../game/delta_force.h"
 #include "../game/game_cheat.h"
  

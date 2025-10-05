@@ -1639,9 +1639,9 @@ bool vmexit_handler(__vmexit_guest_registers* guest_registers)
 		return false;
 	}
 
-	 hide_vm_exit_overhead(vcpu);
+	/* hide_vm_exit_overhead(vcpu);
 	 hv::vmwrite(VMCS_CTRL_TSC_OFFSET, vcpu->tsc_offset);
-	 hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);
+	 hv::vmwrite(VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE, vcpu->preemption_timer);*/
 
 	vcpu->is_on_vmx_root_mode = false;
 	return true;

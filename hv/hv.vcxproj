@@ -133,6 +133,7 @@
     <ClInclude Include="utils\hook_mem_protection.h" />
     <ClInclude Include="utils\hook_process_manager.h" />
     <ClInclude Include="utils\hook_user_comm.h" />
+    <ClInclude Include="utils\mouse_class_utils.h" />
     <ClInclude Include="utils\render.h" />
     <ClInclude Include="utils\shadow_break_point.h" />
     <ClInclude Include="vtx\hv_pre_vmcall.h" />
@@ -244,6 +245,7 @@
     <ClCompile Include="utils\hook_mem_protection.cpp" />
     <ClCompile Include="utils\hook_process_manager.cpp" />
     <ClCompile Include="utils\hook_user_comm.cpp" />
+    <ClCompile Include="utils\mouse_class_utils.cpp" />
     <ClCompile Include="utils\render.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />
     <ClCompile Include="utils\call_back_utils.cpp" />

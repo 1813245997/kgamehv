@@ -369,7 +369,7 @@ namespace utils
 
                 if (SDesc.Width && SDesc.Height && MapRes.pData)
                 {
-                    draw_overlay_elements(SDesc.Width, SDesc.Height, MapRes.pData);
+                      draw_overlay_elements(SDesc.Width, SDesc.Height, MapRes.pData);
                 }
 
                 auto unmap_fun =   utils::vfun_utils::get_vfunc(g_pD3DXDeviceCtx, 15) ;
@@ -398,9 +398,9 @@ namespace utils
 
         NTSTATUS draw_overlay_elements(int width, int height, void* data)
         {
-
-            memset(g_pagehit, 0, sizeof(g_pagehit));
+			memset(g_pagehit, 0, sizeof(g_pagehit));
 			memset(g_pagevaild, 0, sizeof(g_pagevaild));
+
 
             return game::game_cheat::game_draw_every_thing(width, height, data);
         }

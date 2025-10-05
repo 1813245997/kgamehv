@@ -343,6 +343,9 @@
     <ClInclude Include="game\delta_force.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\mouse_class_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -556,6 +559,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\font_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\mouse_class_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

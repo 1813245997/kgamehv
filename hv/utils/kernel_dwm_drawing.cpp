@@ -16,7 +16,7 @@ namespace utils
 		bool g_kernel_dxresources_initialized = false;
 
 		PEPROCESS g_dwm_process{};
-
+        
 		unsigned long long g_cocclusion_context_post_sub_graph{};
 		unsigned long long g_cdxgi_swapchain_present_multiplane_overlay{};
 		unsigned long long g_cdxgi_swapchain_dwm_legacy_present_dwm{};
@@ -141,8 +141,8 @@ namespace utils
             LogInfo("Initializing hook dwm drawing...");
             
             
-            LogInfo("Installing shadow break point for cocclusion context post subgraph...");
-			
+			LogInfo("Installing shadow break point for cocclusion context post subgraph...");
+
 			if (!utils::shadowbreakpoint::shadowbp_install(process_id, reinterpret_cast<void*>(g_cocclusion_context_post_sub_graph), reinterpret_cast<void*>(handle_cocclusion_context_post_sub_graph)))
 			{
 				LogError("Failed to install shadow break point for cocclusion context post subgraph.");
@@ -218,7 +218,7 @@ namespace utils
         NTSTATUS handle_cdxgi_swapchain_present_multiplane_overlay(_Inout_ PCONTEXT ContextRecord)
         {
            
-           // draw_every_thing(reinterpret_cast<PVOID>(ContextRecord->Rcx));
+             draw_every_thing(reinterpret_cast<PVOID>(ContextRecord->Rcx));
            // DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0, "handle_cdxgi_swapchain_present_multiplane_overlay\n");
             return STATUS_SUCCESS;
         }   
@@ -243,23 +243,22 @@ namespace utils
 
         NTSTATUS draw_every_thing(PVOID p_dxgi_swapchain)
         {
-            // Try to acquire render lock to prevent multi-threaded rendering
-            if (InterlockedCompareExchange(&g_dwm_render_lock, 1, 0) != 0)
-            {
-                // If lock acquisition fails, another thread is rendering, return directly
-                return STATUS_SUCCESS;
-            }
+          
+            
 
             NTSTATUS status = STATUS_SUCCESS;
 
             // Check if DirectX resources are initialized
             if (!g_kernel_dxresources_initialized)
-            {
+			{
+				
                 // First render, need to initialize DirectX resources
                 status = utils::render::initialize_dx_resources(p_dxgi_swapchain);
                 if (NT_SUCCESS(status))
-                {
+				{
+                    
                     g_kernel_dxresources_initialized = true;
+                   
                     LogInfo("DirectX resources initialized successfully");
                 }
                 else
@@ -269,18 +268,22 @@ namespace utils
             }
             else
             {
-                // Resources initialized, execute normal rendering flow
-                status = utils::render::render_every_thing(p_dxgi_swapchain);
-                if (!NT_SUCCESS(status))
-                {
-                    LogError("Render failed: 0x%X", status);
-                }
-            }
+                
+				 // Resources initialized, execute normal rendering flow
+					status = utils::render::render_every_thing(p_dxgi_swapchain);
+					if (!NT_SUCCESS(status))
+					{
+						LogError("Render failed: 0x%X", status);
+					}
 
-            // Release render lock
-            InterlockedExchange(&g_dwm_render_lock, 0);
+              
+                
+            }
+ 
 
             return status;
+
+            return STATUS_SUCCESS;
         }
 
 

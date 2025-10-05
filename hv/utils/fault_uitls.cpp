@@ -54,14 +54,28 @@ namespace utils
 			breakpoint_function_info* bp_info = nullptr;
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
 
+			if (PreviousMode != MODE::UserMode)
+			{
+				return FALSE;
+			}
+
+
+			
+
 			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_address(
 				process_id, ExceptionRecord->ExceptionAddress, &bp_info);
 
 			if (!found)
 			{
+				
 				return FALSE;
 			}
 
+			if (!bp_info)
+			{
+				
+				return FALSE;
+			}
 			 
 			bp_info->hit_count++;
 
@@ -79,7 +93,7 @@ namespace utils
 
 			// Enable single step for next instruction
 			ContextRecord->EFlags |= 0x100;
-
+			
 			return TRUE;
 		}
 
@@ -92,11 +106,16 @@ namespace utils
 			_In_ KPROCESSOR_MODE PreviousMode)
 		{
 			 
-			UNREFERENCED_PARAMETER(PreviousMode);
-
-			
 			breakpoint_function_info* bp_info = nullptr;
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
+
+			if (PreviousMode != MODE::UserMode)
+			{
+				return FALSE;
+			}
+
+			
+			
 			
 			// Find breakpoint info for current RIP (single step happens at next instruction)
 			BOOLEAN found = utils::shadowbreakpoint::shadowbp_find_tf_address(
@@ -106,13 +125,18 @@ namespace utils
 			{
 				return FALSE;
 			}
+
+			if (!bp_info)
+			{
+				return FALSE;
+			}
 		 
 			// Restore INT3 instruction at the breakpoint address
 			*(PUINT8)bp_info->breakpoint_va = 0xCC;
 
 			// Clear single step flag
 			ContextRecord->EFlags &= ~0x100;
-
+		
 			return TRUE;
 		}
 	 }
