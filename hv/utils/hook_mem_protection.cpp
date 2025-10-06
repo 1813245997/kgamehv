@@ -202,18 +202,27 @@ namespace utils
 
 		static bool is_address_hidden(PVOID virtual_address, HANDLE process_id)
 		{
-			if (utils::hidden_modules::is_address_hidden(virtual_address))
+			if (utils::memory::is_user_address(virtual_address))
 			{
-				return true;
+				if (utils::hidden_user_memory::is_pid_hidden(process_id))
+				{
+					if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
+					{
+						return true;
+					}
+				}
 			}
-
-			if (utils::hidden_user_memory::is_pid_hidden(process_id))
+			else
 			{
-				if (utils::hidden_user_memory::is_address_hidden_for_pid(process_id, reinterpret_cast<unsigned long long>(virtual_address)))
+				if (utils::hidden_modules::is_address_hidden(virtual_address))
 				{
 					return true;
 				}
 			}
+
+
+
+			
 
 			return false;
 		}
@@ -328,6 +337,7 @@ namespace utils
 
 				if (is_address_hidden(addr, process_id))
 				{
+					 
 					// Remove hidden address by shifting remaining frames
 					for (ULONG j = i + 1; j < frames_captured; ++j)
 					{
@@ -417,7 +427,7 @@ namespace utils
 			{
 				return TRUE;
 			}
-
+			 
 			/*
 			 * To find the IRETQ frame (MACHINE_FRAME) we need to find the top of
 			 * the NMI ISR stack. This is stored at TSS->Ist[3]. To find the TSS, we
