@@ -1,8 +1,10 @@
 #include "../utils/global_defs.h"
 #include "hook_mem_protection.h"
+#include "../ia32/ia32.h"
+
 namespace utils
 {
-	namespace hook_mem_protecion
+	namespace hook_mem_protection
 	{
 
 
@@ -48,6 +50,10 @@ namespace utils
 					_In_ SIZE_T NumberOfBytesToRead,
 					_Out_opt_ PSIZE_T NumberOfBytesRead
 				) = nullptr;
+
+		PVOID(NTAPI* original_ke_register_nmi_callback)(_In_ PNMI_CALLBACK callback_routine, _In_ PVOID context);
+			
+		BOOLEAN(NTAPI* original_nmi_callback)(_In_ PVOID context,_In_ BOOLEAN handled);
 
 		NTSTATUS initialize_mem_protections()
 		{
@@ -130,6 +136,26 @@ namespace utils
 			goto clear;
 		}
 		LogInfo("Hook pfn_rtl_lookup_function_entry SUCCESS");
+
+		if (!reinterpret_cast<void*>(utils::internal_functions::pfn_ke_register_nmi_callback))
+		{
+			LogError("pfn_ke_register_nmi_callback is not found");
+			status = STATUS_NOT_FOUND;
+			goto clear;
+		}
+
+		 
+		if (!utils::hook_utils::hook_kernel_function(
+			reinterpret_cast<void*>(utils::internal_functions::pfn_ke_register_nmi_callback),
+			hook_ke_register_nmi_callback,
+			reinterpret_cast<void**>(&original_ke_register_nmi_callback)
+		))
+		{
+			LogError("Failed to hook pfn_ke_register_nmi_callback");
+			status = STATUS_UNSUCCESSFUL;
+			goto clear;
+		}
+		LogInfo("Hook pfn_ke_register_nmi_callback SUCCESS");
 
 		if (!reinterpret_cast<void*>(utils::internal_functions::pfn_nt_query_virtual_memory))
 		{
@@ -360,6 +386,86 @@ namespace utils
 
 
 
+		PVOID  NTAPI hook_ke_register_nmi_callback(_In_ PNMI_CALLBACK callback_routine, _In_ PVOID context)
+		{
+
+			 
+			if (!utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(callback_routine),
+				hook_nmi_callback,
+				reinterpret_cast<void**>(&original_nmi_callback)
+			))
+			{
+				LogError("Failed to hook ke_register_nmi_callback");
+				return nullptr;
+			}
+		 
+
+
+			return original_ke_register_nmi_callback(callback_routine, context);
+		}
+
+		BOOLEAN __fastcall hook_nmi_callback(_In_ PVOID context, _In_ BOOLEAN handled)
+		{
+			unsigned long long kpcr {};
+			TASK_STATE_SEGMENT_64* tss = NULL;
+			PMACHINE_FRAME machine_frame = NULL;
+			unsigned long long rip {};
+			unsigned long long rsp {};
+			
+			if (!context)
+			{
+				return TRUE;
+			}
+
+			/*
+			 * To find the IRETQ frame (MACHINE_FRAME) we need to find the top of
+			 * the NMI ISR stack. This is stored at TSS->Ist[3]. To find the TSS, we
+			 * can read it from KPCR->TSS_BASE. Once we have our TSS, we can read
+			 * the value at TSS->Ist[3] which points to the top of the ISR stack,
+			 * and subtract the size of the MACHINE_FRAME struct. Allowing us read
+			 * the interrupted RIP.
+			 *
+			 * The reason this is needed is because RtlCaptureStackBackTrace is not
+			 * safe to run at IRQL = HIGH_LEVEL, hence we need to manually unwind
+			 * the ISR stack to find the interrupted rip.
+			 */
+
+			kpcr = __readmsr(IA32_GS_BASE);
+			tss = utils::thread_utils::get_task_state_segment(kpcr);
+			machine_frame = utils::thread_utils::get_isr_machine_frame(tss);
+
+			if (!machine_frame)
+			{
+				return TRUE;
+			}
+			
+			rip = machine_frame->rip;
+			rsp = machine_frame->rsp;
+
+			// Check if the interrupted RIP or RSP is in our hidden address range
+			// Get current process ID
+			HANDLE current_process_id = PsGetCurrentProcessId();
+			
+			// Check if RIP address should be hidden
+			if (utils::hidden_user_memory::is_address_hidden_for_pid(current_process_id, rip))
+			{
+				 
+				// RIP address is hidden, return without calling original callback
+				return TRUE;
+			}
+			
+			// Check if RSP address should be hidden
+			if (utils::hidden_user_memory::is_address_hidden_for_pid(current_process_id, rsp))
+			{
+				 
+				// RSP address is hidden, return without calling original callback
+				return TRUE;
+			}
+
+			// Address is not hidden, call original callback
+			return original_nmi_callback(context, handled);
+		}
 
  
 		NTSTATUS NTAPI  hook_nt_query_virtual_memory(

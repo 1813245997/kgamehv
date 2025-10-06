@@ -43,7 +43,9 @@ namespace utils
 
 		NTSTATUS initialize_hook_page_lists();
 
-		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function);
+		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function);
+
+		bool is_address_already_hooked(_In_ void* target_api);
 
 		bool find_kernel_hook_info_by_rip(
 			void* rip,

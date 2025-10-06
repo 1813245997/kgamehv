@@ -765,6 +765,14 @@ extern "C"
 	 } MM_KERNEL_STACK_CONTEXT, * PMM_KERNEL_STACK_CONTEXT;
 #pragma pack(pop)
 
+	 typedef struct _MACHINE_FRAME {
+		 UINT64 rip;
+		 UINT64 cs;
+		 UINT64 eflags;
+		 UINT64 rsp;
+		 UINT64 ss;
+
+	 } MACHINE_FRAME, * PMACHINE_FRAME;
 }
 
 extern "C"

@@ -10,7 +10,7 @@ namespace utils
 
 
 
-		// ÏÔÊ½º¯ÊýÖ¸Õë¶¨Òå
+		// ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ë¶¨ï¿½ï¿½
 		extern void(__fastcall* pfn_ki_preprocess_fault)(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,
@@ -544,6 +544,11 @@ namespace utils
 			_In_ PIMAGE_INFO ImageInfo
 			);
 		 
+
+		extern PVOID(__fastcall* pfn_ke_register_nmi_callback)(
+			_In_ PNMI_CALLBACK callback_routine,
+			_In_ PVOID context
+			);
 		 
 	} 
 }

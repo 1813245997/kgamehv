@@ -20,7 +20,7 @@ namespace hook_manager
 			return status;
 		}
 		 
-        status = utils::hook_mem_protecion::initialize_mem_protections();
+        status = utils::hook_mem_protection::initialize_mem_protections();
 		if (!NT_SUCCESS(status))
 		{
 

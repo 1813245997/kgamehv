@@ -310,10 +310,7 @@ namespace utils
 			{
 				LogError("Failed to get screen resolution, using defaults: %dx%d", screen_width, screen_height);
 			}
-			else
-			{
-				LogDebug("Using screen resolution: %dx%d", screen_width, screen_height);
-			}
+			 
 
 			// Allocate memory for mouse input data
 			mouse_input_data_start = static_cast<PMOUSE_INPUT_DATA>(

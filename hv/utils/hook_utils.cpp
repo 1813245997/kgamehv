@@ -25,10 +25,40 @@ namespace utils
 		 
 		  }
 		   
-		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Out_ void** origin_function)
+		bool is_address_already_hooked(_In_ void* target_api)
 		{
+			if (!target_api)
+			{
+				return false;
+			}
 
-			
+			// Search through all hooked pages
+			for (PLIST_ENTRY entry = g_kernel_hook_page_list_head.Flink;
+				entry != &g_kernel_hook_page_list_head;
+				entry = entry->Flink)
+			{
+				kernel_hook_page_info* hooked_page_info = CONTAINING_RECORD(entry, kernel_hook_page_info, page_list);
+
+				// Search through all hooked functions in this page
+				for (PLIST_ENTRY func_entry = hooked_page_info->function_list.Flink;
+					func_entry != &hooked_page_info->function_list;
+					func_entry = func_entry->Flink)
+				{
+					kernel_hook_function_info* hook_info = CONTAINING_RECORD(func_entry, kernel_hook_function_info, list_entry);
+
+					// Check if this function's original_va matches our target_api
+					if (hook_info->original_va == target_api)
+					{
+						return true;  // Address is already hooked
+					}
+				}
+			}
+
+			return false;  // Address is not hooked
+		}
+
+		bool hook_kernel_function(_In_ void* target_api, _In_ void* new_api, _Inout_ void** origin_function)
+		{
 			if (!target_api)
 			{
 				return false;
@@ -39,10 +69,20 @@ namespace utils
 				return false;
 			}
 
+			// Check if the target address is already hooked
+			if (is_address_already_hooked(target_api))
+			{
+
+				return true;  // Return true since it's already hooked
+			}
+
+
 			if (origin_function)
 			{
 				*origin_function = nullptr;
 			}
+
+
 
 			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
 			if (target_pa == 0)
@@ -57,6 +97,8 @@ namespace utils
 				entry = entry->Flink)
 			{
 				kernel_hook_page_info* hooked_page_info = CONTAINING_RECORD(entry, kernel_hook_page_info, page_list);
+
+				 
 
 				if (hooked_page_info->orig_page_pfn == GET_PFN(target_pa))
 				{

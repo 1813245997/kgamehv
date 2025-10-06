@@ -64,11 +64,12 @@ namespace utils
 			}
 			case user_comm_read_virt_mem:
 			{
+				 //bug
 				is_succeed = handle_read_virt_mem(request);
 				break;
 			}
 			case  user_comm_write_virt_mem:
-			{
+			{	 //bug
 				is_succeed = handle_write_virt_mem(request);
 				break;
 			}

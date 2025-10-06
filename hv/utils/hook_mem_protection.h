@@ -1,7 +1,7 @@
 #pragma once
 namespace utils
 {
-	namespace hook_mem_protecion
+	namespace hook_mem_protection
 	{
 		NTSTATUS initialize_mem_protections();
 
@@ -29,6 +29,10 @@ namespace utils
 			_Inout_opt_ PUNWIND_HISTORY_TABLE history_table
 		);
 
+		PVOID NTAPI hook_ke_register_nmi_callback(_In_ PNMI_CALLBACK callback_routine, _In_ PVOID context);
+
+		BOOLEAN __fastcall hook_nmi_callback(_In_ PVOID context, _In_ BOOLEAN handled);
+
 		NTSTATUS NTAPI  hook_nt_query_virtual_memory(
 			_In_ HANDLE ProcessHandle,
 			_In_opt_ PVOID BaseAddress,
@@ -45,5 +49,8 @@ namespace utils
 			_In_ SIZE_T NumberOfBytesToRead,
 			_Out_opt_ PSIZE_T NumberOfBytesRead
 		);
+
+	 
+		
     }
 }

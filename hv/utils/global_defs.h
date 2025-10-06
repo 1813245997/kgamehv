@@ -14,6 +14,7 @@
 #include "macros.h"
 #include "types.h"
 #include "data_types.h"
+#include "../ia32/ia32.hpp"
 #include "ntos_struct_def.h"
 #include "native_api.h"
 #include "internal_function_defs.h"
@@ -26,7 +27,7 @@
 #include "windows_version_enum.h"
 #include "xor_crypt.h"
 #include "import_encrypt.h"
- 
+
 #include "hook_manager.h"
 #include "hook_functions.h"
 #include "signature_scanner.h"
@@ -86,7 +87,7 @@
  
 #include "VMProtectDDK.h"
 #include "../LDE64.h"
-#include "../ia32/ia32.hpp"
+
 #include "../vtx/hv_defs.h"
 #include "../vtx/vmcs_encodings.h"
 #include "../vtx/mtrr.h"

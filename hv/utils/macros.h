@@ -410,3 +410,8 @@
 
 #define SM_CXSCREEN             0
 #define SM_CYSCREEN             1
+
+
+ 
+#define KPCR_TSS_BASE_OFFSET         0x008
+#define TSS_IST_OFFSET               0x01c

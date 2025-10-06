@@ -11,7 +11,7 @@
 - **EPT (Extended Page Tables)** - 硬件级内存虚拟化支持
 - **VMCALL接口** - 内核模式内部通信
 - **驱动架构** - 专业内核模式实现
-- **构建系统** - Visual Studio 2022解决方案配置
+- **构建系统** - Visual Studio 2019解决方案配置
 
 ### 第二阶段：ShadowBreakPoint系统 ✅完成⭐
 - **不可见的软件断点** - EPT隐藏的0xCC/int3断点

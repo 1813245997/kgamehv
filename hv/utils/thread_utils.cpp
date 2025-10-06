@@ -1,5 +1,6 @@
 #include "global_defs.h"
 #include "thread_utils.h"
+#include "../ia32/ia32.h"
 namespace utils
 {
 	namespace thread_utils
@@ -86,33 +87,33 @@ namespace utils
 			PVOID context,
 			PETHREAD* thread
 		) {
-			// 用于附加到目标进程
+		 
 			KAPC_STATE kApcState = { 0 };
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &kApcState);
 
-			// 保存并切换之前的模式
+			 
 			MODE previous_mode = (MODE)ke_set_previous_mode(KernelMode);
 
 			HANDLE hThread = NULL;
 			NTSTATUS status = STATUS_UNSUCCESSFUL;
 
-			// 创建线程（注：内部使用 NtCreateThreadEx）
+			 
 			status = utils::internal_functions::pfn_nt_create_thread_ex(
-				&hThread,               // 输出线程句柄
-				THREAD_ALL_ACCESS,      // 线程访问权限
-				NULL,                   // 对象属性
-				NtCurrentProcess(),     // 当前进程句柄
-				shellcode,              // 线程起始地址
-				context,                // 线程参数
-				0,                      // CreateFlags
-				0,                      // ZeroBits
-				0,                      // StackSize
-				0,                      // MaximumStackSize
-				NULL                    // AttributeList
+				&hThread,                
+				THREAD_ALL_ACCESS,       
+				NULL,                    
+				NtCurrentProcess(),      
+				shellcode,               
+				context,                 
+				0,                       
+				0,                      
+				0,                       
+				0,                      
+				NULL                    
 			);
 
 			if (NT_SUCCESS(status) && thread) {
-				// 将线程句柄转换为对象指针
+				 
 				status = ObReferenceObjectByHandle(
 					hThread,
 					THREAD_ALL_ACCESS,
@@ -123,16 +124,26 @@ namespace utils
 				);
 			}
 
-			// 关闭句柄
+		 
 			if (hThread) {
 				NtClose(hThread);
 			}
 
-			// 恢复原来的调用模式并脱离目标进程
+			 
 			ke_set_previous_mode(previous_mode);
 			utils::internal_functions::pfn_ke_unstack_detach_process(&kApcState);
 
 			return status;
+		}
+
+		TASK_STATE_SEGMENT_64* get_task_state_segment(_In_ UINT64 Kpcr)
+		{
+			return *(TASK_STATE_SEGMENT_64**)(Kpcr + KPCR_TSS_BASE_OFFSET);
+		}
+
+		PMACHINE_FRAME get_isr_machine_frame(_In_ TASK_STATE_SEGMENT_64* task_state_segment)
+		{
+			return reinterpret_cast<PMACHINE_FRAME>(task_state_segment->Ist3 - sizeof(MACHINE_FRAME));
 		}
 
 	}

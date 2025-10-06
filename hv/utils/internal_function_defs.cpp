@@ -545,6 +545,10 @@ namespace utils
 								_In_ PIMAGE_INFO ImageInfo
 								) = nullptr;
 
+								PVOID(__fastcall* pfn_ke_register_nmi_callback)(
+									_In_ PNMI_CALLBACK callback_routine,
+									_In_ PVOID context
+									) = nullptr;
 
 
 		NTSTATUS initialize_internal_functions()
@@ -621,7 +625,7 @@ namespace utils
 			unsigned long long ob_reference_object_by_handle_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "ObReferenceObjectByHandle");
 			unsigned long long io_query_file_dos_device_name_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "IoQueryFileDosDeviceName");
 			unsigned long long ps_get_process_exit_status_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "PsGetProcessExitStatus");
-		 
+			unsigned long long ke_register_nmi_callback_addr = scanner_fun::find_module_export_by_name(ntoskrnl_base, "KeRegisterNmiCallback");
 			
 
 
@@ -683,6 +687,7 @@ namespace utils
 			LogInfo("ke_get_current_thread_addr      = %p", reinterpret_cast<PVOID>(ke_get_current_thread_addr));
 			LogInfo("ps_get_process_exit_status_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_exit_status_addr));
 			LogInfo("ps_get_process_section_base_address_addr      = %p", reinterpret_cast<PVOID>(ps_get_process_section_base_address_addr));
+			LogInfo("ke_register_nmi_callback_addr      = %p", reinterpret_cast<PVOID>(ke_register_nmi_callback_addr));
 			 
 
 			 
@@ -754,6 +759,7 @@ namespace utils
 			INIT_FUNC_PTR(pfn_io_query_file_dos_device_name, io_query_file_dos_device_name_addr);
 			INIT_FUNC_PTR(pfn_ps_get_process_exit_status, ps_get_process_exit_status_addr);
 			INIT_FUNC_PTR(pfn_ps_get_process_section_base_address, ps_get_process_section_base_address_addr);
+			INIT_FUNC_PTR(pfn_ke_register_nmi_callback, ke_register_nmi_callback_addr);
 			//rtl_compare_unicode_string_addr
  
 			//These three search feature codes will cause errors. Find a way to solve it.
@@ -766,7 +772,7 @@ namespace utils
 
 			unsigned long long psp_exit_process_addr = scanner_fun::find_psp_exit_process();
 			LogInfo("psp_exit_process_addr     = %p", reinterpret_cast<PVOID>(psp_exit_process_addr));
-			//win10老系统以及一下的是没有这个函数的
+			 
 			unsigned long long mm_is_address_valid_ex_addr = scanner_fun::find_mm_is_address_valid_ex();
 			LogInfo("mm_is_address_valid_ex_addr     = %p", reinterpret_cast<PVOID>(mm_is_address_valid_ex_addr));
 
@@ -1092,6 +1098,8 @@ namespace utils
 				LogError("nt_create_thread_ex_addr is null.");
 			if (!load_image_notify_routine_addr)
 				LogError("load_image_notify_routine_addr is null.");
+			if (!ke_register_nmi_callback_addr)
+				LogError("ke_register_nmi_callback_addr is null.");
 		/*	if (!create_process_notify_routine_t_addr)
 				LogError("create_process_notify_routine_t_addr is null.");*/
 
@@ -1193,7 +1201,8 @@ namespace utils
 				!ps_suspend_thread_addr||
 				!ps_resume_thread_addr||
 				!nt_create_thread_ex_addr||
-				!load_image_notify_routine_addr
+				!load_image_notify_routine_addr||
+				!ke_register_nmi_callback_addr
 				)             
 			{
 				return STATUS_UNSUCCESSFUL;
