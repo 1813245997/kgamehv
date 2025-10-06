@@ -41,17 +41,17 @@ namespace utils
 			PHYSICAL_ADDRESS physical_address;
 			unsigned long long pte_base{};
 			unsigned long long index{};
-			physical_address.QuadPart = __readcr3() & 0xfffffffffffff000;   // »ñÈ¡CR3¼Ä´æÆ÷£¬Çå³ýµÍ12Î»
-			PLONG64 pxe_ptr =  reinterpret_cast<PLONG64>  (MmGetVirtualForPhysical(physical_address));   // »ñÈ¡ÆäËùÔÚµÄÐéÄâµØÖ· - Ò³±í×ÔÓ³Éä
+			physical_address.QuadPart = __readcr3() & 0xfffffffffffff000;    
+			PLONG64 pxe_ptr =  reinterpret_cast<PLONG64>  (MmGetVirtualForPhysical(physical_address));   
 			
-			// ±éÀú±È½Ï
+			 
 			while ((pxe_ptr[index] & 0xfffffffff000) != physical_address.QuadPart) {
 				index++;
 				if (index >= 512) {
 					return 0;
 				}
 			}
-			// ¼ÆËãpte»ùÖ·
+			 
 			pte_base = ((index + 0x1fffe00) << 39);
 
 			return pte_base;
@@ -196,7 +196,7 @@ namespace utils
 			}
 			if (pdpt_entry->large_page)
 			{
-				// 1 GB ´óÒ³Ó³Éä£¬µØÖ·ÓÐÐ§
+				// 1 GB  
 				return true;
 			}
 
@@ -208,7 +208,7 @@ namespace utils
 			}
 			if (pde_entry->large_page)
 			{
-				// 2 MB ´óÒ³Ó³Éä£¬µØÖ·ÓÐÐ§
+				// 2 MB  
 				return true;
 			}
 
@@ -363,6 +363,41 @@ namespace utils
 			   return ((((((long long)virtual_address) & 0x0000FFFFFFFFF000) >> 39) << 3) + (g_pxe_base));
 		   }
 
+		   PVOID allocate_independent_pages(__in SIZE_T size, __in ULONG new_protect)
+		{
+			// 1. Allocate independent pages
+			PVOID base_address = internal_functions::pfn_mm_allocate_independent_pages(size, 0);
+			if (!base_address)
+			{
+				LogError("Failed to allocate independent pages (size: 0x%llX)", size);
+				return nullptr;
+			}
+		
+			// 2. Set memory protection for the allocated region
+			utils::internal_functions::pfn_mm_set_page_protection(base_address, size, new_protect);
+		
+			// 3. Verify that the allocated address is valid
+			if (!internal_functions::pfn_mm_is_address_valid_ex(base_address))
+			{
+				LogError("Allocated pages are invalid. Releasing memory...");
+				internal_functions::pfn_mm_free_independent_pages(base_address, size);
+				return nullptr;
+			}
+		
+			// 4. Set custom PTE bits to ensure correct page attributes
+			//    (0x861 â†’ typically marks the page as valid, accessed, and executable)
+			memory::set_pte_bits(reinterpret_cast<ULONG64>(base_address), size, 0x861);
+		
+			// 5. Successfully allocated and configured the pages
+			 
+		
+			return base_address;
+		}
+		
+		   VOID free_independent_pages(__in PVOID base_address, __in SIZE_T size)
+		   {
+			   return internal_functions::pfn_mm_free_independent_pages(base_address, size);
+		   }
 
 		   NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process, OUT PVOID* base_address, _In_   SIZE_T size, bool load, bool hide)
 		   {
@@ -392,7 +427,7 @@ namespace utils
 					   utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
 				   }
 				   
-				   // Êä³öµ÷ÊÔÐÅÏ¢
+				   
 			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 					   "[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
 					   pid, start_addr, region_size);*/
@@ -419,7 +454,7 @@ namespace utils
 				   unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
 				   unsigned long long end_addr = start_addr + region_size;
 
-				   // Êä³ö·ÖÅäÐÅÏ¢
+				  
 			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
 					   "[allocate_user_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
 					   pid, start_addr, region_size);*/
@@ -741,7 +776,7 @@ namespace utils
 				   return STATUS_SUCCESS;
 			   }
 
-			   return STATUS_NO_MORE_ENTRIES; // page_phys Îª 0
+			   return STATUS_NO_MORE_ENTRIES; // page_phys 
 
 		   }
 		   NTSTATUS __fastcall get_phys_page_size(
@@ -1000,7 +1035,7 @@ namespace utils
 			   if (size > transfer_page_info->size)
 				   return STATUS_BUFFER_TOO_SMALL;
 
-			   // ¿çÒ³²»Ö§³Ö
+			  
 			   if ((phys_page_base >> 12) != ((phys_page_base + size - 1) >> 12))
 				   return STATUS_INVALID_PARAMETER_MIX;
 
@@ -1010,7 +1045,7 @@ namespace utils
 			   ULONG old_irql = 0;
 			   bool raised_irql = false;
 
-			   // Èç¹ûµ±Ç°IRQLÐ¡ÓÚDPC_LEVEL£¬ÌáÉýµ½DPC
+			  
 			   if (KeGetCurrentIrql() < DISPATCH_LEVEL) {
 				   old_irql = raise_irql_to_dpc_level();
 				   raised_irql = true;
@@ -1022,14 +1057,14 @@ namespace utils
 				   return STATUS_INVALID_ADDRESS;
 			   }
 
-			   // ±£´æÔ­Ê¼PTE²¢¹ÒÉÏÄ¿±êÎïÀíÒ³
+			    
 			   ULONG64* pte_entry = reinterpret_cast<ULONG64*>(pte_addr);
 			   ULONG64 old_pte = *pte_entry;
 
 			   *pte_entry =
 				   ((phys_page_base >> 12) & 0xFFFFFFFFFFULL) << 12 |
 				   (*pte_entry & 0xFFF0000000000EF8ULL) |
-				   0x103ULL; // Present | ReadWrite | NX Çå³ý
+				   0x103ULL; // Present | ReadWrite | NX  
 
 			   __invlpg((void*) transfer_page_info->base_address);
 
@@ -1039,7 +1074,7 @@ namespace utils
 				   size
 			   );
 
-			   // »Ö¸´Ô­Ê¼PTE
+			   
 			   *pte_entry = old_pte;
 
 			   if (raised_irql)
@@ -1052,7 +1087,7 @@ namespace utils
 		   {
 			   if (!g_physical_memory_ranges)
 			   {
-				   // ½öÔÚ IRQL = PASSIVE_LEVEL Ê±µ÷ÓÃ MmGetPhysicalMemoryRanges
+				 
 				   if (KeGetCurrentIrql())
 					   return false;
 
@@ -1068,7 +1103,7 @@ namespace utils
 			   {
 				   PHYSICAL_MEMORY_RANGE physical_memory_range = g_physical_memory_ranges[i];
 
-				   // Óöµ½ÖÕÖ¹Ïî
+				   
 				   if (physical_memory_range.BaseAddress.QuadPart == 0 ||
 					   physical_memory_range.NumberOfBytes.QuadPart == 0)
 				   {
@@ -1077,7 +1112,7 @@ namespace utils
 
 			 
 
-				   // ÅÐ¶ÏµØÖ·ÊÇ·ñÍêÈ«ÂäÔÚµ±Ç°ÎïÀíÄÚ´æÇø¼äÖÐ
+				    
 				   if (phys_page_base >= (ULONG64)physical_memory_range.BaseAddress.QuadPart
 					   && phys_page_base < (ULONG64)physical_memory_range.NumberOfBytes.QuadPart + physical_memory_range.BaseAddress.QuadPart
 					   && phys_page_end >= (ULONG64)physical_memory_range.BaseAddress.QuadPart

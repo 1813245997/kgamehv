@@ -10,7 +10,7 @@ namespace utils
 
 
 
-		// ��ʽ����ָ�붨��
+		 
 		extern void(__fastcall* pfn_ki_preprocess_fault)(
 			_Inout_ PEXCEPTION_RECORD ExceptionRecord,
 			_Inout_ PCONTEXT ContextRecord,

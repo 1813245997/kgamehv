@@ -67,7 +67,7 @@ namespace utils
 
 		bool is_phys_page_in_range(unsigned  long long phys_page_base, size_t size);
 
-		//新获取PTE 等算法
+	 
 		long long mm_get_pte_address(long long virtual_address);
 
 		long long mm_get_pde_address(long long virtual_address);
@@ -76,8 +76,9 @@ namespace utils
 
 		long long mm_get_pxe_address(long long virtual_address);
 
+        PVOID allocate_independent_pages(__in SIZE_T size,__in ULONG new_protect);
 
-
+		VOID free_independent_pages(__in PVOID base_address, __in SIZE_T size);
 
 		NTSTATUS allocate_user_hidden_exec_memory(_In_  PEPROCESS process, OUT PVOID* base_address, _In_   SIZE_T size, bool load = true, bool hide = true);
 
