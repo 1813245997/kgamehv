@@ -127,12 +127,15 @@
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="game\game_cheat_config.h" />
     <ClInclude Include="game\delta_force.h" />
     <ClInclude Include="game\game_cheat.h" />
+    <ClInclude Include="utils\comm_utils.h" />
     <ClInclude Include="utils\kernel_dwm_drawing.h" />
     <ClInclude Include="utils\hook_mem_protection.h" />
     <ClInclude Include="utils\hook_process_manager.h" />
     <ClInclude Include="utils\hook_user_comm.h" />
+    <ClInclude Include="utils\key_board_class.h" />
     <ClInclude Include="utils\mouse_class_utils.h" />
     <ClInclude Include="utils\render.h" />
     <ClInclude Include="utils\shadow_break_point.h" />
@@ -238,13 +241,16 @@
   <ItemGroup>
     <ClCompile Include="game\delta_force.cpp" />
     <ClCompile Include="game\game_cheat.cpp" />
+    <ClCompile Include="game\game_cheat_config.cpp" />
     <ClCompile Include="utils\ark_utils.cpp" />
     <ClCompile Include="utils\auth.cpp" />
+    <ClCompile Include="utils\comm_utils.cpp" />
     <ClCompile Include="utils\font_utils.cpp" />
     <ClCompile Include="utils\kernel_dwm_drawing.cpp" />
     <ClCompile Include="utils\hook_mem_protection.cpp" />
     <ClCompile Include="utils\hook_process_manager.cpp" />
     <ClCompile Include="utils\hook_user_comm.cpp" />
+    <ClCompile Include="utils\key_board_class.cpp" />
     <ClCompile Include="utils\mouse_class_utils.cpp" />
     <ClCompile Include="utils\render.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />

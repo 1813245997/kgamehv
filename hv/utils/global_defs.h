@@ -27,7 +27,7 @@
 #include "windows_version_enum.h"
 #include "xor_crypt.h"
 #include "import_encrypt.h"
-
+#include "comm_utils.h"
 #include "hook_manager.h"
 #include "hook_functions.h"
 #include "signature_scanner.h"
@@ -81,6 +81,8 @@
 #include "fontdata.h"
 #include "LegacyRender.h"
 #include "mouse_class_utils.h"
+#include "key_board_class.h"
+#include "../game/game_cheat_config.h"
 #include "../game/delta_force.h"
 #include "../game/game_cheat.h"
  

@@ -165,6 +165,16 @@ namespace utils
 			}
 			LogInfo("Mouse class initialized successfully.");
 
+			LogInfo("Initializing key board class...");
+			status = utils::key_board_class::initialize_key_board_class();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize key board class (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("Key board class initialized successfully.");
+
 			LogInfo("Initializing dwm drawing...");
 			status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
 			if (!NT_SUCCESS(status))

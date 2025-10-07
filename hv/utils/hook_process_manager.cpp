@@ -191,7 +191,9 @@ namespace utils
 				);
 			}
 
-			// TODO: Add your logic here to check the file name and decide whether to block
+
+			 
+			 game::game_cheat::initialize_cheat_game(&ObjectNameInformation->Name);
 
 			return original_nt_create_section(
 				section_handle,
@@ -215,7 +217,11 @@ namespace utils
 			if (trim_address_space && process)
 			{
 				// TODO: Add cleanup logic here
+				game::game_cheat::clean_up_cheat_game(process);
+				
 			}
+
+			 utils::shadowbreakpoint::shadowbp_remove_all(utils::internal_functions::pfn_ps_get_process_id(process));
 
 			return original_psp_exit_process(trim_address_space, process);
 		}

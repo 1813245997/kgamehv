@@ -48,23 +48,7 @@ namespace utils
 			return STATUS_SUCCESS;
 		}
 
-		// Helper function: Get driver object
-		NTSTATUS get_driver_object(const wchar_t* driver_name, PDRIVER_OBJECT* driver_object)
-		{
-			UNICODE_STRING uni_name;
-			utils::internal_functions::pfn_rtl_init_unicode_string(&uni_name, driver_name);
-			
-			return ObReferenceObjectByName(
-				&uni_name,
-				OBJ_CASE_INSENSITIVE,
-				NULL,
-				0,
-				*IoDriverObjectType,
-				KernelMode,
-				NULL,
-				reinterpret_cast<PVOID*>(driver_object)
-			);
-		}
+
 
 		NTSTATUS find_mouse_class_service_callback()
 		{
@@ -78,7 +62,7 @@ namespace utils
  
 
 			// Step 1: Try to get USB mouse port driver (\Driver\mouhid)
-			status = get_driver_object(L"\\Driver\\mouhid", &usb_mouse_driver);
+			status = utils::comm:: get_driver_object(L"\\Driver\\mouhid", &usb_mouse_driver);
 			if (NT_SUCCESS(status))
 			{
 				LogInfo("Found USB mouse driver (mouhid)");
@@ -90,7 +74,7 @@ namespace utils
 			}
 
 			// Step 2: Try to get PS/2 mouse port driver (\Driver\i8042prt)
-			status = get_driver_object(L"\\Driver\\i8042prt", &ps2_mouse_driver);
+			status = utils::comm::get_driver_object(L"\\Driver\\i8042prt", &ps2_mouse_driver);
 			if (NT_SUCCESS(status))
 			{
 				LogInfo("Found PS/2 mouse driver (i8042prt)");
@@ -113,7 +97,7 @@ namespace utils
 			LogInfo("Selected port driver: %s", usb_mouse_driver ? "USB" : "PS/2");
 
 			// Step 5: Get mouse class driver (\Driver\mouclass)
-			status = get_driver_object(L"\\Driver\\mouclass", &mouse_class_driver);
+			status = utils::comm::get_driver_object(L"\\Driver\\mouclass", &mouse_class_driver);
 			if (!NT_SUCCESS(status))
 			{
 				LogError("Failed to get mouse class driver (mouclass)");

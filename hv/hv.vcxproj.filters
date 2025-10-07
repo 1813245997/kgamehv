@@ -346,6 +346,15 @@
     <ClInclude Include="utils\mouse_class_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="game\game_cheat_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\key_board_class.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="utils\comm_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -562,6 +571,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\mouse_class_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="game\game_cheat_config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\key_board_class.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\comm_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
