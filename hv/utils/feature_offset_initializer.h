@@ -22,6 +22,8 @@ namespace utils
 
 		extern unsigned long long g_eprocess_unique_process_id_offset;
 
+		extern unsigned long long g_eprocess_image_file_name_offset;
+
 		NTSTATUS initialize();
 	}
 }

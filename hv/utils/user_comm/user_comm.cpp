@@ -149,11 +149,9 @@ namespace utils
 			size_t path_len = wcslen(file_path) + 1;
 
 			 
-			PWCHAR safe_path = (PWCHAR)utils::internal_functions::pfn_ex_allocate_pool_with_tag(
-				NonPagedPool,
-				path_len * sizeof(WCHAR),
-				'dlfF' 
-			);
+			PWCHAR safe_path = reinterpret_cast<PWCHAR>(utils::memory::allocate_independent_pages(path_len * sizeof(WCHAR), PAGE_READWRITE));
+				 
+			 
 
 			if (!safe_path)
 			{
@@ -235,7 +233,7 @@ namespace utils
 
 	    
 			size_t name_len = (wcslen(module_name) + 1) * sizeof(WCHAR);
-			PWCHAR kernel_module_name = (PWCHAR)ExAllocatePoolWithTag(NonPagedPool, name_len, 'modN');
+			PWCHAR kernel_module_name = reinterpret_cast<PWCHAR>(utils::memory::allocate_independent_pages(name_len, PAGE_READWRITE));
 			if (!kernel_module_name)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(process);
@@ -254,7 +252,7 @@ namespace utils
 			);
 
 	 
-			ExFreePoolWithTag(kernel_module_name, 'modN');
+			utils::memory::free_independent_pages(kernel_module_name, name_len);
 			utils::internal_functions::pfn_ob_dereference_object(process);
 			request->status = status;
 			return true;

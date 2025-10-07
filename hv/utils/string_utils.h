@@ -15,8 +15,8 @@ namespace utils
 
 		size_t strlen(const char* str);
 
-		void utf8_to_unicode(LPCSTR utf8, LPWSTR uni, SIZE_T max_count);
-
+		bool ansi_to_unicode(_In_ PCHAR ansi_str, _Inout_ PWCHAR unicode_buffer, _In_ SIZE_T buffer_size);
+		
 		bool int_to_string(int value, char* buffer, size_t buffer_size);
 
 		char* int_to_string_no_alloc(int value, char* buffer, size_t buffer_size);
@@ -27,9 +27,13 @@ namespace utils
 
 		char* concat_strings_alloc(const char* str1, const char* str2);
 
-		PUNICODE_STRING create_unicode_string_from_wchar(_In_ PCWCHAR src);
-
 		void free_unicode_string(_In_opt_ PUNICODE_STRING uni_str);
+
+		void utf8_to_unicode(LPCSTR utf8, LPWSTR uni, SIZE_T max_count);
+
+		PUNICODE_STRING ansi_to_unicode_string(_In_ PCHAR ansi_str);
+
+		PUNICODE_STRING create_unicode_string_from_wchar(_In_ PCWCHAR src);
 	
 	}
 }

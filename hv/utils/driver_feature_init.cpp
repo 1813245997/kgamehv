@@ -53,6 +53,7 @@ namespace utils
 				" Driver Base: 0x%p, Image Size: 0x%llX\n",
 				module_base,
 				static_cast<ULONGLONG>(image_size));
+			 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Driver Base: 0x%p, Image Size: 0x%llX\n", module_base, static_cast<ULONGLONG>(image_size));
 			 
 			LogInfo("Initializing internal functions...");
 			  status = internal_functions::initialize_internal_functions();
@@ -87,6 +88,7 @@ namespace utils
 			}
 			LogInfo("Feature globals initialized successfully.");
 
+			 
 			LogInfo("Initializing feature offsets...");
 			status = feature_offset::initialize();
 			if (!NT_SUCCESS(status))
@@ -113,6 +115,7 @@ namespace utils
 
 			utils::hidden_user_memory::initialize_hidden_user_memory();
 
+			 
 			status = utils::module_info::initialize_all_user_modules();
 			if (!NT_SUCCESS(status))
 			{

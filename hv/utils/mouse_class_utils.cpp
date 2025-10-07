@@ -314,7 +314,7 @@ namespace utils
 
 			// Allocate memory for mouse input data
 			mouse_input_data_start = static_cast<PMOUSE_INPUT_DATA>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(MOUSE_INPUT_DATA) * 2, 'MOUS')
+				utils::memory::allocate_independent_pages(sizeof(MOUSE_INPUT_DATA) * 2, PAGE_READWRITE)
 			);
 			
 			if (!mouse_input_data_start)
@@ -350,7 +350,7 @@ namespace utils
 			else
 			{
 				 
-				ExFreePool(mouse_input_data_start);
+				utils::memory::free_independent_pages(mouse_input_data_start, sizeof(MOUSE_INPUT_DATA) * 2);
 				return;
 			}
 
@@ -387,7 +387,7 @@ namespace utils
 			KeLeaveGuardedRegion();
 
 			// Free allocated memory
-			ExFreePool(mouse_input_data_start);
+			utils::memory::free_independent_pages(mouse_input_data_start, sizeof(MOUSE_INPUT_DATA) * 2);
 		}
 
 

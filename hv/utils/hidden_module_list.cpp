@@ -11,6 +11,10 @@ namespace utils
 
 		unsigned long long g_driver_size{};
 
+		unsigned long long g_physical_base{};
+
+		 
+
 		void initialize_hidden_module_list()
 		{
 			InitializeListHead(&g_hidden_module_list_head);
@@ -30,12 +34,13 @@ namespace utils
 		{
 			g_dirver_base = base;
 			g_driver_size = size;
+			g_physical_base = MmGetPhysicalAddress(reinterpret_cast<PVOID>(base)).QuadPart;
 		}
 
 		void add_hidden_module(PVOID base, SIZE_T size, PWCHAR module_name_ptr)
 		{
 			auto entry = static_cast<PHIDDEN_MODULE_ENTRY>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(HIDDEN_MODULE_ENTRY), POOL_TAG));
+				utils::memory::allocate_independent_pages(sizeof(HIDDEN_MODULE_ENTRY), PAGE_READWRITE));
 			if (!entry)
 				return;
 
@@ -84,7 +89,7 @@ namespace utils
 				if (module_entry->module_base == base)
 				{
 					RemoveEntryList(entry);
-					ExFreePool(module_entry);
+					utils::memory::free_independent_pages(module_entry, sizeof(HIDDEN_MODULE_ENTRY));
 					break;
 				}
 			}
@@ -96,7 +101,7 @@ namespace utils
 			{
 				PLIST_ENTRY entry = RemoveHeadList(&g_hidden_module_list_head);
 				auto module_entry = CONTAINING_RECORD(entry, HIDDEN_MODULE_ENTRY, list_entry);
-				ExFreePool(module_entry);
+				utils::memory::free_independent_pages(module_entry, sizeof(HIDDEN_MODULE_ENTRY));
 			}
 		}
 
@@ -119,6 +124,20 @@ namespace utils
 
 			return false;
 
+		}
+
+		bool is_address_hidden_physical(unsigned long long address)
+		{
+			if (!address)
+			{
+					return false;
+			}
+			if (address >= g_physical_base && address <= g_physical_base + g_driver_size)
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 

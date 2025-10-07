@@ -27,6 +27,8 @@
   - `MmCopyMemory` - 内存复制操作钩子
   - `NtQueryVirtualMemory` - 虚拟内存查询钩子
   - `NtReadVirtualMemory` - 虚拟内存读取钩子
+  - `ZwQuerySystemInformation` - 绕过内存池扫描通过分配非内存池内存
+  - `MmGetVirtualForPhysical` - 绕过遍历系统进程页表物理内存转换成虚拟内存的检测
 - **堆栈跟踪规避** - 反调试技术
   - `RtlWalkFrameChain` - 堆栈遍历钩子
   - `RtlLookupFunctionEntry` - 函数入口查找钩子

@@ -23,7 +23,7 @@ namespace utils
 
         NTSTATUS initialize_font()
         {
-            g_Font = (Font*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(NonPagedPool, sizeof(Font), 'FONT');
+            g_Font =  reinterpret_cast<Font*>(utils::memory::allocate_independent_pages(sizeof(Font), PAGE_READWRITE));
             if (!g_Font)
             {
                 return STATUS_UNSUCCESSFUL;

@@ -23,7 +23,7 @@ namespace utils
 			{
 				return status;
 			}
-			
+			 
 			g_pde_base = mm_get_pte_address(g_pte_base);
 			g_ppe_base = mm_get_pte_address(g_pde_base);
 			g_pxe_base = mm_get_pte_address(g_ppe_base);
@@ -65,19 +65,6 @@ namespace utils
 			}
 			else
 			{
-				//wchar_t wa_MmGetVirtualForPhysical[] = { 0xE3AE, 0xE38E, 0xE3A4, 0xE386, 0xE397, 0xE3B5, 0xE38A, 0xE391, 0xE397, 0xE396, 0xE382, 0xE38F, 0xE3A5, 0xE38C, 0xE391, 0xE3B3, 0xE38B, 0xE39A, 0xE390, 0xE38A, 0xE380, 0xE382, 0xE38F, 0xE3E3, 0xE3E3 };
-
-				//for (int i = 0; i < 25; i++)
-				//{
-				//	wa_MmGetVirtualForPhysical[i] ^= 0x6D6D;
-				//	wa_MmGetVirtualForPhysical[i] ^= 0x8E8E;
-				//};
-
-				//UNICODE_STRING unFuncNameMmGetVirtualForPhysical = { 0 };
-				//RtlInitUnicodeString(&unFuncNameMmGetVirtualForPhysical, wa_MmGetVirtualForPhysical);
-				//PUCHAR funcMmGetVirtualForPhysical = (PUCHAR)MmGetSystemRoutineAddress(&unFuncNameMmGetVirtualForPhysical);
-				//g_pte_base = *(PULONG64)(funcMmGetVirtualForPhysical + 0x22);
-
 				g_pte_base = new_get_pte_base();
 			}
 			  
@@ -390,12 +377,21 @@ namespace utils
 		
 			// 5. Successfully allocated and configured the pages
 			 
+			RtlZeroMemory(base_address, size);
 		
 			return base_address;
 		}
 		
 		   VOID free_independent_pages(__in PVOID base_address, __in SIZE_T size)
 		   {
+			  if (!base_address)
+			  {
+				   return;
+			  }
+			  if (!size)
+			  {
+				   return;
+			  }
 			   return internal_functions::pfn_mm_free_independent_pages(base_address, size);
 		   }
 
@@ -427,12 +423,9 @@ namespace utils
 					   utils::hidden_user_memory::insert_hidden_address_for_pid(pid, start_addr, end_addr);
 				   }
 				   
-				   
-			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-					   "[allocate_user_hidden_exec_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					   pid, start_addr, region_size);*/
+			 
 			   }
-			   //set_execute_page(*reinterpret_cast<PULONG64> ( base_address),  region_size);
+			    
 			   return status;
 		   }
 		   NTSTATUS allocate_user_memory(OUT PVOID* base_address, _In_   SIZE_T size, ULONG protect, bool load, bool hide)
@@ -454,10 +447,7 @@ namespace utils
 				   unsigned long long start_addr = reinterpret_cast<unsigned long long>(*base_address);
 				   unsigned long long end_addr = start_addr + region_size;
 
-				  
-			   /*	DbgPrintEx(DPFLTR_IHVDRIVER_ID, 0,
-					   "[allocate_user_memory] PID: %lu, Addr: 0x%llX, Size: 0x%llX bytes\n",
-					   pid, start_addr, region_size);*/
+	
 
 				   if (load) {
 					   mem_zero(*base_address, region_size);
@@ -776,7 +766,7 @@ namespace utils
 				   return STATUS_SUCCESS;
 			   }
 
-			   return STATUS_NO_MORE_ENTRIES; // page_phys 
+			  return STATUS_NO_MORE_ENTRIES;
 
 		   }
 		   NTSTATUS __fastcall get_phys_page_size(
@@ -1064,7 +1054,7 @@ namespace utils
 			   *pte_entry =
 				   ((phys_page_base >> 12) & 0xFFFFFFFFFFULL) << 12 |
 				   (*pte_entry & 0xFFF0000000000EF8ULL) |
-				   0x103ULL; // Present | ReadWrite | NX  
+				   0x103ULL;  
 
 			   __invlpg((void*) transfer_page_info->base_address);
 

@@ -32,7 +32,7 @@ namespace utils
 				}
 
 				PPROCESS_ENTRY entry = reinterpret_cast<PPROCESS_ENTRY>(
-					ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(PROCESS_ENTRY), 'prcs'));
+					  utils::memory::allocate_independent_pages(sizeof(PROCESS_ENTRY), PAGE_READWRITE));
 				if (!entry)
 				{
 				 
@@ -86,21 +86,21 @@ namespace utils
 						{
 							 
 							if (entry->image_path->Buffer)
-								ExFreePoolWithTag(entry->image_path->Buffer, 'path');
-							ExFreePoolWithTag(entry->image_path, 'ustr');
+								utils::memory::free_independent_pages(entry->image_path->Buffer, entry->image_path->Length);
+							utils::memory::free_independent_pages(entry->image_path, sizeof(UNICODE_STRING));
 						}
 
 						if (entry->process_name)
 						{
 							if (entry->process_name->Buffer)
-								ExFreePoolWithTag(entry->process_name->Buffer, 'path');
-							ExFreePoolWithTag(entry->process_name, 'ustr');
+								utils::memory::free_independent_pages(entry->process_name->Buffer, entry->process_name->Length);
+							utils::memory::free_independent_pages(entry->process_name, sizeof(UNICODE_STRING));
 						}
 						utils::internal_functions::pfn_ob_dereference_object(entry->process);
 						entry->process = nullptr;
 						 
 
-						ExFreePoolWithTag(entry, 'prcs');
+						utils::memory::free_independent_pages(entry, sizeof(PROCESS_ENTRY));
 						break;
 					}
 					current = current->Flink;
@@ -136,35 +136,35 @@ namespace utils
 				{
 					PPROCESS_ENTRY entry = CONTAINING_RECORD(current, PROCESS_ENTRY, list_entry);
 
-					// 不匹配的直接跳过
+					 
 					if (!entry->process_name ||	!RtlEqualUnicodeString(process_name, entry->process_name, TRUE))
 					{
 						current = current->Flink;
 						continue;
 					}
 
-					// 匹配到，申请内存并复制
+					 
 					PPROCESS_ENTRY copy_entry = reinterpret_cast<PPROCESS_ENTRY>(
-						ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(PROCESS_ENTRY), 'prcs'));
+						utils::memory::allocate_independent_pages(sizeof(PROCESS_ENTRY), PAGE_READWRITE));
 					if (!copy_entry)
 					{
 						status = STATUS_INSUFFICIENT_RESOURCES;
 						break;
 					}
 
-					// 复制简单字段
+				 
 					copy_entry->process_id = entry->process_id;
 					copy_entry->create_time = entry->create_time;
-					copy_entry->process = entry->process; // 只是指针复制
+					copy_entry->process = entry->process;  
 
-					// 复制 image_path
+					 
 					if (entry->image_path)
 					{
 						copy_entry->image_path = reinterpret_cast<PUNICODE_STRING>(
-							ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(UNICODE_STRING), 'ustr'));
+							utils::memory::allocate_independent_pages(sizeof(UNICODE_STRING), PAGE_READWRITE));
 						if (!copy_entry->image_path)
 						{
-							ExFreePoolWithTag(copy_entry, 'prcs');
+							utils::memory::free_independent_pages(copy_entry, sizeof(PROCESS_ENTRY));
 							status = STATUS_INSUFFICIENT_RESOURCES;
 							break;
 						}
@@ -172,11 +172,11 @@ namespace utils
 						copy_entry->image_path->Length = entry->image_path->Length;
 						copy_entry->image_path->MaximumLength = entry->image_path->MaximumLength;
 						copy_entry->image_path->Buffer = reinterpret_cast<PWCH>(
-							ExAllocatePoolWithTag(NonPagedPoolNx, copy_entry->image_path->MaximumLength, 'path'));
+							utils::memory::allocate_independent_pages(copy_entry->image_path->MaximumLength, PAGE_READWRITE));
 						if (!copy_entry->image_path->Buffer)
 						{
-							ExFreePoolWithTag(copy_entry->image_path, 'ustr');
-							ExFreePoolWithTag(copy_entry, 'prcs');
+							utils::memory::free_independent_pages(copy_entry->image_path, sizeof(UNICODE_STRING));
+							utils::memory::free_independent_pages(copy_entry, sizeof(PROCESS_ENTRY));
 							status = STATUS_INSUFFICIENT_RESOURCES;
 							break;
 						}
@@ -187,20 +187,20 @@ namespace utils
 						copy_entry->image_path = nullptr;
 					}
 
-					// 复制 process_name
+					 
 					if (entry->process_name)
 					{
 						copy_entry->process_name = reinterpret_cast<PUNICODE_STRING>(
-							ExAllocatePoolWithTag(NonPagedPoolNx, sizeof(UNICODE_STRING), 'ustr'));
+							utils::memory::allocate_independent_pages(sizeof(UNICODE_STRING), PAGE_READWRITE));
 						if (!copy_entry->process_name)
 						{
 							if (copy_entry->image_path)
 							{
 								if (copy_entry->image_path->Buffer)
-									ExFreePoolWithTag(copy_entry->image_path->Buffer, 'path');
-								ExFreePoolWithTag(copy_entry->image_path, 'ustr');
+									utils::memory::free_independent_pages(copy_entry->image_path->Buffer, copy_entry->image_path->Length);
+								utils::memory::free_independent_pages(copy_entry->image_path, sizeof(UNICODE_STRING));
 							}
-							ExFreePoolWithTag(copy_entry, 'prcs');
+							utils::memory::free_independent_pages(copy_entry, sizeof(PROCESS_ENTRY));
 							status = STATUS_INSUFFICIENT_RESOURCES;
 							break;
 						}
@@ -208,17 +208,17 @@ namespace utils
 						copy_entry->process_name->Length = entry->process_name->Length;
 						copy_entry->process_name->MaximumLength = entry->process_name->MaximumLength;
 						copy_entry->process_name->Buffer = reinterpret_cast<PWCH>(
-							ExAllocatePoolWithTag(NonPagedPoolNx, copy_entry->process_name->MaximumLength, 'path'));
+							utils::memory::allocate_independent_pages(copy_entry->process_name->MaximumLength, PAGE_READWRITE));
 						if (!copy_entry->process_name->Buffer)
 						{
-							ExFreePoolWithTag(copy_entry->process_name, 'ustr');
+							utils::memory::free_independent_pages(copy_entry->process_name, sizeof(UNICODE_STRING));
 							if (copy_entry->image_path)
 							{
 								if (copy_entry->image_path->Buffer)
-									ExFreePoolWithTag(copy_entry->image_path->Buffer, 'path');
-								ExFreePoolWithTag(copy_entry->image_path, 'ustr');
+									utils::memory::free_independent_pages(copy_entry->image_path->Buffer, copy_entry->image_path->Length);
+								utils::memory::free_independent_pages(copy_entry->image_path, sizeof(UNICODE_STRING));
 							}
-							ExFreePoolWithTag(copy_entry, 'prcs');
+							utils::memory::free_independent_pages(copy_entry, sizeof(PROCESS_ENTRY));
 							status = STATUS_INSUFFICIENT_RESOURCES;
 							break;
 						}
@@ -247,15 +247,15 @@ namespace utils
 				if (entry->image_path)
 				{
 					if (entry->image_path->Buffer)
-						ExFreePoolWithTag(entry->image_path->Buffer, 'path');
-					ExFreePoolWithTag(entry->image_path, 'ustr');
+						utils::memory::free_independent_pages(entry->image_path->Buffer, entry->image_path->Length);
+					utils::memory::free_independent_pages(entry->image_path, sizeof(UNICODE_STRING));
 				}
 
 				if (entry->process_name)
 				{
 					if (entry->process_name->Buffer)
-						ExFreePoolWithTag(entry->process_name->Buffer, 'path');
-					ExFreePoolWithTag(entry->process_name, 'ustr');
+						utils::memory::free_independent_pages(entry->process_name->Buffer, entry->process_name->Length);
+					utils::memory::free_independent_pages(entry->process_name, sizeof(UNICODE_STRING));
 				}
 
 				if (entry->process)
@@ -264,7 +264,7 @@ namespace utils
 					entry->process = nullptr;
 				}
 
-				ExFreePoolWithTag(entry, 'prcs');
+				utils::memory::free_independent_pages(entry, sizeof(PROCESS_ENTRY));
 			}
 
 	}

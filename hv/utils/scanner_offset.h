@@ -18,6 +18,9 @@ namespace utils
 		unsigned long long find_win32_start_address_offset();
 
 		unsigned long long find_eprocess_unique_process_id_offset();
+
+		unsigned long long find_eprocess_image_file_name_offset();
+
 		
 	}
 }

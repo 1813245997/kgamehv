@@ -362,22 +362,31 @@ void ByteRender::String(class Font* f, const Vector2& Start, LPCWSTR str, const 
 }
 
 void ByteRender::StringA(class Font* f, const Vector2& Start, LPCSTR str, const FColor& Color  ) {
-	if (!str) return;
+	if (!str)
+	{
+		return;
+	}
 
 	 
 	size_t len = strlen(str);
-	if (len == 0) return;
+	if (len == 0)
+	{
+		return;
+	}
 
 	 
-	WCHAR* wstr = (WCHAR*)utils::internal_functions::pfn_ex_allocate_pool_with_tag (NonPagedPool, (len + 1) * sizeof(WCHAR), 'rtsW');   
-	if (!wstr) return;
+	WCHAR* wstr = (WCHAR*)utils::memory::allocate_independent_pages((len + 1) * sizeof(WCHAR), PAGE_READWRITE);   
+	if (!wstr)
+	{
+		return;
+	}
 
 	RtlZeroMemory(wstr, (len + 1) * sizeof(WCHAR));
 
 	utils::string_utils::utf8_to_unicode(str, wstr, len);   
 	String(f, Start, wstr, Color);
 
-	utils::internal_functions::pfn_ex_free_pool_with_tag (wstr, 'rtsW');
+	utils::memory::free_independent_pages(wstr, (len + 1) * sizeof(WCHAR));
 }
 
 void ByteRender::StringA(class Font* f, float x, float y, LPCSTR str, const FColor& Color)

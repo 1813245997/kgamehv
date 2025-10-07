@@ -48,7 +48,7 @@ namespace utils
 			return status;
 		}
 
-		bool get_file_name_from_full_path(_In_ PUNICODE_STRING full_path, _Out_ PUNICODE_STRING* file_name)
+		bool get_file_name_from_full_path(_In_ PUNICODE_STRING full_path, _Inout_ PUNICODE_STRING* file_name)
 		{
 			if (!full_path || !full_path->Buffer || full_path->Length == 0)
 			{
@@ -59,7 +59,7 @@ namespace utils
 				return false;
 			}
 
-			// 查找最后一个反斜杠位置
+			 
 			USHORT length = full_path->Length / sizeof(WCHAR);
 			WCHAR* buffer = full_path->Buffer;
 			USHORT last_backslash_index = 0;
@@ -75,32 +75,32 @@ namespace utils
 			USHORT name_length = (length - last_backslash_index) * sizeof(WCHAR);
 			if (name_length == 0)
 			{
-				// 如果没有反斜杠或最后一个反斜杠后面没内容，直接返回失败
+				 
 				return false;
 			}
 
-			// 分配缓冲区
+			 
 			UNICODE_STRING name_only{};
 			name_only.Length = name_length;
 			name_only.MaximumLength = static_cast<USHORT>(name_length + sizeof(WCHAR));
 			name_only.Buffer = static_cast<PWSTR>(
-				internal_functions::pfn_ex_allocate_pool_with_tag(PagedPool, name_only.MaximumLength, 'prcN'));
+				utils::memory::allocate_independent_pages(name_only.MaximumLength, PAGE_READWRITE));
 			if (!name_only.Buffer)
 			{
 				return false;
 			}
 
-			// 复制字符串
+			 
 			RtlCopyMemory(name_only.Buffer, &buffer[last_backslash_index], name_length);
-			// 添加结尾空字符
+			 
 			name_only.Buffer[name_only.Length / sizeof(WCHAR)] = L'\0';
 
-			// 分配UNICODE_STRING结构体
+			 
 			*file_name = static_cast<PUNICODE_STRING>(
-				internal_functions::pfn_ex_allocate_pool_with_tag(PagedPool, sizeof(UNICODE_STRING), 'prcS'));
+				utils::memory::allocate_independent_pages(sizeof(UNICODE_STRING), PAGE_READWRITE));
 			if (!*file_name)
 			{
-				internal_functions::pfn_ex_free_pool_with_tag(name_only.Buffer, 0);
+				utils::memory::free_independent_pages(name_only.Buffer, name_only.MaximumLength);
 				return false;
 			}
 

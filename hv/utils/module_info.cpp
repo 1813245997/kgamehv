@@ -42,7 +42,7 @@ namespace utils
 			NTSTATUS status = ZwQuerySystemInformation(SystemModuleInformation, nullptr, 0, &required_bytes);
 
 			 
-			PSYSTEM_MODULE_INFORMATION module_info = (PSYSTEM_MODULE_INFORMATION)ExAllocatePool(NonPagedPool, required_bytes);
+			PSYSTEM_MODULE_INFORMATION module_info = reinterpret_cast<PSYSTEM_MODULE_INFORMATION>(ExAllocatePool(NonPagedPool, required_bytes));
 			if (module_info == nullptr) {
 				return FALSE;
 			}
@@ -94,7 +94,7 @@ namespace utils
 			{
 				return FALSE;
 			}
-			// ��ȡ ci.dll
+		 
 			if (get_driver_module_info("ci.dll", size, base_address)) {
 				g_ci_base = base_address;
 				g_ci_size = size;

@@ -50,15 +50,15 @@ namespace utils
 				if (!utils::string_utils::compare_unicode_strings(process_name, &target_unicode_name, TRUE))
 				{
 					if (process_name->Buffer)
-						internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer,0);
-					internal_functions::pfn_ex_free_pool_with_tag(process_name,0);
+						  utils::memory::free_independent_pages(process_name->Buffer, process_name->Length);
+					utils::memory::free_independent_pages(process_name, sizeof(UNICODE_STRING));
 					internal_functions::pfn_ob_dereference_object(process);
 					continue;
 				}
 
 				if (process_name->Buffer)
-					internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer,0);
-				internal_functions::pfn_ex_free_pool_with_tag(process_name,0);
+					utils::memory::free_independent_pages(process_name->Buffer, process_name->Length);
+				utils::memory::free_independent_pages(process_name, sizeof(UNICODE_STRING));
 
 				*out_process = process;
 				
@@ -102,7 +102,7 @@ namespace utils
 			DWORD build = os_info::get_build_number();
 			if (build < WINDOWS_10_VERSION_1507)
 			{
-				// 老版本：低 3 位为引用计数，屏蔽之后即为 EPROCESS 地址
+			 
 				raw_value &= ~0x7ui64;
 				process_address = raw_value;
 			}
@@ -169,7 +169,7 @@ namespace utils
 			return result;
 		}
 
-		bool get_process_name(_In_ PEPROCESS process,_Inout_ PUNICODE_STRING* process_name)
+		bool get_process_name(_In_ PEPROCESS process, _Inout_ PUNICODE_STRING* process_name)
 		{
 			if (!process)
 			{
@@ -179,71 +179,23 @@ namespace utils
 			{
 				return false;
 			}
-
-			if (!internal_functions::pfn_se_locate_process_image_name)
-			{
-				return false;
-			}
-
-			PUNICODE_STRING full_image_name = nullptr;
-			NTSTATUS status = internal_functions::pfn_se_locate_process_image_name(process, &full_image_name);
-
-			if (!NT_SUCCESS(status))
-			{
-				return false;
-			}
-		
-			if (!full_image_name)
-			{
-				return false;
-			}
-
-			if (!full_image_name->Buffer)
-			{
-				return false;
-			}
+			 
+			const uintptr_t eprocess_image_file_name_addr = reinterpret_cast<uintptr_t>(process) + feature_offset::g_eprocess_image_file_name_offset;
+			 
 			 
 
+			PUCHAR eprocess_image_file_name_buffer = reinterpret_cast<PUCHAR>(eprocess_image_file_name_addr);
 
-			// 查找最后一个反斜杠
-			USHORT length = full_image_name->Length / sizeof(WCHAR);
-			WCHAR* buffer = full_image_name->Buffer;
-			USHORT last_backslash_index = 0;
-
-			for (USHORT i = 0; i < length; ++i)
-			{
-				if (buffer[i] == L'\\')
-				{
-					last_backslash_index = i + 1;
-				}
-			}
-
-			USHORT name_length = (length - last_backslash_index) * sizeof(WCHAR);
-			UNICODE_STRING name_only{};
-			name_only.Length = static_cast<USHORT>(name_length);
-			name_only.MaximumLength = static_cast<USHORT>(name_length + sizeof(WCHAR));
-			name_only.Buffer = static_cast<PWSTR>(internal_functions::pfn_ex_allocate_pool_with_tag(PagedPool, name_only.MaximumLength, 'prcN'));
-
-			if (!name_only.Buffer)
-			{
-				ExFreePool(full_image_name);
-				return false;
-			}
+			 
+		  
+			// Convert ANSI to UNICODE_STRING using our custom function
+			*process_name = utils::string_utils::ansi_to_unicode_string(reinterpret_cast<PCHAR>(eprocess_image_file_name_buffer));
 			
-			RtlCopyMemory(name_only.Buffer, &buffer[last_backslash_index], name_length);
-			name_only.Buffer[name_only.Length / sizeof(WCHAR)] = L'\0';
-
-			*process_name = static_cast<PUNICODE_STRING>(internal_functions::pfn_ex_allocate_pool_with_tag (PagedPool, sizeof(UNICODE_STRING), 'prcS'));
 			if (!*process_name)
 			{
-				internal_functions::pfn_ex_free_pool_with_tag(name_only.Buffer,0);
-				internal_functions::pfn_ex_free_pool_with_tag(full_image_name,0);
 				return false;
 			}
 
-			**process_name = name_only;
-
-			internal_functions::pfn_ex_free_pool_with_tag(full_image_name,0);
 			return true;
 		}
 
@@ -312,13 +264,13 @@ namespace utils
 				result = internal_functions::pfn_rtl_equal_unicode_string(process_name, target_name, case_insensitive);
 			}
 
-			// 清理分配的内存
+			 
 			if (process_name)
 			{
 				if (process_name->Buffer)
-					internal_functions::pfn_ex_free_pool_with_tag(process_name->Buffer, 0);
+					utils::memory::free_independent_pages(process_name->Buffer, process_name->Length);
 
-				internal_functions::pfn_ex_free_pool_with_tag(process_name, 0);
+				utils::memory::free_independent_pages(process_name, sizeof(UNICODE_STRING));
 			}
 
 			return result;
@@ -406,7 +358,7 @@ namespace utils
 			uint64_t table_level = table_code & 0x3;
 
 		 
-			 //二级句柄表
+			 
 			if (table_level == 1)
 			{
 				uint64_t handle_array = *reinterpret_cast<uint64_t*>(table_code + 8 * (handle_value >> 10) - 1);
@@ -415,14 +367,14 @@ namespace utils
 
 		     if (table_level !=0)
 			{
-				// 三级句柄表：两次解引用
+				 
 				uint64_t first_level = *reinterpret_cast<uint64_t*>(table_code + 8 * (handle_value >> 19) - 2);
 				uint64_t handle_array = *reinterpret_cast<uint64_t*>(first_level + 8 * ((handle_value >> 10) & 0x1FF));
 				return reinterpret_cast<PHANDLE_TABLE_ENTRY>(handle_array + 4 * (handle_value & 0x3FF));
 			}
 			 
 
-			//一级句柄表
+		 
 			return reinterpret_cast<PHANDLE_TABLE_ENTRY>(table_code + 4 * handle_value);
 		}
 

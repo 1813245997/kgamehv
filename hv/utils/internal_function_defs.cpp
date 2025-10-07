@@ -830,9 +830,9 @@ namespace utils
 			unsigned long long nt_create_thread_ex_addr = ssdt::get_syscall_fun_addr("NtCreateThreadEx");
 			
 
-			unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
-			unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
-			unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
+			//unsigned long long nt_user_find_window_ex_addr = scanner_fun::find_win32k_exprot_by_name("NtUserFindWindowEx");
+			//unsigned long long nt_user_get_foreground_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserGetForegroundWindow");
+			//unsigned long long nt_user_query_window_addr = scanner_fun::find_win32k_exprot_by_name("NtUserQueryWindow");
 			 
 
 
@@ -858,9 +858,9 @@ namespace utils
 			LogInfo("nt_create_file_addr       = %p", reinterpret_cast<PVOID>(nt_create_file_addr));
 			LogInfo("ob_reference_object_by_handle_addr       = %p", reinterpret_cast<PVOID>(ob_reference_object_by_handle_addr));
 			LogInfo("io_query_file_dos_device_name_addr       = %p", reinterpret_cast<PVOID>(io_query_file_dos_device_name_addr));
-			LogInfo("nt_user_find_window_ex_addr       = %p", reinterpret_cast<PVOID>(nt_user_find_window_ex_addr));
-			LogInfo("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
-			LogInfo("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
+			//LogInfo("nt_user_find_window_ex_addr       = %p", reinterpret_cast<PVOID>(nt_user_find_window_ex_addr));
+			//LogInfo("nt_user_get_foreground_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_get_foreground_window_addr));
+			//LogInfo("nt_user_query_window_addr       = %p", reinterpret_cast<PVOID>(nt_user_query_window_addr));
 			LogInfo("nt_write_virtual_memory_addr       = %p", reinterpret_cast<PVOID>(nt_write_virtual_memory_addr));
 			LogInfo("nt_create_thread_ex_addr       = %p", reinterpret_cast<PVOID>(nt_create_thread_ex_addr));
 			//nt_create_thread_ex_addr
@@ -880,9 +880,9 @@ namespace utils
 			INIT_FUNC_PTR(pfn_nt_create_user_process, nt_create_user_process_addr);
 			INIT_FUNC_PTR(pfn_nt_get_next_thread, nt_get_next_thread_addr);
 			INIT_FUNC_PTR(pfn_nt_create_thread_ex, nt_create_thread_ex_addr);
-			INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
-			INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
-			INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
+			//INIT_FUNC_PTR(pfn_nt_user_find_window_ex, nt_user_find_window_ex_addr);
+			//INIT_FUNC_PTR(pfn_nt_user_get_foreground_window, nt_user_get_foreground_window_addr);
+			//INIT_FUNC_PTR(pfn_nt_user_query_window, nt_user_query_window_addr);
 
 
 
@@ -1053,12 +1053,12 @@ namespace utils
 				LogError("ob_reference_object_by_handle_addr is null.");
 			if (!io_query_file_dos_device_name_addr)
 				LogError("io_query_file_dos_device_name_addr is null.");
-			if (!nt_user_find_window_ex_addr)
-				LogError("nt_user_find_window_ex_addr is null.");
-			if (!nt_user_get_foreground_window_addr)
-				LogError("nt_user_get_foreground_window_addr is null.");
-			if (!nt_user_query_window_addr)
-				LogError("nt_user_query_window_addr is null.");
+			//if (!nt_user_find_window_ex_addr)
+			//	LogError("nt_user_find_window_ex_addr is null.");
+			//if (!nt_user_get_foreground_window_addr)
+			//	LogError("nt_user_get_foreground_window_addr is null.");
+			//if (!nt_user_query_window_addr)
+			//	LogError("nt_user_query_window_addr is null.");
 			if (!nt_write_virtual_memory_addr)
 				LogError("nt_write_virtual_memory_addr is null.");
 			if(!nt_create_user_process_addr)
@@ -1180,9 +1180,9 @@ namespace utils
 				!nt_create_file_addr||
 				!ob_reference_object_by_handle_addr||
 				!io_query_file_dos_device_name_addr||
-				!nt_user_find_window_ex_addr ||
+		/*		!nt_user_find_window_ex_addr ||
 				!nt_user_get_foreground_window_addr ||
-				!nt_user_query_window_addr ||
+				!nt_user_query_window_addr ||*/
 				!nt_write_virtual_memory_addr ||
 				!ki_preprocess_fault_addr ||
 				!psp_exit_process_addr ||

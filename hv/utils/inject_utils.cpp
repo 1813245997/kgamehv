@@ -9,7 +9,7 @@ namespace utils
 		typedef struct _freeitem_info
 		{
 			WORK_QUEUE_ITEM work_item;       // 原 workitem
-			HANDLE pid;                      // 保留 pid
+			HANDLE pid;                      // 锟斤拷锟斤拷 pid
 			ULONG64 is_execute_addr;         // 原 IsExecuteAddr
 			ULONG64 base_addr_free_size;     // 原 BaseAddrfreeSize
 			ULONG64 dll_base;                // 原 Dllbase
@@ -52,16 +52,16 @@ namespace utils
 			if (utils::internal_functions::pfn_ps_get_process_exit_status(target_process) != STATUS_PENDING)
 			{
 				utils::internal_functions::pfn_ob_dereference_object(target_process);
-				return STATUS_UNSUCCESSFUL; // 或 STATUS_PROCESS_IS_TERMINATING
+				return STATUS_UNSUCCESSFUL;  
 			}
 
 			PETHREAD main_thread = utils::thread_utils::nt_get_process_main_thread(target_process);
 			if (!main_thread)
 			{
-				return STATUS_UNSUCCESSFUL; // 或 STATUS_THREAD_NOT_FOUND
+				return STATUS_UNSUCCESSFUL;  
 			}
 			utils::internal_functions::pfn_ob_dereference_object(target_process);
-			PUCHAR kShellcode = (PUCHAR)ExAllocatePool(PagedPool, dll_size);
+			PUCHAR kShellcode = reinterpret_cast<PUCHAR>(utils::memory::allocate_independent_pages(dll_size, PAGE_EXECUTE_READWRITE));
 		    if (!kShellcode)
 			{
 				return STATUS_UNSUCCESSFUL;
@@ -179,7 +179,7 @@ namespace utils
 				0xFF, 0x25, 0x00, 0x00, 0x00, 0x00,								//
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00					//
 			};
-			//x64进程
+			 
 
 			*(PULONG64)&bufcode[25] = (ULONG64)dll_addr;
 			*(PULONG64)&bufcode[35] = (ULONG64)ms;
@@ -190,7 +190,7 @@ namespace utils
 
 			k_trap->Rip = (ULONG64)base_addr;
 
-			p_freeitem_info item = (p_freeitem_info)ExAllocatePool(NonPagedPool, PAGE_SIZE);
+			p_freeitem_info item = reinterpret_cast<p_freeitem_info>(utils::memory::allocate_independent_pages(PAGE_SIZE, PAGE_EXECUTE_READWRITE));
 
 			item->is_execute_addr = (ULONG64)base_addr + 0x500;
 			item->pid = process_id;
@@ -210,7 +210,7 @@ namespace utils
 
 			ObDereferenceObject(main_thread);
 
-			ExFreePool(kShellcode);
+			utils::memory::free_independent_pages(kShellcode, dll_size);
 
 			return status;
 		}
@@ -310,7 +310,7 @@ namespace utils
 			}
 
 
-			// 检查进程是否已退出
+			 
 			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING) {
 				utils::internal_functions::pfn_ob_dereference_object (process);
 				return STATUS_UNSUCCESSFUL;
@@ -318,7 +318,7 @@ namespace utils
 
 			
 			PUCHAR kernel_dll_copy = reinterpret_cast<PUCHAR>(
-				ExAllocatePoolWithTag(PagedPool, dll_size, 'ldll')
+				utils::memory::allocate_independent_pages(dll_size, PAGE_READWRITE)
 				);
 			if (!kernel_dll_copy) {
 				utils::internal_functions::pfn_ob_dereference_object(process);
@@ -327,7 +327,7 @@ namespace utils
 			 
 			memcpy(kernel_dll_copy, dll_shellcode, dll_size);
 
-			// 资源相关标志位
+		 
 			BOOLEAN allocated_user_dll = FALSE;
 			BOOLEAN allocated_shellcode = FALSE;
 			BOOLEAN allocated_image_memory = FALSE;
@@ -341,9 +341,7 @@ namespace utils
 			utils::internal_functions::pfn_ke_stack_attach_process(process, &kApcState);
 
 			do {
-				//
-				// 1. 为 DLL 模块分配用户空间内存
-				//
+				 
 				status = utils::memory::allocate_user_hidden_exec_memory(
 					process,
 					(PVOID*)&user_dll,
@@ -356,9 +354,7 @@ namespace utils
 				memcpy(user_dll, kernel_dll_copy, dll_size);
 				allocated_user_dll = TRUE;
 
-				//
-				// 2. 为 Shellcode 分配内存
-				//
+				 
 				status = utils::memory::allocate_user_hidden_exec_memory(
 					process,
 					(PVOID*)&user_shellcode,
@@ -371,16 +367,12 @@ namespace utils
 				memcpy(user_shellcode, MemLoadShellcode_x64, user_shellcode_size);
 				allocated_shellcode = TRUE;
 
-				//
-				// 3. 获取 DLL 映像大小
-				//
+				 
 				PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)user_dll;
 				PIMAGE_NT_HEADERS nt_headers = (PIMAGE_NT_HEADERS)(user_dll + dos_header->e_lfanew);
 				user_image_size = nt_headers->OptionalHeader.SizeOfImage;
 
-				//
-				// 4. 分配 DLL 映像空间
-				//
+				 
 				status = utils::memory::allocate_user_hidden_exec_memory(
 					process,
 					(PVOID*)&user_image,
@@ -392,17 +384,13 @@ namespace utils
 
 				allocated_image_memory = TRUE;
 
-				//
-				// 5. 修补 Shellcode 以填入 DLL 基址
-				//
+				 
 				user_shellcode[0x50F] = 0x90;
 				user_shellcode[0x510] = 0x48;
 				user_shellcode[0x511] = 0xB8;
 				*(PULONG64)&user_shellcode[0x512] = (ULONG64)user_image;
 
-				//
-				// 6. 创建远程线程执行 Shellcode
-				//
+				 
 				PETHREAD thread = NULL;
 				status = utils::thread_utils::my_create_thread(
 					process,
@@ -418,8 +406,8 @@ namespace utils
 						utils::internal_functions::pfn_ps_get_process_section_base_address(process)
 						);
 
-					// 生成随机偏移 0 ~ 10000
-					ULONG seed = static_cast<ULONG>(__rdtsc());   // 用时间戳计数器初始化种子
+					 
+					ULONG seed = static_cast<ULONG>(__rdtsc());    
 					ULONG random_offset = RtlRandomEx(&seed) % 10001;
 
 					*reinterpret_cast<ULONG64*>(
@@ -430,12 +418,12 @@ namespace utils
 						reinterpret_cast<PUCHAR>(thread) + utils::feature_offset::g_win32_start_address_offset
 						) = exe_address + random_offset;
 
-					// 等待线程执行完成
+					 
 					KeWaitForSingleObject(thread, Executive, KernelMode, FALSE, NULL);
 					utils::internal_functions::pfn_ob_dereference_object(thread);
 				}
 				else {
-					// 如果线程创建失败，标记 DLL 内存为已分配
+					 
 					allocated_image_memory = TRUE;
 				}
 
@@ -443,9 +431,7 @@ namespace utils
 
 
 			
-			//
-			// 7. 清理资源
-			//
+			 
 			if (allocated_user_dll) {
 				utils::memory::free_user_memory(process_id, user_dll, dll_size);
 			}
@@ -454,7 +440,7 @@ namespace utils
 				utils::memory::free_user_memory(process_id, user_shellcode, user_shellcode_size);
 			}
 		
-			// 注意：DLL 映像 user_image 一般不能释放，否则 DLL 会消失
+		 
 			if (allocated_image_memory)
 			{
 				PIMAGE_DOS_HEADER dos_header = reinterpret_cast<PIMAGE_DOS_HEADER>(user_image);
@@ -501,7 +487,7 @@ namespace utils
 
 			utils::internal_functions::pfn_ke_unstack_detach_process(&kApcState);
 			utils::internal_functions::pfn_ob_dereference_object(process);
-			ExFreePool(kernel_dll_copy);
+			utils::memory::free_independent_pages(kernel_dll_copy, dll_size);
 
 			return status;
 

@@ -29,13 +29,19 @@ namespace utils
 
 		void clear_all_hidden_modules();
 
+		void set_driver_info(unsigned long long base, unsigned long long size);
+
 		bool is_address_hidden(PVOID address);
+
+		bool is_address_hidden_physical(unsigned long long address);
 
 		unsigned long long get_driver_base();
 		 
 		unsigned long long get_driver_size();
 
-		void set_driver_info(unsigned long long base, unsigned long long size);
+		
+
+
 		
 	}
 

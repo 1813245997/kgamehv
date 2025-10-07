@@ -420,5 +420,22 @@ namespace utils
  
 		 }
 
+		 unsigned long long find_eprocess_image_file_name_offset()
+		 {
+			 unsigned long long eprocess_image_file_name_offset{};
+			 auto const ps_get_process_image_file_name = reinterpret_cast<uint8_t*>(utils::internal_functions::pfn_ps_get_process_image_file_name);
+
+
+			 if (ps_get_process_image_file_name[0] != 0x48 ||
+				 ps_get_process_image_file_name[1] != 0x8D ||
+				 ps_get_process_image_file_name[2] != 0x81 ||
+				 ps_get_process_image_file_name[7] != 0xC3)
+			 {
+				 return 0;
+			 }
+			 eprocess_image_file_name_offset = *reinterpret_cast<ULONG*>(ps_get_process_image_file_name + 3);
+			 return eprocess_image_file_name_offset;
+		 }
+
 	}
 }

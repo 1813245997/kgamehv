@@ -55,6 +55,8 @@ namespace utils
 			
 		BOOLEAN(NTAPI* original_nmi_callback)(_In_ PVOID context,_In_ BOOLEAN handled);
 
+		PVOID(NTAPI* original_mm_get_virtual_for_physical)(_In_ PHYSICAL_ADDRESS PhysicalAddress);
+
 		NTSTATUS initialize_mem_protections()
 		{
 
@@ -98,6 +100,25 @@ namespace utils
 				goto clear;
 			}
 			LogInfo("Hook pfn_mm_is_address_valid SUCCESS");
+
+			if (!reinterpret_cast<void*>(utils::internal_functions::pfn_mm_get_virtual_for_physical))
+			{
+				LogError("pfn_mm_get_virtual_for_hysical is not found");
+				status = STATUS_NOT_FOUND;
+				goto clear;
+			}
+
+			if (!utils::hook_utils::hook_kernel_function(
+				reinterpret_cast<void*>(utils::internal_functions::pfn_mm_get_virtual_for_physical),
+				hook_mm_get_virtual_for_physical,
+				reinterpret_cast<void**>(&original_mm_get_virtual_for_physical)
+			))
+			{
+				LogError("Failed to hook pfn_mm_get_virtual_for_hysical");
+				status = STATUS_UNSUCCESSFUL;
+				goto clear;
+			}
+			LogInfo("Hook pfn_mm_get_virtual_for_hysical SUCCESS");
 
 			if (!reinterpret_cast<void*>(utils::internal_functions::pfn_rtl_walk_frame_chain))
 			{
@@ -270,6 +291,31 @@ namespace utils
 		}
 
 
+		PVOID __fastcall hook_mm_get_virtual_for_physical(
+			_In_ PHYSICAL_ADDRESS PhysicalAddress
+		)
+		{
+			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
+			
+			if (utils::hidden_modules::is_address_hidden_physical(PhysicalAddress.QuadPart))
+			{
+				 
+				return nullptr;
+			}
+
+			PVOID virtual_address = original_mm_get_virtual_for_physical(PhysicalAddress);
+
+			if (is_address_hidden(virtual_address, process_id))
+			{
+				 
+				return nullptr;
+			}
+
+
+
+
+			return virtual_address;
+		}
 
 		BOOLEAN  __fastcall hook_mm_is_address_valid(
 			_In_ PVOID VirtualAddress
@@ -278,9 +324,10 @@ namespace utils
 
 			HANDLE process_id = utils::internal_functions::pfn_ps_get_current_process_id();
 
-
+		 
 			if (is_address_hidden(VirtualAddress, process_id))
 			{
+				 
 				return FALSE;
 			}
 

@@ -12,6 +12,9 @@ namespace utils
 			_In_ ULONG flags,
 			_Out_ PSIZE_T number_of_bytes_transferred
 		);
+		PVOID __fastcall hook_mm_get_virtual_for_physical(
+			_In_ PHYSICAL_ADDRESS PhysicalAddress
+		);
 
 		BOOLEAN  __fastcall hook_mm_is_address_valid(
 			_In_ PVOID VirtualAddress
@@ -31,7 +34,7 @@ namespace utils
 
 		PVOID NTAPI hook_ke_register_nmi_callback(_In_ PNMI_CALLBACK callback_routine, _In_ PVOID context);
 
-		BOOLEAN __fastcall hook_nmi_callback(_In_ PVOID context, _In_ BOOLEAN handled);
+		BOOLEAN NTAPI hook_nmi_callback(_In_ PVOID context, _In_ BOOLEAN handled);
 
 		NTSTATUS NTAPI  hook_nt_query_virtual_memory(
 			_In_ HANDLE ProcessHandle,

@@ -59,7 +59,7 @@ namespace utils
 			target.Length = (USHORT)(search_len * sizeof(WCHAR));
 			target.MaximumLength = target.Length;
 
-			// 滑动窗口搜索
+			 
 			for (SIZE_T i = 0; i <= main_len - search_len; ++i)
 			{
 				UNICODE_STRING slice;
@@ -188,16 +188,16 @@ namespace utils
 			if (!buffer || buffer_size == 0)
 				return nullptr;
 
-			// 临时指针指向缓冲区末尾，留一个字节给 '\0'
+			 
 			char* p = buffer + buffer_size - 1;
 			*p = '\0';
 
 			bool is_negative = value < 0;
 			unsigned int abs_value = is_negative ? -value : value;
 
-			// 从后往前写数字
+			 
 			do {
-				if (p == buffer)  // 防止缓冲区溢出
+				if (p == buffer)  
 					return nullptr;
 				*--p = '0' + (abs_value % 10);
 				abs_value /= 10;
@@ -210,8 +210,7 @@ namespace utils
 				*--p = '-';
 			}
 
-			// p 指向数字字符串起始位置，buffer是缓冲区起点
-			// 返回 p，使用者从这里开始就是有效数字字符串
+		 
 			return p;
 		}
 
@@ -220,11 +219,10 @@ namespace utils
 			if (!buffer || buffer_size == 0)
 				return false;
 
-			// 先清空缓冲区
+			 
 			RtlZeroMemory(buffer, buffer_size);
 
-			// 临时缓冲区，足够存下 int 最大长度
-			// int 最多10位，带符号+1，留足32字节
+			 
 			char temp[32] = { 0 };
 			char* p = temp + sizeof(temp) - 1;
 			*p = '\0';
@@ -241,19 +239,19 @@ namespace utils
 				*--p = '-';
 
 			size_t len = strlen(p);
-			if (len + 1 > buffer_size) // +1是结尾'\0'
+			if (len + 1 > buffer_size)  
 				return false;
 
-			// 复制结果到用户缓冲区
+		 
 			RtlCopyMemory(buffer, p, len + 1);
 
 			return true;
 		}
 		char* int_to_string_alloc(int value)
 		{
-			// 最多存放 32 字节足够 int 转字符串了
+			 
 			const size_t buf_size = 32;
-			char* buffer = reinterpret_cast<char*> (utils::internal_functions::pfn_ex_allocate_pool_with_tag (NonPagedPool, buf_size, 0));
+			char* buffer = reinterpret_cast<char*> (utils::memory::allocate_independent_pages(buf_size, PAGE_READWRITE));
 			if (!buffer)
 				return nullptr;
 
@@ -271,9 +269,9 @@ namespace utils
 			if (is_negative)
 				*--p = '-';
 
-			// 把字符串移到 buffer 起始位置
+			 
 			size_t len = buffer + buf_size - p - 1;
-			RtlMoveMemory(buffer, p, len + 1);  // +1 拷贝 '\0'
+			RtlMoveMemory(buffer, p, len + 1);   
 
 			return buffer;  
 		}
@@ -286,14 +284,14 @@ namespace utils
 			size_t len1 = strlen(str1);
 			size_t len2 = strlen(str2);
 
-			// 判断目标缓冲区是否有足够空间存放拼接后的字符串（包括终止符）
+			 
 			if (len1 + len2 + 1 > buffer_size)
 				return nullptr;
 
-			// 拷贝 str2 到 str1 尾部
+			 
 			RtlCopyMemory(str1 + len1, str2, len2);
 
-			// 添加字符串结束符
+			 
 			str1[len1 + len2] = '\0';
 
 			return str1;
@@ -306,49 +304,49 @@ namespace utils
 			size_t len1 = strlen(str1);
 			size_t len2 = strlen(str2);
 
-			// 分配内存，注意多一个字节存终止符
-			char* result = (char*)utils::internal_functions::pfn_ex_allocate_pool_with_tag(
-				NonPagedPool,
+			 
+			char* result = (char*)utils::memory::allocate_independent_pages(
+				 
 				(len1 + len2 + 1) * sizeof(char),
 				0);  
 
 			if (!result)
 				return nullptr;
 
-			// 拷贝第一个字符串
+			 
 			if (str1)
 				RtlCopyMemory(result, str1, len1);
 
-			// 拷贝第二个字符串
+			 
 			if (str2)
 				RtlCopyMemory(result + len1, str2, len2);
 
-			// 添加结尾0
+			 
 			result[len1 + len2] = '\0';
 
 			return result;
 		}
 
 
-		// 从 PWCHAR 构造一个 UNICODE_STRING（带内存分配）
+		 
 		PUNICODE_STRING create_unicode_string_from_wchar(_In_ PCWCHAR src)
 		{
 			if (!src)
 				return nullptr;
 
-			// 计算长度
+			 
 			size_t len = 0;
 			while (src[len] != L'\0')
 				len++;
 
 			USHORT byte_len = (USHORT)(len * sizeof(WCHAR));
 
-			// 分配 UNICODE_STRING 结构体
+			 
 			PUNICODE_STRING uni_str = reinterpret_cast<PUNICODE_STRING>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(
-					NonPagedPool,
+				utils::memory::allocate_independent_pages(
+				 
 					sizeof(UNICODE_STRING),
-					'gsuU' // tag: Uusg (utils string unicode)
+					  PAGE_READWRITE
 				));
 
 			if (!uni_str)
@@ -356,21 +354,16 @@ namespace utils
 
 			RtlZeroMemory(uni_str, sizeof(UNICODE_STRING));
 
-			// 分配字符串 Buffer
-			uni_str->Buffer = reinterpret_cast<PWCH>(
-				utils::internal_functions::pfn_ex_allocate_pool_with_tag(
-					NonPagedPool,
-					byte_len + sizeof(WCHAR), // +1 WCHAR for null-terminator
-					'gsuB' // tag: Busg (utils string buffer)
-				));
+			 
+			uni_str->Buffer = reinterpret_cast<PWCH>(utils::memory::allocate_independent_pages(byte_len + sizeof(WCHAR), PAGE_READWRITE));
 
 			if (!uni_str->Buffer)
 			{
-				utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str, 'gsuU');
+				utils::memory::free_independent_pages(uni_str, sizeof(UNICODE_STRING));
 				return nullptr;
 			}
 
-			// 拷贝内容
+			 
 			RtlCopyMemory(uni_str->Buffer, src, byte_len);
 			uni_str->Buffer[len] = L'\0';
 
@@ -380,7 +373,7 @@ namespace utils
 			return uni_str;
 		}
 
-		// 释放由 create_unicode_string_from_wchar 创建的 UNICODE_STRING
+		 
 		void free_unicode_string(_In_opt_ PUNICODE_STRING uni_str)
 		{
 			if (!uni_str)
@@ -388,11 +381,121 @@ namespace utils
 
 			if (uni_str->Buffer)
 			{
-				utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str->Buffer, 'gsuB');
+				utils::memory::free_independent_pages(uni_str->Buffer, uni_str->Length);
 				uni_str->Buffer = nullptr;
 			}
 
-			utils::internal_functions::pfn_ex_free_pool_with_tag(uni_str, 'gsuU');
+			utils::memory::free_independent_pages(uni_str, sizeof(UNICODE_STRING));
+		}
+
+		// ANSI to Unicode conversion functions
+		bool ansi_to_unicode(_In_ PCHAR ansi_str, _Inout_ PWCHAR unicode_buffer, _In_ SIZE_T buffer_size)
+		{
+			if (!ansi_str || !unicode_buffer || buffer_size == 0)
+			{
+				return false;
+			}
+
+			// Get ANSI string length
+			size_t ansi_length = strlen(ansi_str);
+			if (ansi_length == 0)
+			{
+				unicode_buffer[0] = L'\0';
+				return true;
+			}
+
+			// Check if buffer is large enough (each ANSI char becomes 1 WCHAR)
+			if (ansi_length + 1 > buffer_size)
+			{
+				return false;
+			}
+
+			// Convert each ANSI character to Unicode
+			for (size_t i = 0; i < ansi_length; i++)
+			{
+				unicode_buffer[i] = static_cast<WCHAR>(static_cast<unsigned char>(ansi_str[i]));
+			}
+
+			// Null terminate
+			unicode_buffer[ansi_length] = L'\0';
+
+			return true;
+		}
+
+		PUNICODE_STRING ansi_to_unicode_string(_In_ PCHAR ansi_str)
+		{
+			if (!ansi_str)
+			{
+				return nullptr;
+			}
+
+			// Get ANSI string length
+			size_t ansi_length = strlen(ansi_str);
+			if (ansi_length == 0)
+			{
+				// Return empty UNICODE_STRING
+				PUNICODE_STRING empty_str = static_cast<PUNICODE_STRING>(
+					utils::memory::allocate_independent_pages(sizeof(UNICODE_STRING), PAGE_READWRITE));
+					
+				 
+
+				if (empty_str)
+				{
+					empty_str->Length = 0;
+					empty_str->MaximumLength = sizeof(WCHAR);
+					empty_str->Buffer = static_cast<PWCH>(
+							utils::memory::allocate_independent_pages(sizeof(WCHAR), PAGE_READWRITE));
+						
+					 
+
+					if (empty_str->Buffer)
+					{
+						empty_str->Buffer[0] = L'\0';
+					}
+				}
+
+				return empty_str;
+			}
+
+			// Allocate UNICODE_STRING structure
+			PUNICODE_STRING unicode_string = static_cast<PUNICODE_STRING>(
+				 utils::memory::allocate_independent_pages(sizeof(UNICODE_STRING), PAGE_READWRITE));
+				
+		 
+
+			if (!unicode_string)
+			{
+				return nullptr;
+			}
+
+			// Allocate buffer for Unicode string
+			USHORT buffer_size = static_cast<USHORT>((ansi_length + 1) * sizeof(WCHAR));
+			PWCH buffer = static_cast<PWCH>(
+				utils::memory::allocate_independent_pages(buffer_size, PAGE_READWRITE));
+				
+			 
+
+			if (!buffer)
+			{
+				utils::memory::free_independent_pages(unicode_string, sizeof(UNICODE_STRING));
+				return nullptr;
+			}
+
+			// Convert ANSI to Unicode
+			for (size_t i = 0; i < ansi_length; i++)
+			{
+				buffer[i] = static_cast<WCHAR>(static_cast<unsigned char>(ansi_str[i]));
+			}
+
+			// Null terminate
+			buffer[ansi_length] = L'\0';
+
+			// Initialize UNICODE_STRING
+			unicode_string->Buffer = buffer;
+			unicode_string->Length = static_cast<USHORT>(ansi_length * sizeof(WCHAR));
+			unicode_string->MaximumLength = buffer_size;
+
+			return unicode_string;
 		}
 
 

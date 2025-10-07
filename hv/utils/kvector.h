@@ -47,7 +47,7 @@ namespace utils {
 
 		void clear() {
 			if (m_data&& m_valid) {
-				ExFreePool(m_data);
+				utils::memory::free_independent_pages(m_data, m_size * sizeof(T));
 				m_data = nullptr;
 				m_size = 0;
 				m_capacity = 0;
@@ -78,7 +78,7 @@ namespace utils {
 			if (count == 0)
 				return true;
 
-			m_data = (T*)ExAllocatePool(NonPagedPool, count * sizeof(T));
+			m_data = (T*)utils::memory::allocate_independent_pages(count * sizeof(T), PAGE_READWRITE);
 			if (!m_data) return false;
 
 			RtlCopyMemory(m_data, first, count * sizeof(T));
@@ -91,12 +91,12 @@ namespace utils {
 	private:
 		bool grow() {
 			size_t new_capacity = (m_capacity == 0) ? 4 : m_capacity * 2;
-			T* new_data = (T*)ExAllocatePool(NonPagedPool, new_capacity * sizeof(T));
+			T* new_data = (T*)utils::memory::allocate_independent_pages(new_capacity * sizeof(T), PAGE_READWRITE);
 			if (!new_data) return false;
 
 			if (m_data) {
 				RtlCopyMemory(new_data, m_data, m_size * sizeof(T));
-				ExFreePool(m_data);
+				utils::memory::free_independent_pages(m_data, m_size * sizeof(T));
 			}
 
 			m_data = new_data;
