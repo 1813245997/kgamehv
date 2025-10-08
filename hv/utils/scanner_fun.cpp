@@ -1794,17 +1794,10 @@ namespace utils
 				 
 				temp_addr = signature_scanner::find_pattern_image(
 					reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-					"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xA1\x73\x0F\x00", 
-					"x????xxxxxxxxx",
-					"PAGE"
+					"\xE8\xCC\xCC\xCC\xCC\x48\x89\x43\x40\x48\x85\xC0\x74\x64", "x????xxxxxxxxx",
+					".text"
 				);
-				if (!temp_addr || !MmIsAddressValid(reinterpret_cast<PVOID> (temp_addr)))
-				{
-					temp_addr = signature_scanner::find_pattern_image(
-						reinterpret_cast<ULONG_PTR>(module_info::ntoskrnl_base),
-						"\xE8\xCC\xCC\xCC\xCC\x48\x85\xC0\x0F\x84\xCF\xD0\x0B\x00", "x????xxxxxxxxx", "PAGE"
-					);
-				}
+				 
 				 
 				mm_create_kernel_stack_addr =
 					signature_scanner::resolve_relative_address(
