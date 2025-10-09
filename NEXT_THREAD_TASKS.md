@@ -43,12 +43,12 @@
   - 在内核上下文中实现ImGui集成 暂不实现
   - 创建ESP和视觉覆盖系统 
   - 实现内核级图形渲染管道
-- **MouseClass 集成** 
+- **MouseClass 集成**✅完成⭐
   - 动态符号解析 - 运行时 MouseClassServiceCallback 发现 
   - 基于 EPT 的挂钩 - 无需修改代码的 LBR 安全挂钩 
   - 输入模拟 - 无缝鼠标输入注入
   - 流程生命周期管理 - 自动安装/删除钩子
-  **KeyboardClass 集成** 
+- **KeyboardClass 集成**✅完成⭐
   - 动态符号解析 - 运行时 KeyboardClassServiceCallback 发现
   - 基于 EPT 的键盘钩子 - 无需修改代码的安全挂钩
   - 键盘输入监控 - 实时捕获按键事件
