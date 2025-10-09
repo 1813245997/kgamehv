@@ -110,6 +110,18 @@ namespace utils
             }
                 return false;
             }
+
+        PVOID get_last_render_target_view()
+        {
+			if (!g_pSwapChain)
+				return nullptr;
+
+			uint32_t index = *(uint32_t*)((uint64_t) g_pSwapChain + 0x1EC);
+			uint64_t tex_target = *(uint64_t*)(*(uint64_t*)(*(uint64_t*)(
+                (uint64_t)g_pSwapChain + 0x1B0) + (index * 8)) + 0xD8);
+
+			return *(PVOID**)(tex_target + 0x20);
+        }
             
         
         NTSTATUS cleanup_dx_resources()
@@ -169,92 +181,202 @@ namespace utils
 
         NTSTATUS initialize_dx_resources(PVOID p_dxgi_swapchain)
         {
-            const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
-            const GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
 
-            static unsigned long long g_user_buffer = 0;
-            if (!g_user_buffer)
+            if (utils::os_info::get_build_number()< WINDOWS_11_VERSION_24H2)
             {
-                // Optimized buffer size: GUID(16)*2 + PVOID(8)*4 + padding = ~0x600 bytes  
-                NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x1000, PAGE_READWRITE, true, false);
-                if (!NT_SUCCESS(status))
-                {
-                    return STATUS_UNSUCCESSFUL;
-                }
+                return initialize_older_dx_resources(p_dxgi_swapchain);
             }
-
-            g_pSwapChain = p_dxgi_swapchain;
-
-
-            // Use offset 0x200 for first GUID
-            PVOID guid_buffer_1 = reinterpret_cast<PVOID>(g_user_buffer + 0x200);
-            memory::mem_copy(guid_buffer_1, (PVOID)&ID3D11DeviceVar, sizeof(ID3D11DeviceVar));
-            PVOID device_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x250);
-            *reinterpret_cast<PVOID*>(device_buffer) = g_pd3dDevice;
-
-            pfn_get_dxgi_device =  reinterpret_cast<HRESULT (__fastcall *)(PVOID, REFIID, void **)>(utils::vfun_utils::get_vfunc(g_pSwapChain, 7));
-          
-          
-             unsigned long long return_ptr = user_call::call(
-                reinterpret_cast<unsigned long long>(pfn_get_dxgi_device),
-                reinterpret_cast<unsigned long long>(g_pSwapChain),
-                reinterpret_cast<unsigned long long>(guid_buffer_1),
-                reinterpret_cast<unsigned long long>(device_buffer),
-                0);
-
-                HRESULT hr = *reinterpret_cast<HRESULT*>(return_ptr);
-                if (FAILED(hr))
-                {
-                    return STATUS_UNSUCCESSFUL;
-                }
-
-                g_pd3dDevice = *(PVOID*)(device_buffer);
-
+			else
+			{
+               
+                return initialize_last_dx_resources(p_dxgi_swapchain);
+            }
              
+        }
 
-                // Use offset 0x300 for immediate context buffer
-                PVOID context_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x300);
-                pfn_get_immediate_context =  reinterpret_cast<void (__fastcall*)(PVOID, void **)>(utils::vfun_utils::get_vfunc(g_pd3dDevice, 40));
-                user_call::call(
-                    reinterpret_cast<unsigned long long>(pfn_get_immediate_context),
-                    reinterpret_cast<unsigned long long>(g_pd3dDevice),
-                    reinterpret_cast<unsigned long long>(context_buffer),
-                    0,
-                    0);
+        NTSTATUS initialize_older_dx_resources(PVOID p_dxgi_swapchain)
+        {
+			const GUID ID3D11DeviceVar = { 0xdb6f6ddb, 0xac77, 0x4e88, 0x82, 0x53, 0x81, 0x9d, 0xf9, 0xbb, 0xf1, 0x40 };
+			const GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
 
-                g_pD3DXDeviceCtx = *(PVOID*)(context_buffer);
+			static unsigned long long g_user_buffer = 0;
+			if (!g_user_buffer)
+			{
+				// Optimized buffer size: GUID(16)*2 + PVOID(8)*4 + padding = ~0x600 bytes  
+				NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x1000, PAGE_READWRITE, true, false);
+				if (!NT_SUCCESS(status))
+				{
+					return STATUS_UNSUCCESSFUL;
+				}
+			}
 
-                // Use offset 0x400 for second GUID
-                PVOID guid_buffer_2 = reinterpret_cast<PVOID>(g_user_buffer + 0x400);
-                memory::mem_copy(guid_buffer_2, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
-
-                PVOID surface_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x450);
-                *reinterpret_cast<PVOID*>(surface_buffer) = g_pSurface;
-                pfn_get_buffer =  reinterpret_cast<HRESULT (__fastcall*)(PVOID, REFIID, void **)>(utils::vfun_utils::get_vfunc(g_pSwapChain, 9));
-                  return_ptr = user_call::call(
-                    reinterpret_cast<unsigned long long>(pfn_get_buffer),
-                    reinterpret_cast<unsigned long long>(g_pSwapChain),
-                    0,
-                    reinterpret_cast<unsigned long long>(guid_buffer_2),
-                    reinterpret_cast<unsigned long long>(surface_buffer));
+			g_pSwapChain = p_dxgi_swapchain;
 
 
-                hr = *reinterpret_cast<HRESULT*>(return_ptr);
-                if (FAILED(hr))
-                {
-                    return STATUS_UNSUCCESSFUL;
-                }
+			// Use offset 0x200 for first GUID
+			PVOID guid_buffer_1 = reinterpret_cast<PVOID>(g_user_buffer + 0x200);
+			memory::mem_copy(guid_buffer_1, (PVOID)&ID3D11DeviceVar, sizeof(ID3D11DeviceVar));
+			PVOID device_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x250);
+			*reinterpret_cast<PVOID*>(device_buffer) = g_pd3dDevice;
 
-                g_pSurface = *(PVOID*)(surface_buffer);
-
- 
+			pfn_get_dxgi_device = reinterpret_cast<HRESULT(__fastcall*)(PVOID, REFIID, void**)>(utils::vfun_utils::get_vfunc(g_pSwapChain, 7));
 
 
-               // utils::vfun_utils::release(g_pSurface);
+			unsigned long long return_ptr = user_call::call(
+				reinterpret_cast<unsigned long long>(pfn_get_dxgi_device),
+				reinterpret_cast<unsigned long long>(g_pSwapChain),
+				reinterpret_cast<unsigned long long>(guid_buffer_1),
+				reinterpret_cast<unsigned long long>(device_buffer),
+				0);
 
-              
-         
-               return STATUS_SUCCESS;
+			HRESULT hr = *reinterpret_cast<HRESULT*>(return_ptr);
+			if (FAILED(hr))
+			{
+				return STATUS_UNSUCCESSFUL;
+			}
+
+			g_pd3dDevice = *(PVOID*)(device_buffer);
+
+
+
+			// Use offset 0x300 for immediate context buffer
+			PVOID context_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x300);
+			pfn_get_immediate_context = reinterpret_cast<void(__fastcall*)(PVOID, void**)>(utils::vfun_utils::get_vfunc(g_pd3dDevice, 40));
+			user_call::call(
+				reinterpret_cast<unsigned long long>(pfn_get_immediate_context),
+				reinterpret_cast<unsigned long long>(g_pd3dDevice),
+				reinterpret_cast<unsigned long long>(context_buffer),
+				0,
+				0);
+
+			g_pD3DXDeviceCtx = *(PVOID*)(context_buffer);
+
+			// Use offset 0x400 for second GUID
+			PVOID guid_buffer_2 = reinterpret_cast<PVOID>(g_user_buffer + 0x400);
+			memory::mem_copy(guid_buffer_2, (PVOID)&ID3D11Texture2DVar, sizeof(ID3D11Texture2DVar));
+
+			PVOID surface_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x450);
+			*reinterpret_cast<PVOID*>(surface_buffer) = g_pSurface;
+			pfn_get_buffer = reinterpret_cast<HRESULT(__fastcall*)(PVOID, REFIID, void**)>(utils::vfun_utils::get_vfunc(g_pSwapChain, 9));
+			return_ptr = user_call::call(
+				reinterpret_cast<unsigned long long>(pfn_get_buffer),
+				reinterpret_cast<unsigned long long>(g_pSwapChain),
+				0,
+				reinterpret_cast<unsigned long long>(guid_buffer_2),
+				reinterpret_cast<unsigned long long>(surface_buffer));
+
+
+			hr = *reinterpret_cast<HRESULT*>(return_ptr);
+			if (FAILED(hr))
+			{
+				return STATUS_UNSUCCESSFUL;
+			}
+
+			g_pSurface = *(PVOID*)(surface_buffer);
+
+
+
+
+			// utils::vfun_utils::release(g_pSurface);
+
+            return STATUS_SUCCESS;
+        }
+
+        NTSTATUS initialize_last_dx_resources(PVOID p_render_target)
+        {
+			 
+			  GUID ID3D11Texture2DVar = { 0x6f15aaf2, 0xd208, 0x4e89, 0x9a, 0xb4, 0x48, 0x95, 0x35, 0xd3, 0x4f, 0x9c };
+
+			static unsigned long long g_user_buffer = 0;
+			if (!g_user_buffer)
+			{
+				 
+				NTSTATUS status = utils::memory::allocate_user_memory(reinterpret_cast<PVOID*>(&g_user_buffer), 0x1000, PAGE_READWRITE, true, false);
+				if (!NT_SUCCESS(status))
+				{
+					return STATUS_UNSUCCESSFUL;
+				}
+			}
+
+
+			auto pRenderTarget =   reinterpret_cast<uint64_t>(p_render_target);
+            g_pSwapChain =  reinterpret_cast<PVOID>(*(uint64_t*)(pRenderTarget + 0xD0) + 0x18);
+			 
+            uint64_t cd3d_device_addr = *(uint64_t*)( (uint64_t)g_pSwapChain + 0x28);
+            g_pd3dDevice = *(PVOID**)(cd3d_device_addr + 0x228);
+			 
+			// Use offset 0x300 for immediate context buffer
+			PVOID context_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x300);
+			auto  get_immediate_context = utils::vfun_utils::get_vfunc(g_pd3dDevice, 40) ;
+			user_call::call(
+				 get_immediate_context,
+				reinterpret_cast<unsigned long long>(g_pd3dDevice),
+				reinterpret_cast<unsigned long long>(context_buffer),
+				0,
+				0);
+
+			g_pD3DXDeviceCtx = *(PVOID*)(context_buffer);
+
+
+            g_pRenderTargetView = get_last_render_target_view();
+			 
+			// Get underlying resource (Texture2D) from render target view
+			PVOID p_resource = nullptr;
+			PVOID p_back_buffer = nullptr;
+			
+			// Use offset 0x400 for resource buffer
+			PVOID resource_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x400);
+			
+			// Get GetResource vfunc (typically index 8 for ID3D11RenderTargetView)
+			auto pfn_get_resource = utils::vfun_utils::get_vfunc(g_pRenderTargetView, 7) ;
+			user_call::call(
+				pfn_get_resource,
+				reinterpret_cast<unsigned long long>(g_pRenderTargetView),
+				reinterpret_cast<unsigned long long>(resource_buffer),
+				0,
+				0);
+			
+			p_resource = *(PVOID*)(resource_buffer);
+			
+			if (p_resource)
+			{
+				// QueryInterface for ID3D11Texture2D
+				// Use offset 0x500 for QueryInterface buffer
+				PVOID query_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x500);
+				
+				// Copy GUID to user buffer at offset 0x600
+				PVOID guid_buffer = reinterpret_cast<PVOID>(g_user_buffer + 0x600);
+				memory::mem_copy(guid_buffer,  reinterpret_cast<PVOID>(&ID3D11Texture2DVar), sizeof(ID3D11Texture2DVar));
+				
+				// Get QueryInterface vfunc (typically index 0 for IUnknown)
+				auto pfn_query_interface = utils::vfun_utils::get_vfunc(p_resource, 0) ;
+				
+				// Call QueryInterface with ID3D11Texture2D GUID
+				user_call::call(
+					 pfn_query_interface ,
+					reinterpret_cast<unsigned long long>(p_resource),
+					reinterpret_cast<unsigned long long>(guid_buffer),
+					reinterpret_cast<unsigned long long>(query_buffer),
+					0);
+				
+				p_back_buffer = *(PVOID*)(query_buffer);
+
+				// Store the back buffer texture for later use
+				g_pSurface = p_back_buffer;
+				
+				// Release the resource
+				 utils::vfun_utils::release(p_resource);
+			}
+            else
+            {
+                LogError("Failed to get the back buffer texture");
+                return STATUS_UNSUCCESSFUL;
+
+            }
+			
+			
+
+			return STATUS_SUCCESS;
         }
 
         NTSTATUS render_every_thing(PVOID p_dxgi_swapchain)
