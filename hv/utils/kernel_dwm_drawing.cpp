@@ -118,7 +118,7 @@ namespace utils
 
             if (utils::os_info::get_build_number() >= WINDOWS_11_VERSION_24H2)
             {
-                addr = scanner_fun::find_cddisplay_render_target_present(reinterpret_cast<unsigned long long>(utils::module_info::dxgi_base));
+                addr = scanner_fun::find_cddisplay_render_target_present(reinterpret_cast<unsigned long long>(utils::module_info::dwmcore_base));
                 if (addr == 0)
                 {
                     LogError("Failed to find cddisplay render target present (0x%X).", STATUS_NOT_FOUND);
