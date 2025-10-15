@@ -65,7 +65,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* of this control.
 	*/
 #ifdef _MINIMAL
-	primary_controls.cr3_load_exiting = true;
+	primary_controls.cr3_load_exiting = false;
 #else
 	primary_controls.cr3_load_exiting = true;
 #endif
@@ -125,7 +125,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	bitmaps are used, the setting of the “unconditional I/O exiting?control is ignored
 	*/
 #ifdef _MINIMAL
-	primary_controls.use_io_bitmaps = false;
+	primary_controls.use_io_bitmaps = true;
 #else
 	primary_controls.use_io_bitmaps = true;
 #endif
@@ -142,7 +142,7 @@ void set_primary_controls(__vmx_primary_processor_based_control& primary_control
 	* MSR bitmaps are not used, all executions of the RDMSR and WRMSR instructions cause
 	* VM exits.
 	*/
-	primary_controls.use_msr_bitmaps = true;
+	primary_controls.use_msr_bitmaps =true;
 
 	/**
 	* This control determines whether executions of MONITOR cause VM exits.
@@ -354,7 +354,7 @@ void set_entry_control(__vmx_entry_control& entry_control)
 	* The first processors to support the virtual-machine extensions supported only the 1-setting of
 	* this control.
 	*/
-	entry_control.load_dbg_controls = true;
+	entry_control.load_dbg_controls = false;
 
 	/**
 	* On processors that support Intel 64 architecture, this control determines whether the logical
@@ -400,7 +400,7 @@ void set_entry_control(__vmx_entry_control& entry_control)
 	* If this control is 1, Intel Processor Trace does not produce a paging information packet (PIP) on
 	* a VM entry or a VMCS packet on a VM entry that returns from SMM (see Chapter 35).
 	*/
-	entry_control.conceal_vmx_from_pt = true;
+	entry_control.conceal_vmx_from_pt = false;
 
 	/**
 	* This control determines whether the IA32_RTIT_CTL MSR is loaded on VM entry.
@@ -429,7 +429,7 @@ void set_exit_control(__vmx_exit_control& exit_control)
 	* The first processors to support the virtual-machine extensions supported only the 1-
 	* setting of this control.
 	*/
-	exit_control.save_dbg_controls = true;
+	exit_control.save_dbg_controls = false;
 
 	/**
 	* On processors that support Intel 64 architecture, this control determines whether a logical
@@ -489,7 +489,7 @@ void set_exit_control(__vmx_exit_control& exit_control)
 	* If this control is 1, Intel Processor Trace does not produce a paging information packet (PIP)
 	* on a VM exit or a VMCS packet on an SMM VM exit (see Chapter 35).
 	*/
-	exit_control.conceal_vmx_from_pt = true;
+	exit_control.conceal_vmx_from_pt = false;
 
 	/**
 	* This control determines whether the IA32_RTIT_CTL MSR is cleared on VM exit.
@@ -560,7 +560,7 @@ void set_exception_bitmap(__exception_bitmap& exception_bitmap)
 
 	exception_bitmap.nmi_interrupt = true;
 
-	exception_bitmap.breakpoint = true;
+	exception_bitmap.breakpoint = false;
 
 	exception_bitmap.overflow = false;
 
@@ -722,15 +722,15 @@ void fill_vmcs_control_fields(__vcpu* vcpu)
 
 	if (primary_controls.use_io_bitmaps == true)
 	{
-		hv::vmwrite<unsigned __int64>(CONTROL_BITMAP_IO_A_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_a_physical);
-		hv::vmwrite<unsigned __int64>(CONTROL_BITMAP_IO_B_ADDRESS, vcpu->vcpu_bitmaps.io_bitmap_b_physical);
+		hv::vmwrite<unsigned __int64>(CONTROL_BITMAP_IO_A_ADDRESS,0);
+		hv::vmwrite<unsigned __int64>(CONTROL_BITMAP_IO_B_ADDRESS,0);
 	}
 
 
 	// EPT and VPID
 
 	if (secondary_controls.enable_vpid == true)
-		hv::vmwrite<unsigned __int64>(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, guest_vpid);
+		hv::vmwrite<unsigned __int64>(VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER, 1);
 
 	if (secondary_controls.enable_ept == true && secondary_controls.enable_vpid == true)
 		hv::vmwrite<unsigned __int64>(VMCS_CTRL_EPT_POINTER, vcpu->ept_state->ept_pointer->all);
