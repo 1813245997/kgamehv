@@ -19,6 +19,7 @@
 #include "native_api.h"
 #include "internal_function_defs.h"
 #include "kvector.h"
+#include "kunordered_map.h"
 #include "math_utils.h"
 #include "string_utils.h"
 #include "module_info.h"

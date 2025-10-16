@@ -136,6 +136,7 @@
     <ClInclude Include="utils\hook_process_manager.h" />
     <ClInclude Include="utils\hook_user_comm.h" />
     <ClInclude Include="utils\key_board_class.h" />
+    <ClInclude Include="utils\kunordered_map.h" />
     <ClInclude Include="utils\mouse_class_utils.h" />
     <ClInclude Include="utils\render.h" />
     <ClInclude Include="utils\shadow_break_point.h" />
@@ -251,6 +252,7 @@
     <ClCompile Include="utils\hook_process_manager.cpp" />
     <ClCompile Include="utils\hook_user_comm.cpp" />
     <ClCompile Include="utils\key_board_class.cpp" />
+    <ClCompile Include="utils\kunordered_map.cpp" />
     <ClCompile Include="utils\mouse_class_utils.cpp" />
     <ClCompile Include="utils\render.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />
