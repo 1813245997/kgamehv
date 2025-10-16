@@ -20,14 +20,14 @@ namespace hook_manager
 			return status;
 		}
 		 
-        status = utils::hook_mem_protection::initialize_mem_protections();
+		status = utils::hook_mem_protection::initialize_mem_protections();
 		if (!NT_SUCCESS(status))
 		{
 
 			LogError("Failed to initialize mem prot (0x%X).", status);
 			return status;
 		}
- 
+
 		status = utils::hook_process_manager::initialize_hook_process_manager();
 		if (!NT_SUCCESS(status))
 		{

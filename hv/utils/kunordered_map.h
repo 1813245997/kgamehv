@@ -185,12 +185,7 @@ namespace utils {
 		typedef const khash_iterator<Key, Value, Hash> const_iterator;
 		typedef size_t size_type;
 
-		// Constructor
-		kunordered_map() : m_buckets(nullptr), m_bucket_count(0), m_size(0), m_valid(false) {}
-
-		~kunordered_map() {
-			clear();
-		}
+	 
 
 		// Initialization
 		void init() {
