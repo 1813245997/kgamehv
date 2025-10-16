@@ -189,7 +189,15 @@ namespace pool_manager
             LogError("Pool mangaer request allocation Failed");
             return false;
         }
-        
+
+        // Pre-allocate memory for breakpoint tracking
+        if (request_allocation(sizeof(process_breakpoint_info), g_vmm_context->processor_count * 50, INTENTION_TRACK_PROCESS) == false)
+        {
+            LogError("Pool manager request allocation Failed for breakpoint process info");
+            return false;
+        }
+
+      
 
 
         return perform_allocation();
@@ -270,6 +278,7 @@ namespace pool_manager
         case INTENTION_SPLIT_PML2: return "Split Pml2";
         case INTENTION_TRACK_HOOKED_FUNCTIONS: return "Trace Hooked Functions";
         case INTENTION_BACKUP_INSTRUCTION: return "Backup command";
+        case INTENTION_TRACK_PROCESS: return "Track Process";
         default:      return "Unknown";
         }
     }

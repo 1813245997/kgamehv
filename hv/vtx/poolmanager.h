@@ -12,7 +12,8 @@ namespace pool_manager
         INTENTION_SPLIT_PML2,
         INTENTION_TRACK_HOOKED_FUNCTIONS,
         INTENTION_FAKE_PAGE_CONTENTS,
-        INTENTION_BACKUP_INSTRUCTION
+        INTENTION_BACKUP_INSTRUCTION,
+        INTENTION_TRACK_PROCESS
     };
 
     struct __request_new_allocation

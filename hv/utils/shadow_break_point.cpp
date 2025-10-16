@@ -114,7 +114,7 @@ namespace utils {
 			{
 				// Create new process info
 				process_info = pool_manager::request_pool<process_breakpoint_info*>(
-					pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(process_breakpoint_info));
+					pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
 				if (!process_info)
 				{
 					goto clear;
@@ -274,7 +274,7 @@ namespace utils {
 			{
 				// Create new process info
 				process_info = pool_manager::request_pool<process_breakpoint_info*>(
-					pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(process_breakpoint_info));
+					pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
 				if (!process_info)
 				{
 					goto clear;
