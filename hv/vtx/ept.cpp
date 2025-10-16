@@ -18,7 +18,7 @@ namespace ept
 
 		//
 		// The memory type range registers (MTRRs) provide a mechanism for associating the memory types (see Section
-		// 11.3, “Methods of Caching Available? with physical - address ranges in system memory.They allow the processor to
+		// 11.3, ï¿½Methods of Caching Available? with physical - address ranges in system memory.They allow the processor to
 		// optimize operations for different types of memory such as RAM, ROM, frame - buffer memory, and memory - mapped
 		// I/O devices.They also simplify system hardware design by eliminating the memory control pins used for this func -
 		// tion on earlier IA - 32 processors and the external logic needed to drive them.
@@ -110,7 +110,7 @@ namespace ept
 		{
 			//
 			// The first entry in each pair (IA32_MTRR_PHYSBASEn) defines the base address and memory type for the range;
-			// the second entry(IA32_MTRR_PHYSMASKn) contains a mask used to determine the address range.The “n?suffix
+			// the second entry(IA32_MTRR_PHYSMASKn) contains a mask used to determine the address range.The ï¿½n?suffix
 			// is in the range 0 through m? and identifies a specific register pair.
 			//
 			current_phys_base.all = __readmsr(IA32_MTRR_PHYSBASE0 + (i * 2));
@@ -298,6 +298,9 @@ namespace ept
 
 		RtlSecureZeroMemory(ept_pointer, PAGE_SIZE);
 
+		// Initialize hash table for hooked pages
+		ept_state.hooked_page_map.init();
+
 		if (create_ept_page_table(ept_state) == false)
 			return false;
 
@@ -467,10 +470,10 @@ namespace ept
 			return false;
 		}
 
-		// ¼ÆËãÄ¿±êÒ³ÃæµÄÎïÀíµØÖ·
+		// ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Ò³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö·
 		unsigned __int64 target_physical_address = orig_page_pfn << PAGE_SHIFT;
 
-		// Èç¹ûÃ»ÓÐ split£¬ÔòÖ´ÐÐ PML2 ²ðÒ³
+		// ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ splitï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ PML2 ï¿½ï¿½Ò³
 
 		if (is_page_splitted(ept_state, target_physical_address) == false)
 		{
@@ -491,7 +494,7 @@ namespace ept
 			}
 		}
 
-		// »ñÈ¡ PML1 Ò³±íÏî
+		// ï¿½ï¿½È¡ PML1 Ò³ï¿½ï¿½ï¿½ï¿½
 		__ept_pte* target_page = get_pml1_entry(ept_state, target_physical_address);
 		if (!target_page)
 		{
@@ -499,7 +502,7 @@ namespace ept
 			return false;
 		}
 
-		// ´´½¨ Hook ÐÅÏ¢½á¹¹
+		// ï¿½ï¿½ï¿½ï¿½ Hook ï¿½ï¿½Ï¢ï¿½á¹¹
 		auto* hook_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
 		if (!hook_info)
 		{
@@ -507,29 +510,28 @@ namespace ept
 			return false;
 		}
 
-		// Ìî³ä hook ÐÅÏ¢
+		// Initialize hook info
 		hook_info->orig_page_pfn = orig_page_pfn;
 		hook_info->exec_page_pfn = exec_page_pfn;
 		hook_info->entry_address = target_page;
 	
-	 
+		// Set original page permissions (read/write, no execute)
 		hook_info->entry_address->execute = 0;
 		hook_info->entry_address->read = 1;
 		hook_info->entry_address->write = 1;
 
+		// Save original entry for restoration
 		hook_info->original_entry = *target_page;
 		hook_info->changed_entry = *target_page;
 
-	 
+		// Set execution page permissions (execute only)
 		hook_info->changed_entry.read = 0;
 		hook_info->changed_entry.write = 0;
 		hook_info->changed_entry.execute = 1;
-		 
 		hook_info->changed_entry.physical_address = exec_page_pfn;
 		 
-		 
-		// ²åÈëµ½ hook Á´±íÖÐ
-		InsertHeadList(&ept_state.hooked_page_list, &hook_info->hooked_page_list);
+		// Add to hash table instead of linked list
+		ept_state.hooked_page_map[orig_page_pfn] = hook_info;
 		invept_single_context_address(ept_state.ept_pointer->all);
 
 		invept_all_contexts();
@@ -544,35 +546,89 @@ namespace ept
 			return false;
 		}
 
-		// ±éÀú hooked_page_list ÕÒµ½Ä¿±ê PFN ¶ÔÓ¦µÄ hook ÐÅÏ¢
-		for (PLIST_ENTRY entry = ept_state.hooked_page_list.Flink; entry != &ept_state.hooked_page_list; entry = entry->Flink)
+		// O(1) find hooked page info using hash table
+		auto it = ept_state.hooked_page_map.find(orig_page_pfn);
+		if (it == ept_state.hooked_page_map.end())
 		{
-			auto* hook_info = CONTAINING_RECORD(entry, __ept_hooked_page_info, hooked_page_list);
-
-			if (hook_info->orig_page_pfn != orig_page_pfn)
-			{
-				continue;
-
-			}
-			 
-			 hook_info->original_entry.read = 1;
-			 hook_info->original_entry.write = 1;
-			 hook_info->original_entry.execute = 1;
-			 hook_info->entry_address->all = hook_info->original_entry.all;
-
-			 invept_all_contexts();
-			 
-			RemoveEntryList(entry);
-			pool_manager::release_pool(hook_info);
-			return true;
-			 
+			return false;  // Page not hooked
 		}
 
+		auto* hook_info = it->second;
+
+		// Restore original page permissions
+		hook_info->original_entry.read = 1;
+		hook_info->original_entry.write = 1;
+		hook_info->original_entry.execute = 1;
+		hook_info->entry_address->all = hook_info->original_entry.all;
+
+		invept_all_contexts();
 		 
-		return false;
+		// Remove from hash table
+		ept_state.hooked_page_map.erase(orig_page_pfn);
+		pool_manager::release_pool(hook_info);
+		return true;
 	}
- 
- 
- 
+
+	/// <summary>
+	/// Find hooked page info by PFN
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	/// <param name="page_pfn"> Page frame number to search for </param>
+	/// <returns> Pointer to hooked page info or nullptr if not found </returns>
+	ept_hooked_page_info* find_hooked_page(__ept_state& ept_state, unsigned __int64 page_pfn)
+	{
+		if (page_pfn == 0)
+		{
+			return nullptr;
+		}
+
+		auto it = ept_state.hooked_page_map.find(page_pfn);
+		if (it != ept_state.hooked_page_map.end())
+		{
+			return it->second;
+		}
+
+		return nullptr;
+	}
+
+	/// <summary>
+	/// Cleanup all hooked pages
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	void cleanup_all_hooked_pages(__ept_state& ept_state)
+	{
+		// Iterate through all hooked pages and restore them
+		for (auto& pair : ept_state.hooked_page_map)
+		{
+			ept_hooked_page_info* hook_info = pair.second;
+			if (hook_info)
+			{
+				// Restore original page permissions
+				hook_info->original_entry.read = 1;
+				hook_info->original_entry.write = 1;
+				hook_info->original_entry.execute = 1;
+				hook_info->entry_address->all = hook_info->original_entry.all;
+
+				// Release memory
+				pool_manager::release_pool(hook_info);
+			}
+		}
+
+		// Clear the hash table
+		ept_state.hooked_page_map.clear();
+
+		// Invalidate all contexts
+		invept_all_contexts();
+	}
+
+	/// <summary>
+	/// Get statistics about hooked pages
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	/// <returns> Number of hooked pages </returns>
+	size_t get_hooked_page_count(__ept_state& ept_state)
+	{
+		return ept_state.hooked_page_map.size();
+	}
 
 }

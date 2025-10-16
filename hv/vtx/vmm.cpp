@@ -312,7 +312,7 @@ bool init_vcpu(__vcpu*& vcpu)
 		return false;
 	}
 	RtlSecureZeroMemory(vcpu->ept_state, sizeof(__ept_state));
-	InitializeListHead(&vcpu->ept_state->hooked_page_list);
+	vcpu->ept_state->hooked_page_map.init();
 
 	//
 	// Initialize ept structure

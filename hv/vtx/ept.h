@@ -1,4 +1,6 @@
 #pragma once
+
+#include "../utils/kunordered_map.h"
  
  
 
@@ -243,22 +245,19 @@ union __ept_violation
 
 typedef struct __ept_hooked_page_info
 {
-	// 链表结构，用于维护多个被 Hook 页
-	LIST_ENTRY hooked_page_list;
-
-	// 被 Hook 的真实物理页帧号（PFN）
+	// Hooked page PFN (original page frame number)
 	unsigned __int64 orig_page_pfn;
 
-	// 替代页的 PFN（即我们伪造的页面所映射的物理页）
+	// Execution page PFN (shadow page frame number mapped to execution page)
 	unsigned __int64 exec_page_pfn;
 
-	// EPT 页表中该页对应的 PTE 地址
+	// EPT page table entry address for this page
 	__ept_pte* entry_address;
 
-	// 原始的 PTE 内容（用于后续恢复）
+	// Original PTE data (for restoration)
 	__ept_pte original_entry;
 
-	// 替换后的 PTE 内容（伪造访问映射）
+	// Changed PTE data (shadow mapping)
 	__ept_pte changed_entry;
 
 } ept_hooked_page_info;
@@ -266,7 +265,9 @@ typedef struct __ept_hooked_page_info
 
 struct __ept_state
 {
-	LIST_ENTRY hooked_page_list;
+	// Hash table for hooked pages: PFN -> ept_hooked_page_info*
+	utils::kunordered_map<unsigned __int64, ept_hooked_page_info*> hooked_page_map;
+	
 	__eptp* ept_pointer;
 	__vmm_ept_page_table* ept_page_table;
 	__ept_hooked_page_info* page_to_change;
@@ -314,9 +315,25 @@ namespace ept
 	/// <returns> status </returns>
 	bool split_pml2(__ept_state& ept_state, void* pre_allocated_buffer, unsigned __int64 physical_address);
 
+	/// <summary>
+	/// Find hooked page info by PFN
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	/// <param name="page_pfn"> Page frame number to search for </param>
+	/// <returns> Pointer to hooked page info or nullptr if not found </returns>
+	ept_hooked_page_info* find_hooked_page(__ept_state& ept_state, unsigned __int64 page_pfn);
 
+	/// <summary>
+	/// Cleanup all hooked pages
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	void cleanup_all_hooked_pages(__ept_state& ept_state);
 
- 
-	
+	/// <summary>
+	/// Get statistics about hooked pages
+	/// </summary>
+	/// <param name="ept_state"> EPT state structure </param>
+	/// <returns> Number of hooked pages </returns>
+	size_t get_hooked_page_count(__ept_state& ept_state);
 
 }

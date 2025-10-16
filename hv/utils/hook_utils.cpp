@@ -31,8 +31,8 @@ namespace utils
 				return false;
 			}
 
-			// Calculate page PFN
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+			void* aligned_target = PAGE_ALIGN(target_api);
+			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
 			if (target_pa == 0)
 			{
 				return false;

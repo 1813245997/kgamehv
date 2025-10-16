@@ -482,39 +482,33 @@ void vmexit_ept_violation_handler(__vcpu* vcpu)
 	ept_violation.all = vcpu->vmexit_info.qualification;
 	unsigned __int64 guest_physical_adddress = hv::vmread(GUEST_PHYSICAL_ADDRESS);
 
-	PLIST_ENTRY current = &vcpu->ept_state->hooked_page_list;
-	while (&vcpu->ept_state->hooked_page_list != current->Flink)
+	// O(1) find hooked page using hash table instead of linked list traversal
+	unsigned __int64 page_pfn = GET_PFN(guest_physical_adddress);
+	ept_hooked_page_info* hooked_entry = ept::find_hooked_page(*vcpu->ept_state, page_pfn);
+	
+	if (!hooked_entry)
 	{
-		current = current->Flink;
-		__ept_hooked_page_info* hooked_entry = CONTAINING_RECORD(current, __ept_hooked_page_info, hooked_page_list);
-		if (hooked_entry->orig_page_pfn == GET_PFN(guest_physical_adddress))
+		return;
+	}
+
+	if ((ept_violation.read_access || ept_violation.write_access) && (!ept_violation.ept_readable || !ept_violation.ept_writeable))
+	{
+ 
+		if (page_pfn == hooked_entry->orig_page_pfn)
 		{
-			if ((ept_violation.read_access || ept_violation.write_access) && (!ept_violation.ept_readable || !ept_violation.ept_writeable))
-			{
-				const auto old_cr3 = hv::swap_context();
-				const auto rip_physical_address = MmGetPhysicalAddress((PVOID)vcpu->vmexit_info.guest_rip).QuadPart;
-				const auto rip_physical_pnf = GET_PFN(rip_physical_address);
-				hv::restore_context(old_cr3);
-				if (static_cast<unsigned __int64>(rip_physical_pnf) == hooked_entry->orig_page_pfn)
-				{
-					hv::set_mtf(true);
-					hooked_entry->original_entry.execute = true;
-					vcpu->ept_state->page_to_change = hooked_entry;
-					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
-				}
-				else
-				{
-					ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
-				}
-			}
-
-			else if (ept_violation.execute_access && (ept_violation.ept_readable || ept_violation.ept_writeable))
-			{
-				ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->changed_entry, invept_type::invept_single_context);
-			}
-
-			break;
+			hv::set_mtf(true);
+			hooked_entry->original_entry.execute = true;
+			vcpu->ept_state->page_to_change = hooked_entry;
+			ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
 		}
+		else
+		{
+			ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->original_entry, invept_type::invept_single_context);
+		}
+	}
+	else if (ept_violation.execute_access && (ept_violation.ept_readable || ept_violation.ept_writeable))
+	{
+		ept::swap_pml1_and_invalidate_tlb(*vcpu->ept_state, hooked_entry->entry_address, hooked_entry->changed_entry, invept_type::invept_single_context);
 	}
 }
 
