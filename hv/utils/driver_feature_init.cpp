@@ -8,6 +8,75 @@ namespace utils
 {
 	namespace driver_features
 	{
+		/// <summary>
+		/// Test function to demonstrate read_virt_mem interface with DWM process
+		/// </summary>
+		void test_read_virt_mem_dwm()
+		{
+			 
+			LogInfo("=== Testing read_virt_mem interface with DWM process ===");
+
+			// Step 1: Get DWM process
+			PEPROCESS dwm_process = nullptr;
+			NTSTATUS status = utils::kernel_dwm_drawing::get_dwm_process(&dwm_process);
+			if (!NT_SUCCESS(status) || !dwm_process)
+			{
+				LogError("Failed to get DWM process for testing (0x%X)", status);
+				return;
+			}
+
+			// Step 2: Get DWM process ID
+			HANDLE dwm_pid = utils::internal_functions::pfn_ps_get_process_id(dwm_process);
+			LogInfo("DWM Process ID: %p", dwm_pid);
+
+			// Step 3: Get DWM process CR3
+			cr3 dwm_cr3 = hv::prevmcall::query_process_cr3(reinterpret_cast<uint64_t>(dwm_pid));
+			LogInfo("DWM Process CR3: 0x%llX", dwm_cr3.flags);
+
+			// Step 4: Get DWM process base address
+			PVOID dwm_base = utils::module_info::dwmcore_base;
+			if (!dwm_base)
+			{
+				LogError("DWM base address not available");
+				return;
+			}
+			LogInfo("DWM Base Address: 0x%p", dwm_base);
+
+			// Step 5: Test reading virtual memory from DWM process
+			// Read the first 64 bytes of DWM module to verify it's a valid PE
+			char buffer[64] = { 0 };
+			size_t bytes_read = hv::prevmcall::read_virt_mem(dwm_cr3, buffer, dwm_base, sizeof(buffer));
+
+			if (bytes_read == sizeof(buffer))
+			{
+				LogInfo("Successfully read %zu bytes from DWM process", bytes_read);
+				
+				// Check if it's a valid PE header (MZ signature)
+				if (buffer[0] == 'M' && buffer[1] == 'Z')
+				{
+					LogInfo("  Valid PE header found - MZ signature detected");
+					
+				 
+					LogInfo("First 16 bytes: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+						(unsigned char)buffer[0], (unsigned char)buffer[1], (unsigned char)buffer[2], (unsigned char)buffer[3],
+						(unsigned char)buffer[4], (unsigned char)buffer[5], (unsigned char)buffer[6], (unsigned char)buffer[7],
+						(unsigned char)buffer[8], (unsigned char)buffer[9], (unsigned char)buffer[10], (unsigned char)buffer[11],
+						(unsigned char)buffer[12], (unsigned char)buffer[13], (unsigned char)buffer[14], (unsigned char)buffer[15]);
+				}
+				else
+				{
+					LogError("  Invalid PE header - MZ signature not found");
+				}
+			}
+			else
+			{
+				LogError("Failed to read memory from DWM process. Bytes read: %zu", bytes_read);
+			}
+
+			 
+
+			LogInfo("=== read_virt_mem test completed ===");
+		}
 
 
 
@@ -186,8 +255,10 @@ namespace utils
 			}
 			LogInfo("Dwm drawing initialized successfully.");
 
-
 			 
+
+			
+			
 
 
 		 

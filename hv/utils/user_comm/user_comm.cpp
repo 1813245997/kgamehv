@@ -5,6 +5,9 @@
 
 #define USER_COMM_KEY1 0X88889922
 #define USER_COMM_KEY2 0X88889922
+
+// Maximum size for virtual memory read operations (1MB)
+#define MAX_READ_SIZE (1024 * 1024)
 namespace utils
 {
 	namespace user_comm
@@ -64,12 +67,12 @@ namespace utils
 			}
 			case user_comm_read_virt_mem:
 			{
-				 //bug
+				 
 				is_succeed = handle_read_virt_mem(request);
 				break;
 			}
 			case  user_comm_write_virt_mem:
-			{	 //bug
+			{	  
 				is_succeed = handle_write_virt_mem(request);
 				break;
 			}
@@ -308,7 +311,6 @@ namespace utils
 
 		bool handle_read_virt_mem(user_comm_request* request)
 		{
-			 
 			if (!request || !request->input_buffer)
 			{
 				return false;
@@ -323,12 +325,17 @@ namespace utils
 				return false;
 			}
 
-		 
-			* reinterpret_cast<size_t*> (params->bytes_read) = 0;
+			// Initialize bytes_read to 0
+			*reinterpret_cast<size_t*>(params->bytes_read) = 0;
 
-			 
-			size_t bytes_read = 0;
+			// Validate size parameter
+			if (params->size == 0 || params->size > MAX_READ_SIZE)
+			{
+				request->status = STATUS_INVALID_PARAMETER;
+				return false;
+			}
 
+			// Get target process CR3
 			cr3 target_cr3 = hv::prevmcall::query_process_cr3(params->process_id);
 			if (!target_cr3.flags)
 			{
@@ -336,20 +343,45 @@ namespace utils
 				return false;
 			}
 
+			// Allocate kernel buffer for reading virtual memory
+			void* kernel_buffer = utils::memory::allocate_independent_pages(params->size, PAGE_READWRITE);
+			if (!kernel_buffer)
+			{
+				request->status = STATUS_INSUFFICIENT_RESOURCES;
+				return false;
+			}
+
+			size_t bytes_read = 0;
+			bool success = false;
+
+			// Read virtual memory into kernel buffer
 			bytes_read = hv::prevmcall::read_virt_mem(
 				target_cr3,
-				reinterpret_cast<void*>(params->dst_buffer),
+				kernel_buffer,
 				reinterpret_cast<void const*>(params->src_address),
 				static_cast<size_t>(params->size)
 			);
 
+			if (bytes_read > 0)
+			{
+				// Copy data from kernel buffer to user buffer
+				RtlCopyMemory(
+					reinterpret_cast<void*>(params->dst_buffer),
+					kernel_buffer,
+					bytes_read
+				);
 
-			 
-			*reinterpret_cast<size_t*> (params->bytes_read) = bytes_read;
-			request->status = (bytes_read > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+				success = true;
+			}
 
-			return (bytes_read > 0);
-			 
+			// Free kernel buffer
+			utils::memory::free_independent_pages(kernel_buffer, params->size);
+
+			// Set result
+			*reinterpret_cast<size_t*>(params->bytes_read) = bytes_read;
+			request->status = success ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+
+			return success;
 		}
 
 		bool handle_write_virt_mem(user_comm_request* request)
@@ -368,35 +400,63 @@ namespace utils
 				return false;
 			}
 
+			// Initialize bytes_written to 0
+			*reinterpret_cast<size_t*>(params->bytes_written) = 0;
 
-			*reinterpret_cast<size_t*> (params->bytes_written) = 0;
+			// Validate size parameter
+			if (params->size == 0 || params->size > MAX_READ_SIZE)
+			{
+				request->status = STATUS_INVALID_PARAMETER;
+				return false;
+			}
 
-			size_t bytes_written = 0;
-
-
-			cr3 target_cr3 =  hv::prevmcall::query_process_cr3(params->process_id);
+			// Get target process CR3
+			cr3 target_cr3 = hv::prevmcall::query_process_cr3(params->process_id);
 			if (!target_cr3.flags)
 			{
 				request->status = STATUS_NOT_FOUND;
 				return false;
 			}
 
+			// Allocate kernel buffer for writing virtual memory
+			void* kernel_buffer = utils::memory::allocate_independent_pages(params->size, PAGE_READWRITE);
+			if (!kernel_buffer)
+			{
+				request->status = STATUS_INSUFFICIENT_RESOURCES;
+				return false;
+			}
 
-			bytes_written = hv::prevmcall::write_virt_mem(
-				target_cr3,
-				reinterpret_cast<void*>(params->dst_address),
+			size_t bytes_written = 0;
+			bool success = false;
+
+			// Copy data from user buffer to kernel buffer
+			RtlCopyMemory(
+				kernel_buffer,
 				reinterpret_cast<void const*>(params->src_buffer),
 				static_cast<size_t>(params->size)
 			);
 
+			// Write virtual memory from kernel buffer
+			bytes_written = hv::prevmcall::write_virt_mem(
+				target_cr3,
+				reinterpret_cast<void*>(params->dst_address),
+				kernel_buffer,
+				static_cast<size_t>(params->size)
+			);
 
+			if (bytes_written > 0)
+			{
+				success = true;
+			}
 
-			*reinterpret_cast<size_t*> (params->bytes_written) = bytes_written;
-			request->status = (bytes_written > 0) ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
+			// Free kernel buffer
+			utils::memory::free_independent_pages(kernel_buffer, params->size);
 
-			return (bytes_written > 0);
+			// Set result
+			*reinterpret_cast<size_t*>(params->bytes_written) = bytes_written;
+			request->status = success ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
-			 
+			return success;
 		}
 
 		bool handle_clear_unloaded_drivers(user_comm_request* request)
