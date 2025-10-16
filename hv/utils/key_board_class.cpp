@@ -255,7 +255,7 @@ namespace utils
 			return STATUS_UNSUCCESSFUL;
 		}
 
-		return status;
+	 
 	  }
 
 	  void hook_key_board_class_service_callback(
