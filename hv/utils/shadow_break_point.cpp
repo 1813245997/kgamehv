@@ -660,6 +660,15 @@ namespace utils {
 				return false;
 			}
 
+			void* aligned_target = PAGE_ALIGN(target_address);
+			// Calculate page PFN
+			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
+			if (target_pa == 0)
+			{
+				return false;
+			}
+			unsigned __int64 page_pfn = GET_PFN(target_pa);
+
 			// O(1) find process
 			auto process_it = g_process_breakpoint_map.find(process_id);
 			if (process_it == g_process_breakpoint_map.end())
@@ -667,28 +676,32 @@ namespace utils {
 				return false;  // Process doesn't exist
 			}
 
-			// Iterate through all pages in this process to find TF match
+			// O(1) find page within process
 			process_breakpoint_info* process_info = process_it->second;
-			for (auto& page_pair : process_info->page_map)
+			auto page_it = process_info->page_map.find(page_pfn);
+			if (page_it == process_info->page_map.end())
 			{
-				breakpoint_page_info* page_info = page_pair.second;
-				
-				// Iterate through all breakpoints in this page to find TF match
-				for (auto& bp_pair : page_info->breakpoint_map)
+				return false;  // Page doesn't exist
+			}
+
+			// Use the found page to search for TF breakpoints
+			breakpoint_page_info* page_info = page_it->second;
+			
+			// Iterate through all breakpoints in this specific page to find TF match
+			for (auto& bp_pair : page_info->breakpoint_map)
+			{
+				breakpoint_function_info* bp_info = bp_pair.second;
+				if (bp_info && bp_info->is_active)
 				{
-					breakpoint_function_info* bp_info = bp_pair.second;
-					if (bp_info && bp_info->is_active)
+					// Calculate TF address: target_address - instruction_size
+					void* tf_address = reinterpret_cast<void*>(
+						reinterpret_cast<uint64_t>(target_address) - bp_info->instruction_size);
+					
+					// Check if TF address matches the original VA
+					if (reinterpret_cast<void*>(tf_address) == bp_info->original_va)
 					{
-						// Calculate TF address: target_address - instruction_size
-						void* tf_address = reinterpret_cast<void*>(
-							reinterpret_cast<uint64_t>(target_address) - bp_info->instruction_size);
-						
-						// Check if TF address matches the original VA
-						if (reinterpret_cast<void*>(tf_address) == bp_info->original_va)
-						{
-							*out_bp_info = bp_info;
-							return true;
-						}
+						*out_bp_info = bp_info;
+						return true;
 					}
 				}
 			}
