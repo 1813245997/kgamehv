@@ -235,8 +235,23 @@ namespace utils {
 
 		// Access operations
 		Value& operator[](const Key& key) {
+			// First try to find the key
+			iterator it = find(key);
+			if (it != end()) {
+				// Key exists, return reference to existing value
+				return it->second;
+			}
+			
+			// Key doesn't exist, insert with default value and return reference
 			auto result = insert(key, Value());
-			return result.first->second;
+			if (result.second) {
+				// Insert successful
+				return result.first->second;
+			} else {
+				// Insert failed, return a static default value
+				static Value default_value;
+				return default_value;
+			}
 		}
 
 		const Value& at(const Key& key) const {
@@ -381,6 +396,7 @@ namespace utils {
 
 		// Get bucket index
 		size_t get_bucket_index(const Key& key) const {
+			if (m_bucket_count == 0) return 0;
 			return m_hasher(key) % m_bucket_count;
 		}
 
