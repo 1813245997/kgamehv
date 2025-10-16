@@ -72,20 +72,17 @@ namespace utils
 				*origin_function = nullptr;
 			}
 
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(target_api).QuadPart;
+			void* aligned_target = PAGE_ALIGN(target_api);
+			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
 			if (target_pa == 0)
 			{
 				return false;
 			}
-
-			bool succeed = false;
-			void* aligned_target = PAGE_ALIGN(target_api);
-			unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET((unsigned __int64)target_api);
 			unsigned __int64 page_pfn = GET_PFN(target_pa);
-			
-			
+			unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET(target_api);
 			kernel_hook_function_info* hook_info = nullptr;
 			kernel_hook_page_info* hooked_page_info = nullptr;
+			bool succeed = false;
 			bool is_new_page = false;
 
 			// O(1) find page - using hash table
@@ -212,7 +209,8 @@ namespace utils
 			}
 
 			// Calculate page PFN
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(rip).QuadPart;
+			void* aligned_rip = PAGE_ALIGN(rip);
+			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_rip).QuadPart;
 			if (target_pa == 0)
 			{
 				return false;
