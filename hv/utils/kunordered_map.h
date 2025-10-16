@@ -5,8 +5,64 @@ namespace utils {
 	template<typename T>
 	struct khash {
 		size_t operator()(const T& key) const {
-			// Simple hash implementation, can be optimized as needed
+			// For most types, use address-based hashing
+			return reinterpret_cast<size_t>(&key);
+		}
+	};
+
+	// Specialized version for integral types
+	template<>
+	struct khash<int> {
+		size_t operator()(int key) const {
 			return static_cast<size_t>(key);
+		}
+	};
+
+	template<>
+	struct khash<unsigned int> {
+		size_t operator()(unsigned int key) const {
+			return static_cast<size_t>(key);
+		}
+	};
+
+	template<>
+	struct khash<long> {
+		size_t operator()(long key) const {
+			return static_cast<size_t>(key);
+		}
+	};
+
+	template<>
+	struct khash<ULONG> {
+		size_t operator()(ULONG key) const {
+			return static_cast<size_t>(key);
+		}
+	};
+
+ 
+
+	template<>
+	struct khash<size_t> {
+		size_t operator()(size_t key) const {
+			return key;
+		}
+	};
+
+	// Specialized version for pointers
+	template<typename T>
+	struct khash<T*> {
+		size_t operator()(T* key) const {
+			if (!key) return 0;
+			return reinterpret_cast<size_t>(key);
+		}
+	};
+
+	// Specialized version for PVOID
+	template<>
+	struct khash<PVOID> {
+		size_t operator()(PVOID key) const {
+			if (!key) return 0;
+			return reinterpret_cast<size_t>(key);
 		}
 	};
 
@@ -36,11 +92,11 @@ namespace utils {
 	struct kpair {
 		Key first;
 		Value second;
-		
+
 		kpair() : first(), second() {}
 		kpair(const Key& k, const Value& v) : first(k), second(v) {}
 		kpair(const kpair& other) : first(other.first), second(other.second) {}
-		
+
 		kpair& operator=(const kpair& other) {
 			if (this != &other) {
 				first = other.first;
@@ -55,7 +111,7 @@ namespace utils {
 	struct khash_node {
 		kpair<Key, Value> data;
 		khash_node* next;
-		
+
 		khash_node() : next(nullptr) {}
 		khash_node(const Key& k, const Value& v) : data(k, v), next(nullptr) {}
 		khash_node(const kpair<Key, Value>& p) : data(p), next(nullptr) {}
@@ -113,7 +169,7 @@ namespace utils {
 		khash_node<Key, Value>* m_node;
 		size_t m_bucket_index;
 		kunordered_map<Key, Value, Hash>* m_map;
-		
+
 		friend class kunordered_map<Key, Value, Hash>;
 	};
 
@@ -156,7 +212,7 @@ namespace utils {
 
 			size_t bucket_index = get_bucket_index(key);
 			khash_node<Key, Value>* node = find_in_bucket(bucket_index, key);
-			
+
 			if (node) {
 				// Key already exists, update value
 				node->data.second = value;
@@ -211,7 +267,7 @@ namespace utils {
 
 			size_t bucket_index = get_bucket_index(key);
 			khash_node<Key, Value>* node = find_in_bucket(bucket_index, key);
-			
+
 			if (node) {
 				return iterator(node, bucket_index, this);
 			}
@@ -236,10 +292,11 @@ namespace utils {
 				if (current->data.first == key) {
 					if (prev) {
 						prev->next = current->next;
-					} else {
+					}
+					else {
 						m_buckets[bucket_index] = current->next;
 					}
-					
+
 					destroy_node(current);
 					m_size--;
 					return 1;
@@ -309,7 +366,8 @@ namespace utils {
 			}
 			if (bucket_index < m_bucket_count) {
 				node = m_buckets[bucket_index];
-			} else {
+			}
+			else {
 				node = nullptr;
 			}
 		}
@@ -344,14 +402,19 @@ namespace utils {
 				sizeof(khash_node<Key, Value>), PAGE_READWRITE);
 			if (!node) return nullptr;
 
-			new (node) khash_node<Key, Value>(key, value);
+			// Initialize the node manually instead of using placement new
+			RtlZeroMemory(node, sizeof(khash_node<Key, Value>));
+			node->data.first = key;
+			node->data.second = value;
+			node->next = nullptr;
 			return node;
 		}
 
 		// Destroy node
 		void destroy_node(khash_node<Key, Value>* node) {
 			if (node) {
-				node->~khash_node<Key, Value>();
+				// In kernel environment, we don't need explicit destructor call
+				// Just free the memory directly
 				utils::memory::free_independent_pages(node, sizeof(khash_node<Key, Value>));
 			}
 		}
@@ -403,14 +466,14 @@ namespace utils {
 				khash_node<Key, Value>* node = old_buckets[i];
 				while (node) {
 					khash_node<Key, Value>* next = node->next;
-					
+
 					// Calculate new bucket index
 					size_t new_bucket_index = get_bucket_index(node->data.first);
-					
+
 					// Insert into new bucket
 					node->next = m_buckets[new_bucket_index];
 					m_buckets[new_bucket_index] = node;
-					
+
 					node = next;
 				}
 			}
