@@ -588,9 +588,6 @@
     <ClCompile Include="utils\kunordered_map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utils\kunordered_map_example.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="lde64.asm">

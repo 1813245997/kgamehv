@@ -372,7 +372,7 @@ namespace utils
 			}
 		
 			// 4. Set custom PTE bits to ensure correct page attributes
-			//    (0x861 → typically marks the page as valid, accessed, and executable)
+			//    (0x861  typically marks the page as valid, accessed, and executable)
 			memory::set_pte_bits(reinterpret_cast<ULONG64>(base_address), size, 0x861);
 		
 			// 5. Successfully allocated and configured the pages

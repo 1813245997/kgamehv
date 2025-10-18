@@ -253,7 +253,6 @@
     <ClCompile Include="utils\hook_user_comm.cpp" />
     <ClCompile Include="utils\key_board_class.cpp" />
     <ClCompile Include="utils\kunordered_map.cpp" />
-    <ClCompile Include="utils\kunordered_map_example.cpp" />
     <ClCompile Include="utils\mouse_class_utils.cpp" />
     <ClCompile Include="utils\render.cpp" />
     <ClCompile Include="utils\shadow_break_point.cpp" />

@@ -138,7 +138,7 @@ namespace utils
 		injetThread:
 
 		 
-			char bufcode[] =
+			UCHAR bufcode[] =
 			{
 				0x50, //push  rax
 				0x51, //push  rcx   

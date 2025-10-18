@@ -52,161 +52,169 @@ namespace utils {
 		{
 			PEPROCESS process = nullptr;
 
-			if (!target_address)
-			{
-				return false;
-			}
-
-			if (!handler)
-			{
-				return false;
-			}
-
-			NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
-			if (!NT_SUCCESS(status))
-			{
-				return false;
-			}
-
-			if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
-			{
-				utils::internal_functions::pfn_ob_dereference_object(process);
-				return false;
-			}
-
-			const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
-			if (target_cr3 == 0)
-			{
-				utils::internal_functions::pfn_ob_dereference_object(process);
-				return false;
-			}
-
-			KAPC_STATE apc_state{};
-			uint64_t target_pa{};
-			
 			bool succeed = false;
-			  
-			utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
-
-			void* aligned_target = PAGE_ALIGN(target_address);
-			target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
-			if (target_pa == 0)
+			KAPC_STATE apc_state{};
+			do 
 			{
-				goto clear;
-			}
-			unsigned __int64 page_pfn = GET_PFN(target_pa);
-			unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET(target_address);
+				if (!target_address)
+				{
+					return false;
+				}
 
-			ExAcquireFastMutex(&g_breakpoint_list_lock);
+				if (!handler)
+				{
+					return false;
+				}
 
-		 
 
-		  	bool is_new_page = false;
-			// O(1) find process
-			auto process_it = g_process_breakpoint_map.find(process_id);
-			process_breakpoint_info* process_info = nullptr;
+				NTSTATUS status = utils::internal_functions::pfn_ps_lookup_process_by_process_id(process_id, &process);
+				if (!NT_SUCCESS(status))
+				{
+					return false;
+				}
+
+				if (utils::internal_functions::pfn_ps_get_process_exit_status(process) != STATUS_PENDING)
+				{
+					utils::internal_functions::pfn_ob_dereference_object(process);
+					return false;
+				}
+
+				const ULONGLONG target_cr3 = utils::process_utils::get_process_cr3(process);
+				if (target_cr3 == 0)
+				{
+					utils::internal_functions::pfn_ob_dereference_object(process);
+					return false;
+				}
+
+	
+				uint64_t target_pa{};
+
+				
+
+				utils::internal_functions::pfn_ke_stack_attach_process(process, &apc_state);
+				ExAcquireFastMutex(&g_breakpoint_list_lock);
+				void* aligned_target = PAGE_ALIGN(target_address);
+				target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
+				if (target_pa == 0)
+				{
+					break;
+				}
+				unsigned __int64 page_pfn = GET_PFN(target_pa);
+				unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET(target_address);
+
+				bool is_new_page = false;
+				// O(1) find process
+				auto process_it = g_process_breakpoint_map.find(process_id);
+				process_breakpoint_info* process_info = nullptr;
+
+				if (process_it != g_process_breakpoint_map.end())
+				{
+					process_info = process_it->second;
+				}
+				else
+				{
+					// Create new process info
+					process_info = pool_manager::request_pool<process_breakpoint_info*>(
+						pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
+					if (!process_info)
+					{
+						break;
+					}
+
+					process_info->process_id = process_id;
+					process_info->page_map.init();
+
+					// Add to process hash table
+					g_process_breakpoint_map[process_id] = process_info;
+				}
+
+				// O(1) find page within process
+				auto page_it = process_info->page_map.find(page_pfn);
+				breakpoint_page_info* page_info = nullptr;
+
+				if (page_it != process_info->page_map.end())
+				{
+					page_info = page_it->second;
+				}
+				else
+				{
+					is_new_page = true;
+					// Create new page
+					page_info = pool_manager::request_pool<breakpoint_page_info*>(
+						pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(breakpoint_page_info));
+					if (!page_info)
+					{
+						break;
+					}
+
+					page_info->page_contents = pool_manager::request_pool<uint8_t*>(
+						pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
+					if (!page_info->page_contents)
+					{
+						pool_manager::release_pool(page_info);
+						break;
+					}
+
+					uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
+					if (fake_pa == 0)
+					{
+						pool_manager::release_pool(page_info->page_contents);
+						pool_manager::release_pool(page_info);
+						break;
+					}
+
+
+					RtlCopyMemory(page_info->page_contents, aligned_target, PAGE_SIZE);
+
+					auto exec_page = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
+
+					page_info->orig_page_pfn = page_pfn;
+					page_info->exec_page_pfn = GET_PFN(exec_page);
+					page_info->breakpoint_count = 0;
+					page_info->breakpoint_map.init();
+
+					// Add to process page map
+					process_info->page_map[page_pfn] = page_info;
+
+
+				}
+
+				// Create breakpoint info
+				auto* func_info = pool_manager::request_pool<breakpoint_function_info*>(
+					pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(breakpoint_function_info));
+				if (!func_info)
+				{
+					break;
+				}
+
+				func_info->handler_va = handler;
+				func_info->original_va = target_address;
+				func_info->original_pa = target_pa;
+				func_info->breakpoint_va = &page_info->page_contents[page_offset];
+				func_info->instruction_size = LDE(target_address, 64);
+				func_info->is_active = true;
+				func_info->page_info_ptr = page_info;
+				RtlCopyMemory(&func_info->original_byte, target_address, 1);
+				*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC; // INT3
+				++page_info->breakpoint_count;
+
+				// O(1) insert - only insert to page hash table
+				page_info->breakpoint_map[target_address] = func_info;
+				succeed = true;
+
+				if (is_new_page)
+				{
+					hv::prevmcall::install_ept_hook(page_info->orig_page_pfn, page_info->exec_page_pfn);
+				}
+
+			 
+
+
+
+
+			} while (FALSE);
 			
-			if (process_it != g_process_breakpoint_map.end())
-			{
-				process_info = process_it->second;
-			}
-			else
-			{
-				// Create new process info
-				process_info = pool_manager::request_pool<process_breakpoint_info*>(
-					pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
-				if (!process_info)
-				{
-					goto clear;
-				}
-				
-				process_info->process_id = process_id;
-				process_info->page_map.init();
-				
-				// Add to process hash table
-				g_process_breakpoint_map[process_id] = process_info;
-			}
 
-			// O(1) find page within process
-			auto page_it = process_info->page_map.find(page_pfn);
-			breakpoint_page_info* page_info = nullptr;
-			
-			if (page_it != process_info->page_map.end())
-			{
-				page_info = page_it->second;
-			}
-			else
-			{
-				is_new_page = true;
-				// Create new page
-				page_info = pool_manager::request_pool<breakpoint_page_info*>(
-					pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(breakpoint_page_info));
-				if (!page_info)
-				{
-					goto clear;
-				}
-
-				page_info->page_contents = pool_manager::request_pool<uint8_t*>(
-					pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
-				if (!page_info->page_contents)
-				{
-					pool_manager::release_pool(page_info);
-					goto clear;
-				}
-
-				uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
-				if (fake_pa == 0)
-				{
-					pool_manager::release_pool(page_info->page_contents);
-					pool_manager::release_pool(page_info);
-					goto clear;
-				}
-
-				 
-				RtlCopyMemory(page_info->page_contents, aligned_target, PAGE_SIZE);
-
-				auto exec_page = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
-
-				page_info->orig_page_pfn = page_pfn;
-				page_info->exec_page_pfn = GET_PFN(exec_page);
-				page_info->breakpoint_count = 0;
-				page_info->breakpoint_map.init();
-
-				// Add to process page map
-				process_info->page_map[page_pfn] = page_info;
-				
-				
-			}
-
-			// Create breakpoint info
-			auto* func_info = pool_manager::request_pool<breakpoint_function_info*>(
-				pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(breakpoint_function_info));
-			if (!func_info)
-			{
-				goto clear;
-			}
-			
-			func_info->handler_va = handler;
-			func_info->original_va = target_address;
-			func_info->original_pa = target_pa;
-			func_info->breakpoint_va = &page_info->page_contents[page_offset];
-			func_info->instruction_size = LDE(target_address, 64);
-			func_info->is_active = true;
-			func_info->page_info_ptr = page_info;
-			RtlCopyMemory(&func_info->original_byte, target_address, 1);
-			*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC; // INT3
-			++page_info->breakpoint_count;
-
-			// O(1) insert - only insert to page hash table
-			page_info->breakpoint_map[target_address] = func_info;
-			succeed = true;
-
-			if (is_new_page)
-			{
-				hv::prevmcall::install_ept_hook(page_info->orig_page_pfn, page_info->exec_page_pfn);
-			}
-
-		clear:
 			ExReleaseFastMutex(&g_breakpoint_list_lock);
 			utils::internal_functions::pfn_ke_unstack_detach_process(&apc_state);
 			utils::internal_functions::pfn_ob_dereference_object(process);
@@ -242,130 +250,132 @@ namespace utils {
 			}
 			 
 			uint64_t target_pa{};
-			
 			bool succeed = false;
 			  
-			
-
-			bool is_new_page = false;
-			void* aligned_target = PAGE_ALIGN(target_address);
-			target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
-			if (target_pa == 0)
+			do 
 			{
-				goto clear;
-			}
-			unsigned __int64 page_pfn = GET_PFN(target_pa);
-			unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET(target_address);
-
-			ExAcquireFastMutex(&g_breakpoint_list_lock);
-
-
+				bool is_new_page = false;
+				void* aligned_target = PAGE_ALIGN(target_address);
+				ExAcquireFastMutex(&g_breakpoint_list_lock);
+				target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
+				if (target_pa == 0)
+				{
+					break;
+				}
+				unsigned __int64 page_pfn = GET_PFN(target_pa);
+				unsigned __int64 page_offset = MASK_EPT_PML1_OFFSET(target_address);
 
 			
-			// O(1) find process
-			auto process_it = g_process_breakpoint_map.find(process_id);
-			process_breakpoint_info* process_info = nullptr;
+				 
+				// O(1) find process
+				auto process_it = g_process_breakpoint_map.find(process_id);
+				process_breakpoint_info* process_info = nullptr;
+
+				if (process_it != g_process_breakpoint_map.end())
+				{
+					process_info = process_it->second;
+				}
+				else
+				{
+					// Create new process info
+					process_info = pool_manager::request_pool<process_breakpoint_info*>(
+						pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
+					if (!process_info)
+					{
+						break;
+					}
+
+					process_info->process_id = process_id;
+					process_info->page_map.init();
+
+					// Add to process hash table
+					g_process_breakpoint_map[process_id] = process_info;
+				}
+
+				// O(1) find page within process
+				auto page_it = process_info->page_map.find(page_pfn);
+				breakpoint_page_info* page_info = nullptr;
+
+				if (page_it != process_info->page_map.end())
+				{
+					page_info = page_it->second;
+				}
+				else
+				{
+					is_new_page = true;
+					// Create new page
+					page_info = pool_manager::request_pool<breakpoint_page_info*>(
+						pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(breakpoint_page_info));
+					if (!page_info)
+					{
+						break;
+					}
+
+					page_info->page_contents = pool_manager::request_pool<uint8_t*>(
+						pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
+					if (!page_info->page_contents)
+					{
+						pool_manager::release_pool(page_info);
+						break;
+					}
+
+					uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
+					if (fake_pa == 0)
+					{
+						pool_manager::release_pool(page_info->page_contents);
+						pool_manager::release_pool(page_info);
+						break;
+					}
+
+
+					RtlCopyMemory(page_info->page_contents, aligned_target, PAGE_SIZE);
+
+					auto exec_page = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
+
+					page_info->orig_page_pfn = page_pfn;
+					page_info->exec_page_pfn = GET_PFN(exec_page);
+					page_info->breakpoint_count = 0;
+					page_info->breakpoint_map.init();
+
+					// Add to process page map
+					process_info->page_map[page_pfn] = page_info;
+
+
+				}
+
+				// Create breakpoint info
+				auto* func_info = pool_manager::request_pool<breakpoint_function_info*>(
+					pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(breakpoint_function_info));
+				if (!func_info)
+				{
+					break;
+				}
+
+				func_info->handler_va = handler;
+				func_info->original_va = target_address;
+				func_info->original_pa = target_pa;
+				func_info->breakpoint_va = &page_info->page_contents[page_offset];
+				func_info->is_active = true;
+				func_info->page_info_ptr = page_info;
+
+				RtlCopyMemory(&func_info->original_byte, target_address, 1);
+				*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC; // INT3
+				++page_info->breakpoint_count;
+
+				// O(1) insert - only insert to page hash table
+				page_info->breakpoint_map[target_address] = func_info;
+				succeed = true;
+				if (is_new_page)
+				{
+					hv::prevmcall::install_ept_hook(page_info->orig_page_pfn, page_info->exec_page_pfn);
+				}
+
+			 
+
+			} while (FALSE);
 			
-			if (process_it != g_process_breakpoint_map.end())
-			{
-				process_info = process_it->second;
-			}
-			else
-			{
-				// Create new process info
-				process_info = pool_manager::request_pool<process_breakpoint_info*>(
-					pool_manager::INTENTION_TRACK_PROCESS, TRUE, sizeof(process_breakpoint_info));
-				if (!process_info)
-				{
-					goto clear;
-				}
-				
-				process_info->process_id = process_id;
-				process_info->page_map.init();
-				
-				// Add to process hash table
-				g_process_breakpoint_map[process_id] = process_info;
-			}
 
-			// O(1) find page within process
-			auto page_it = process_info->page_map.find(page_pfn);
-			breakpoint_page_info* page_info = nullptr;
 			
-			if (page_it != process_info->page_map.end())
-			{
-				page_info = page_it->second;
-			}
-			else
-			{
-				is_new_page = true;
-				// Create new page
-				page_info = pool_manager::request_pool<breakpoint_page_info*>(
-					pool_manager::INTENTION_TRACK_HOOKED_PAGES, TRUE, sizeof(breakpoint_page_info));
-				if (!page_info)
-				{
-					goto clear;
-				}
-
-				page_info->page_contents = pool_manager::request_pool<uint8_t*>(
-					pool_manager::INTENTION_FAKE_PAGE_CONTENTS, TRUE, PAGE_SIZE);
-				if (!page_info->page_contents)
-				{
-					pool_manager::release_pool(page_info);
-					goto clear;
-				}
-
-				uint64_t fake_pa = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
-				if (fake_pa == 0)
-				{
-					pool_manager::release_pool(page_info->page_contents);
-					pool_manager::release_pool(page_info);
-					goto clear;
-				}
-
-				
-				RtlCopyMemory(page_info->page_contents, aligned_target, PAGE_SIZE);
-
-				auto exec_page = utils::internal_functions::pfn_mm_get_physical_address(page_info->page_contents).QuadPart;
-
-				page_info->orig_page_pfn = page_pfn;
-				page_info->exec_page_pfn = GET_PFN(exec_page);
-				page_info->breakpoint_count = 0;
-				page_info->breakpoint_map.init();
-
-				// Add to process page map
-				process_info->page_map[page_pfn] = page_info;
-					
-				
-			}
-
-			// Create breakpoint info
-			auto* func_info = pool_manager::request_pool<breakpoint_function_info*>(
-				pool_manager::INTENTION_TRACK_HOOKED_FUNCTIONS, TRUE, sizeof(breakpoint_function_info));
-			if (!func_info)
-			{
-				goto clear;
-			}
-
-			func_info->handler_va = handler;
-			func_info->original_va = target_address;
-			func_info->original_pa = target_pa;
-			func_info->breakpoint_va = &page_info->page_contents[page_offset];
-			func_info->is_active = true;
-			func_info->page_info_ptr = page_info;
-				  
-			RtlCopyMemory(&func_info->original_byte, target_address, 1);
-			*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC; // INT3
-			++page_info->breakpoint_count;
-
-			// O(1) insert - only insert to page hash table
-			page_info->breakpoint_map[target_address] = func_info;
-			succeed = true;
-			if (is_new_page)
-			{
-				hv::prevmcall::install_ept_hook(page_info->orig_page_pfn, page_info->exec_page_pfn);
-			}
-
-		clear:
 			ExReleaseFastMutex(&g_breakpoint_list_lock);
 
 			if (succeed)
@@ -451,73 +461,79 @@ namespace utils {
 		{
 			bool removed = false;
 
-			ExAcquireFastMutex(&g_breakpoint_list_lock);
 
-			void* aligned_target = PAGE_ALIGN(target_address);
-			// Calculate page PFN
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
-			if (target_pa == 0)
+			do 
 			{
-				goto done;
-			}
-			unsigned __int64 page_pfn = GET_PFN(target_pa);
+				ExAcquireFastMutex(&g_breakpoint_list_lock);
 
-			// O(1) find process
-			auto process_it = g_process_breakpoint_map.find(process_id);
-			if (process_it == g_process_breakpoint_map.end())
-			{
-				goto done;  // Process doesn't exist
-			}
-
-			// O(1) find page within process
-			process_breakpoint_info* process_info = process_it->second;
-			auto page_it = process_info->page_map.find(page_pfn);
-			if (page_it == process_info->page_map.end())
-			{
-				goto done;  // Page doesn't exist
-			}
-
-			// O(1) find breakpoint within page
-			breakpoint_page_info* page_info = page_it->second;
-			auto bp_it = page_info->breakpoint_map.find(target_address);
-			if (bp_it != page_info->breakpoint_map.end())
-			{
-				breakpoint_function_info* func_info = bp_it->second;
-				
-				*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = func_info->original_byte;
-				func_info->is_active = false;
-
-				// Remove from page hash table using target_address as key
-				page_info->breakpoint_map.erase(target_address);
-				--page_info->breakpoint_count;
-
-				if (page_info->breakpoint_count == 0)
+				void* aligned_target = PAGE_ALIGN(target_address);
+				// Calculate page PFN
+				uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
+				if (target_pa == 0)
 				{
-					// Remove EPT hook
-					hv::prevmcall::remove_ept_hook(page_info->orig_page_pfn);
-					
-					// Clean page
-					pool_manager::release_pool(page_info->page_contents);
-					page_info->breakpoint_map.clear();
-					pool_manager::release_pool(page_info);
-					
-					// Remove from process page map using PFN as key
-					process_info->page_map.erase(page_pfn);
-					
-					// If process has no pages left, remove process
-					if (process_info->page_map.empty())
-					{
-						process_info->page_map.clear();
-						pool_manager::release_pool(process_info);
-						g_process_breakpoint_map.erase(process_id);
-					}
+					 break;
+				}
+				unsigned __int64 page_pfn = GET_PFN(target_pa);
+
+				// O(1) find process
+				auto process_it = g_process_breakpoint_map.find(process_id);
+				if (process_it == g_process_breakpoint_map.end())
+				{
+					break;
 				}
 
-				pool_manager::release_pool(func_info);
-				removed = true;
-			}
+				// O(1) find page within process
+				process_breakpoint_info* process_info = process_it->second;
+				auto page_it = process_info->page_map.find(page_pfn);
+				if (page_it == process_info->page_map.end())
+				{
+					 break;
+				}
 
-		done:
+				// O(1) find breakpoint within page
+				breakpoint_page_info* page_info = page_it->second;
+				auto bp_it = page_info->breakpoint_map.find(target_address);
+				if (bp_it != page_info->breakpoint_map.end())
+				{
+					breakpoint_function_info* func_info = bp_it->second;
+
+					*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = func_info->original_byte;
+					func_info->is_active = false;
+
+					// Remove from page hash table using target_address as key
+					page_info->breakpoint_map.erase(target_address);
+					--page_info->breakpoint_count;
+
+					if (page_info->breakpoint_count == 0)
+					{
+						// Remove EPT hook
+						hv::prevmcall::remove_ept_hook(page_info->orig_page_pfn);
+
+						// Clean page
+						pool_manager::release_pool(page_info->page_contents);
+						page_info->breakpoint_map.clear();
+						pool_manager::release_pool(page_info);
+
+						// Remove from process page map using PFN as key
+						process_info->page_map.erase(page_pfn);
+
+						// If process has no pages left, remove process
+						if (process_info->page_map.empty())
+						{
+							process_info->page_map.clear();
+							pool_manager::release_pool(process_info);
+							g_process_breakpoint_map.erase(process_id);
+						}
+					}
+
+					pool_manager::release_pool(func_info);
+					removed = true;
+				}
+
+		 
+				
+			} while (FALSE);
+			
 			ExReleaseFastMutex(&g_breakpoint_list_lock);
 
 			if (removed)
@@ -528,7 +544,6 @@ namespace utils {
 			{
 				LogError("[shadowbp] Failed to find breakpoint at %p for process %p", target_address, process_id);
 			}
-
 			return removed;
 		}
 
@@ -536,54 +551,58 @@ namespace utils {
 		{
 			bool updated = false;
 
-			ExAcquireFastMutex(&g_breakpoint_list_lock);
-
-			void* aligned_target = PAGE_ALIGN(target_address);
-			// Calculate page PFN
-			uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
-			if (target_pa == 0)
+			do 
 			{
-				goto done;
-			}
-			unsigned __int64 page_pfn = GET_PFN(target_pa);
+				ExAcquireFastMutex(&g_breakpoint_list_lock);
 
-			// O(1) find process
-			auto process_it = g_process_breakpoint_map.find(process_id);
-			if (process_it == g_process_breakpoint_map.end())
-			{
-				goto done;  // Process doesn't exist
-			}
-
-			// O(1) find page within process
-			process_breakpoint_info* process_info = process_it->second;
-			auto page_it = process_info->page_map.find(page_pfn);
-			if (page_it == process_info->page_map.end())
-			{
-				goto done;  // Page doesn't exist
-			}
-
-			// O(1) find breakpoint within page
-			breakpoint_page_info* page_info = page_it->second;
-			auto bp_it = page_info->breakpoint_map.find(target_address);
-			if (bp_it != page_info->breakpoint_map.end())
-			{
-				breakpoint_function_info* func_info = bp_it->second;
-
-				if (enable && !func_info->is_active)
+				void* aligned_target = PAGE_ALIGN(target_address);
+				// Calculate page PFN
+				uint64_t target_pa = utils::internal_functions::pfn_mm_get_physical_address(aligned_target).QuadPart;
+				if (target_pa == 0)
 				{
-					*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC;
-					func_info->is_active = true;
-					updated = true;
+					break;
 				}
-				else if (!enable && func_info->is_active)
-				{
-					*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = func_info->original_byte;
-					func_info->is_active = false;
-					updated = true;
-				}
-			}
+				unsigned __int64 page_pfn = GET_PFN(target_pa);
 
-		done:
+				// O(1) find process
+				auto process_it = g_process_breakpoint_map.find(process_id);
+				if (process_it == g_process_breakpoint_map.end())
+				{
+					break;  // Process doesn't exist
+				}
+
+				// O(1) find page within process
+				process_breakpoint_info* process_info = process_it->second;
+				auto page_it = process_info->page_map.find(page_pfn);
+				if (page_it == process_info->page_map.end())
+				{
+					break;   // Page doesn't exist
+				}
+
+				// O(1) find breakpoint within page
+				breakpoint_page_info* page_info = page_it->second;
+				auto bp_it = page_info->breakpoint_map.find(target_address);
+				if (bp_it != page_info->breakpoint_map.end())
+				{
+					breakpoint_function_info* func_info = bp_it->second;
+
+					if (enable && !func_info->is_active)
+					{
+						*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = 0xCC;
+						func_info->is_active = true;
+						updated = true;
+					}
+					else if (!enable && func_info->is_active)
+					{
+						*reinterpret_cast<uint8_t*>(func_info->breakpoint_va) = func_info->original_byte;
+						func_info->is_active = false;
+						updated = true;
+					}
+				}
+
+			 
+			
+			} while (FALSE);
 			ExReleaseFastMutex(&g_breakpoint_list_lock);
 
 			if (updated)

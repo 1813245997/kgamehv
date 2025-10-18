@@ -470,10 +470,10 @@ namespace ept
 			return false;
 		}
 
-		// ����Ŀ��ҳ���������ַ
+		 
 		unsigned __int64 target_physical_address = orig_page_pfn << PAGE_SHIFT;
 
-		// ���û�� split����ִ�� PML2 ��ҳ
+		 
 
 		if (is_page_splitted(ept_state, target_physical_address) == false)
 		{
@@ -494,7 +494,7 @@ namespace ept
 			}
 		}
 
-		// ��ȡ PML1 ҳ����
+		 
 		__ept_pte* target_page = get_pml1_entry(ept_state, target_physical_address);
 		if (!target_page)
 		{
@@ -502,7 +502,7 @@ namespace ept
 			return false;
 		}
 
-		// ���� Hook ��Ϣ�ṹ
+		 
 		auto* hook_info = pool_manager::request_pool<__ept_hooked_page_info*>(pool_manager::INTENTION_TRACK_HOOKED_PAGES, true, sizeof(__ept_hooked_page_info));
 		if (!hook_info)
 		{
