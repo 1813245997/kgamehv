@@ -173,7 +173,7 @@ namespace utils
 			status = utils::file_utils::force_delete_file(&uni_path);
 
 			 
-			ExFreePool(safe_path);
+			 utils::memory::free_independent_pages (safe_path, path_len * sizeof(WCHAR));
 
 			if (!NT_SUCCESS(status))
 			{
