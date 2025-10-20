@@ -3,29 +3,40 @@
 #include <ntstrsafe.h>
 #include "../vtx/spinlock.h"
 
-// ------------------------- 实现 -------------------------
+ 
 
 namespace logger {
 
 	LOG_CONTEXT g_log_ctx = {};
 
-	// 初始化日志系统
+	 
 	NTSTATUS init_log_system(
 		const wchar_t* log_dir,
 		const wchar_t* log_name_prefix,
 		ULONG max_file_size,
-		ULONG max_file_count)
+		ULONG max_file_count,
+		__log_output_mode output_mode)
 	{
+#if !ENABLE_HV_DEBUG_LOG
+
+		return STATUS_SUCCESS;
+#endif
 		RtlZeroMemory(&g_log_ctx, sizeof(g_log_ctx));
 		 
 
 		g_log_ctx.config.max_file_size = max_file_size;
 		g_log_ctx.config.max_file_count = max_file_count;
+		g_log_ctx.config.output_mode = output_mode;
 
 		RtlInitUnicodeString(&g_log_ctx.config.log_dir, log_dir);
 		RtlInitUnicodeString(&g_log_ctx.config.log_name_prefix, log_name_prefix);
 
-		// 创建日志目录
+		 
+		if (output_mode == LOG_OUTPUT_DBGPRINT) {
+			return STATUS_SUCCESS;
+		}
+
+		 
 		OBJECT_ATTRIBUTES objAttr;
 		IO_STATUS_BLOCK iosb;
 		HANDLE dir_handle;
@@ -58,7 +69,7 @@ namespace logger {
 
 		return open_log_file();
 	}
-	// 内部辅助函数：关闭当前日志文件
+	 
 	void close_log_file()
 	{
 		if (g_log_ctx.file_handle) {
@@ -67,10 +78,10 @@ namespace logger {
 		}
 	}
 
-	// 内部辅助函数：打开当前日志文件
+	 
 	NTSTATUS open_log_file()
 	{
-		WCHAR path_buffer[512] = {}; // 512 WCHAR，一般足够存放日志目录 + 文件名
+		WCHAR path_buffer[512] = {};  
 		swprintf_s(path_buffer, ARRAY_SIZE(path_buffer), L"%wZ\\%wZ_%lu.log",
 			&g_log_ctx.config.log_dir,
 			&g_log_ctx.config.log_name_prefix,
@@ -110,7 +121,7 @@ namespace logger {
 	}
 
 
-	// 内部辅助函数：删除最旧日志文件
+	 
 	NTSTATUS delete_oldest_log_file()
 	{
 		WCHAR path_buffer[512] = {};
@@ -135,16 +146,16 @@ namespace logger {
 		return status;
 	}
 
-	// 滚动日志文件
+	 
 	NTSTATUS roll_log_file_if_needed()
 	{
 		if (g_log_ctx.current_file_size >= g_log_ctx.config.max_file_size) {
 			close_log_file();
 
-			// 循环下一个文件编号
+		 
 			g_log_ctx.current_file_index = (g_log_ctx.current_file_index + 1) % g_log_ctx.config.max_file_count;
 
-			// 删除旧文件保证数量不超限
+		 
 			delete_oldest_log_file();
 
 			return open_log_file();
@@ -153,9 +164,14 @@ namespace logger {
 	}
 
 	 
-	// 写日志实现
+	 
 	void LogPrint(__log_type type, const char* fmt, ...)
 	{
+#if !ENABLE_HV_DEBUG_LOG
+		 
+		return;
+#endif
+
 		char message_buffer[1024] = {};
 		char final_buffer[2048] = {};
 		const char* log_type_str = nullptr;
@@ -184,26 +200,33 @@ namespace logger {
 			tf.Hour, tf.Minute, tf.Second, tf.Milliseconds,
 			log_type_str, message_buffer);
 
-		spinlock lock(&g_log_ctx.lock_flag);
-
-		roll_log_file_if_needed();
-
-		if (g_log_ctx.file_handle) {
-			IO_STATUS_BLOCK iosb;
-			ZwWriteFile(g_log_ctx.file_handle, nullptr, nullptr, nullptr, &iosb,
-				final_buffer, (ULONG)strlen(final_buffer), nullptr, nullptr);
-			g_log_ctx.current_file_size += (ULONG)strlen(final_buffer);
-		}
-
 		 
+		if (g_log_ctx.config.output_mode == LOG_OUTPUT_DBGPRINT) {
+			 
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "%s", final_buffer);
+		} else {
+			 
+			spinlock lock(&g_log_ctx.lock_flag);
+
+			roll_log_file_if_needed();
+
+			if (g_log_ctx.file_handle) {
+				IO_STATUS_BLOCK iosb;
+				ZwWriteFile(g_log_ctx.file_handle, nullptr, nullptr, nullptr, &iosb,
+					final_buffer, (ULONG)strlen(final_buffer), nullptr, nullptr);
+				g_log_ctx.current_file_size += (ULONG)strlen(final_buffer);
+			}
+		}
 	}
 
-	// 关闭日志系统
+	 
 	void shutdown_log_system()
 	{
-		spinlock lock(&g_log_ctx.lock_flag);
-		close_log_file();
 		 
+		if (g_log_ctx.config.output_mode == LOG_OUTPUT_FILE) {
+			spinlock lock(&g_log_ctx.lock_flag);
+			close_log_file();
+		}
 	}
 
 }

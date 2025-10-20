@@ -86,19 +86,34 @@ namespace utils
 			PVOID module_base = nullptr;
 			SIZE_T image_size = {};
 
+		
+			if (!get_module_info_from_context(context, module_base, image_size))
+			{
 			 
+				return STATUS_INVALID_IMAGE_FORMAT;
+			}
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Driver Base: 0x%p, Image Size: 0x%llX\n", module_base, static_cast<ULONGLONG>(image_size));
+			utils::hidden_modules::set_driver_info(reinterpret_cast<unsigned long long>(module_base), image_size);
+
+
 		 
 			NTSTATUS status = logger::init_log_system(
 				L"\\SystemRoot\\Logs\\DriverLogs",   
 				L"MyDriver",
 				1024 * 1024*1,  
-				5
+				5,
+				LOG_OUTPUT_DBGPRINT
 			);
 			if (!NT_SUCCESS(status)) {
 				return status;
 			}
 			 
 			LogInfo("Driver loaded.");
+			LogInfo("Getting module info from context...");
+			LogInfo(
+				" Driver Base: 0x%p, Image Size: 0x%llX\n",
+				module_base,
+				static_cast<ULONGLONG>(image_size));
 
 			LogInfo("Initializing ntoskrnl info...");
 			if (!utils::module_info::init_ntoskrnl_info())
@@ -110,20 +125,8 @@ namespace utils
 			LogInfo("ntoskrnl info initialized successfully.");
 			utils::global::initialize_all_globals();
 
-			LogInfo("Getting module info from context...");
-			if (!get_module_info_from_context(context, module_base, image_size))
-			{
-				LogError("Failed to get module info from context.");
-			   // VMProtectEnd();
-				return STATUS_INVALID_IMAGE_FORMAT;
-			}
-		 
-			utils::hidden_modules::set_driver_info(reinterpret_cast<unsigned long long>(module_base), image_size);
-			LogInfo( 
-				" Driver Base: 0x%p, Image Size: 0x%llX\n",
-				module_base,
-				static_cast<ULONGLONG>(image_size));
-			 DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Driver Base: 0x%p, Image Size: 0x%llX\n", module_base, static_cast<ULONGLONG>(image_size));
+
+		
 			 
 			LogInfo("Initializing internal functions...");
 			  status = internal_functions::initialize_internal_functions();
@@ -255,14 +258,6 @@ namespace utils
 			}
 			LogInfo("Dwm drawing initialized successfully.");
 
-			 
-
-			
-			
-
-
-		 
-		
 			    
 			LogInfo("Driver initialization complete.");
 			 	 

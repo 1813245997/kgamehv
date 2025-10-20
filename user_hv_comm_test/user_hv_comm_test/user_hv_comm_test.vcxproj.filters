@@ -21,6 +21,9 @@
     <ClCompile Include="main.cpp">
       <Filter>资源文件</Filter>
     </ClCompile>
+    <ClCompile Include="user_hv_comm_export.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hv_user_comm.h">
@@ -30,6 +33,12 @@
       <Filter>源文件</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hv_user_comm_export.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="user_hv_comm_export.h">
       <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>

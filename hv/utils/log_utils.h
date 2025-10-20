@@ -1,5 +1,6 @@
 #pragma once
 
+ 
 
  
 #include "../vtx/vmm.h"
@@ -23,6 +24,12 @@ enum __log_type {
 	LOG_TYPE_INFO
 };
 
+ 
+enum __log_output_mode {
+	LOG_OUTPUT_FILE,      
+	LOG_OUTPUT_DBGPRINT   
+};
+
 
 
 namespace logger {
@@ -32,6 +39,7 @@ namespace logger {
 		UNICODE_STRING log_name_prefix; 
 		ULONG max_file_size;           
 		ULONG max_file_count;          
+		__log_output_mode output_mode;   
 	};
 
 	struct LOG_CONTEXT {
@@ -44,22 +52,24 @@ namespace logger {
 
 	extern LOG_CONTEXT g_log_ctx;
 
-	// 初始化日志系统
+ 
 	NTSTATUS init_log_system(
 		const wchar_t* log_dir,
 		const wchar_t* log_name_prefix,
 		ULONG max_file_size,
-		ULONG max_file_count);
+		ULONG max_file_count,
+		__log_output_mode output_mode = LOG_OUTPUT_FILE);
 
 	NTSTATUS open_log_file();
-	// 写日志接口
+ 
 	void LogPrint(__log_type type, const char* fmt, ...);
 
-	// 卸载/关闭日志系统
+ 
 	void shutdown_log_system();
 
 } // namespace logger
  
+#if ENABLE_HV_DEBUG_LOG
 #define LogError(format, ...) \
     logger::LogPrint(LOG_TYPE_ERROR, "  [VMXMode:%d][%s:%d] " format, \
                       vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
@@ -75,3 +85,13 @@ namespace logger {
 #define LogInfo(format, ...) \
     logger::LogPrint(LOG_TYPE_INFO, "  [VMXMode:%d][%s:%d] " format, \
                      vmx_get_current_execution_mode(), __func__, __LINE__, ##__VA_ARGS__)
+#else
+// 褰撹皟璇曟棩蹇楄绂佺敤鏃讹紝杩欎簺瀹忓睍寮�涓虹┖
+#define LogError(format, ...) ((void)0)
+#define LogDebug(format, ...) ((void)0)
+#define LogDump(format, ...) ((void)0)
+#define LogInfo(format, ...) ((void)0)
+#endif
+
+ 
+ 
