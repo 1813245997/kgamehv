@@ -449,10 +449,7 @@ namespace utils {
 			{
 				LogInfo("[shadowbp] Removed all breakpoints for process %p", process_id);
 			}
-			else
-			{
-				LogError("[shadowbp] No breakpoints found for process %p", process_id);
-			}
+			 
 
 			return removed_any;
 		}
