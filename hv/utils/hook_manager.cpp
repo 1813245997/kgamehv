@@ -27,13 +27,13 @@ namespace hook_manager
 			LogError("Failed to initialize mem prot (0x%X).", status);
 			return status;
 		}
-
-		status = utils::hook_process_manager::initialize_hook_process_manager();
-		if (!NT_SUCCESS(status))
-		{
-			LogError("Failed to initialize hook process manager (0x%X).", status);
-			return status;
-		}
+		//会导致游戏不正常进入
+		//status = utils::hook_process_manager::initialize_hook_process_manager();
+		//if (!NT_SUCCESS(status))
+		//{
+		//	LogError("Failed to initialize hook process manager (0x%X).", status);
+		//	return status;
+		//}
 
 		status = utils::hook_user_comm::initialize_hook_user_comm();
 		if (!NT_SUCCESS(status))

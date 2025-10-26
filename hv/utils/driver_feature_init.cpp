@@ -102,7 +102,7 @@ namespace utils
 				L"MyDriver",
 				1024 * 1024*1,  
 				5,
-				LOG_OUTPUT_DBGPRINT
+				LOG_OUTPUT_FILE
 			);
 			if (!NT_SUCCESS(status)) {
 				return status;
@@ -248,15 +248,17 @@ namespace utils
 			}
 			LogInfo("Key board class initialized successfully.");
 
-			LogInfo("Initializing dwm drawing...");
-			status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
-			if (!NT_SUCCESS(status))
-			{
-				LogError("Failed to initialize dwm drawing (0x%X).", status);
-				//  VMProtectEnd();
-				return status;
-			}
-			LogInfo("Dwm drawing initialized successfully.");
+
+			//可能会拉闸
+			//LogInfo("Initializing dwm drawing...");
+			//status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
+			//if (!NT_SUCCESS(status))
+			//{
+			//	LogError("Failed to initialize dwm drawing (0x%X).", status);
+			//	//  VMProtectEnd();
+			//	return status;
+			//}
+			//LogInfo("Dwm drawing initialized successfully.");
 
 			    
 			LogInfo("Driver initialization complete.");
