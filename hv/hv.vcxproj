@@ -140,6 +140,7 @@
     <ClInclude Include="utils\mouse_class_utils.h" />
     <ClInclude Include="utils\render.h" />
     <ClInclude Include="utils\shadow_break_point.h" />
+    <ClInclude Include="vtx\bit_wise.h" />
     <ClInclude Include="vtx\hv_pre_vmcall.h" />
     <ClInclude Include="vtx\hypercalls.h" />
     <ClInclude Include="vtx\mm.h" />
@@ -295,6 +296,7 @@
     <ClCompile Include="utils\user_call_utils.cpp" />
     <ClCompile Include="utils\user_comm\user_comm.cpp" />
     <ClCompile Include="utils\vfun_utils.cpp" />
+    <ClCompile Include="vtx\bit_wise.cpp" />
     <ClCompile Include="vtx\compatibility_checks.cpp" />
     <ClCompile Include="vtx\gdt.cpp" />
     <ClCompile Include="vtx\ept.cpp" />

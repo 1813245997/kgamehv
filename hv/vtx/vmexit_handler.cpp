@@ -37,6 +37,8 @@ void vmexit_vmx_preemption(__vcpu* vcpu);
 void vmexit_nmi_window(__vcpu* vcpu);
 void vmexit_vmxon_handler(__vcpu* vcpu);
 void vmexit_getsec_handler(__vcpu* vcpu);
+
+using namespace hv;
 void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 {
 	vmexit_exception_handler,						// 00 EXIT_REASON_EXCEPTION_NMI
@@ -57,7 +59,7 @@ void (*exit_handlers[EXIT_REASON_LAST])(__vcpu* guest_registers) =
 	vmexit_unimplemented,							// 15 EXIT_REASON_RDPMC
 	vmexit_rdtsc_handler,							// 16 EXIT_REASON_RDTSC
 	vmexit_unimplemented,							// 17 EXIT_REASON_RSM
-	hv::vmexit_vmcall_handler,							// 18 EXIT_REASON_VMCALL
+	vmexit_vmcall_handler,							// 18 EXIT_REASON_VMCALL
 	vmexit_vm_instruction,							// 19 EXIT_REASON_VMCLEAR
 	vmexit_vm_instruction,							// 20 EXIT_REASON_VMLAUNCH
 	vmexit_vm_instruction,							// 21 EXIT_REASON_VMPTRLD
@@ -316,7 +318,7 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 	
 	 
 	UINT32      msr_index  = vcpu->vmexit_info.guest_registers->rcx & 0xffffffff;
-	 
+	__msr msr{};
 	if (msr_index == IA32_FEATURE_CONTROL)
 	{
 		 
@@ -328,23 +330,107 @@ void vmexit_msr_read_handler(__vcpu* vcpu)
 		return;
 	}
 
-	__msr msr{};
-	hv::host_exception_info e{};
+	if ((msr_index <= 0x00001FFF) || ((0xC0000000 <= msr_index) && (msr_index <= 0xC0001FFF)) ||
+		(msr_index >= RESERVED_MSR_RANGE_LOW && (msr_index <= RESERVED_MSR_RANGE_HI)))
+	{
 
-	// the guest could be reading from MSRs that are outside of the MSR bitmap
-	// range. refer to https://www.unknowncheats.me/forum/3425463-post15.html
-	msr.all = rdmsr_safe(e, msr_index);
 
-	if (e.exception_occurred) {
-		// reflect the exception back into the guest
+
+
+
+
+
+
+		switch (msr_index)
+		{
+		case IA32_SYSENTER_CS:
+			msr.all = hv::vmread(GUEST_SYSENTER_CS);
+			break;
+
+		case IA32_SYSENTER_ESP:
+			msr.all = hv::vmread(GUEST_SYSENTER_ESP);
+			break;
+
+		case IA32_SYSENTER_EIP:
+			msr.all = hv::vmread(GUEST_SYSENTER_EIP);
+			break;
+
+		case IA32_GS_BASE:
+			msr.all = hv::vmread(GUEST_GS_BASE);
+			break;
+
+		case IA32_FS_BASE:
+			msr.all = hv::vmread(GUEST_FS_BASE);
+			break;
+
+		case IA32_INTERRUPT_SSP_TABLE_ADDR:
+			msr.all = hv::vmread(GUEST_INTERRUPT_SSP_TABLE_ADDR);
+			break;
+
+
+		case IA32_S_CET:
+			msr.all = hv::vmread(GUEST_S_CET);
+			break;
+
+		case IA32_PERF_GLOBAL_CTRL:
+			msr.all = hv::vmread(GUEST_PERF_GLOBAL_CONTROL);
+			break;
+
+		case IA32_PKRS:
+			msr.all = hv::vmread(GUEST_PKRS);
+			break;
+
+		case IA32_RTIT_CTL:
+			msr.all = hv::vmread(GUEST_RTIT_CTL);
+			break;
+
+		case IA32_BNDCFGS:
+			msr.all = hv::vmread(GUEST_BNDCFGS);
+			break;
+
+		case IA32_PAT:
+			msr.all = hv::vmread(GUEST_PAT);
+			break;
+
+		case IA32_EFER:
+			msr.all = hv::vmread(GUEST_EFER);
+			break;
+
+		default:
+
+		{
+
+			if (msr_index <= 0xfff && hv::bit_test(msr_index, (unsigned long*)g_invalid_msr_bitmap) != NULL64_ZERO)
+			{
+				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+				return;
+			}
+
+			if ((msr_index >= 0x40000000 && msr_index <= 0x400000FF) &&
+				hv::bit_test(msr_index - 0x40000000, (unsigned long*)g_invalid_synthetic_msr_bitmap) != NULL64_ZERO)
+			{
+				hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
+				return;
+			}
+
+			msr.all = __readmsr(msr_index);
+
+
+		}
+		break;
+		}
+
+		vcpu->vmexit_info.guest_registers->rdx = msr.high;
+		vcpu->vmexit_info.guest_registers->rax = msr.low;
+		vcpu->hide_vm_exit_overhead = true;
+		adjust_rip(vcpu);
+
+	}
+	else
+	{
 		hv::inject_interruption(EXCEPTION_VECTOR_GENERAL_PROTECTION_FAULT, INTERRUPT_TYPE_HARDWARE_EXCEPTION, 0, true);
 		return;
 	}
-
-	vcpu->vmexit_info.guest_registers->rdx = msr.high;
-	vcpu->vmexit_info.guest_registers->rax = msr.low;
-	vcpu->hide_vm_exit_overhead = true;
-	adjust_rip(vcpu);
 
 
 	 

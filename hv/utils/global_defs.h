@@ -100,6 +100,7 @@
 #include "../vtx/hv_vt_structs.h"
 #include "../vtx/exception.h"
 #include "../vtx/cpuid.h"
+#include "../vtx/bit_wise.h"
 #include "../vtx/msr.h"
 #include "../vtx/xsave.h"
 #include "../vtx/segment.h"

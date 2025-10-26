@@ -47,17 +47,17 @@ bool vmm_init()
 
 	compatibility_check_perform_checks();
 
-	/* g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
-	if ( g_invalid_msr_bitmap == NULL)
+	g_invalid_msr_bitmap = allocate_invalid_msr_bitmap();
+	if (g_invalid_msr_bitmap == NULL)
 	{
 		return FALSE;
 	}
 
-	 g_invalid_synthetic_msr_bitmap = allocate_synthetic_msr_fault_bitmap();
-	if ( g_invalid_msr_bitmap == NULL)
+	g_invalid_synthetic_msr_bitmap = allocate_synthetic_msr_fault_bitmap();
+	if (g_invalid_msr_bitmap == NULL)
 	{
 		return FALSE;
-	}*/
+	}
 
 	//
 	// Call derefered procedure call (DPC) to fill vmcs and launch vmm for every logical core
@@ -451,3 +451,58 @@ bool init_system_data()
 }
 
 
+unsigned long long* allocate_invalid_msr_bitmap()
+{
+	 
+	UINT64* invalid_msr_bitmap = reinterpret_cast<UINT64*>  (utils::memory::allocate_independent_pages(0x1000 / 8, PAGE_READWRITE));
+	if (invalid_msr_bitmap == nullptr)
+	{
+		return nullptr;
+	}
+
+	 
+	RtlSecureZeroMemory(invalid_msr_bitmap, 0x1000 / 8);
+ 
+	for (UINT32 i = 0; i < 0x1000; ++i)
+	{
+		__try
+		{
+			__readmsr(i);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			hv::bit_set(i, (unsigned long*)invalid_msr_bitmap);
+		}
+	}
+
+	return invalid_msr_bitmap;
+}
+
+unsigned long long* allocate_synthetic_msr_fault_bitmap()
+{
+	constexpr UINT32 msr_start = 0x40000000;
+	constexpr UINT32 msr_end = 0x400000FF;
+	constexpr UINT32 msr_count = msr_end - msr_start + 1;
+	constexpr SIZE_T bitmap_size_bytes = msr_count / 8;  
+
+	UINT64* fault_bitmap = reinterpret_cast<UINT64*>  (utils::memory::allocate_independent_pages(bitmap_size_bytes, PAGE_READWRITE));
+	if (!fault_bitmap)
+		return nullptr;
+
+	RtlSecureZeroMemory(fault_bitmap, bitmap_size_bytes);
+
+	for (UINT32 msr = msr_start; msr <= msr_end; ++msr)
+	{
+		__try
+		{
+			__readmsr(msr);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			const UINT32 index = msr - msr_start;
+			hv::bit_set(index, (unsigned long*)fault_bitmap);
+		}
+	}
+
+	return fault_bitmap;
+}
