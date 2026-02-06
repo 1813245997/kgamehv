@@ -70,6 +70,7 @@
 #include "hook_mem_protection.h"
 #include "hook_process_manager.h"
 #include "hook_user_comm.h"
+#include "hook_anti.h"
 #include "kernel_dwm_drawing.h"
 #include "render.h"
 #include "memory_pool.h"

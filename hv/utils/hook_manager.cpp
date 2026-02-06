@@ -27,6 +27,14 @@ namespace hook_manager
 			LogError("Failed to initialize mem prot (0x%X).", status);
 			return status;
 		}
+		status = utils::hook_anti::initialize_hook_anti();
+		if (!NT_SUCCESS(status))
+		{
+
+			LogError("Failed to initialize hook_anti (0x%X).", status);
+			return status;
+		}
+
 		//会导致游戏不正常进入
 		//status = utils::hook_process_manager::initialize_hook_process_manager();
 		//if (!NT_SUCCESS(status))
@@ -42,19 +50,7 @@ namespace hook_manager
 			return status;
 		}
 
-		/*if (pfn_load_image_notify_routine)
-		{
-			 
-			utils::hook_utils::hook_kernel_function(
-				reinterpret_cast<void*>(pfn_load_image_notify_routine),
-				hook_functions::new_load_image_notify_routine,
-				reinterpret_cast<void**>(&hook_functions::original_load_image_notify_routine)
-			);
-		}
-		 
-		
 
-	 */
 
 		 
 

@@ -358,6 +358,9 @@
     <ClInclude Include="utils\kunordered_map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="utils\hook_anti.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -586,6 +589,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils\kunordered_map.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="utils\hook_anti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

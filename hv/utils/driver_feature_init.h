@@ -7,5 +7,7 @@ namespace utils
 
 		bool get_module_info_from_context(PVOID context, PVOID& module_base, SIZE_T& image_size);
 
+	    
+
 	}
 }

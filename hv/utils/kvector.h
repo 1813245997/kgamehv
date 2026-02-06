@@ -8,11 +8,11 @@ namespace utils {
 	public:
 
 
-		kvector() : m_data(nullptr), m_size(0), m_capacity(0), m_valid(false) {}
+		 
 
-		~kvector() {
-			clear();
-		}
+		//~kvector() {
+		//	clear();
+		//}
 
 
 		void init() {
@@ -107,9 +107,9 @@ namespace utils {
 
 	private:
 		T* m_data;
-		size_t m_size{};
-		size_t m_capacity{};
-		bool m_valid{};
+		size_t m_size ;
+		size_t m_capacity ;
+		bool m_valid ;
 	};
 
 }

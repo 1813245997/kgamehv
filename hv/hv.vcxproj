@@ -131,6 +131,7 @@
     <ClInclude Include="game\delta_force.h" />
     <ClInclude Include="game\game_cheat.h" />
     <ClInclude Include="utils\comm_utils.h" />
+    <ClInclude Include="utils\hook_anti.h" />
     <ClInclude Include="utils\kernel_dwm_drawing.h" />
     <ClInclude Include="utils\hook_mem_protection.h" />
     <ClInclude Include="utils\hook_process_manager.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="utils\auth.cpp" />
     <ClCompile Include="utils\comm_utils.cpp" />
     <ClCompile Include="utils\font_utils.cpp" />
+    <ClCompile Include="utils\hook_anti.cpp" />
     <ClCompile Include="utils\kernel_dwm_drawing.cpp" />
     <ClCompile Include="utils\hook_mem_protection.cpp" />
     <ClCompile Include="utils\hook_process_manager.cpp" />
