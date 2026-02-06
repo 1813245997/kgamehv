@@ -249,16 +249,16 @@ namespace utils
 			LogInfo("Key board class initialized successfully.");
 
 
-			//¿ÉÄÜ»áÀ­Õ¢
-			//LogInfo("Initializing dwm drawing...");
-			//status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
-			//if (!NT_SUCCESS(status))
-			//{
-			//	LogError("Failed to initialize dwm drawing (0x%X).", status);
-			//	//  VMProtectEnd();
-			//	return status;
-			//}
-			//LogInfo("Dwm drawing initialized successfully.");
+			//ï¿½ï¿½ï¿½Ü»ï¿½ï¿½ï¿½Õ¢
+			LogInfo("Initializing dwm drawing...");
+			status = utils::kernel_dwm_drawing::initialize_dwm_drawing();
+			if (!NT_SUCCESS(status))
+			{
+				LogError("Failed to initialize dwm drawing (0x%X).", status);
+				//  VMProtectEnd();
+				return status;
+			}
+			LogInfo("Dwm drawing initialized successfully.");
 
 			    
 			LogInfo("Driver initialization complete.");
