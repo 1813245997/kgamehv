@@ -4,3 +4,6 @@
 # build files
 build/
 /hv/*.cmd
+
+# local dev notes (do not commit)
+NEXT_THREAD_TASKS.md
